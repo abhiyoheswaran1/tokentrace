@@ -2,6 +2,12 @@
 
 All notable changes to TokenTrace are documented here.
 
+## [0.1.5] - 2026-05-09
+
+### Changed
+
+- Polish the overview period toolbar and five-card metric layout for denser desktop scanning.
+
 ## [0.1.4] - 2026-05-09
 
 ### Changed

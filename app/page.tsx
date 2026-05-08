@@ -17,23 +17,29 @@ export const dynamic = "force-dynamic";
 function MetricCard({
   label,
   value,
-  detail,
+  detailItems,
   icon: Icon
 }: {
   label: string;
   value: string;
-  detail?: string;
+  detailItems?: string[];
   icon: typeof Database;
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+    <Card className="h-full">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle>{label}</CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-semibold">{value}</div>
-        {detail ? <p className="mt-1 text-xs text-muted-foreground">{detail}</p> : null}
+        <div className="text-2xl font-semibold leading-tight">{value}</div>
+        {detailItems?.length ? (
+          <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs leading-snug text-muted-foreground">
+            {detailItems.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -69,43 +75,43 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card p-4">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-sm font-medium">
+      <div className="rounded-md border bg-card px-3 py-3">
+        <form className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between" action="/">
+          <input type="hidden" name="range" value="custom" />
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold">
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
               Period
             </div>
-            <p className="text-sm text-muted-foreground">
-              Showing {range.label}. Cards, charts, tool mix, sessions, projects, models, and insights use this same range.
-            </p>
+            <Badge variant="secondary">{range.label}</Badge>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {dateRangeOptions.map((option) => (
-              <Button
-                key={option.key}
-                asChild
-                size="sm"
-                variant={range.key === option.key ? "default" : "outline"}
-              >
-                <Link href={rangeHref(option.key)}>{option.label}</Link>
-              </Button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap gap-1">
+              {dateRangeOptions.map((option) => (
+                <Button
+                  key={option.key}
+                  asChild
+                  size="sm"
+                  variant={range.key === option.key ? "default" : "outline"}
+                >
+                  <Link href={rangeHref(option.key)}>{option.label}</Link>
+                </Button>
+              ))}
+            </div>
+            <div className="hidden h-6 w-px bg-border xl:block" />
+            <span className="text-xs font-medium text-muted-foreground">Custom</span>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>From</span>
+              <Input type="date" name="from" defaultValue={range.fromInput} className="h-8 w-[9.25rem]" />
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>To</span>
+              <Input type="date" name="to" defaultValue={range.toInput} className="h-8 w-[9.25rem]" />
+            </label>
+            <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>
+              Apply
+            </Button>
           </div>
-        </div>
-        <form className="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-end" action="/">
-          <input type="hidden" name="range" value="custom" />
-          <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-            From
-            <Input type="date" name="from" defaultValue={range.fromInput} className="w-full sm:w-40" />
-          </label>
-          <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-            To
-            <Input type="date" name="to" defaultValue={range.toInput} className="w-full sm:w-40" />
-          </label>
-          <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>
-            Apply custom range
-          </Button>
         </form>
       </div>
 
@@ -116,35 +122,50 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         />
       ) : null}
 
-      <div className="dashboard-grid">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <MetricCard
           label="Processed tokens"
           value={formatTokens(summary.totalTokens)}
-          detail={`${formatTokens(summary.inputTokens)} input, ${formatTokens(summary.outputTokens)} output, ${formatTokens(summary.cachedTokens)} cached`}
+          detailItems={[
+            `${formatTokens(summary.inputTokens)} input`,
+            `${formatTokens(summary.outputTokens)} output`,
+            `${formatTokens(summary.cachedTokens)} cached`
+          ]}
           icon={Database}
         />
         <MetricCard
           label="Non-cache tokens"
           value={formatTokens(summary.nonCachedTokens)}
-          detail={`${formatTokens(summary.inputTokens)} input + ${formatTokens(summary.outputTokens)} output + ${formatTokens(summary.reasoningTokens)} reasoning`}
+          detailItems={[
+            `${formatTokens(summary.inputTokens)} input`,
+            `${formatTokens(summary.outputTokens)} output`,
+            `${formatTokens(summary.reasoningTokens)} reasoning`
+          ]}
           icon={Database}
         />
         <MetricCard
           label="Cached tokens"
           value={formatTokens(summary.cachedTokens)}
-          detail={`${formatTokens(summary.cacheReadTokens)} cache read, ${formatTokens(summary.cacheWriteTokens)} cache write`}
+          detailItems={[
+            `${formatTokens(summary.cacheReadTokens)} read`,
+            `${formatTokens(summary.cacheWriteTokens)} write`
+          ]}
           icon={Sparkles}
         />
         <MetricCard
           label="Estimated cost"
           value={formatCurrency(summary.totalCost)}
-          detail={`${formatCurrency(summary.exactCost)} exact, ${formatCurrency(summary.estimatedCost)} estimated, ${summary.unknownCostInteractions.toLocaleString()} unknown`}
+          detailItems={[
+            `${formatCurrency(summary.exactCost)} exact`,
+            `${formatCurrency(summary.estimatedCost)} estimated`,
+            `${summary.unknownCostInteractions.toLocaleString()} unknown`
+          ]}
           icon={Coins}
         />
         <MetricCard
           label="Sessions"
           value={summary.sessions.toLocaleString()}
-          detail={`${summary.interactions.toLocaleString()} interactions`}
+          detailItems={[`${summary.interactions.toLocaleString()} interactions`]}
           icon={MessageSquare}
         />
       </div>
