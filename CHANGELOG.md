@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.2.0] - 2026-05-09
+
 ### Added
 
 - Scan health summary for post-scan trust, including parser review, confidence, pricing coverage, and recommended next actions.
