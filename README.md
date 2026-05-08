@@ -242,7 +242,7 @@ The ingestion system is intentionally pluggable:
 
 ## License
 
-MIT. See `LICENSE`.
+Open source by [Abhi Yoheswaran](https://github.com/abhiyoheswaran1). Released under the MIT License. See `LICENSE`.
 
 ## Next Improvements
 

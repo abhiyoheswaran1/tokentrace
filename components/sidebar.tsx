@@ -59,8 +59,20 @@ export function Sidebar() {
             );
           })}
         </nav>
-        <div className="border-t p-4 text-xs text-muted-foreground">
-          Local only. No telemetry. Raw content off by default.
+        <div className="space-y-2 border-t p-4 text-xs text-muted-foreground">
+          <p>Local only. No telemetry. Raw content off by default.</p>
+          <p>
+            Open source by{" "}
+            <a
+              href="https://github.com/abhiyoheswaran1"
+              target="_blank"
+              rel="noreferrer"
+              className="underline-offset-2 hover:underline"
+            >
+              Abhi Yoheswaran
+            </a>
+            .
+          </p>
         </div>
       </div>
     </aside>

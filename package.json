@@ -2,6 +2,10 @@
   "name": "tokentrace",
   "version": "0.1.1",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
+  "author": {
+    "name": "Abhi Yoheswaran",
+    "url": "https://github.com/abhiyoheswaran1"
+  },
   "type": "module",
   "homepage": "https://github.com/abhiyoheswaran1/tokentrace#readme",
   "repository": {
