@@ -28,6 +28,7 @@
     "app",
     "components",
     "docs/assets",
+    "CHANGELOG.md",
     "pricing",
     "src",
     "scripts",
