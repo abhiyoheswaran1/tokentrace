@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Coins, Database, MessageSquare, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, Coins, Database, Info, MessageSquare, Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
@@ -18,18 +18,27 @@ function MetricCard({
   label,
   value,
   detailItems,
+  description,
   icon: Icon
 }: {
   label: string;
   value: string;
   detailItems?: string[];
+  description?: string;
   icon: typeof Database;
 }) {
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle>{label}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <div className="flex min-w-0 items-center gap-1.5">
+          <CardTitle>{label}</CardTitle>
+          {description ? (
+            <span title={description} aria-label={description}>
+              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+            </span>
+          ) : null}
+        </div>
+        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-semibold leading-tight">{value}</div>
@@ -126,6 +135,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         <MetricCard
           label="Processed tokens"
           value={formatTokens(summary.totalTokens)}
+          description="All tokens processed locally from imported records, including fresh input, output, cache read/write, and reasoning tokens."
           detailItems={[
             `${formatTokens(summary.inputTokens)} input`,
             `${formatTokens(summary.outputTokens)} output`,
@@ -136,6 +146,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         <MetricCard
           label="Non-cache tokens"
           value={formatTokens(summary.nonCachedTokens)}
+          description="Fresh input, output, and reasoning tokens, excluding cache read/write tokens."
           detailItems={[
             `${formatTokens(summary.inputTokens)} input`,
             `${formatTokens(summary.outputTokens)} output`,
@@ -146,6 +157,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         <MetricCard
           label="Cached tokens"
           value={formatTokens(summary.cachedTokens)}
+          description="Cache read and cache write tokens reported by supported tools. These are separated from fresh input/output."
           detailItems={[
             `${formatTokens(summary.cacheReadTokens)} read`,
             `${formatTokens(summary.cacheWriteTokens)} write`
@@ -155,6 +167,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         <MetricCard
           label="Estimated cost"
           value={formatCurrency(summary.totalCost)}
+          description="Cost is calculated from editable model prices. Unknown means a model price or usable token count is missing."
           detailItems={[
             `${formatCurrency(summary.exactCost)} exact`,
             `${formatCurrency(summary.estimatedCost)} estimated`,
@@ -165,6 +178,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         <MetricCard
           label="Sessions"
           value={summary.sessions.toLocaleString()}
+          description="Imported local CLI sessions and interactions in the selected period."
           detailItems={[`${summary.interactions.toLocaleString()} interactions`]}
           icon={MessageSquare}
         />

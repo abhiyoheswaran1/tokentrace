@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, Filter } from "lucide-react";
+import { Download, Filter, RotateCcw } from "lucide-react";
 import type { SessionRow } from "@/src/lib/analytics";
 import { formatCurrency, formatDate, formatDuration, formatTokens } from "@/src/lib/format";
 import { Badge } from "@/components/ui/badge";
@@ -83,6 +83,34 @@ export function SessionExplorer({
         .includes(normalizedQuery);
     });
   }, [exact, from, highCost, highCostThreshold, model, project, query, sessions, to, tool]);
+  const filteredSummary = useMemo(
+    () =>
+      filtered.reduce(
+        (summary, session) => {
+          summary.tokens += session.totalTokens;
+          summary.cost += session.cost ?? 0;
+          summary.exact += session.tokenConfidence === "exact" ? 1 : 0;
+          summary.estimated += session.estimatedTokens ? 1 : 0;
+          summary.unknown += session.tokenConfidence === "unknown" ? 1 : 0;
+          return summary;
+        },
+        { tokens: 0, cost: 0, exact: 0, estimated: 0, unknown: 0 }
+      ),
+    [filtered]
+  );
+  const hasFilters =
+    query || tool !== "all" || model !== "all" || project !== "all" || exact !== "all" || from || to || highCost;
+
+  function clearFilters() {
+    setQuery("");
+    setTool("all");
+    setModel("all");
+    setProject("all");
+    setExact("all");
+    setFrom("");
+    setTo("");
+    setHighCost(false);
+  }
 
   return (
     <div className="space-y-4">
@@ -150,6 +178,14 @@ export function SessionExplorer({
               </label>
             </div>
           </div>
+          {hasFilters ? (
+            <div className="mt-3">
+              <Button type="button" size="sm" variant="ghost" onClick={clearFilters}>
+                <RotateCcw className="h-4 w-4" />
+                Clear filters
+              </Button>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -168,7 +204,30 @@ export function SessionExplorer({
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="table-scroll">
+        <CardContent className="space-y-4">
+          <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 lg:grid-cols-5">
+            <div className="p-3">
+              <div className="text-xs text-muted-foreground">Filtered tokens</div>
+              <div className="mt-1 text-sm font-semibold">{formatTokens(filteredSummary.tokens)}</div>
+            </div>
+            <div className="p-3">
+              <div className="text-xs text-muted-foreground">Filtered cost</div>
+              <div className="mt-1 text-sm font-semibold">{formatCurrency(filteredSummary.cost)}</div>
+            </div>
+            <div className="p-3">
+              <div className="text-xs text-muted-foreground">Exact sessions</div>
+              <div className="mt-1 text-sm font-semibold">{filteredSummary.exact.toLocaleString()}</div>
+            </div>
+            <div className="p-3">
+              <div className="text-xs text-muted-foreground">Estimated sessions</div>
+              <div className="mt-1 text-sm font-semibold">{filteredSummary.estimated.toLocaleString()}</div>
+            </div>
+            <div className="p-3">
+              <div className="text-xs text-muted-foreground">Unknown confidence</div>
+              <div className="mt-1 text-sm font-semibold">{filteredSummary.unknown.toLocaleString()}</div>
+            </div>
+          </div>
+          <div className="table-scroll">
           <Table>
             <TableHeader>
               <TableRow>
@@ -184,25 +243,34 @@ export function SessionExplorer({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((session) => (
-                <TableRow key={session.id}>
-                  <TableCell>{formatDate(session.startedAt)}</TableCell>
-                  <TableCell className="font-medium">{session.tool}</TableCell>
-                  <TableCell>{session.project}</TableCell>
-                  <TableCell className="max-w-44 truncate">{session.models}</TableCell>
-                  <TableCell>{formatTokens(session.totalTokens)}</TableCell>
-                  <TableCell>{formatCurrency(session.cost)}</TableCell>
-                  <TableCell>{formatDuration(session.durationMs)}</TableCell>
-                  <TableCell>
-                    <Badge variant={session.tokenConfidence === "exact" ? "success" : session.tokenConfidence === "unknown" ? "destructive" : "warning"}>
-                      {session.tokenConfidence}
-                    </Badge>
+              {filtered.length ? (
+                filtered.map((session) => (
+                  <TableRow key={session.id}>
+                    <TableCell>{formatDate(session.startedAt)}</TableCell>
+                    <TableCell className="font-medium">{session.tool}</TableCell>
+                    <TableCell>{session.project}</TableCell>
+                    <TableCell className="max-w-44 truncate" title={session.models}>{session.models}</TableCell>
+                    <TableCell>{formatTokens(session.totalTokens)}</TableCell>
+                    <TableCell>{formatCurrency(session.cost)}</TableCell>
+                    <TableCell>{formatDuration(session.durationMs)}</TableCell>
+                    <TableCell>
+                      <Badge variant={session.tokenConfidence === "exact" ? "success" : session.tokenConfidence === "unknown" ? "destructive" : "warning"}>
+                        {session.tokenConfidence}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-72 break-all font-mono text-xs" title={session.sourceFile}>{session.sourceFile}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">
+                    No sessions match the current filters.
                   </TableCell>
-                  <TableCell className="max-w-72 truncate">{session.sourceFile}</TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

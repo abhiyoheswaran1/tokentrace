@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { FolderPlus, Play, RotateCcw, Trash2 } from "lucide-react";
+import type { ScanHealth } from "@/src/lib/scan-health";
+import { formatDate, percent } from "@/src/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,11 +20,27 @@ type ScanResult = {
   scanRunId: string;
   filesScanned: number;
   recordsImported: number;
+  costsRecalculated: number;
+  modelAliasesUpdated: number;
+  unknownCostInteractions: number;
   warnings: string[];
   errors: string[];
 };
 
-export function SettingsPanel({ initialSettings }: { initialSettings: SettingsPayload }) {
+function toneVariant(tone: ScanHealth["tone"]) {
+  if (tone === "success") return "success";
+  if (tone === "destructive") return "destructive";
+  if (tone === "warning") return "warning";
+  return "secondary";
+}
+
+export function SettingsPanel({
+  initialSettings,
+  initialScanHealth
+}: {
+  initialSettings: SettingsPayload;
+  initialScanHealth: ScanHealth;
+}) {
   const [customFolders, setCustomFolders] = useState(initialSettings.customFolders);
   const [storeRaw, setStoreRaw] = useState(initialSettings.storeRawMessageContent);
   const [newFolder, setNewFolder] = useState("");
@@ -119,6 +137,57 @@ export function SettingsPanel({ initialSettings }: { initialSettings: SettingsPa
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex flex-wrap items-center gap-2">
+            Scan Memory
+            <Badge variant={toneVariant(initialScanHealth.tone)}>{initialScanHealth.headline}</Badge>
+          </CardTitle>
+          <CardDescription>
+            TokenTrace keeps scan history locally so you can see freshness and review what changed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 lg:grid-cols-4">
+            <div className="p-3">
+              <div className="text-xs text-muted-foreground">Last scan</div>
+              <div className="mt-1 text-sm font-medium">
+                {initialScanHealth.latestRun
+                  ? formatDate(initialScanHealth.latestRun.completedAt ?? initialScanHealth.latestRun.startedAt)
+                  : "Never"}
+              </div>
+            </div>
+            <div className="p-3">
+              <div className="text-xs text-muted-foreground">Files scanned</div>
+              <div className="mt-1 text-sm font-medium">
+                {initialScanHealth.latestRun?.filesScanned.toLocaleString() ?? "0"}
+              </div>
+            </div>
+            <div className="p-3">
+              <div className="text-xs text-muted-foreground">Records imported</div>
+              <div className="mt-1 text-sm font-medium">
+                {initialScanHealth.latestRun?.recordsImported.toLocaleString() ?? "0"}
+              </div>
+            </div>
+            <div className="p-3">
+              <div className="text-xs text-muted-foreground">Priced interactions</div>
+              <div className="mt-1 text-sm font-medium">
+                {percent(
+                  initialScanHealth.costCoverage.total
+                    ? initialScanHealth.costCoverage.priced / initialScanHealth.costCoverage.total
+                    : 0
+                )}
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {initialScanHealth.latestRun
+              ? "Data is current as of the latest scan. Run Scan now after new Claude, Codex, or other AI CLI sessions."
+              : "No scan has run yet. Start with the default folders, then add custom folders if expected files are missing."}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Custom Folders</CardTitle>
           <CardDescription>Add folders outside the default Claude, Codex, OpenAI, and project paths.</CardDescription>
         </CardHeader>
@@ -193,6 +262,20 @@ export function SettingsPanel({ initialSettings }: { initialSettings: SettingsPa
               <div>
                 <div className="text-xs text-muted-foreground">Errors</div>
                 <div className="font-semibold">{scanResult.errors.length.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Costs recalculated</div>
+                <div className="font-semibold">{scanResult.costsRecalculated.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Unknown cost</div>
+                <div className="font-semibold">{scanResult.unknownCostInteractions.toLocaleString()}</div>
+              </div>
+              <div className="sm:col-span-2">
+                <div className="text-xs text-muted-foreground">Next step</div>
+                <a className="font-medium text-primary underline-offset-4 hover:underline" href="/diagnostics">
+                  Review scan health and parser diagnostics
+                </a>
               </div>
             </div>
           ) : null}

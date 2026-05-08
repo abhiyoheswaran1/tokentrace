@@ -2,6 +2,17 @@
 
 All notable changes to TokenTrace are documented here.
 
+## Unreleased
+
+### Added
+
+- Scan health summary for post-scan trust, including parser review, confidence, pricing coverage, and recommended next actions.
+- Diagnostics CSV export for scanned files and scan runs.
+
+### Changed
+
+- Polish Settings, Discovery, Parser Debug, Sessions, and Overview explainability around scan freshness, confidence, and unknown cost.
+
 ## [0.1.5] - 2026-05-09
 
 ### Changed

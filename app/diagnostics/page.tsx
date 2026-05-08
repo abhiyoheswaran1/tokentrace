@@ -1,18 +1,14 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, FileWarning, SearchX } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDebugData } from "@/src/lib/analytics";
-import { formatDate } from "@/src/lib/format";
+import { ScanHealthSummary } from "@/components/scan-health-summary";
+import { getScanTrustData } from "@/src/lib/analytics";
 
 export const dynamic = "force-dynamic";
 
 export default function DiagnosticsPage() {
-  const data = getDebugData();
-  const latest = data.scanRuns[0];
-  const imported = data.scanFiles.filter((file) => file.status === "imported").length;
-  const unsupported = data.scanFiles.filter((file) => file.status === "skipped_unknown").length;
-  const failed = data.scanFiles.filter((file) => file.status === "failed").length;
+  const data = getScanTrustData();
 
   return (
     <div className="space-y-6">
@@ -23,47 +19,7 @@ export default function DiagnosticsPage() {
         </p>
       </div>
 
-      <div className="dashboard-grid">
-        <Card>
-          <CardHeader>
-            <CardTitle>Latest Scan</CardTitle>
-            <CardDescription>{latest ? formatDate(latest.startedAt) : "No scans yet"}</CardDescription>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            {latest?.filesScanned.toLocaleString() ?? "0"} files
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Imported</CardTitle>
-            <CardDescription>Files parsed successfully.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center gap-2 text-2xl font-semibold">
-            <CheckCircle2 className="h-5 w-5 text-primary" />
-            {imported.toLocaleString()}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Unsupported</CardTitle>
-            <CardDescription>Discovered but no adapter matched.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center gap-2 text-2xl font-semibold">
-            <SearchX className="h-5 w-5 text-muted-foreground" />
-            {unsupported.toLocaleString()}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Failed</CardTitle>
-            <CardDescription>Parser or import errors.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center gap-2 text-2xl font-semibold">
-            <FileWarning className="h-5 w-5 text-destructive" />
-            {failed.toLocaleString()}
-          </CardContent>
-        </Card>
-      </div>
+      <ScanHealthSummary health={data.health} />
 
       <div className="grid gap-4 md:grid-cols-3">
         {[

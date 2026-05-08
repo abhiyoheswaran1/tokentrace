@@ -1,4 +1,9 @@
 import { sqlite } from "@/src/db/client";
+import {
+  buildScanHealth,
+  type ScanConfidenceSummary,
+  type ScanHealth
+} from "@/src/lib/scan-health";
 
 export type TrendPoint = {
   date: string;
@@ -126,6 +131,13 @@ export type DebugScanRun = {
   recordsImported: number;
   warnings: string[];
   errors: string[];
+};
+
+export type ScanTrustData = {
+  scanRuns: DebugScanRun[];
+  scanFiles: DebugScanFile[];
+  confidence: ScanConfidenceSummary;
+  health: ScanHealth;
 };
 
 export type AnalyticsData = {
@@ -659,4 +671,48 @@ export function getDebugData() {
   }));
 
   return { scanRuns, scanFiles };
+}
+
+export function getScanConfidenceSummary(): ScanConfidenceSummary {
+  const row = sqlite
+    .prepare(
+      `SELECT
+        COUNT(*) AS interactions,
+        COALESCE(SUM(CASE WHEN token_confidence = 'exact' THEN 1 ELSE 0 END), 0) AS exactTokenInteractions,
+        COALESCE(SUM(CASE WHEN token_confidence = 'high-confidence estimate' THEN 1 ELSE 0 END), 0) AS highConfidenceTokenInteractions,
+        COALESCE(SUM(CASE WHEN token_confidence = 'low-confidence estimate' THEN 1 ELSE 0 END), 0) AS lowConfidenceTokenInteractions,
+        COALESCE(SUM(CASE WHEN token_confidence = 'unknown' THEN 1 ELSE 0 END), 0) AS unknownTokenInteractions,
+        COALESCE(SUM(CASE WHEN estimated_tokens = 1 THEN 1 ELSE 0 END), 0) AS estimatedTokenInteractions,
+        COALESCE(SUM(CASE WHEN cost IS NOT NULL AND cost_estimated = 0 THEN 1 ELSE 0 END), 0) AS exactCostInteractions,
+        COALESCE(SUM(CASE WHEN cost IS NOT NULL AND cost_estimated = 1 THEN 1 ELSE 0 END), 0) AS estimatedCostInteractions,
+        COALESCE(SUM(CASE WHEN cost IS NULL THEN 1 ELSE 0 END), 0) AS unknownCostInteractions
+       FROM interactions`
+    )
+    .get() as ScanConfidenceSummary;
+
+  return {
+    interactions: number(row.interactions),
+    exactTokenInteractions: number(row.exactTokenInteractions),
+    highConfidenceTokenInteractions: number(row.highConfidenceTokenInteractions),
+    lowConfidenceTokenInteractions: number(row.lowConfidenceTokenInteractions),
+    unknownTokenInteractions: number(row.unknownTokenInteractions),
+    estimatedTokenInteractions: number(row.estimatedTokenInteractions),
+    exactCostInteractions: number(row.exactCostInteractions),
+    estimatedCostInteractions: number(row.estimatedCostInteractions),
+    unknownCostInteractions: number(row.unknownCostInteractions)
+  };
+}
+
+export function getScanTrustData(): ScanTrustData {
+  const debug = getDebugData();
+  const confidence = getScanConfidenceSummary();
+  return {
+    ...debug,
+    confidence,
+    health: buildScanHealth({
+      scanRuns: debug.scanRuns,
+      scanFiles: debug.scanFiles,
+      confidence
+    })
+  };
 }
