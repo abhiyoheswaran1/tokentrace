@@ -6,7 +6,7 @@ TokenTrace is designed for local development machines first, with macOS-oriented
 
 ![TokenTrace overview dashboard](docs/assets/overview.png)
 
-## npm Usage
+## Start In Seconds
 
 Run without installing:
 
@@ -29,6 +29,8 @@ CLI commands:
 tokentrace              # Start local dashboard
 tokentrace serve        # Start local dashboard
 tokentrace scan         # Scan local AI CLI usage logs
+tokentrace pricing refresh
+                        # Refresh public model prices
 tokentrace run <cmd>    # Optional wrapper mode for command runtime diagnostics
 tokentrace reset        # Reset imported local data
 tokentrace reset --yes  # Reset without confirmation
@@ -36,7 +38,7 @@ tokentrace --help       # Print help
 tokentrace --version    # Print version
 ```
 
-## Local Development
+## Run From Source
 
 ```bash
 npm install
@@ -47,7 +49,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-Development commands:
+Useful source commands:
 
 ```bash
 npm run dev          # Start the Next.js dev server
@@ -57,7 +59,6 @@ npm run scan         # Scan default and configured folders
 npm run db:migrate   # Create/update local SQLite tables
 npm run db:seed      # Seed editable provider/model prices
 npm run reset        # Clear imported data and scan history
-npm run package:test # Run tests and validate npm package contents
 npm test             # Run parser and cost tests
 ```
 
@@ -170,20 +171,34 @@ Mobile overview:
 - No cloud account is required.
 - Raw full prompts and responses are not stored by default.
 - TokenTrace stores short text previews for debugging and analytics context.
+- TokenTrace may download a public model-pricing manifest so cost estimates stay useful. It does not send usage logs, prompts, file paths, or analytics data with that request. Set `TOKENTRACE_DISABLE_PRICE_REFRESH=1` to use only bundled prices.
 - Turn on **Store raw message content** in Settings only if you want full local message text preserved in SQLite.
 
 Stop the server with `Ctrl+C` in the terminal where `tokentrace` is running.
 
 ## Pricing
 
-Model prices change. TokenTrace seeds editable public list prices for common OpenAI and Anthropic models, checked on May 8, 2026.
+Model prices change. TokenTrace ships with bundled public list prices and can refresh them from a public TokenTrace pricing manifest. Manual edits made in **Pricing** are preserved by future refreshes.
+
+The bundled catalog includes common OpenAI, Anthropic, Google Gemini, xAI, DeepSeek, Mistral, and Cohere models, checked on May 8, 2026.
 
 Seed sources:
 
 - [OpenAI API pricing](https://openai.com/api/pricing/) and [OpenAI model docs](https://developers.openai.com/api/docs/models)
 - [Anthropic Claude pricing](https://platform.claude.com/docs/en/about-claude/pricing)
+- [Gemini Developer API pricing](https://ai.google.dev/gemini-api/docs/pricing)
+- [xAI models and pricing](https://docs.x.ai/developers/models)
+- [DeepSeek models and pricing](https://api-docs.deepseek.com/quick_start/pricing)
+- [Mistral model docs](https://docs.mistral.ai/models)
+- [Cohere pricing](https://cohere.com/pricing)
 
 Review and update prices in **Pricing** before treating cost estimates as financial truth, especially if you use batch processing, priority/flex modes, data residency, long-context surcharges, subscriptions, or provider-specific discounts.
+
+Refresh from the dashboard or from the CLI:
+
+```bash
+tokentrace pricing refresh
+```
 
 Cost is calculated per interaction:
 
@@ -208,29 +223,7 @@ Adapters live under `src/ingestion/adapters/`:
 
 Formats for Claude Code and Codex CLI can vary across versions, so these adapters are defensive and best-effort. Unknown files fail safely and show warnings in the Raw Data page.
 
-## Publishing To npm
-
-Before publishing, verify:
-
-```bash
-npm run package:test
-npm pack
-npm install -g ./tokentrace-*.tgz
-tokentrace --help
-tokentrace scan
-tokentrace
-```
-
-Publish after npm authentication:
-
-```bash
-npm login
-npm publish --access public
-```
-
-The package includes the built `.next` app, source needed for runtime scan/reset scripts, and the executable `bin/tokentrace.js`.
-
-## Development Notes
+## Extending Parsers
 
 Example generic JSONL fixtures are in `fixtures/generic-jsonl/`.
 

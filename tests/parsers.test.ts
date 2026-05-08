@@ -1,6 +1,7 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { genericJsonlAdapter } from "@/src/ingestion/adapters/generic-jsonl";
+import { inferProviderFromModel } from "@/src/lib/provider-inference";
 
 describe("generic JSONL adapter", () => {
   const fixturePath = path.join(process.cwd(), "fixtures", "generic-jsonl", "sample.jsonl");
@@ -22,5 +23,15 @@ describe("generic JSONL adapter", () => {
     expect(parsed.sessions[0].interactions[1].tokenConfidence).toBe("exact");
     expect(parsed.sessions[0].interactions[1].toolCalls?.[0].name).toBe("read_file");
     expect(parsed.sessions[0].interactions[0].rawText).toBeNull();
+  });
+});
+
+describe("provider inference", () => {
+  it("maps common model names to providers", () => {
+    expect(inferProviderFromModel("gemini-2.5-pro")?.id).toBe("google");
+    expect(inferProviderFromModel("grok-4.3")?.id).toBe("xai");
+    expect(inferProviderFromModel("deepseek-chat")?.id).toBe("deepseek");
+    expect(inferProviderFromModel("mistral-large-3")?.id).toBe("mistral");
+    expect(inferProviderFromModel("command-r-plus")?.id).toBe("cohere");
   });
 });

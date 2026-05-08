@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Save } from "lucide-react";
+import { Plus, RefreshCw, Save } from "lucide-react";
 import type { PricingRow } from "@/src/lib/pricing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,6 +74,35 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
     });
   }
 
+  function refreshDefaultPrices() {
+    startTransition(async () => {
+      setMessage("Refreshing public price table...");
+      const response = await fetch("/api/prices/refresh", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ source: "remote" })
+      });
+      if (!response.ok) {
+        setMessage("Price refresh failed.");
+        return;
+      }
+      const result = (await response.json()) as {
+        source: string;
+        imported: number;
+        updated: number;
+        skippedManual: number;
+        error: string | null;
+      };
+      const latest = (await fetch("/api/prices").then((res) => res.json())) as PricingRow[];
+      setRows(latest);
+      setMessage(
+        result.error
+          ? "Remote refresh failed; bundled prices were used."
+          : `Prices refreshed. ${result.imported} added, ${result.updated} updated, ${result.skippedManual} manual rows kept.`
+      );
+    });
+  }
+
   return (
     <div className="space-y-4">
       <Card>
@@ -84,10 +113,16 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
               Prices are per 1M tokens. Seed values use public provider list prices and remain editable.
             </CardDescription>
           </div>
-          <Button variant="outline" onClick={addRow}>
-            <Plus className="h-4 w-4" />
-            Add model
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={refreshDefaultPrices} disabled={isPending}>
+              <RefreshCw className="h-4 w-4" />
+              Refresh prices
+            </Button>
+            <Button variant="outline" onClick={addRow}>
+              <Plus className="h-4 w-4" />
+              Add model
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="table-scroll">
           <Table>

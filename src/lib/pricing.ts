@@ -30,8 +30,13 @@ export function getPricingRows() {
         CASE p.id
           WHEN 'openai' THEN 0
           WHEN 'anthropic' THEN 1
-          WHEN 'generic' THEN 2
-          ELSE 3
+          WHEN 'google' THEN 2
+          WHEN 'xai' THEN 3
+          WHEN 'deepseek' THEN 4
+          WHEN 'mistral' THEN 5
+          WHEN 'cohere' THEN 6
+          WHEN 'generic' THEN 7
+          ELSE 8
         END,
         p.name ASC,
         m.name ASC`
@@ -63,15 +68,16 @@ export function upsertPricing(input: {
     .prepare(
       `INSERT INTO models
         (id, provider_id, name, input_token_price, output_token_price, cached_input_token_price,
-         cache_write_token_price, currency, effective_from)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         cache_write_token_price, currency, effective_from, raw_metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET
         input_token_price = excluded.input_token_price,
         output_token_price = excluded.output_token_price,
         cached_input_token_price = excluded.cached_input_token_price,
         cache_write_token_price = excluded.cache_write_token_price,
         currency = excluded.currency,
-        effective_from = excluded.effective_from`
+        effective_from = excluded.effective_from,
+        raw_metadata = excluded.raw_metadata`
     )
     .run(
       id,
@@ -82,7 +88,11 @@ export function upsertPricing(input: {
       input.cachedInputTokenPrice,
       input.cacheWriteTokenPrice,
       input.currency || "USD",
-      Date.now()
+      Date.now(),
+      JSON.stringify({
+        managedBy: "user",
+        editedAt: new Date().toISOString()
+      })
     );
 
   return id;

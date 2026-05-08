@@ -3,6 +3,7 @@ import path from "node:path";
 import { sqlite } from "@/src/db/client";
 import { calculateInteractionCost } from "@/src/lib/cost";
 import { stableId, slugify } from "@/src/lib/ids";
+import { inferProviderFromModel } from "@/src/lib/provider-inference";
 import { estimateTokensFromText, previewText } from "@/src/lib/token-estimator";
 import { NormalizedInteraction, NormalizedSession } from "./types";
 
@@ -39,6 +40,13 @@ function providerForTool(toolId: string) {
   return sqlite.prepare("SELECT provider_id FROM tools WHERE id = ?").get(toolId) as
     | { provider_id: string }
     | undefined;
+}
+
+function ensureProvider(providerId: string, providerName: string) {
+  insertIgnore(
+    "INSERT OR IGNORE INTO providers (id, name, type) VALUES (?, ?, 'llm-provider')",
+    [providerId, providerName]
+  );
 }
 
 function getModel(providerId: string, modelName: string) {
@@ -201,7 +209,10 @@ export function importSessions(sessions: NormalizedSession[]): ImportSessionResu
       sessionsImported += insertedSession;
 
       for (const interaction of session.interactions) {
-        const model = ensureModel(providerId, interaction.modelName);
+        const inferredProvider = inferProviderFromModel(interaction.modelName);
+        const modelProviderId = inferredProvider?.id ?? providerId;
+        if (inferredProvider) ensureProvider(inferredProvider.id, inferredProvider.name);
+        const model = ensureModel(modelProviderId, interaction.modelName);
         const tokens = normalizeTokens(interaction);
         const cost = calculateInteractionCost(tokens, {
           inputTokenPrice: model.input_token_price,

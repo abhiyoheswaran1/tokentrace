@@ -1,0 +1,697 @@
+{
+  "schemaVersion": 1,
+  "name": "TokenTrace default model pricing",
+  "effectiveFrom": "2026-05-08T00:00:00.000Z",
+  "checkedAt": "2026-05-08",
+  "currency": "USD",
+  "unit": "USD per 1M tokens",
+  "sources": [
+    {
+      "providerId": "openai",
+      "name": "OpenAI API pricing and model docs",
+      "url": "https://openai.com/api/pricing/"
+    },
+    {
+      "providerId": "anthropic",
+      "name": "Anthropic Claude pricing",
+      "url": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "providerId": "google",
+      "name": "Gemini Developer API pricing",
+      "url": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "providerId": "xai",
+      "name": "xAI models and pricing",
+      "url": "https://docs.x.ai/developers/models"
+    },
+    {
+      "providerId": "deepseek",
+      "name": "DeepSeek models and pricing",
+      "url": "https://api-docs.deepseek.com/quick_start/pricing"
+    },
+    {
+      "providerId": "mistral",
+      "name": "Mistral model docs",
+      "url": "https://docs.mistral.ai/models"
+    },
+    {
+      "providerId": "cohere",
+      "name": "Cohere pricing",
+      "url": "https://cohere.com/pricing"
+    }
+  ],
+  "models": [
+    {
+      "id": "openai-gpt-5-5",
+      "providerId": "openai",
+      "name": "gpt-5.5",
+      "inputTokenPrice": 5,
+      "outputTokenPrice": 30,
+      "cachedInputTokenPrice": 0.5,
+      "cacheWriteTokenPrice": 5,
+      "sourceUrl": "https://openai.com/api/pricing/"
+    },
+    {
+      "id": "openai-gpt-5-5-pro",
+      "providerId": "openai",
+      "name": "gpt-5.5-pro",
+      "inputTokenPrice": 30,
+      "outputTokenPrice": 180,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 30,
+      "sourceUrl": "https://developers.openai.com/api/docs/models/compare"
+    },
+    {
+      "id": "openai-gpt-5-4",
+      "providerId": "openai",
+      "name": "gpt-5.4",
+      "inputTokenPrice": 2.5,
+      "outputTokenPrice": 15,
+      "cachedInputTokenPrice": 0.25,
+      "cacheWriteTokenPrice": 2.5,
+      "sourceUrl": "https://openai.com/api/pricing/"
+    },
+    {
+      "id": "openai-gpt-5-4-mini",
+      "providerId": "openai",
+      "name": "gpt-5.4-mini",
+      "inputTokenPrice": 0.75,
+      "outputTokenPrice": 4.5,
+      "cachedInputTokenPrice": 0.075,
+      "cacheWriteTokenPrice": 0.75,
+      "sourceUrl": "https://openai.com/api/pricing/"
+    },
+    {
+      "id": "openai-gpt-5-4-nano",
+      "providerId": "openai",
+      "name": "gpt-5.4-nano",
+      "inputTokenPrice": 0.2,
+      "outputTokenPrice": 1.25,
+      "cachedInputTokenPrice": 0.02,
+      "cacheWriteTokenPrice": 0.2,
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-5.4-nano"
+    },
+    {
+      "id": "openai-codex-mini-latest",
+      "providerId": "openai",
+      "name": "codex-mini-latest",
+      "inputTokenPrice": 1.5,
+      "outputTokenPrice": 6,
+      "cachedInputTokenPrice": 0.375,
+      "cacheWriteTokenPrice": 1.5,
+      "sourceUrl": "https://developers.openai.com/api/docs/models/codex-mini-latest"
+    },
+    {
+      "id": "openai-o4-mini",
+      "providerId": "openai",
+      "name": "o4-mini",
+      "inputTokenPrice": 1.1,
+      "outputTokenPrice": 4.4,
+      "cachedInputTokenPrice": 0.275,
+      "cacheWriteTokenPrice": 1.1,
+      "sourceUrl": "https://developers.openai.com/api/docs/models/o4-mini"
+    },
+    {
+      "id": "openai-gpt-4-1",
+      "providerId": "openai",
+      "name": "gpt-4.1",
+      "inputTokenPrice": 2,
+      "outputTokenPrice": 8,
+      "cachedInputTokenPrice": 0.5,
+      "cacheWriteTokenPrice": 2,
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-4.1"
+    },
+    {
+      "id": "openai-gpt-4-1-mini",
+      "providerId": "openai",
+      "name": "gpt-4.1-mini",
+      "inputTokenPrice": 0.4,
+      "outputTokenPrice": 1.6,
+      "cachedInputTokenPrice": 0.1,
+      "cacheWriteTokenPrice": 0.4,
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-4.1-mini"
+    },
+    {
+      "id": "openai-gpt-4-1-nano",
+      "providerId": "openai",
+      "name": "gpt-4.1-nano",
+      "inputTokenPrice": 0.1,
+      "outputTokenPrice": 0.4,
+      "cachedInputTokenPrice": 0.025,
+      "cacheWriteTokenPrice": 0.1,
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-4.1-nano"
+    },
+    {
+      "id": "openai-gpt-4o",
+      "providerId": "openai",
+      "name": "gpt-4o",
+      "inputTokenPrice": 2.5,
+      "outputTokenPrice": 10,
+      "cachedInputTokenPrice": 1.25,
+      "cacheWriteTokenPrice": 2.5,
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-4o"
+    },
+    {
+      "id": "openai-gpt-4o-mini",
+      "providerId": "openai",
+      "name": "gpt-4o-mini",
+      "inputTokenPrice": 0.15,
+      "outputTokenPrice": 0.6,
+      "cachedInputTokenPrice": 0.075,
+      "cacheWriteTokenPrice": 0.15,
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-4o-mini"
+    },
+    {
+      "id": "anthropic-claude-opus-4-7",
+      "providerId": "anthropic",
+      "name": "claude-opus-4.7",
+      "inputTokenPrice": 5,
+      "outputTokenPrice": 25,
+      "cachedInputTokenPrice": 0.5,
+      "cacheWriteTokenPrice": 6.25,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-opus-4-7-alias",
+      "providerId": "anthropic",
+      "name": "claude-opus-4-7",
+      "inputTokenPrice": 5,
+      "outputTokenPrice": 25,
+      "cachedInputTokenPrice": 0.5,
+      "cacheWriteTokenPrice": 6.25,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-opus-4-6",
+      "providerId": "anthropic",
+      "name": "claude-opus-4.6",
+      "inputTokenPrice": 5,
+      "outputTokenPrice": 25,
+      "cachedInputTokenPrice": 0.5,
+      "cacheWriteTokenPrice": 6.25,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-opus-4-6-alias",
+      "providerId": "anthropic",
+      "name": "claude-opus-4-6",
+      "inputTokenPrice": 5,
+      "outputTokenPrice": 25,
+      "cachedInputTokenPrice": 0.5,
+      "cacheWriteTokenPrice": 6.25,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-opus-4-5",
+      "providerId": "anthropic",
+      "name": "claude-opus-4.5",
+      "inputTokenPrice": 5,
+      "outputTokenPrice": 25,
+      "cachedInputTokenPrice": 0.5,
+      "cacheWriteTokenPrice": 6.25,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-opus-4-5-alias",
+      "providerId": "anthropic",
+      "name": "claude-opus-4-5",
+      "inputTokenPrice": 5,
+      "outputTokenPrice": 25,
+      "cachedInputTokenPrice": 0.5,
+      "cacheWriteTokenPrice": 6.25,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-opus-4-1",
+      "providerId": "anthropic",
+      "name": "claude-opus-4.1",
+      "inputTokenPrice": 15,
+      "outputTokenPrice": 75,
+      "cachedInputTokenPrice": 1.5,
+      "cacheWriteTokenPrice": 18.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-opus-4-1-alias",
+      "providerId": "anthropic",
+      "name": "claude-opus-4-1",
+      "inputTokenPrice": 15,
+      "outputTokenPrice": 75,
+      "cachedInputTokenPrice": 1.5,
+      "cacheWriteTokenPrice": 18.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-opus-4",
+      "providerId": "anthropic",
+      "name": "claude-opus-4",
+      "inputTokenPrice": 15,
+      "outputTokenPrice": 75,
+      "cachedInputTokenPrice": 1.5,
+      "cacheWriteTokenPrice": 18.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-sonnet-4-6",
+      "providerId": "anthropic",
+      "name": "claude-sonnet-4.6",
+      "inputTokenPrice": 3,
+      "outputTokenPrice": 15,
+      "cachedInputTokenPrice": 0.3,
+      "cacheWriteTokenPrice": 3.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-sonnet-4-6-alias",
+      "providerId": "anthropic",
+      "name": "claude-sonnet-4-6",
+      "inputTokenPrice": 3,
+      "outputTokenPrice": 15,
+      "cachedInputTokenPrice": 0.3,
+      "cacheWriteTokenPrice": 3.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-sonnet-4-5",
+      "providerId": "anthropic",
+      "name": "claude-sonnet-4.5",
+      "inputTokenPrice": 3,
+      "outputTokenPrice": 15,
+      "cachedInputTokenPrice": 0.3,
+      "cacheWriteTokenPrice": 3.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-sonnet-4-5-alias",
+      "providerId": "anthropic",
+      "name": "claude-sonnet-4-5",
+      "inputTokenPrice": 3,
+      "outputTokenPrice": 15,
+      "cachedInputTokenPrice": 0.3,
+      "cacheWriteTokenPrice": 3.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-sonnet-4",
+      "providerId": "anthropic",
+      "name": "claude-sonnet-4",
+      "inputTokenPrice": 3,
+      "outputTokenPrice": 15,
+      "cachedInputTokenPrice": 0.3,
+      "cacheWriteTokenPrice": 3.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-sonnet-3-7",
+      "providerId": "anthropic",
+      "name": "claude-sonnet-3.7",
+      "inputTokenPrice": 3,
+      "outputTokenPrice": 15,
+      "cachedInputTokenPrice": 0.3,
+      "cacheWriteTokenPrice": 3.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-sonnet-3-7-alias",
+      "providerId": "anthropic",
+      "name": "claude-sonnet-3-7",
+      "inputTokenPrice": 3,
+      "outputTokenPrice": 15,
+      "cachedInputTokenPrice": 0.3,
+      "cacheWriteTokenPrice": 3.75,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-haiku-4-5",
+      "providerId": "anthropic",
+      "name": "claude-haiku-4.5",
+      "inputTokenPrice": 1,
+      "outputTokenPrice": 5,
+      "cachedInputTokenPrice": 0.1,
+      "cacheWriteTokenPrice": 1.25,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-haiku-4-5-alias",
+      "providerId": "anthropic",
+      "name": "claude-haiku-4-5",
+      "inputTokenPrice": 1,
+      "outputTokenPrice": 5,
+      "cachedInputTokenPrice": 0.1,
+      "cacheWriteTokenPrice": 1.25,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-haiku-3-5",
+      "providerId": "anthropic",
+      "name": "claude-haiku-3.5",
+      "inputTokenPrice": 0.8,
+      "outputTokenPrice": 4,
+      "cachedInputTokenPrice": 0.08,
+      "cacheWriteTokenPrice": 1,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-haiku-3-5-alias",
+      "providerId": "anthropic",
+      "name": "claude-haiku-3-5",
+      "inputTokenPrice": 0.8,
+      "outputTokenPrice": 4,
+      "cachedInputTokenPrice": 0.08,
+      "cacheWriteTokenPrice": 1,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-haiku",
+      "providerId": "anthropic",
+      "name": "claude-haiku",
+      "inputTokenPrice": 0.8,
+      "outputTokenPrice": 4,
+      "cachedInputTokenPrice": 0.08,
+      "cacheWriteTokenPrice": 1,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-haiku-3",
+      "providerId": "anthropic",
+      "name": "claude-haiku-3",
+      "inputTokenPrice": 0.25,
+      "outputTokenPrice": 1.25,
+      "cachedInputTokenPrice": 0.03,
+      "cacheWriteTokenPrice": 0.3,
+      "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "generic-unknown",
+      "providerId": "generic",
+      "name": "unknown",
+      "inputTokenPrice": null,
+      "outputTokenPrice": null,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": null,
+      "sourceUrl": null
+    },
+    {
+      "id": "google-gemini-3-pro",
+      "providerId": "google",
+      "name": "gemini-3-pro",
+      "inputTokenPrice": 2,
+      "outputTokenPrice": 12,
+      "cachedInputTokenPrice": 0.2,
+      "cacheWriteTokenPrice": 2,
+      "sourceUrl": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "id": "google-gemini-3-1-flash-lite",
+      "providerId": "google",
+      "name": "gemini-3.1-flash-lite",
+      "inputTokenPrice": 0.25,
+      "outputTokenPrice": 1.5,
+      "cachedInputTokenPrice": 0.025,
+      "cacheWriteTokenPrice": 0.25,
+      "sourceUrl": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "id": "google-gemini-3-1-flash-lite-preview",
+      "providerId": "google",
+      "name": "gemini-3.1-flash-lite-preview",
+      "inputTokenPrice": 0.25,
+      "outputTokenPrice": 1.5,
+      "cachedInputTokenPrice": 0.025,
+      "cacheWriteTokenPrice": 0.25,
+      "sourceUrl": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "id": "google-gemini-2-5-pro",
+      "providerId": "google",
+      "name": "gemini-2.5-pro",
+      "inputTokenPrice": 1.25,
+      "outputTokenPrice": 10,
+      "cachedInputTokenPrice": 0.125,
+      "cacheWriteTokenPrice": 1.25,
+      "sourceUrl": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "id": "google-gemini-2-5-flash",
+      "providerId": "google",
+      "name": "gemini-2.5-flash",
+      "inputTokenPrice": 0.3,
+      "outputTokenPrice": 2.5,
+      "cachedInputTokenPrice": 0.03,
+      "cacheWriteTokenPrice": 0.3,
+      "sourceUrl": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "id": "google-gemini-2-5-flash-lite",
+      "providerId": "google",
+      "name": "gemini-2.5-flash-lite",
+      "inputTokenPrice": 0.1,
+      "outputTokenPrice": 0.4,
+      "cachedInputTokenPrice": 0.01,
+      "cacheWriteTokenPrice": 0.1,
+      "sourceUrl": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "id": "xai-grok-4-3",
+      "providerId": "xai",
+      "name": "grok-4.3",
+      "inputTokenPrice": 1.25,
+      "outputTokenPrice": 2.5,
+      "cachedInputTokenPrice": 0.2,
+      "cacheWriteTokenPrice": 1.25,
+      "sourceUrl": "https://docs.x.ai/developers/models"
+    },
+    {
+      "id": "xai-grok-4-3-latest",
+      "providerId": "xai",
+      "name": "grok-4.3-latest",
+      "inputTokenPrice": 1.25,
+      "outputTokenPrice": 2.5,
+      "cachedInputTokenPrice": 0.2,
+      "cacheWriteTokenPrice": 1.25,
+      "sourceUrl": "https://docs.x.ai/developers/models"
+    },
+    {
+      "id": "xai-grok-latest",
+      "providerId": "xai",
+      "name": "grok-latest",
+      "inputTokenPrice": 1.25,
+      "outputTokenPrice": 2.5,
+      "cachedInputTokenPrice": 0.2,
+      "cacheWriteTokenPrice": 1.25,
+      "sourceUrl": "https://docs.x.ai/developers/models"
+    },
+    {
+      "id": "xai-grok-4-20-multi-agent-0309",
+      "providerId": "xai",
+      "name": "grok-4.20-multi-agent-0309",
+      "inputTokenPrice": 1.25,
+      "outputTokenPrice": 2.5,
+      "cachedInputTokenPrice": 0.2,
+      "cacheWriteTokenPrice": 1.25,
+      "sourceUrl": "https://docs.x.ai/developers/models"
+    },
+    {
+      "id": "xai-grok-4-20-0309-reasoning",
+      "providerId": "xai",
+      "name": "grok-4.20-0309-reasoning",
+      "inputTokenPrice": 1.25,
+      "outputTokenPrice": 2.5,
+      "cachedInputTokenPrice": 0.2,
+      "cacheWriteTokenPrice": 1.25,
+      "sourceUrl": "https://docs.x.ai/developers/models"
+    },
+    {
+      "id": "xai-grok-4-20-0309-non-reasoning",
+      "providerId": "xai",
+      "name": "grok-4.20-0309-non-reasoning",
+      "inputTokenPrice": 1.25,
+      "outputTokenPrice": 2.5,
+      "cachedInputTokenPrice": 0.2,
+      "cacheWriteTokenPrice": 1.25,
+      "sourceUrl": "https://docs.x.ai/developers/models"
+    },
+    {
+      "id": "xai-grok-4-1-fast-reasoning",
+      "providerId": "xai",
+      "name": "grok-4-1-fast-reasoning",
+      "inputTokenPrice": 0.2,
+      "outputTokenPrice": 0.5,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.2,
+      "sourceUrl": "https://docs.x.ai/developers/models"
+    },
+    {
+      "id": "xai-grok-4-1-fast-non-reasoning",
+      "providerId": "xai",
+      "name": "grok-4-1-fast-non-reasoning",
+      "inputTokenPrice": 0.2,
+      "outputTokenPrice": 0.5,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.2,
+      "sourceUrl": "https://docs.x.ai/developers/models"
+    },
+    {
+      "id": "deepseek-v4-flash",
+      "providerId": "deepseek",
+      "name": "deepseek-v4-flash",
+      "inputTokenPrice": 0.14,
+      "outputTokenPrice": 0.28,
+      "cachedInputTokenPrice": 0.0028,
+      "cacheWriteTokenPrice": 0.14,
+      "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing"
+    },
+    {
+      "id": "deepseek-chat",
+      "providerId": "deepseek",
+      "name": "deepseek-chat",
+      "inputTokenPrice": 0.14,
+      "outputTokenPrice": 0.28,
+      "cachedInputTokenPrice": 0.0028,
+      "cacheWriteTokenPrice": 0.14,
+      "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing"
+    },
+    {
+      "id": "deepseek-reasoner",
+      "providerId": "deepseek",
+      "name": "deepseek-reasoner",
+      "inputTokenPrice": 0.14,
+      "outputTokenPrice": 0.28,
+      "cachedInputTokenPrice": 0.0028,
+      "cacheWriteTokenPrice": 0.14,
+      "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing"
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "providerId": "deepseek",
+      "name": "deepseek-v4-pro",
+      "inputTokenPrice": 0.435,
+      "outputTokenPrice": 0.87,
+      "cachedInputTokenPrice": 0.003625,
+      "cacheWriteTokenPrice": 0.435,
+      "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing"
+    },
+    {
+      "id": "mistral-medium-3-5-api",
+      "providerId": "mistral",
+      "name": "mistral-medium-3.5",
+      "inputTokenPrice": 1.5,
+      "outputTokenPrice": 7.5,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 1.5,
+      "sourceUrl": "https://docs.mistral.ai/models/model-cards/mistral-medium-3-5-26-04"
+    },
+    {
+      "id": "mistral-large-3",
+      "providerId": "mistral",
+      "name": "mistral-large-3",
+      "inputTokenPrice": 0.5,
+      "outputTokenPrice": 1.5,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.5,
+      "sourceUrl": "https://docs.mistral.ai/models/model-cards/mistral-large-3-25-12"
+    },
+    {
+      "id": "mistral-large-2512",
+      "providerId": "mistral",
+      "name": "mistral-large-2512",
+      "inputTokenPrice": 0.5,
+      "outputTokenPrice": 1.5,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.5,
+      "sourceUrl": "https://docs.mistral.ai/models/model-cards/mistral-large-3-25-12"
+    },
+    {
+      "id": "mistral-small-4",
+      "providerId": "mistral",
+      "name": "mistral-small-4",
+      "inputTokenPrice": 0.15,
+      "outputTokenPrice": 0.6,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.15,
+      "sourceUrl": "https://docs.mistral.ai/models/model-cards/mistral-small-4-0-26-03"
+    },
+    {
+      "id": "mistral-small-2603",
+      "providerId": "mistral",
+      "name": "mistral-small-2603",
+      "inputTokenPrice": 0.15,
+      "outputTokenPrice": 0.6,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.15,
+      "sourceUrl": "https://docs.mistral.ai/models/model-cards/mistral-small-4-0-26-03"
+    },
+    {
+      "id": "mistral-medium-2508",
+      "providerId": "mistral",
+      "name": "mistral-medium-2508",
+      "inputTokenPrice": 0.4,
+      "outputTokenPrice": 2,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.4,
+      "sourceUrl": "https://docs.mistral.ai/models/model-cards/mistral-medium-3-1-25-08"
+    },
+    {
+      "id": "cohere-command-r-plus-08-2024",
+      "providerId": "cohere",
+      "name": "command-r-plus-08-2024",
+      "inputTokenPrice": 2.5,
+      "outputTokenPrice": 10,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 2.5,
+      "sourceUrl": "https://cohere.com/pricing"
+    },
+    {
+      "id": "cohere-command-r-plus",
+      "providerId": "cohere",
+      "name": "command-r-plus",
+      "inputTokenPrice": 2.5,
+      "outputTokenPrice": 10,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 2.5,
+      "sourceUrl": "https://cohere.com/pricing"
+    },
+    {
+      "id": "cohere-command",
+      "providerId": "cohere",
+      "name": "command",
+      "inputTokenPrice": 1,
+      "outputTokenPrice": 2,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 1,
+      "sourceUrl": "https://cohere.com/pricing"
+    },
+    {
+      "id": "cohere-command-light",
+      "providerId": "cohere",
+      "name": "command-light",
+      "inputTokenPrice": 0.3,
+      "outputTokenPrice": 0.6,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.3,
+      "sourceUrl": "https://cohere.com/pricing"
+    },
+    {
+      "id": "cohere-aya-expanse-8b",
+      "providerId": "cohere",
+      "name": "aya-expanse-8b",
+      "inputTokenPrice": 0.5,
+      "outputTokenPrice": 1.5,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.5,
+      "sourceUrl": "https://cohere.com/pricing"
+    },
+    {
+      "id": "cohere-aya-expanse-32b",
+      "providerId": "cohere",
+      "name": "aya-expanse-32b",
+      "inputTokenPrice": 0.5,
+      "outputTokenPrice": 1.5,
+      "cachedInputTokenPrice": null,
+      "cacheWriteTokenPrice": 0.5,
+      "sourceUrl": "https://cohere.com/pricing"
+    }
+  ]
+}

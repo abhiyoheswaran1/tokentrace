@@ -24,6 +24,8 @@ Usage:
   tokentrace              Start local dashboard
   tokentrace serve        Start local dashboard
   tokentrace scan         Scan local AI CLI usage logs
+  tokentrace pricing refresh
+                          Refresh public model prices
   tokentrace run <cmd>    Run a command and record wrapper diagnostics
   tokentrace reset        Reset local database
   tokentrace --version    Print version`;
@@ -90,13 +92,22 @@ function runNodeScript(scriptName, args = [], options = {}) {
   });
 }
 
-async function initializeDatabase({ quiet = false } = {}) {
+async function initializeDatabase({ quiet = false, refreshPrices = true } = {}) {
   const env = runtimeEnv();
   if (!quiet) {
     console.log(`TokenTrace data: ${env.TOKENTRACE_APP_DATA_DIR}`);
   }
   await runNodeScript("db-migrate", [], { stdio: quiet ? "ignore" : "inherit" });
   await runNodeScript("db-seed", [], { stdio: quiet ? "ignore" : "inherit" });
+  if (refreshPrices) {
+    await runNodeScript("pricing-refresh", ["--quiet"], { stdio: quiet ? "ignore" : "inherit" }).catch(
+      () => {
+        if (!quiet) {
+          console.log("Pricing refresh skipped; using bundled default prices.");
+        }
+      }
+    );
+  }
 }
 
 function sleep(ms) {
@@ -170,6 +181,11 @@ async function serve() {
 async function scan(args) {
   await initializeDatabase({ quiet: true });
   await runNodeScript("scan", args);
+}
+
+async function refreshPrices(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("pricing-refresh", args.length ? args : ["--json"]);
 }
 
 async function reset(args) {
@@ -294,6 +310,10 @@ async function main() {
   }
   if (command === "scan") {
     await scan(args);
+    return;
+  }
+  if ((command === "pricing" || command === "prices") && args[0] === "refresh") {
+    await refreshPrices(args.slice(1));
     return;
   }
   if (command === "run") {
