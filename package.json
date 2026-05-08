@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "type": "module",
+  "homepage": "https://github.com/abhiyoheswaran1/TokenScope#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abhiyoheswaran1/TokenScope.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abhiyoheswaran1/TokenScope/issues"
+  },
   "bin": {
     "tokenscope": "./bin/tokenscope.js"
   },
