@@ -12,7 +12,7 @@
     "url": "https://github.com/abhiyoheswaran1/tokentrace/issues"
   },
   "bin": {
-    "tokentrace": "./bin/tokentrace.js"
+    "tokentrace": "bin/tokentrace.js"
   },
   "files": [
     "bin",
