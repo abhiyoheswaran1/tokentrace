@@ -135,6 +135,11 @@ export type AnalyticsData = {
   insights: Insight[];
 };
 
+export type AnalyticsFilters = {
+  from?: number | null;
+  to?: number | null;
+};
+
 function number(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
@@ -153,7 +158,42 @@ function rows<T>(sql: string, ...params: unknown[]) {
   return sqlite.prepare(sql).all(...params) as T[];
 }
 
-function getSummary(): SummaryMetrics {
+function timestampWhere(filters: AnalyticsFilters = {}, alias = "i", prefix = "WHERE") {
+  const clauses: string[] = [];
+  const params: unknown[] = [];
+  if (filters.from != null) {
+    clauses.push(`${alias}.timestamp >= ?`);
+    params.push(filters.from);
+  }
+  if (filters.to != null) {
+    clauses.push(`${alias}.timestamp < ?`);
+    params.push(filters.to);
+  }
+  return {
+    sql: clauses.length ? `${prefix} ${clauses.join(" AND ")}` : "",
+    params
+  };
+}
+
+function timestampJoinCondition(filters: AnalyticsFilters = {}, alias = "i") {
+  const clauses: string[] = [];
+  const params: unknown[] = [];
+  if (filters.from != null) {
+    clauses.push(`${alias}.timestamp >= ?`);
+    params.push(filters.from);
+  }
+  if (filters.to != null) {
+    clauses.push(`${alias}.timestamp < ?`);
+    params.push(filters.to);
+  }
+  return {
+    sql: clauses.length ? ` AND ${clauses.join(" AND ")}` : "",
+    params
+  };
+}
+
+function getSummary(filters: AnalyticsFilters = {}): SummaryMetrics {
+  const interactionFilter = timestampWhere(filters, "interactions");
   const aggregate = sqlite
     .prepare(
       `SELECT
@@ -168,32 +208,37 @@ function getSummary(): SummaryMetrics {
         COALESCE(SUM(CASE WHEN cost IS NULL THEN 1 ELSE 0 END), 0) AS unknownCostInteractions,
         COUNT(*) AS interactions,
         COUNT(DISTINCT session_id) AS sessions
-       FROM interactions`
+       FROM interactions
+       ${interactionFilter.sql}`
     )
-    .get() as Omit<SummaryMetrics, "mostUsedTool" | "mostUsedModel">;
+    .get(...interactionFilter.params) as Omit<SummaryMetrics, "mostUsedTool" | "mostUsedModel">;
 
+  const toolFilter = timestampWhere(filters, "i");
   const tool = sqlite
     .prepare(
       `SELECT t.name
        FROM interactions i
        JOIN sessions s ON s.id = i.session_id
        JOIN tools t ON t.id = s.tool_id
+       ${toolFilter.sql}
        GROUP BY t.id
        ORDER BY SUM(i.total_tokens) DESC
        LIMIT 1`
     )
-    .get() as { name: string } | undefined;
+    .get(...toolFilter.params) as { name: string } | undefined;
 
+  const modelFilter = timestampWhere(filters, "i");
   const model = sqlite
     .prepare(
       `SELECT m.name
        FROM interactions i
        LEFT JOIN models m ON m.id = i.model_id
+       ${modelFilter.sql}
        GROUP BY m.id
        ORDER BY SUM(i.total_tokens) DESC
        LIMIT 1`
     )
-    .get() as { name: string } | undefined;
+    .get(...modelFilter.params) as { name: string } | undefined;
 
   return {
     totalTokens: number(aggregate.totalTokens),
@@ -212,20 +257,23 @@ function getSummary(): SummaryMetrics {
   };
 }
 
-function getTrends(): TrendPoint[] {
+function getTrends(filters: AnalyticsFilters = {}): TrendPoint[] {
+  const filter = timestampWhere(filters, "i", "AND");
   return rows<TrendPoint>(
     `SELECT
-      date(COALESCE(timestamp, 0) / 1000, 'unixepoch') AS date,
-      COALESCE(SUM(total_tokens), 0) AS totalTokens,
-      COALESCE(SUM(input_tokens), 0) AS inputTokens,
-      COALESCE(SUM(output_tokens), 0) AS outputTokens,
-      COALESCE(SUM(cache_read_tokens + cache_write_tokens), 0) AS cachedTokens,
-      COALESCE(SUM(reasoning_tokens), 0) AS reasoningTokens,
-      COALESCE(SUM(cost), 0) AS cost
-     FROM interactions
-     WHERE timestamp IS NOT NULL
+      date(COALESCE(i.timestamp, 0) / 1000, 'unixepoch') AS date,
+      COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
+      COALESCE(SUM(i.input_tokens), 0) AS inputTokens,
+      COALESCE(SUM(i.output_tokens), 0) AS outputTokens,
+      COALESCE(SUM(i.cache_read_tokens + i.cache_write_tokens), 0) AS cachedTokens,
+      COALESCE(SUM(i.reasoning_tokens), 0) AS reasoningTokens,
+      COALESCE(SUM(i.cost), 0) AS cost
+     FROM interactions i
+     WHERE i.timestamp IS NOT NULL
+     ${filter.sql}
      GROUP BY date
-     ORDER BY date ASC`
+     ORDER BY date ASC`,
+    ...filter.params
   ).map((row) => ({
     ...row,
     totalTokens: number(row.totalTokens),
@@ -237,7 +285,9 @@ function getTrends(): TrendPoint[] {
   }));
 }
 
-function getToolComparison(): ToolComparisonRow[] {
+function getToolComparison(filters: AnalyticsFilters = {}): ToolComparisonRow[] {
+  const filter = timestampWhere(filters, "i");
+  const subFilter = timestampWhere(filters, "i2", "AND");
   return rows<
     ToolComparisonRow & {
       inputTokens: number;
@@ -261,6 +311,7 @@ function getToolComparison(): ToolComparisonRow[] {
         JOIN sessions s2 ON s2.id = i2.session_id
         LEFT JOIN models m2 ON m2.id = i2.model_id
         WHERE s2.tool_id = t.id
+        ${subFilter.sql}
         GROUP BY m2.id
         ORDER BY SUM(COALESCE(i2.cost, 0)) DESC
         LIMIT 1
@@ -269,8 +320,11 @@ function getToolComparison(): ToolComparisonRow[] {
      JOIN sessions s ON s.id = i.session_id
      JOIN tools t ON t.id = s.tool_id
      JOIN providers p ON p.id = t.provider_id
+     ${filter.sql}
      GROUP BY t.id, p.id
-     ORDER BY totalTokens DESC`
+     ORDER BY totalTokens DESC`,
+    ...subFilter.params,
+    ...filter.params
   ).map((row) => ({
     tool: row.tool,
     provider: row.provider,
@@ -289,7 +343,8 @@ function getToolComparison(): ToolComparisonRow[] {
   }));
 }
 
-function getModelRows(): ModelAnalyticsRow[] {
+function getModelRows(filters: AnalyticsFilters = {}): ModelAnalyticsRow[] {
+  const filter = timestampWhere(filters, "i");
   const baseRows = rows<
     ModelAnalyticsRow & {
       providerId: string;
@@ -312,8 +367,10 @@ function getModelRows(): ModelAnalyticsRow[] {
      FROM interactions i
      LEFT JOIN models m ON m.id = i.model_id
      LEFT JOIN providers p ON p.id = m.provider_id
+     ${filter.sql}
      GROUP BY m.id
-     ORDER BY totalTokens DESC`
+     ORDER BY totalTokens DESC`,
+    ...filter.params
   );
 
   const configuredPrices = rows<{
@@ -357,7 +414,8 @@ function getModelRows(): ModelAnalyticsRow[] {
   });
 }
 
-function getProjectRows(): ProjectAnalyticsRow[] {
+function getProjectRows(filters: AnalyticsFilters = {}): ProjectAnalyticsRow[] {
+  const filter = timestampJoinCondition(filters, "i");
   return rows<ProjectAnalyticsRow & { inputTokens: number; outputTokens: number }>(
     `SELECT
       pr.id,
@@ -372,9 +430,10 @@ function getProjectRows(): ProjectAnalyticsRow[] {
       MAX(i.timestamp) AS lastUsedAt
      FROM projects pr
      JOIN sessions s ON s.project_id = pr.id
-     LEFT JOIN interactions i ON i.session_id = s.id
+     JOIN interactions i ON i.session_id = s.id ${filter.sql}
      GROUP BY pr.id
-     ORDER BY totalTokens DESC`
+     ORDER BY totalTokens DESC`,
+    ...filter.params
   ).map((row) => ({
     id: row.id,
     project: row.project,
@@ -388,7 +447,8 @@ function getProjectRows(): ProjectAnalyticsRow[] {
   }));
 }
 
-function getSessions(): SessionRow[] {
+function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
+  const filter = timestampJoinCondition(filters, "i");
   return rows<
     Omit<SessionRow, "costEstimated" | "estimatedTokens"> & {
       costEstimated: 0 | 1;
@@ -426,11 +486,12 @@ function getSessions(): SessionRow[] {
      JOIN tools t ON t.id = s.tool_id
      JOIN providers provider ON provider.id = t.provider_id
      LEFT JOIN projects pr ON pr.id = s.project_id
-     LEFT JOIN interactions i ON i.session_id = s.id
+     JOIN interactions i ON i.session_id = s.id ${filter.sql}
      LEFT JOIN models m ON m.id = i.model_id
      GROUP BY s.id
      ORDER BY COALESCE(s.started_at, 0) DESC
-     LIMIT 1000`
+     LIMIT 1000`,
+    ...filter.params
   ).map((row) => ({
     ...row,
     totalTokens: number(row.totalTokens),
@@ -539,13 +600,13 @@ function buildInsights(data: {
   return insights;
 }
 
-export function getAnalyticsData(): AnalyticsData {
-  const summary = getSummary();
-  const trends = getTrends();
-  const tools = getToolComparison();
-  const models = getModelRows();
-  const projects = getProjectRows();
-  const sessions = getSessions();
+export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData {
+  const summary = getSummary(filters);
+  const trends = getTrends(filters);
+  const tools = getToolComparison(filters);
+  const models = getModelRows(filters);
+  const projects = getProjectRows(filters);
+  const sessions = getSessions(filters);
   const insights = buildInsights({ summary, trends, models, projects, sessions });
 
   return {

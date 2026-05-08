@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { ArrowRight, Coins, Database, MessageSquare, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, Coins, Database, MessageSquare, Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getAnalyticsData } from "@/src/lib/analytics";
+import { dateRangeOptions, resolveDateRange } from "@/src/lib/date-range";
 import { formatCurrency, formatTokens, percent } from "@/src/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -37,8 +39,18 @@ function MetricCard({
   );
 }
 
-export default function OverviewPage() {
-  const data = getAnalyticsData();
+type OverviewPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function rangeHref(range: string) {
+  return range === "all" ? "/" : `/?range=${range}`;
+}
+
+export default async function OverviewPage({ searchParams }: OverviewPageProps) {
+  const params = (await searchParams) ?? {};
+  const range = resolveDateRange(params);
+  const data = getAnalyticsData(range.filters);
   const { summary } = data;
 
   return (
@@ -55,6 +67,46 @@ export default function OverviewPage() {
             Configure scan <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
+      </div>
+
+      <div className="rounded-md border bg-card p-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              Period
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Showing {range.label}. Cards, charts, tool mix, sessions, projects, models, and insights use this same range.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {dateRangeOptions.map((option) => (
+              <Button
+                key={option.key}
+                asChild
+                size="sm"
+                variant={range.key === option.key ? "default" : "outline"}
+              >
+                <Link href={rangeHref(option.key)}>{option.label}</Link>
+              </Button>
+            ))}
+          </div>
+        </div>
+        <form className="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-end" action="/">
+          <input type="hidden" name="range" value="custom" />
+          <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+            From
+            <Input type="date" name="from" defaultValue={range.fromInput} className="w-full sm:w-40" />
+          </label>
+          <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+            To
+            <Input type="date" name="to" defaultValue={range.toInput} className="w-full sm:w-40" />
+          </label>
+          <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>
+            Apply custom range
+          </Button>
+        </form>
       </div>
 
       {summary.interactions === 0 ? (

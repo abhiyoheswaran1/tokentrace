@@ -2,6 +2,13 @@
 
 All notable changes to TokenTrace are documented here.
 
+## Unreleased
+
+### Added
+
+- Overview period controls for all-time, today, rolling windows, this month, and custom date ranges.
+- Date-range-aware overview analytics so headline cards, trends, tool mix, model/project/session aggregates, and insights use the same selected period.
+
 ## [0.1.2] - 2026-05-09
 
 ### Fixed
