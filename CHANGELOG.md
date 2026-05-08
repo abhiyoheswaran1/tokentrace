@@ -2,6 +2,14 @@
 
 All notable changes to TokenTrace are documented here.
 
+## [0.1.2] - 2026-05-09
+
+### Fixed
+
+- Recalculate imported interaction costs after scans, price refreshes, default seeding, and manual pricing edits.
+- Apply configured pricing to duplicate records during force rescans by repricing existing imported interactions.
+- Backfill pricing for observed dated Claude model names, such as `claude-haiku-4-5-20251001`, from matching base pricing rows.
+
 ## [0.1.1] - 2026-05-08
 
 ### Added

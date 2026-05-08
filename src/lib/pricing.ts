@@ -1,4 +1,5 @@
 import { sqlite } from "@/src/db/client";
+import { recalculateInteractionCosts } from "@/src/lib/cost-recalculation";
 import { stableId } from "./ids";
 
 export type PricingRow = {
@@ -95,6 +96,7 @@ export function upsertPricing(input: {
       })
     );
 
+  recalculateInteractionCosts();
   return id;
 }
 

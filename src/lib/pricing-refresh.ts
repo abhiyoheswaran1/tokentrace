@@ -1,4 +1,5 @@
 import { sqlite } from "@/src/db/client";
+import { recalculateInteractionCosts } from "@/src/lib/cost-recalculation";
 import {
   DEFAULT_PRICING_MANIFEST_URL,
   getBundledPricingManifest,
@@ -19,6 +20,9 @@ export type PricingRefreshResult = {
   imported: number;
   updated: number;
   skippedManual: number;
+  costsRecalculated: number;
+  modelAliasesUpdated: number;
+  unknownCostInteractions: number;
   error: string | null;
 };
 
@@ -182,21 +186,29 @@ export async function refreshPricing(options: RefreshOptions = {}): Promise<Pric
   try {
     const { manifest, source, url } = await loadManifest(options);
     const result = importManifest(manifest, source, url, Boolean(options.force));
+    const recalculation = recalculateInteractionCosts();
     return {
       source,
       url,
       checkedAt: manifest.checkedAt,
       ...result,
+      costsRecalculated: recalculation.interactionsUpdated,
+      modelAliasesUpdated: recalculation.modelsUpdated,
+      unknownCostInteractions: recalculation.unknownCostInteractions,
       error: null
     };
   } catch (error) {
     const fallback = getBundledPricingManifest();
     const result = importManifest(fallback, "bundled", null, Boolean(options.force));
+    const recalculation = recalculateInteractionCosts();
     return {
       source: "bundled",
       url: null,
       checkedAt: fallback.checkedAt,
       ...result,
+      costsRecalculated: recalculation.interactionsUpdated,
+      modelAliasesUpdated: recalculation.modelsUpdated,
+      unknownCostInteractions: recalculation.unknownCostInteractions,
       error: error instanceof Error ? error.message : "Pricing refresh failed."
     };
   }

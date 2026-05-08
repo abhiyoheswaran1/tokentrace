@@ -91,6 +91,9 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
         imported: number;
         updated: number;
         skippedManual: number;
+        costsRecalculated: number;
+        modelAliasesUpdated: number;
+        unknownCostInteractions: number;
         error: string | null;
       };
       const latest = (await fetch("/api/prices").then((res) => res.json())) as PricingRow[];
@@ -98,7 +101,7 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
       setMessage(
         result.error
           ? "Remote refresh failed; bundled prices were used."
-          : `Prices refreshed. ${result.imported} added, ${result.updated} updated, ${result.skippedManual} manual rows kept.`
+          : `Prices refreshed. ${result.imported} added, ${result.updated} updated, ${result.skippedManual} manual rows kept. ${result.costsRecalculated} imported interactions repriced.`
       );
     });
   }

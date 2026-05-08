@@ -1,4 +1,5 @@
 import { getBundledPricingManifest } from "@/src/lib/pricing-manifest";
+import { recalculateInteractionCosts } from "@/src/lib/cost-recalculation";
 import { db } from "./client";
 import { models, providers, settings, tools } from "./schema";
 
@@ -81,4 +82,6 @@ export function seedDatabase() {
     })
     .onConflictDoNothing()
     .run();
+
+  recalculateInteractionCosts();
 }

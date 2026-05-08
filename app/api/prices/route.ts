@@ -30,5 +30,5 @@ export async function POST(request: Request) {
     currency: body.currency ? String(body.currency) : "USD"
   });
 
-  return NextResponse.json({ id });
+  return NextResponse.json({ id, costsRecalculated: true });
 }

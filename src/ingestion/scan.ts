@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { sqlite } from "@/src/db/client";
 import { getAppSettings } from "@/src/db/settings";
+import { recalculateInteractionCosts, type CostRecalculationResult } from "@/src/lib/cost-recalculation";
 import { hashContent, stableId } from "@/src/lib/ids";
 import { adapters } from "./adapters";
 import { discoverFiles, expandHome, getDefaultSearchRoots } from "./discovery";
@@ -19,6 +20,9 @@ export type RunScanResult = {
   scanRunId: string;
   filesScanned: number;
   recordsImported: number;
+  costsRecalculated: number;
+  modelAliasesUpdated: number;
+  unknownCostInteractions: number;
   warnings: string[];
   errors: string[];
 };
@@ -237,10 +241,15 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
       scanRunId
     );
 
+  const recalculation: CostRecalculationResult = recalculateInteractionCosts();
+
   return {
     scanRunId,
     filesScanned,
     recordsImported,
+    costsRecalculated: recalculation.interactionsUpdated,
+    modelAliasesUpdated: recalculation.modelsUpdated,
+    unknownCostInteractions: recalculation.unknownCostInteractions,
     warnings: allWarnings,
     errors: allErrors
   };
