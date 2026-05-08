@@ -2,6 +2,7 @@ export type PriceConfig = {
   inputTokenPrice: number | null;
   outputTokenPrice: number | null;
   cachedInputTokenPrice: number | null;
+  cacheWriteTokenPrice?: number | null;
   currency: string;
 };
 
@@ -47,7 +48,10 @@ export function calculateInteractionCost(
     usage.cacheReadTokens,
     price.cachedInputTokenPrice ?? price.inputTokenPrice
   );
-  const cacheWrite = pricePart(usage.cacheWriteTokens, price.inputTokenPrice);
+  const cacheWrite = pricePart(
+    usage.cacheWriteTokens,
+    price.cacheWriteTokenPrice ?? price.inputTokenPrice
+  );
   const amount = input + output + cacheRead + cacheWrite;
 
   return {

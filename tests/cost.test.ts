@@ -17,12 +17,35 @@ describe("cost engine", () => {
         inputTokenPrice: 2,
         outputTokenPrice: 8,
         cachedInputTokenPrice: 0.5,
+        cacheWriteTokenPrice: null,
         currency: "USD"
       }
     );
 
     expect(result.status).toBe("exact");
     expect(result.amount).toBeCloseTo(6.35);
+  });
+
+  it("uses explicit cache-write pricing when configured", () => {
+    const result = calculateInteractionCost(
+      {
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheReadTokens: 100_000,
+        cacheWriteTokens: 100_000,
+        reasoningTokens: 0,
+        estimatedTokens: false
+      },
+      {
+        inputTokenPrice: 3,
+        outputTokenPrice: 15,
+        cachedInputTokenPrice: 0.3,
+        cacheWriteTokenPrice: 3.75,
+        currency: "USD"
+      }
+    );
+
+    expect(result.amount).toBeCloseTo(0.405);
   });
 
   it("marks cost unknown when prices are missing", () => {
@@ -39,6 +62,7 @@ describe("cost engine", () => {
         inputTokenPrice: null,
         outputTokenPrice: 1,
         cachedInputTokenPrice: null,
+        cacheWriteTokenPrice: null,
         currency: "USD"
       }
     );

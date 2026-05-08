@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS models (
   input_token_price REAL,
   output_token_price REAL,
   cached_input_token_price REAL,
+  cache_write_token_price REAL,
   currency TEXT NOT NULL DEFAULT 'USD',
   effective_from INTEGER,
   raw_metadata TEXT
@@ -131,10 +132,27 @@ CREATE TABLE IF NOT EXISTS settings (
 
 export function applyMigrations(sqlite: Database.Database) {
   sqlite.exec(ddl);
-  const columns = sqlite.prepare("PRAGMA table_info(interactions)").all() as Array<{ name: string }>;
-  if (!columns.some((column) => column.name === "token_confidence")) {
+
+  const interactionColumns = sqlite.prepare("PRAGMA table_info(interactions)").all() as Array<{
+    name: string;
+  }>;
+  if (!interactionColumns.some((column) => column.name === "token_confidence")) {
     try {
       sqlite.exec("ALTER TABLE interactions ADD COLUMN token_confidence TEXT NOT NULL DEFAULT 'unknown'");
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        !error.message.toLowerCase().includes("duplicate column")
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  const modelColumns = sqlite.prepare("PRAGMA table_info(models)").all() as Array<{ name: string }>;
+  if (!modelColumns.some((column) => column.name === "cache_write_token_price")) {
+    try {
+      sqlite.exec("ALTER TABLE models ADD COLUMN cache_write_token_price REAL");
     } catch (error) {
       if (
         !(error instanceof Error) ||

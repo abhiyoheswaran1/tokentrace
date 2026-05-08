@@ -44,7 +44,8 @@ function providerForTool(toolId: string) {
 function getModel(providerId: string, modelName: string) {
   return sqlite
     .prepare(
-      `SELECT id, input_token_price, output_token_price, cached_input_token_price, currency
+      `SELECT id, input_token_price, output_token_price, cached_input_token_price,
+        cache_write_token_price, currency
        FROM models WHERE provider_id = ? AND lower(name) = lower(?)`
     )
     .get(providerId, modelName) as
@@ -53,6 +54,7 @@ function getModel(providerId: string, modelName: string) {
         input_token_price: number | null;
         output_token_price: number | null;
         cached_input_token_price: number | null;
+        cache_write_token_price: number | null;
         currency: string;
       }
     | undefined;
@@ -66,8 +68,9 @@ function ensureModel(providerId: string, modelName: string | null | undefined) {
   const id = stableId("model", [providerId, name]);
   insertIgnore(
     `INSERT OR IGNORE INTO models
-      (id, provider_id, name, input_token_price, output_token_price, cached_input_token_price, currency, raw_metadata)
-     VALUES (?, ?, ?, NULL, NULL, NULL, 'USD', ?)`,
+      (id, provider_id, name, input_token_price, output_token_price, cached_input_token_price,
+       cache_write_token_price, currency, raw_metadata)
+     VALUES (?, ?, ?, NULL, NULL, NULL, NULL, 'USD', ?)`,
     [
       id,
       providerId,
@@ -82,6 +85,7 @@ function ensureModel(providerId: string, modelName: string | null | undefined) {
     input_token_price: null,
     output_token_price: null,
     cached_input_token_price: null,
+    cache_write_token_price: null,
     currency: "USD"
   };
 }
@@ -203,6 +207,7 @@ export function importSessions(sessions: NormalizedSession[]): ImportSessionResu
           inputTokenPrice: model.input_token_price,
           outputTokenPrice: model.output_token_price,
           cachedInputTokenPrice: model.cached_input_token_price,
+          cacheWriteTokenPrice: model.cache_write_token_price,
           currency: model.currency
         });
         const interactionSourceId = stableId("interaction-source", [

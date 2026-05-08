@@ -39,6 +39,7 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
         inputTokenPrice: null,
         outputTokenPrice: null,
         cachedInputTokenPrice: null,
+        cacheWriteTokenPrice: null,
         currency: "USD",
         effectiveFrom: null
       },
@@ -59,6 +60,7 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
           inputTokenPrice: row.inputTokenPrice,
           outputTokenPrice: row.outputTokenPrice,
           cachedInputTokenPrice: row.cachedInputTokenPrice,
+          cacheWriteTokenPrice: row.cacheWriteTokenPrice,
           currency: row.currency
         })
       });
@@ -79,7 +81,7 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
           <div>
             <CardTitle>Model Pricing</CardTitle>
             <CardDescription>
-              Prices are per 1M tokens. Seed values are editable placeholders.
+              Prices are per 1M tokens. Seed values use public provider list prices and remain editable.
             </CardDescription>
           </div>
           <Button variant="outline" onClick={addRow}>
@@ -96,7 +98,8 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
                 <TableHead>Model</TableHead>
                 <TableHead>Input / 1M</TableHead>
                 <TableHead>Output / 1M</TableHead>
-                <TableHead>Cached input / 1M</TableHead>
+                <TableHead>Cache read / 1M</TableHead>
+                <TableHead>Cache write / 1M</TableHead>
                 <TableHead>Currency</TableHead>
                 <TableHead></TableHead>
               </TableRow>
@@ -105,16 +108,29 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
               {rows.map((row, index) => (
                 <TableRow key={row.id}>
                   <TableCell>
-                    <Input value={row.providerId} onChange={(event) => updateRow(index, { providerId: event.target.value })} />
-                  </TableCell>
-                  <TableCell>
-                    <Input value={row.providerName ?? row.provider} onChange={(event) => updateRow(index, { providerName: event.target.value })} />
-                  </TableCell>
-                  <TableCell>
-                    <Input value={row.model} onChange={(event) => updateRow(index, { model: event.target.value })} />
+                    <Input
+                      className="w-28"
+                      value={row.providerId}
+                      onChange={(event) => updateRow(index, { providerId: event.target.value })}
+                    />
                   </TableCell>
                   <TableCell>
                     <Input
+                      className="w-28"
+                      value={row.providerName ?? row.provider}
+                      onChange={(event) => updateRow(index, { providerName: event.target.value })}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      className="w-52"
+                      value={row.model}
+                      onChange={(event) => updateRow(index, { model: event.target.value })}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      className="w-24"
                       inputMode="decimal"
                       value={numberInputValue(row.inputTokenPrice)}
                       onChange={(event) => updateRow(index, { inputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
@@ -122,6 +138,7 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
                   </TableCell>
                   <TableCell>
                     <Input
+                      className="w-24"
                       inputMode="decimal"
                       value={numberInputValue(row.outputTokenPrice)}
                       onChange={(event) => updateRow(index, { outputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
@@ -129,13 +146,26 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
                   </TableCell>
                   <TableCell>
                     <Input
+                      className="w-24"
                       inputMode="decimal"
                       value={numberInputValue(row.cachedInputTokenPrice)}
                       onChange={(event) => updateRow(index, { cachedInputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
                     />
                   </TableCell>
                   <TableCell>
-                    <Input value={row.currency} onChange={(event) => updateRow(index, { currency: event.target.value })} />
+                    <Input
+                      className="w-24"
+                      inputMode="decimal"
+                      value={numberInputValue(row.cacheWriteTokenPrice)}
+                      onChange={(event) => updateRow(index, { cacheWriteTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      className="w-24"
+                      value={row.currency}
+                      onChange={(event) => updateRow(index, { currency: event.target.value })}
+                    />
                   </TableCell>
                   <TableCell>
                     <Button size="sm" onClick={() => saveRow(row)} disabled={isPending || !row.model}>
@@ -159,9 +189,10 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <Label>Formula</Label>
           <div className="rounded-md border bg-muted/40 p-3 font-mono text-xs text-foreground">
-            input * inputPrice + output * outputPrice + cacheRead * cachedInputPrice + cacheWrite * inputPrice
+            input * inputPrice + output * outputPrice + cacheRead * cacheReadPrice + cacheWrite * cacheWritePrice
           </div>
           <p>
+            Cache read and cache write fall back to input price when a model has no separate cache rate.
             TokenTrace separates exact token counts from estimated counts. Unknown model prices produce unknown costs.
           </p>
         </CardContent>

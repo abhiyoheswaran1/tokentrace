@@ -48,6 +48,7 @@ export const models = sqliteTable(
     inputTokenPrice: real("input_token_price"),
     outputTokenPrice: real("output_token_price"),
     cachedInputTokenPrice: real("cached_input_token_price"),
+    cacheWriteTokenPrice: real("cache_write_token_price"),
     currency: text("currency").notNull().default("USD"),
     effectiveFrom: integer("effective_from", { mode: "timestamp_ms" }),
     rawMetadata: text("raw_metadata", { mode: "json" }).$type<Record<string, unknown>>()

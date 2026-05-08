@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "type": "module",
   "homepage": "https://github.com/abhiyoheswaran1/tokentrace#readme",
@@ -23,6 +23,8 @@
     "public",
     "app",
     "components",
+    "docs/assets",
+    "docs/tapes",
     "src",
     "scripts",
     "dist",

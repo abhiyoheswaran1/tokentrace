@@ -9,6 +9,7 @@ export type PricingRow = {
   inputTokenPrice: number | null;
   outputTokenPrice: number | null;
   cachedInputTokenPrice: number | null;
+  cacheWriteTokenPrice: number | null;
   currency: string;
   effectiveFrom: number | null;
 };
@@ -20,11 +21,20 @@ export function getPricingRows() {
         m.input_token_price AS inputTokenPrice,
         m.output_token_price AS outputTokenPrice,
         m.cached_input_token_price AS cachedInputTokenPrice,
+        m.cache_write_token_price AS cacheWriteTokenPrice,
         m.currency,
         m.effective_from AS effectiveFrom
        FROM models m
        JOIN providers p ON p.id = m.provider_id
-       ORDER BY p.name ASC, m.name ASC`
+       ORDER BY
+        CASE p.id
+          WHEN 'openai' THEN 0
+          WHEN 'anthropic' THEN 1
+          WHEN 'generic' THEN 2
+          ELSE 3
+        END,
+        p.name ASC,
+        m.name ASC`
     )
     .all() as PricingRow[];
 }
@@ -36,6 +46,7 @@ export function upsertPricing(input: {
   inputTokenPrice: number | null;
   outputTokenPrice: number | null;
   cachedInputTokenPrice: number | null;
+  cacheWriteTokenPrice: number | null;
   currency: string;
 }) {
   const providerName = input.providerName?.trim() || input.providerId;
@@ -51,12 +62,14 @@ export function upsertPricing(input: {
   sqlite
     .prepare(
       `INSERT INTO models
-        (id, provider_id, name, input_token_price, output_token_price, cached_input_token_price, currency, effective_from)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (id, provider_id, name, input_token_price, output_token_price, cached_input_token_price,
+         cache_write_token_price, currency, effective_from)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET
         input_token_price = excluded.input_token_price,
         output_token_price = excluded.output_token_price,
         cached_input_token_price = excluded.cached_input_token_price,
+        cache_write_token_price = excluded.cache_write_token_price,
         currency = excluded.currency,
         effective_from = excluded.effective_from`
     )
@@ -67,6 +80,7 @@ export function upsertPricing(input: {
       input.inputTokenPrice,
       input.outputTokenPrice,
       input.cachedInputTokenPrice,
+      input.cacheWriteTokenPrice,
       input.currency || "USD",
       Date.now()
     );

@@ -4,6 +4,8 @@ Local-first analytics for AI CLI usage. TokenTrace scans local CLI logs, normali
 
 TokenTrace is designed for local development machines first, with macOS-oriented defaults. It does not require a cloud account and does not send telemetry or logs anywhere.
 
+![TokenTrace overview dashboard](docs/assets/overview.png)
+
 ## npm Usage
 
 Run without installing:
@@ -53,7 +55,7 @@ npm run build        # Build the production app
 npm run start        # Serve the production build
 npm run scan         # Scan default and configured folders
 npm run db:migrate   # Create/update local SQLite tables
-npm run db:seed      # Seed editable placeholder provider/model prices
+npm run db:seed      # Seed editable provider/model prices
 npm run reset        # Clear imported data and scan history
 npm run package:test # Run tests and validate npm package contents
 npm test             # Run parser and cost tests
@@ -78,6 +80,8 @@ The CLI sets `TOKENTRACE_DB` and `DATABASE_URL` automatically. You can override 
 ```bash
 TOKENTRACE_HOME=/custom/path tokentrace
 ```
+
+If `npm install -g tokentrace` prints a `prebuild-install` deprecation warning, it is from the native SQLite dependency chain used by `better-sqlite3`. The install should continue normally, and TokenTrace still runs locally.
 
 ## Where TokenTrace Looks
 
@@ -127,6 +131,38 @@ tokentrace run npm test
 
 Wrapper mode launches the subprocess, measures duration, counts stdout/stderr bytes, detects structured JSON output when available, and writes a local JSONL diagnostic log under the app-data directory. It does not intercept network traffic.
 
+## Screenshots
+
+CLI startup and help:
+
+![TokenTrace CLI help](docs/assets/cli-help.gif)
+
+Local scan output:
+
+![TokenTrace scan command](docs/assets/cli-scan.gif)
+
+Optional wrapper diagnostics:
+
+![TokenTrace wrapper command](docs/assets/cli-wrapper.gif)
+
+Session exploration:
+
+![TokenTrace session explorer](docs/assets/session-explorer.png)
+
+Ingestion diagnostics and file discovery:
+
+![TokenTrace ingestion diagnostics](docs/assets/diagnostics.png)
+
+![TokenTrace file discovery](docs/assets/discovery.png)
+
+Editable model pricing:
+
+![TokenTrace pricing configuration](docs/assets/pricing.png)
+
+Mobile overview:
+
+![TokenTrace mobile overview](docs/assets/mobile-overview.png)
+
 ## Privacy Model
 
 - All processing runs locally on your machine.
@@ -140,7 +176,14 @@ Stop the server with `Ctrl+C` in the terminal where `tokentrace` is running.
 
 ## Pricing
 
-Model prices change. TokenTrace seeds editable placeholder prices only. Review and update prices in **Pricing** before treating cost estimates as financial truth.
+Model prices change. TokenTrace seeds editable public list prices for common OpenAI and Anthropic models, checked on May 8, 2026.
+
+Seed sources:
+
+- [OpenAI API pricing](https://openai.com/api/pricing/) and [OpenAI model docs](https://developers.openai.com/api/docs/models)
+- [Anthropic Claude pricing](https://platform.claude.com/docs/en/about-claude/pricing)
+
+Review and update prices in **Pricing** before treating cost estimates as financial truth, especially if you use batch processing, priority/flex modes, data residency, long-context surcharges, subscriptions, or provider-specific discounts.
 
 Cost is calculated per interaction:
 
@@ -148,10 +191,10 @@ Cost is calculated per interaction:
 inputTokens * inputPricePer1M / 1,000,000
 + outputTokens * outputPricePer1M / 1,000,000
 + cacheReadTokens * cachedInputPricePer1M / 1,000,000
-+ cacheWriteTokens * inputPricePer1M / 1,000,000
++ cacheWriteTokens * cacheWritePricePer1M / 1,000,000
 ```
 
-Rows are marked exact, estimated, or unknown depending on token availability and pricing configuration.
+Cache read and cache write prices fall back to input price when a model has no separate cache rate. Anthropic seed rows use the 5-minute prompt cache write price by default. Rows are marked exact, estimated, or unknown depending on token availability and pricing configuration.
 
 ## Supported Inputs
 
@@ -202,7 +245,7 @@ The ingestion system is intentionally pluggable:
 - Claude Code and Codex CLI log formats are inferred defensively and may need refinement with real sample logs.
 - Token estimation uses a simple conservative `characters / 4` approximation.
 - SQLite log ingestion is not implemented yet, though the adapter boundary is ready for it.
-- Prices are editable placeholders and should be verified manually.
+- Seed prices are editable and should be verified manually for your account, region, and provider plan.
 
 ## License
 

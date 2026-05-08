@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     inputTokenPrice: nullableNumber(body.inputTokenPrice),
     outputTokenPrice: nullableNumber(body.outputTokenPrice),
     cachedInputTokenPrice: nullableNumber(body.cachedInputTokenPrice),
+    cacheWriteTokenPrice: nullableNumber(body.cacheWriteTokenPrice),
     currency: body.currency ? String(body.currency) : "USD"
   });
 
