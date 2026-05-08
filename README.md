@@ -233,6 +233,10 @@ The ingestion system is intentionally pluggable:
 2. Register it in `src/ingestion/adapters/index.ts`.
 3. Add parser tests under `tests/`.
 
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, parser guidelines, pricing update notes, and the release policy.
+
 ## Known Limitations
 
 - Claude Code and Codex CLI log formats are inferred defensively and may need refinement with real sample logs.
