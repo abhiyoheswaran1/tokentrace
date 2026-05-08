@@ -1,0 +1,88 @@
+{
+  "name": "tokenscope",
+  "version": "0.1.0",
+  "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
+  "type": "module",
+  "bin": {
+    "tokenscope": "./bin/tokenscope.js"
+  },
+  "files": [
+    "bin",
+    ".next/BUILD_ID",
+    ".next/*.json",
+    ".next/server",
+    ".next/static",
+    "public",
+    "app",
+    "components",
+    "src",
+    "scripts",
+    "dist",
+    "fixtures",
+    "next.config.mjs",
+    "postcss.config.mjs",
+    "tailwind.config.ts",
+    "tsconfig.json",
+    "components.json",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && node scripts/build-cli-runtime.mjs",
+    "start": "next start",
+    "scan": "tsx scripts/scan.ts",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:seed": "tsx scripts/db-seed.ts",
+    "reset": "tsx scripts/reset.ts",
+    "test": "vitest run",
+    "package:test": "npm test && npm pack --dry-run",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "keywords": [
+    "tokens",
+    "ai",
+    "cli",
+    "analytics",
+    "codex",
+    "claude",
+    "local-first",
+    "nextjs",
+    "sqlite"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.1.1",
+    "better-sqlite3": "^11.7.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.38.3",
+    "get-port": "^7.2.0",
+    "lucide-react": "^0.468.0",
+    "next": "^15.1.4",
+    "open": "^10.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.0",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.4",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "drizzle-kit": "^0.30.1",
+    "esbuild": "^0.28.0",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.4",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
