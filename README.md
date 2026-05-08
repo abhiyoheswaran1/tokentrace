@@ -204,6 +204,10 @@ The ingestion system is intentionally pluggable:
 - SQLite log ingestion is not implemented yet, though the adapter boundary is ready for it.
 - Prices are editable placeholders and should be verified manually.
 
+## License
+
+MIT. See `LICENSE`.
+
 ## Next Improvements
 
 - Add tokenizer-backed estimates per provider/model.
