@@ -39,7 +39,7 @@ export function Sidebar() {
               <LineChart className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-sm font-semibold">TokenScope CLI</div>
+              <div className="text-sm font-semibold">TokenTrace CLI</div>
               <div className="text-xs text-muted-foreground">Local analytics</div>
             </div>
           </div>

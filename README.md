@@ -1,22 +1,22 @@
-# TokenScope CLI
+# TokenTrace CLI
 
-Local-first analytics for AI CLI usage. TokenScope scans local CLI logs, normalizes token usage, estimates missing counts, and shows cost, model, project, and session analytics in a browser dashboard.
+Local-first analytics for AI CLI usage. TokenTrace scans local CLI logs, normalizes token usage, estimates missing counts, and shows cost, model, project, and session analytics in a browser dashboard.
 
-TokenScope is designed for local development machines first, with macOS-oriented defaults. It does not require a cloud account and does not send telemetry or logs anywhere.
+TokenTrace is designed for local development machines first, with macOS-oriented defaults. It does not require a cloud account and does not send telemetry or logs anywhere.
 
 ## npm Usage
 
 Run without installing:
 
 ```bash
-npx tokenscope
+npx tokentrace
 ```
 
 Or install globally:
 
 ```bash
-npm install -g tokenscope
-tokenscope
+npm install -g tokentrace
+tokentrace
 ```
 
 The command starts the local dashboard, chooses an available localhost port starting at `3030`, opens your default browser, and keeps the server running until you press `Ctrl+C`.
@@ -24,14 +24,14 @@ The command starts the local dashboard, chooses an available localhost port star
 CLI commands:
 
 ```bash
-tokenscope              # Start local dashboard
-tokenscope serve        # Start local dashboard
-tokenscope scan         # Scan local AI CLI usage logs
-tokenscope run <cmd>    # Optional wrapper mode for command runtime diagnostics
-tokenscope reset        # Reset imported local data
-tokenscope reset --yes  # Reset without confirmation
-tokenscope --help       # Print help
-tokenscope --version    # Print version
+tokentrace              # Start local dashboard
+tokentrace serve        # Start local dashboard
+tokentrace scan         # Scan local AI CLI usage logs
+tokentrace run <cmd>    # Optional wrapper mode for command runtime diagnostics
+tokentrace reset        # Reset imported local data
+tokentrace reset --yes  # Reset without confirmation
+tokentrace --help       # Print help
+tokentrace --version    # Print version
 ```
 
 ## Local Development
@@ -59,27 +59,27 @@ npm run package:test # Run tests and validate npm package contents
 npm test             # Run parser and cost tests
 ```
 
-In local development, the SQLite database defaults to `.tokenscope/tokenscope.db`. Override it with:
+In local development, the SQLite database defaults to `.tokentrace/tokentrace.db`. Override it with:
 
 ```bash
-TOKENSCOPE_DB=/absolute/path/tokenscope.db npm run dev
+TOKENTRACE_DB=/absolute/path/tokentrace.db npm run dev
 ```
 
 ## Data Location
 
-When installed from npm, TokenScope stores runtime data outside the package folder:
+When installed from npm, TokenTrace stores runtime data outside the package folder:
 
-- macOS: `~/Library/Application Support/TokenScope/`
-- Linux: `~/.local/share/tokenscope/`
-- Windows: `%APPDATA%/TokenScope/`
+- macOS: `~/Library/Application Support/TokenTrace/`
+- Linux: `~/.local/share/tokentrace/`
+- Windows: `%APPDATA%/TokenTrace/`
 
-The CLI sets `TOKENSCOPE_DB` and `DATABASE_URL` automatically. You can override the base directory with:
+The CLI sets `TOKENTRACE_DB` and `DATABASE_URL` automatically. You can override the base directory with:
 
 ```bash
-TOKENSCOPE_HOME=/custom/path tokenscope
+TOKENTRACE_HOME=/custom/path tokentrace
 ```
 
-## Where TokenScope Looks
+## Where TokenTrace Looks
 
 Default discovery checks these locations when present:
 
@@ -88,15 +88,15 @@ Default discovery checks these locations when present:
 - `~/.codex/`
 - `~/.config/codex/`
 - `~/.openai/`
-- Project-level hidden folders such as `.claude`, `.codex`, `.openai`, and `.ai` in the directory where `tokenscope` was invoked
-- TokenScope wrapper logs in the local app-data directory
+- Project-level hidden folders such as `.claude`, `.codex`, `.openai`, and `.ai` in the directory where `tokentrace` was invoked
+- TokenTrace wrapper logs in the local app-data directory
 - Any custom folders configured in Settings
 
 Use **Settings** in the dashboard to add custom folders, toggle raw message storage, and trigger scans. Use **Diagnostics**, **Discovery**, **Parser Debug**, and **Raw Data** to inspect discovered files, parser decisions, warnings, failures, extracted metadata, and confidence levels.
 
 ## Ingestion Architecture
 
-TokenScope's primary ingestion architecture is direct local filesystem ingestion:
+TokenTrace's primary ingestion architecture is direct local filesystem ingestion:
 
 1. Discover local AI CLI artifacts.
 2. Parse supported formats through adapters.
@@ -104,7 +104,7 @@ TokenScope's primary ingestion architecture is direct local filesystem ingestion
 4. Store normalized records locally in SQLite.
 5. Visualize analytics in the local dashboard.
 
-TokenScope does not use MITM proxies, packet sniffing, browser extensions, traffic interception, or cloud telemetry.
+TokenTrace does not use MITM proxies, packet sniffing, browser extensions, traffic interception, or cloud telemetry.
 
 Each adapter detects compatibility, parses partial metadata where possible, and fails safely when a file format is unsupported. Imported interactions carry token confidence metadata:
 
@@ -120,9 +120,9 @@ Exact and estimated token values are never mixed silently.
 Filesystem ingestion is the primary product path. Wrapper mode is secondary and optional:
 
 ```bash
-tokenscope run claude-code
-tokenscope run codex
-tokenscope run npm test
+tokentrace run claude-code
+tokentrace run codex
+tokentrace run npm test
 ```
 
 Wrapper mode launches the subprocess, measures duration, counts stdout/stderr bytes, detects structured JSON output when available, and writes a local JSONL diagnostic log under the app-data directory. It does not intercept network traffic.
@@ -133,14 +133,14 @@ Wrapper mode launches the subprocess, measures duration, counts stdout/stderr by
 - No external telemetry is included. Next.js telemetry is disabled by the CLI.
 - No cloud account is required.
 - Raw full prompts and responses are not stored by default.
-- TokenScope stores short text previews for debugging and analytics context.
+- TokenTrace stores short text previews for debugging and analytics context.
 - Turn on **Store raw message content** in Settings only if you want full local message text preserved in SQLite.
 
-Stop the server with `Ctrl+C` in the terminal where `tokenscope` is running.
+Stop the server with `Ctrl+C` in the terminal where `tokentrace` is running.
 
 ## Pricing
 
-Model prices change. TokenScope seeds editable placeholder prices only. Review and update prices in **Pricing** before treating cost estimates as financial truth.
+Model prices change. TokenTrace seeds editable placeholder prices only. Review and update prices in **Pricing** before treating cost estimates as financial truth.
 
 Cost is calculated per interaction:
 
@@ -172,10 +172,10 @@ Before publishing, verify:
 ```bash
 npm run package:test
 npm pack
-npm install -g ./tokenscope-*.tgz
-tokenscope --help
-tokenscope scan
-tokenscope
+npm install -g ./tokentrace-*.tgz
+tokentrace --help
+tokentrace scan
+tokentrace
 ```
 
 Publish after npm authentication:
@@ -185,7 +185,7 @@ npm login
 npm publish --access public
 ```
 
-The package includes the built `.next` app, source needed for runtime scan/reset scripts, and the executable `bin/tokenscope.js`.
+The package includes the built `.next` app, source needed for runtime scan/reset scripts, and the executable `bin/tokentrace.js`.
 
 ## Development Notes
 

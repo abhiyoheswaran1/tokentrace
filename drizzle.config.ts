@@ -3,7 +3,7 @@ import type { Config } from "drizzle-kit";
 function sqliteUrl() {
   const databaseUrl = process.env.DATABASE_URL;
   if (databaseUrl?.startsWith("file:")) return databaseUrl.slice("file:".length);
-  return process.env.TOKENSCOPE_DB ?? ".tokenscope/tokenscope.db";
+  return process.env.TOKENTRACE_DB ?? ".tokentrace/tokentrace.db";
 }
 
 export default {

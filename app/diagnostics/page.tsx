@@ -100,7 +100,7 @@ export default function DiagnosticsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Architecture Guardrails</CardTitle>
-          <CardDescription>TokenScope uses direct local filesystem ingestion as the primary architecture.</CardDescription>
+          <CardDescription>TokenTrace uses direct local filesystem ingestion as the primary architecture.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           {["no proxy", "no packet sniffing", "no browser extension", "no cloud telemetry", "adapter based"].map((item) => (

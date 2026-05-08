@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   return new NextResponse(toCsv(rows as Array<Record<string, unknown>>), {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="tokenscope-${type}.csv"`
+      "content-disposition": `attachment; filename="tokentrace-${type}.csv"`
     }
   });
 }

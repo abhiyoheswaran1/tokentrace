@@ -22,7 +22,7 @@ const summary = {
 if (json) {
   console.log(JSON.stringify(summary, null, 2));
 } else {
-  console.log("TokenScope scan complete");
+  console.log("TokenTrace scan complete");
   console.log(`Files scanned: ${summary.filesScanned}`);
   console.log(`Records imported: ${summary.recordsImported}`);
   console.log(`Warnings: ${summary.warnings}`);

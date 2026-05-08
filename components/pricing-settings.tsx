@@ -162,7 +162,7 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
             input * inputPrice + output * outputPrice + cacheRead * cachedInputPrice + cacheWrite * inputPrice
           </div>
           <p>
-            TokenScope separates exact token counts from estimated counts. Unknown model prices produce unknown costs.
+            TokenTrace separates exact token counts from estimated counts. Unknown model prices produce unknown costs.
           </p>
         </CardContent>
       </Card>

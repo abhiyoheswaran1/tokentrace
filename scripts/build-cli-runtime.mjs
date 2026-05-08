@@ -28,7 +28,7 @@ await Promise.all(
       external: ["better-sqlite3"],
       logLevel: "silent",
       banner: {
-        js: "import { createRequire as __tokenscopeCreateRequire } from 'node:module'; const require = __tokenscopeCreateRequire(import.meta.url);"
+        js: "import { createRequire as __tokentraceCreateRequire } from 'node:module'; const require = __tokentraceCreateRequire(import.meta.url);"
       },
       alias: {
         "@": process.cwd()
@@ -37,4 +37,4 @@ await Promise.all(
   )
 );
 
-console.log(`TokenScope CLI runtime built at ${outdir}`);
+console.log(`TokenTrace CLI runtime built at ${outdir}`);

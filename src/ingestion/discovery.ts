@@ -44,8 +44,8 @@ async function exists(target: string) {
 
 export async function getDefaultSearchRoots(customFolders: string[] = []) {
   const home = os.homedir();
-  const workingDirectory = process.env.TOKENSCOPE_WORKDIR ?? process.cwd();
-  const appDataDir = process.env.TOKENSCOPE_APP_DATA_DIR;
+  const workingDirectory = process.env.TOKENTRACE_WORKDIR ?? process.cwd();
+  const appDataDir = process.env.TOKENTRACE_APP_DATA_DIR;
   const candidates = [
     path.join(home, ".claude"),
     path.join(home, ".config", "claude"),

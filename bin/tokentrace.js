@@ -18,39 +18,39 @@ const packageJson = JSON.parse(
 );
 
 function help() {
-  return `TokenScope CLI
+  return `TokenTrace CLI
 
 Usage:
-  tokenscope              Start local dashboard
-  tokenscope serve        Start local dashboard
-  tokenscope scan         Scan local AI CLI usage logs
-  tokenscope run <cmd>    Run a command and record wrapper diagnostics
-  tokenscope reset        Reset local database
-  tokenscope --version    Print version`;
+  tokentrace              Start local dashboard
+  tokentrace serve        Start local dashboard
+  tokentrace scan         Scan local AI CLI usage logs
+  tokentrace run <cmd>    Run a command and record wrapper diagnostics
+  tokentrace reset        Reset local database
+  tokentrace --version    Print version`;
 }
 
 function appDataDir() {
-  if (process.env.TOKENSCOPE_HOME) return path.resolve(process.env.TOKENSCOPE_HOME);
+  if (process.env.TOKENTRACE_HOME) return path.resolve(process.env.TOKENTRACE_HOME);
   const home = os.homedir();
   if (process.platform === "darwin") {
-    return path.join(home, "Library", "Application Support", "TokenScope");
+    return path.join(home, "Library", "Application Support", "TokenTrace");
   }
   if (process.platform === "win32") {
-    return path.join(process.env.APPDATA ?? path.join(home, "AppData", "Roaming"), "TokenScope");
+    return path.join(process.env.APPDATA ?? path.join(home, "AppData", "Roaming"), "TokenTrace");
   }
-  return path.join(process.env.XDG_DATA_HOME ?? path.join(home, ".local", "share"), "tokenscope");
+  return path.join(process.env.XDG_DATA_HOME ?? path.join(home, ".local", "share"), "tokentrace");
 }
 
 function runtimeEnv() {
   const dataDir = appDataDir();
   fs.mkdirSync(dataDir, { recursive: true });
-  const dbPath = path.join(dataDir, "tokenscope.db");
+  const dbPath = path.join(dataDir, "tokentrace.db");
   return {
     ...process.env,
-    TOKENSCOPE_DB: process.env.TOKENSCOPE_DB ?? dbPath,
+    TOKENTRACE_DB: process.env.TOKENTRACE_DB ?? dbPath,
     DATABASE_URL: process.env.DATABASE_URL ?? `file:${dbPath}`,
-    TOKENSCOPE_APP_DATA_DIR: dataDir,
-    TOKENSCOPE_WORKDIR: invocationCwd,
+    TOKENTRACE_APP_DATA_DIR: dataDir,
+    TOKENTRACE_WORKDIR: invocationCwd,
     NEXT_TELEMETRY_DISABLED: "1"
   };
 }
@@ -93,7 +93,7 @@ function runNodeScript(scriptName, args = [], options = {}) {
 async function initializeDatabase({ quiet = false } = {}) {
   const env = runtimeEnv();
   if (!quiet) {
-    console.log(`TokenScope data: ${env.TOKENSCOPE_APP_DATA_DIR}`);
+    console.log(`TokenTrace data: ${env.TOKENTRACE_APP_DATA_DIR}`);
   }
   await runNodeScript("db-migrate", [], { stdio: quiet ? "ignore" : "inherit" });
   await runNodeScript("db-seed", [], { stdio: quiet ? "ignore" : "inherit" });
@@ -107,7 +107,7 @@ async function waitForServer(url, child) {
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     if (child.exitCode != null) {
-      throw new Error(`TokenScope server exited with code ${child.exitCode}`);
+      throw new Error(`TokenTrace server exited with code ${child.exitCode}`);
     }
     try {
       const response = await fetch(url, { method: "HEAD" });
@@ -117,13 +117,13 @@ async function waitForServer(url, child) {
     }
     await sleep(300);
   }
-  throw new Error("Timed out waiting for the TokenScope server to start.");
+  throw new Error("Timed out waiting for the TokenTrace server to start.");
 }
 
 async function serve() {
   const buildId = path.join(packageRoot, ".next", "BUILD_ID");
   if (!fs.existsSync(buildId)) {
-    console.error("TokenScope is not built yet. Run `npm run build` before using the package CLI from a source checkout.");
+    console.error("TokenTrace is not built yet. Run `npm run build` before using the package CLI from a source checkout.");
     process.exit(1);
   }
 
@@ -132,7 +132,7 @@ async function serve() {
   const hostname = "127.0.0.1";
   const url = `http://localhost:${port}`;
 
-  console.log(`Starting TokenScope at ${url}`);
+  console.log(`Starting TokenTrace at ${url}`);
   console.log("Press Ctrl+C to stop the server.");
 
   const child = spawn(
@@ -161,7 +161,7 @@ async function serve() {
       console.log(`Open this URL in your browser: ${url}`);
     });
   } catch (error) {
-    console.error(error instanceof Error ? error.message : "Failed to start TokenScope.");
+    console.error(error instanceof Error ? error.message : "Failed to start TokenTrace.");
   }
 
   child.on("exit", (code) => process.exit(code ?? 0));
@@ -177,7 +177,7 @@ async function reset(args) {
   if (!args.includes("--yes")) {
     const rl = createInterface({ input, output });
     const answer = await rl.question(
-      "Reset TokenScope imported data and scan history? Settings and pricing will be kept. Continue? [y/N] "
+      "Reset TokenTrace imported data and scan history? Settings and pricing will be kept. Continue? [y/N] "
     );
     rl.close();
     if (!/^y(es)?$/i.test(answer.trim())) {
@@ -202,12 +202,12 @@ function looksStructured(text) {
 
 async function runWrapped(args) {
   if (!args.length) {
-    console.error("Usage: tokenscope run <command> [args...]");
+    console.error("Usage: tokentrace run <command> [args...]");
     process.exit(1);
   }
 
   const env = runtimeEnv();
-  fs.mkdirSync(path.join(env.TOKENSCOPE_APP_DATA_DIR, "wrapper-runs"), {
+  fs.mkdirSync(path.join(env.TOKENTRACE_APP_DATA_DIR, "wrapper-runs"), {
     recursive: true
   });
 
@@ -251,7 +251,7 @@ async function runWrapped(args) {
     timestamp: endedAt.toISOString(),
     session_id: sessionId,
     role: "tool",
-    type: "tokenscope.wrapper_run",
+    type: "tokentrace.wrapper_run",
     cwd: invocationCwd,
     content: `Wrapper run for ${command} completed in ${durationMs}ms with ${stdoutBytes} stdout bytes and ${stderrBytes} stderr bytes.`,
     command,
@@ -263,11 +263,11 @@ async function runWrapped(args) {
     structured_output_detected: Boolean(structuredOutput),
     structured_output_preview: structuredOutput ?? undefined
   };
-  const logPath = path.join(env.TOKENSCOPE_APP_DATA_DIR, "wrapper-runs", "runs.jsonl");
+  const logPath = path.join(env.TOKENTRACE_APP_DATA_DIR, "wrapper-runs", "runs.jsonl");
   fs.appendFileSync(logPath, `${JSON.stringify(record)}\n`);
 
   console.log("");
-  console.log("TokenScope wrapper summary");
+  console.log("TokenTrace wrapper summary");
   console.log(`Duration: ${durationMs}ms`);
   console.log(`stdout bytes: ${stdoutBytes}`);
   console.log(`stderr bytes: ${stderrBytes}`);

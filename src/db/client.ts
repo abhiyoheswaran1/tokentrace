@@ -6,7 +6,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { applyMigrations } from "./migrate-core";
 import * as schema from "./schema";
 
-const defaultDbPath = path.join(process.cwd(), ".tokenscope", "tokenscope.db");
+const defaultDbPath = path.join(process.cwd(), ".tokentrace", "tokentrace.db");
 
 function databaseUrlPath(value: string | undefined) {
   if (!value?.startsWith("file:")) return null;
@@ -17,7 +17,7 @@ function databaseUrlPath(value: string | undefined) {
   }
 }
 
-const dbPath = process.env.TOKENSCOPE_DB ?? databaseUrlPath(process.env.DATABASE_URL) ?? defaultDbPath;
+const dbPath = process.env.TOKENTRACE_DB ?? databaseUrlPath(process.env.DATABASE_URL) ?? defaultDbPath;
 
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 

@@ -3,7 +3,7 @@ import "./globals.css";
 import { MobileNav, Sidebar } from "@/components/sidebar";
 
 export const metadata: Metadata = {
-  title: "TokenScope CLI",
+  title: "TokenTrace CLI",
   description: "Local-first AI CLI token and cost analytics"
 };
 
@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Sidebar />
           <main className="min-w-0 flex-1">
             <div className="border-b bg-card px-4 py-3 md:hidden">
-              <div className="text-sm font-semibold">TokenScope CLI</div>
+              <div className="text-sm font-semibold">TokenTrace CLI</div>
               <div className="text-xs text-muted-foreground">Local analytics dashboard</div>
             </div>
             <MobileNav />
