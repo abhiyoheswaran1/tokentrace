@@ -2,6 +2,12 @@
 
 All notable changes to TokenTrace are documented here.
 
+## Unreleased
+
+### Changed
+
+- Clarify overview token metric cards by separating processed tokens, non-cache tokens, and cache read/write tokens.
+
 ## [0.1.3] - 2026-05-09
 
 ### Added

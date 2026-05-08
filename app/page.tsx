@@ -118,15 +118,21 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
 
       <div className="dashboard-grid">
         <MetricCard
-          label="Total tokens"
+          label="Processed tokens"
           value={formatTokens(summary.totalTokens)}
-          detail={`${formatTokens(summary.inputTokens)} input, ${formatTokens(summary.outputTokens)} output`}
+          detail={`${formatTokens(summary.inputTokens)} input, ${formatTokens(summary.outputTokens)} output, ${formatTokens(summary.cachedTokens)} cached`}
+          icon={Database}
+        />
+        <MetricCard
+          label="Non-cache tokens"
+          value={formatTokens(summary.nonCachedTokens)}
+          detail={`${formatTokens(summary.inputTokens)} input + ${formatTokens(summary.outputTokens)} output + ${formatTokens(summary.reasoningTokens)} reasoning`}
           icon={Database}
         />
         <MetricCard
           label="Cached tokens"
           value={formatTokens(summary.cachedTokens)}
-          detail={`${formatTokens(summary.reasoningTokens)} reasoning tokens`}
+          detail={`${formatTokens(summary.cacheReadTokens)} cache read, ${formatTokens(summary.cacheWriteTokens)} cache write`}
           icon={Sparkles}
         />
         <MetricCard

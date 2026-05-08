@@ -12,8 +12,11 @@ export type TrendPoint = {
 
 export type SummaryMetrics = {
   totalTokens: number;
+  nonCachedTokens: number;
   inputTokens: number;
   outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
   cachedTokens: number;
   reasoningTokens: number;
   totalCost: number;
@@ -198,8 +201,11 @@ function getSummary(filters: AnalyticsFilters = {}): SummaryMetrics {
     .prepare(
       `SELECT
         COALESCE(SUM(total_tokens), 0) AS totalTokens,
+        COALESCE(SUM(input_tokens + output_tokens + reasoning_tokens), 0) AS nonCachedTokens,
         COALESCE(SUM(input_tokens), 0) AS inputTokens,
         COALESCE(SUM(output_tokens), 0) AS outputTokens,
+        COALESCE(SUM(cache_read_tokens), 0) AS cacheReadTokens,
+        COALESCE(SUM(cache_write_tokens), 0) AS cacheWriteTokens,
         COALESCE(SUM(cache_read_tokens + cache_write_tokens), 0) AS cachedTokens,
         COALESCE(SUM(reasoning_tokens), 0) AS reasoningTokens,
         COALESCE(SUM(cost), 0) AS totalCost,
@@ -242,8 +248,11 @@ function getSummary(filters: AnalyticsFilters = {}): SummaryMetrics {
 
   return {
     totalTokens: number(aggregate.totalTokens),
+    nonCachedTokens: number(aggregate.nonCachedTokens),
     inputTokens: number(aggregate.inputTokens),
     outputTokens: number(aggregate.outputTokens),
+    cacheReadTokens: number(aggregate.cacheReadTokens),
+    cacheWriteTokens: number(aggregate.cacheWriteTokens),
     cachedTokens: number(aggregate.cachedTokens),
     reasoningTokens: number(aggregate.reasoningTokens),
     totalCost: number(aggregate.totalCost),
