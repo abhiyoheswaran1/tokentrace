@@ -16,6 +16,7 @@ All notable changes to TokenTrace are documented here.
 - Codex integration spike documentation confirming terminal split/watch mode as the supported 0.4.0 fallback.
 - Scan cleanup for previously imported sessions whose source paths are now classified as non-usage Claude/Codex support files.
 - Scan Doctor health now uses the full latest scan-file set instead of the Raw Data table preview limit.
+- Moved the Overview unknown-cost repair queue below the dashboard charts and current mix section.
 
 ## [0.3.0] - 2026-05-09
 
