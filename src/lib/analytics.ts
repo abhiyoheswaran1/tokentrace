@@ -4,6 +4,7 @@ import {
   type ScanConfidenceSummary,
   type ScanHealth
 } from "@/src/lib/scan-health";
+import { modelNameCandidates } from "@/src/lib/model-aliases";
 import { buildLocalRecommendations, type LocalRecommendation } from "@/src/lib/recommendations";
 
 export type TrendPoint = {
@@ -95,6 +96,13 @@ export type SessionRow = {
   costEstimated: boolean;
   estimatedTokens: boolean;
   tokenConfidence: string;
+  parser: string | null;
+  parserStatus: string | null;
+  parserConfidence: number | null;
+  parserReason: string | null;
+  sourceHref: string;
+  parserHref: string;
+  pricingHref: string | null;
   interactionCount: number;
   durationMs: number | null;
 };
@@ -118,6 +126,23 @@ export type UnknownCostQueueRow = {
   sessions: number;
   totalTokens: number;
   repairHref: string;
+  sourceHref: string;
+  parserHref: string;
+  pricingHref: string | null;
+};
+
+export type ModelAliasSuggestion = {
+  model: string;
+  provider: string;
+  tool: string;
+  sourceFile: string;
+  interactions: number;
+  totalTokens: number;
+  suggestedModel: string | null;
+  confidence: "high" | "medium" | "low";
+  reason: string;
+  repairHref: string;
+  parserHref: string;
 };
 
 export type DebugScanFile = {
@@ -162,6 +187,7 @@ export type AnalyticsData = {
   projects: ProjectAnalyticsRow[];
   sessions: SessionRow[];
   unknownCosts: UnknownCostQueueRow[];
+  modelAliasSuggestions: ModelAliasSuggestion[];
   recommendations: LocalRecommendation[];
   insights: Insight[];
 };
@@ -187,6 +213,27 @@ function parseJson<T>(value: unknown, fallback: T): T {
 
 function rows<T>(sql: string, ...params: unknown[]) {
   return sqlite.prepare(sql).all(...params) as T[];
+}
+
+function withQuery(path: string, params: Record<string, string | null | undefined>) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) query.set(key, value);
+  });
+  const serialized = query.toString();
+  return serialized ? `${path}?${serialized}` : path;
+}
+
+function stringMetadata(value: unknown, key: string) {
+  if (!value || typeof value !== "object") return null;
+  const candidate = (value as Record<string, unknown>)[key];
+  return typeof candidate === "string" && candidate.trim() ? candidate : null;
+}
+
+function numberMetadata(value: unknown, key: string) {
+  if (!value || typeof value !== "object") return null;
+  const candidate = (value as Record<string, unknown>)[key];
+  return typeof candidate === "number" && Number.isFinite(candidate) ? candidate : null;
 }
 
 function timestampWhere(filters: AnalyticsFilters = {}, alias = "i", prefix = "WHERE") {
@@ -490,6 +537,8 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
     Omit<SessionRow, "costEstimated" | "estimatedTokens"> & {
       costEstimated: 0 | 1;
       estimatedTokens: 0 | 1;
+      parserRawMetadata: string | null;
+      pricingModel: string | null;
     }
   >(
     `SELECT
@@ -503,6 +552,15 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
       pr.name AS project,
       pr.path AS projectPath,
       COALESCE(group_concat(DISTINCT m.name), 'unknown') AS models,
+      (
+        SELECT m2.name
+        FROM interactions i2
+        LEFT JOIN models m2 ON m2.id = i2.model_id
+        WHERE i2.session_id = s.id
+        GROUP BY m2.id
+        ORDER BY SUM(i2.total_tokens) DESC
+        LIMIT 1
+      ) AS pricingModel,
       COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
       COALESCE(SUM(i.input_tokens), 0) AS inputTokens,
       COALESCE(SUM(i.output_tokens), 0) AS outputTokens,
@@ -517,6 +575,9 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
         WHEN SUM(CASE WHEN i.token_confidence = 'high-confidence estimate' THEN 1 ELSE 0 END) > 0 THEN 'high-confidence estimate'
         ELSE 'exact'
       END AS tokenConfidence,
+      sf.parser AS parser,
+      sf.status AS parserStatus,
+      sf.raw_metadata AS parserRawMetadata,
       COUNT(i.id) AS interactionCount,
       CASE WHEN s.started_at IS NOT NULL AND s.ended_at IS NOT NULL THEN s.ended_at - s.started_at ELSE NULL END AS durationMs
      FROM sessions s
@@ -525,22 +586,39 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
      LEFT JOIN projects pr ON pr.id = s.project_id
      JOIN interactions i ON i.session_id = s.id ${filter.sql}
      LEFT JOIN models m ON m.id = i.model_id
+     LEFT JOIN scan_files sf ON sf.id = (
+       SELECT sf2.id
+       FROM scan_files sf2
+       JOIN scan_runs sr2 ON sr2.id = sf2.scan_run_id
+       WHERE sf2.path = s.source_file
+       ORDER BY sr2.started_at DESC
+       LIMIT 1
+     )
      GROUP BY s.id
      ORDER BY COALESCE(s.started_at, 0) DESC
      LIMIT 1000`,
     ...filter.params
-  ).map((row) => ({
-    ...row,
-    totalTokens: number(row.totalTokens),
-    inputTokens: number(row.inputTokens),
-    outputTokens: number(row.outputTokens),
-    cachedTokens: number(row.cachedTokens),
-    reasoningTokens: number(row.reasoningTokens),
-    cost: row.cost == null ? null : number(row.cost),
-    costEstimated: Boolean(row.costEstimated),
-    estimatedTokens: Boolean(row.estimatedTokens),
-    interactionCount: number(row.interactionCount)
-  }));
+  ).map((row) => {
+    const parserMetadata = parseJson<Record<string, unknown>>(row.parserRawMetadata, {});
+    const pricingModel = row.pricingModel && row.pricingModel !== "unknown" ? row.pricingModel : null;
+    return {
+      ...row,
+      totalTokens: number(row.totalTokens),
+      inputTokens: number(row.inputTokens),
+      outputTokens: number(row.outputTokens),
+      cachedTokens: number(row.cachedTokens),
+      reasoningTokens: number(row.reasoningTokens),
+      cost: row.cost == null ? null : number(row.cost),
+      costEstimated: Boolean(row.costEstimated),
+      estimatedTokens: Boolean(row.estimatedTokens),
+      parserConfidence: numberMetadata(parserMetadata, "confidence"),
+      parserReason: stringMetadata(parserMetadata, "reason"),
+      sourceHref: withQuery("/sessions", { source: row.sourceFile }),
+      parserHref: withQuery("/parser-debug", { source: row.sourceFile }),
+      pricingHref: pricingModel ? withQuery("/pricing", { model: pricingModel }) : null,
+      interactionCount: number(row.interactionCount)
+    };
+  });
 }
 
 function getUnknownCostQueue(filters: AnalyticsFilters = {}): UnknownCostQueueRow[] {
@@ -563,15 +641,10 @@ function getUnknownCostQueue(filters: AnalyticsFilters = {}): UnknownCostQueueRo
       COUNT(i.id) AS interactions,
       COUNT(DISTINCT s.id) AS sessions,
       COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
-      CASE
-        WHEN lower(COALESCE(m.name, 'unknown')) = 'unknown' THEN '/parser-debug'
-        WHEN COALESCE(i.total_tokens, 0) <= 0 THEN '/parser-debug'
-        WHEN lower(COALESCE(m.name, 'unknown')) <> 'unknown'
-          AND COALESCE(i.total_tokens, 0) > 0
-          AND (m.input_token_price IS NULL OR m.output_token_price IS NULL)
-          THEN '/pricing'
-        ELSE '/parser-debug'
-      END AS repairHref
+      '' AS repairHref,
+      '' AS sourceHref,
+      '' AS parserHref,
+      '' AS pricingHref
      FROM interactions i
      JOIN sessions s ON s.id = i.session_id ${filter.sql}
      JOIN tools t ON t.id = s.tool_id
@@ -590,12 +663,138 @@ function getUnknownCostQueue(filters: AnalyticsFilters = {}): UnknownCostQueueRo
       totalTokens DESC
      LIMIT 20`,
     ...filter.params
-  ).map((row) => ({
-    ...row,
-    interactions: number(row.interactions),
-    sessions: number(row.sessions),
-    totalTokens: number(row.totalTokens)
-  }));
+  ).map((row) => {
+    const parserHref = withQuery("/parser-debug", { source: row.sourceFile });
+    const sourceHref = withQuery("/sessions", { source: row.sourceFile });
+    const pricingHref =
+      row.cause === "missing pricing" && row.model !== "unknown"
+        ? withQuery("/pricing", { model: row.model })
+        : null;
+    return {
+      ...row,
+      repairHref: pricingHref ?? parserHref,
+      sourceHref,
+      parserHref,
+      pricingHref,
+      interactions: number(row.interactions),
+      sessions: number(row.sessions),
+      totalTokens: number(row.totalTokens)
+    };
+  });
+}
+
+function getModelAliasSuggestions(filters: AnalyticsFilters = {}): ModelAliasSuggestion[] {
+  const filter = timestampJoinCondition(filters, "i");
+  const pricedRows = rows<{ providerId: string; model: string }>(
+    `SELECT provider_id AS providerId, name AS model
+     FROM models
+     WHERE input_token_price IS NOT NULL AND output_token_price IS NOT NULL`
+  );
+  const pricedByProvider = new Map<string, Set<string>>();
+  pricedRows.forEach((row) => {
+    const bucket = pricedByProvider.get(row.providerId) ?? new Set<string>();
+    bucket.add(row.model.toLowerCase());
+    pricedByProvider.set(row.providerId, bucket);
+  });
+  const pricedName = new Map<string, string>();
+  pricedRows.forEach((row) => {
+    pricedName.set(`${row.providerId}:${row.model.toLowerCase()}`, row.model);
+  });
+
+  const suggestions: ModelAliasSuggestion[] = rows<
+    Omit<ModelAliasSuggestion, "suggestedModel" | "confidence" | "reason" | "repairHref" | "parserHref"> & {
+      providerId: string;
+    }
+  >(
+    `SELECT
+      COALESCE(m.name, 'unknown') AS model,
+      COALESCE(p.id, tool_provider.id) AS providerId,
+      COALESCE(p.name, tool_provider.name) AS provider,
+      t.name AS tool,
+      MIN(s.source_file) AS sourceFile,
+      COUNT(i.id) AS interactions,
+      COALESCE(SUM(i.total_tokens), 0) AS totalTokens
+     FROM interactions i
+     JOIN sessions s ON s.id = i.session_id ${filter.sql}
+     JOIN tools t ON t.id = s.tool_id
+     JOIN providers tool_provider ON tool_provider.id = t.provider_id
+     LEFT JOIN models m ON m.id = i.model_id
+     LEFT JOIN providers p ON p.id = m.provider_id
+     WHERE i.cost IS NULL
+     GROUP BY model, providerId, t.id
+     ORDER BY interactions DESC, totalTokens DESC
+     LIMIT 40`,
+    ...filter.params
+  ).map((row): ModelAliasSuggestion => {
+    const { providerId: _providerId, ...baseRow } = row;
+    const normalizedModel = row.model.trim().toLowerCase();
+    const parserHref = withQuery("/parser-debug", { source: row.sourceFile });
+    const repairHref = withQuery("/pricing", { model: row.model });
+    const candidates = modelNameCandidates(row.model).slice(1);
+    const pricedSet = pricedByProvider.get(row.providerId) ?? new Set<string>();
+    const suggestedModel =
+      candidates
+        .map((candidate) => candidate.toLowerCase())
+        .find((candidate) => pricedSet.has(candidate)) ?? null;
+    const suggestedDisplay = suggestedModel
+      ? pricedName.get(`${row.providerId}:${suggestedModel}`) ?? suggestedModel
+      : null;
+
+    if (normalizedModel === "unknown") {
+      return {
+        ...baseRow,
+        interactions: number(row.interactions),
+        totalTokens: number(row.totalTokens),
+        suggestedModel: null,
+        confidence: "low",
+        reason: "The parser did not extract a model name. Inspect the source metadata before adding pricing.",
+        repairHref: parserHref,
+        parserHref
+      };
+    }
+
+    if (normalizedModel === "<synthetic>" || normalizedModel === "synthetic") {
+      return {
+        ...baseRow,
+        interactions: number(row.interactions),
+        totalTokens: number(row.totalTokens),
+        suggestedModel: null,
+        confidence: "medium",
+        reason: "Synthetic rows should inherit the real transcript model only after parser review.",
+        repairHref: parserHref,
+        parserHref
+      };
+    }
+
+    if (suggestedDisplay) {
+      return {
+        ...baseRow,
+        interactions: number(row.interactions),
+        totalTokens: number(row.totalTokens),
+        suggestedModel: suggestedDisplay,
+        confidence: "high",
+        reason: "This observed model name matches a priced base model after removing a dated provider suffix.",
+        repairHref,
+        parserHref
+      };
+    }
+
+    return {
+      ...baseRow,
+      interactions: number(row.interactions),
+      totalTokens: number(row.totalTokens),
+      suggestedModel: null,
+      confidence: "low",
+      reason: "No priced alias candidate exists yet. Add an explicit price row or verify the model name from parser evidence.",
+      repairHref,
+      parserHref
+    };
+  });
+
+  const confidenceRank = { high: 0, medium: 1, low: 2 };
+  return suggestions
+    .sort((a, b) => confidenceRank[a.confidence] - confidenceRank[b.confidence] || b.totalTokens - a.totalTokens)
+    .slice(0, 8);
 }
 
 function getLatestScanRecommendationStats() {
@@ -738,6 +937,7 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
   const projects = getProjectRows(filters);
   const sessions = getSessions(filters);
   const unknownCosts = getUnknownCostQueue(filters);
+  const modelAliasSuggestions = getModelAliasSuggestions(filters);
   const recommendations = buildLocalRecommendations({
     summary,
     tools,
@@ -755,6 +955,7 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
     projects,
     sessions,
     unknownCosts,
+    modelAliasSuggestions,
     recommendations,
     insights
   };

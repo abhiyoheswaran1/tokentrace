@@ -43,17 +43,17 @@ export default function OptimisationPage() {
                 </div>
                 <Badge variant={severityVariant[insight.severity]}>{insight.severity}</Badge>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-md border bg-muted/40 p-3">
-                  <div className="text-xs font-medium uppercase text-muted-foreground">
+              <CardContent className="grid border-t p-0 md:grid-cols-2 md:divide-x">
+                <div className="p-4">
+                  <p className="font-mono text-xs font-medium uppercase text-muted-foreground">
                     Saving opportunity
-                  </div>
+                  </p>
                   <p className="mt-1 text-sm">{insight.savingOpportunity}</p>
                 </div>
-                <div className="rounded-md border bg-muted/40 p-3">
-                  <div className="text-xs font-medium uppercase text-muted-foreground">
+                <div className="p-4">
+                  <p className="font-mono text-xs font-medium uppercase text-muted-foreground">
                     Recommendation
-                  </div>
+                  </p>
                   <p className="mt-1 text-sm">{insight.recommendation}</p>
                 </div>
               </CardContent>

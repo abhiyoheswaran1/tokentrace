@@ -22,6 +22,8 @@ function MetricCard({
   value,
   detailItems,
   description,
+  href,
+  actionLabel = "Inspect sessions",
   icon: Icon,
   className,
   valueClassName
@@ -30,6 +32,8 @@ function MetricCard({
   value: string;
   detailItems?: string[];
   description?: string;
+  href?: string;
+  actionLabel?: string;
   icon: typeof Database;
   className?: string;
   valueClassName?: string;
@@ -55,6 +59,11 @@ function MetricCard({
               <span key={item}>{item}</span>
             ))}
           </div>
+        ) : null}
+        {href ? (
+          <Link href={href} className="mt-3 inline-flex text-xs font-medium text-primary underline-offset-4 hover:underline">
+            {actionLabel}
+          </Link>
         ) : null}
       </CardContent>
     </Card>
@@ -96,14 +105,14 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
 
       <Card>
         <CardHeader>
-          <CardTitle>Recommended Next Actions</CardTitle>
+          <h2 className="text-sm font-semibold leading-tight">Recommended Next Actions</h2>
           <CardDescription>
             Local rules ranked from your scan, pricing, parser, project, and cache data.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-2 lg:grid-cols-3">
+        <CardContent className="grid divide-y overflow-hidden p-0 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
           {data.recommendations.slice(0, 3).map((item) => (
-            <Link key={item.id} href={item.href} className="rounded-md border bg-muted/20 p-3 transition-colors hover:bg-muted/40">
+            <Link key={item.id} href={item.href} className="px-4 py-3 transition-colors hover:bg-muted/30">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="text-sm font-semibold">{item.title}</div>
                 <Badge variant={item.severity === "high" ? "destructive" : item.severity === "medium" ? "warning" : "secondary"}>
@@ -111,7 +120,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
                 </Badge>
               </div>
               <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.evidence}</div>
-              <div className="mt-2 text-xs font-medium text-primary">{item.action}</div>
+              <div className="mt-2 text-xs font-medium text-emerald-800">{item.action}</div>
             </Link>
           ))}
         </CardContent>
@@ -129,6 +138,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatTokens(summary.outputTokens)} output`,
             `${formatTokens(summary.cachedTokens)} cached`
           ]}
+          href="/sessions"
           icon={Database}
         />
         <MetricCard
@@ -140,6 +150,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatTokens(summary.outputTokens)} output`,
             `${formatTokens(summary.reasoningTokens)} reasoning`
           ]}
+          href="/sessions"
           icon={Database}
         />
         <MetricCard
@@ -150,6 +161,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatTokens(summary.cacheReadTokens)} read`,
             `${formatTokens(summary.cacheWriteTokens)} write`
           ]}
+          href="/sessions?cache=1"
+          actionLabel="Inspect cached sessions"
           icon={Sparkles}
         />
         <MetricCard
@@ -161,6 +174,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatCurrency(summary.estimatedCost)} estimated`,
             `${summary.unknownCostInteractions.toLocaleString()} unknown`
           ]}
+          href={summary.unknownCostInteractions > 0 ? "/sessions?cost=unknown" : "/sessions"}
+          actionLabel={summary.unknownCostInteractions > 0 ? "Inspect unknown costs" : "Inspect sessions"}
           icon={Coins}
         />
         <MetricCard
@@ -168,6 +183,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           value={summary.sessions.toLocaleString()}
           description="Imported local CLI sessions and interactions in the selected period."
           detailItems={[`${summary.interactions.toLocaleString()} interactions`]}
+          href="/sessions"
           icon={MessageSquare}
         />
       </div>
@@ -224,7 +240,11 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
               <TableBody>
                 {data.tools.slice(0, 5).map((tool) => (
                   <TableRow key={tool.tool}>
-                    <TableCell className="font-medium">{tool.tool}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/sessions?tool=${encodeURIComponent(tool.tool)}`} className="text-primary underline-offset-4 hover:underline">
+                        {tool.tool}
+                      </Link>
+                    </TableCell>
                     <TableCell>{tool.provider}</TableCell>
                     <TableCell>{formatTokens(tool.totalTokens)}</TableCell>
                     <TableCell>{formatCurrency(tool.cost)}</TableCell>
@@ -282,12 +302,21 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
                     <TableCell>{row.interactions.toLocaleString()}</TableCell>
                     <TableCell>{formatTokens(row.totalTokens)}</TableCell>
                     <TableCell className="max-w-72 truncate">
-                      <MonoText className="text-muted-foreground">{row.sourceFile}</MonoText>
+                      <Link href={row.sourceHref} title={row.sourceFile}>
+                        <MonoText className="text-muted-foreground underline-offset-4 hover:underline">{row.sourceFile}</MonoText>
+                      </Link>
                     </TableCell>
                     <TableCell>
-                      <Link href={row.repairHref} className="font-medium text-primary underline-offset-4 hover:underline">
-                        {row.repairHref === "/pricing" ? "Configure price" : "Review parser"}
-                      </Link>
+                      <div className="flex flex-wrap gap-2">
+                        <Link href={row.repairHref} className="font-medium text-primary underline-offset-4 hover:underline">
+                          {row.pricingHref ? "Configure price" : "Review parser"}
+                        </Link>
+                        {row.pricingHref ? (
+                          <Link href={row.parserHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                            Parser
+                          </Link>
+                        ) : null}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

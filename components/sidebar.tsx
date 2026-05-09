@@ -42,7 +42,7 @@ export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string 
             </div>
             <div>
               <div className="text-sm font-semibold">TokenTrace CLI</div>
-              <div className="text-xs text-muted-foreground">Local analytics</div>
+              <div className="text-xs text-muted-foreground">Local only · No telemetry</div>
             </div>
           </div>
         </div>
@@ -61,24 +61,23 @@ export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string 
             );
           })}
         </nav>
-        <div className="space-y-2 border-t p-4 text-xs text-muted-foreground">
-          <div className="flex items-center justify-between gap-2">
-            <span>TokenTrace version</span>
+        <div className="border-t p-4 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-relaxed">
             <span className="font-medium text-foreground">{formatAppVersion(appVersion)}</span>
+            <span aria-hidden="true">·</span>
+            <span>
+              Open source by{" "}
+              <a
+                href="https://github.com/abhiyoheswaran1"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium underline-offset-2 hover:text-foreground hover:underline"
+              >
+                Abhi Yoheswaran
+              </a>
+              .
+            </span>
           </div>
-          <p>Local only. No telemetry. Raw content off by default.</p>
-          <p>
-            Open source by{" "}
-            <a
-              href="https://github.com/abhiyoheswaran1"
-              target="_blank"
-              rel="noreferrer"
-              className="underline-offset-2 hover:underline"
-            >
-              Abhi Yoheswaran
-            </a>
-            .
-          </p>
         </div>
       </div>
     </aside>

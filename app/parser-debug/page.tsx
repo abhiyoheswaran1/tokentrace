@@ -7,8 +7,17 @@ import { getScanTrustData } from "@/src/lib/analytics";
 
 export const dynamic = "force-dynamic";
 
-export default function ParserDebugPage() {
+export default async function ParserDebugPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ source?: string }>;
+}) {
+  const params = await searchParams;
+  const selectedSource = params?.source;
   const { scanFiles, health } = getScanTrustData();
+  const visibleScanFiles = selectedSource
+    ? scanFiles.filter((file) => file.path === selectedSource)
+    : scanFiles.slice(0, 500);
   const parserEntries = Object.entries(health.parserCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
@@ -44,9 +53,19 @@ export default function ParserDebugPage() {
         <Card>
           <CardHeader>
             <CardTitle>Parser Results</CardTitle>
-            <CardDescription>Latest 500 parser results. Useful when vendors change local file formats.</CardDescription>
+            <CardDescription>
+              {selectedSource
+                ? "Parser evidence for the selected source file."
+                : "Latest 500 parser results. Useful when vendors change local file formats."}
+            </CardDescription>
           </CardHeader>
           <CardContent className="table-scroll">
+            {selectedSource ? (
+              <div className="mb-3 rounded-md border bg-muted/30 p-3 text-sm">
+                <div className="font-medium">Selected source file</div>
+                <MonoText className="mt-1 block break-all text-muted-foreground">{selectedSource}</MonoText>
+              </div>
+            ) : null}
             <Table>
               <TableHeader>
                 <TableRow>
@@ -61,7 +80,8 @@ export default function ParserDebugPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {scanFiles.map((file) => (
+                {visibleScanFiles.length ? (
+                  visibleScanFiles.map((file) => (
                   <TableRow key={file.id}>
                     <TableCell>{file.parser ?? "None"}</TableCell>
                     <TableCell><Badge variant={file.errors.length ? "destructive" : file.parser ? "success" : "secondary"}>{file.status}</Badge></TableCell>
@@ -78,7 +98,14 @@ export default function ParserDebugPage() {
                       <MonoText>{file.path}</MonoText>
                     </TableCell>
                   </TableRow>
-                ))}
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
+                      No parser results match this source file.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>

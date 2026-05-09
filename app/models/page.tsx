@@ -73,10 +73,10 @@ export default function ModelAnalyticsPage() {
                 <TableRow key={`${model.provider}-${model.model}`}>
                   <TableCell className="font-medium">{model.model}</TableCell>
                   <TableCell>{model.provider}</TableCell>
-                  <TableCell>{formatTokens(model.totalTokens)}</TableCell>
-                  <TableCell>{formatCurrency(model.cost)}</TableCell>
-                  <TableCell>{formatTokens(model.averageOutputTokens)}</TableCell>
-                  <TableCell>{model.tokenEfficiency.toFixed(2)}x</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{formatTokens(model.totalTokens)}</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{formatCurrency(model.cost)}</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{formatTokens(model.averageOutputTokens)}</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{model.tokenEfficiency.toFixed(2)}x</TableCell>
                   <TableCell>{model.suggestedAlternative ?? "None configured"}</TableCell>
                   <TableCell>
                     {model.overuseFlag ? (

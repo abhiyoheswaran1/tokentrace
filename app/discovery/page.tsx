@@ -17,6 +17,7 @@ function variant(status: string) {
 
 export default function DiscoveryPage() {
   const { scanFiles, health } = getScanTrustData();
+  const visibleScanFiles = scanFiles.slice(0, 500);
   const imported = health.latestStatusCounts.imported ?? 0;
   const unsupported = health.latestStatusCounts.skipped_unknown ?? 0;
   const duplicate = health.latestStatusCounts.skipped_duplicate ?? 0;
@@ -63,7 +64,7 @@ export default function DiscoveryPage() {
             <CardDescription>Latest 500 discovered files. Ignored files are retained so support-file noise stays visible without becoming usage.</CardDescription>
           </CardHeader>
           <CardContent className="table-scroll">
-            <Table>
+            <Table className="min-w-[64rem]">
               <TableHeader>
                 <TableRow>
                   <TableHead>File</TableHead>
@@ -75,10 +76,10 @@ export default function DiscoveryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {scanFiles.map((file) => (
+                {visibleScanFiles.map((file) => (
                   <TableRow key={file.id}>
-                    <TableCell className="max-w-xl break-all" title={file.path}>
-                      <MonoText>{file.path}</MonoText>
+                    <TableCell className="max-w-md truncate" title={file.path}>
+                      <MonoText className="block truncate">{file.path}</MonoText>
                     </TableCell>
                     <TableCell><Badge variant={variant(file.status)}>{file.status}</Badge></TableCell>
                     <TableCell>{file.sizeBytes.toLocaleString()} bytes</TableCell>

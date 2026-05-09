@@ -13,9 +13,12 @@ describe("PeriodFilter", () => {
 
     const html = renderToStaticMarkup(<PeriodFilter range={range} />);
 
-    expect(html).toContain("2026-04-01 to 2026-04-30");
+    expect(html).toContain("Custom range");
+    expect(html).toContain('value="2026-04-01"');
+    expect(html).toContain('value="2026-04-30"');
     expect(html).toContain("overflow-x-auto");
     expect(html).toContain("min-w-max");
+    expect(html).toContain("period-date-input");
     expect(html).not.toContain("flex-wrap");
   });
 });

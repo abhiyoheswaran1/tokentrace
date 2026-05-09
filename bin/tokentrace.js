@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { createRequire } from "node:module";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { fileURLToPath } from "node:url";
@@ -12,6 +13,7 @@ import open from "open";
 
 const binPath = fs.realpathSync(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(path.dirname(binPath), "..");
+const require = createRequire(import.meta.url);
 const invocationCwd = process.cwd();
 const packageJson = JSON.parse(
   fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")
@@ -70,7 +72,11 @@ function runtimeEnv() {
 }
 
 function nextBin() {
-  return path.join(packageRoot, "node_modules", "next", "dist", "bin", "next");
+  try {
+    return require.resolve("next/dist/bin/next");
+  } catch {
+    return path.join(packageRoot, "node_modules", "next", "dist", "bin", "next");
+  }
 }
 
 function runtimeScriptPath(scriptName) {

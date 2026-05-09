@@ -73,12 +73,12 @@ export default function ToolComparisonPage() {
                 <TableRow key={`${tool.provider}-${tool.tool}`}>
                   <TableCell className="font-medium">{tool.tool}</TableCell>
                   <TableCell>{tool.provider}</TableCell>
-                  <TableCell>{formatTokens(tool.totalTokens)}</TableCell>
-                  <TableCell>{formatCurrency(tool.cost)}</TableCell>
-                  <TableCell>{formatTokens(tool.averageTokensPerSession)}</TableCell>
-                  <TableCell>{formatTokens(tool.averageTokensPerInteraction)}</TableCell>
-                  <TableCell>{tool.outputInputRatio.toFixed(2)}x</TableCell>
-                  <TableCell>{percent(tool.cacheEfficiency)}</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{formatTokens(tool.totalTokens)}</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{formatCurrency(tool.cost)}</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{formatTokens(tool.averageTokensPerSession)}</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{formatTokens(tool.averageTokensPerInteraction)}</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{tool.outputInputRatio.toFixed(2)}x</TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums">{percent(tool.cacheEfficiency)}</TableCell>
                   <TableCell>{tool.mostExpensiveModel}</TableCell>
                 </TableRow>
               ))}

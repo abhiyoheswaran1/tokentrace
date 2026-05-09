@@ -118,7 +118,7 @@ Default discovery checks these locations when present:
 - TokenTrace wrapper logs in the local app-data directory
 - Any custom folders configured in Settings
 
-Use **Settings** in the dashboard to add custom folders, toggle raw message storage, and trigger scans. Use **Diagnostics**, **Discovery**, **Parser Debug**, and **Raw Data** to inspect discovered files, parser decisions, warnings, failures, extracted metadata, and confidence levels.
+Use **Settings** in the dashboard to add custom folders, toggle raw message storage, and trigger scans. Use **Doctor**, **Discovery**, **Parser Debug**, and **Raw Data** to inspect discovered files, parser decisions, warnings, failures, extracted metadata, and confidence levels.
 
 ## Ingestion Architecture
 
@@ -198,7 +198,7 @@ Session exploration:
 
 ![TokenTrace session explorer](docs/assets/session-explorer.png)
 
-Ingestion diagnostics and file discovery:
+Scan Doctor and file discovery:
 
 ![TokenTrace ingestion diagnostics](docs/assets/diagnostics.png)
 

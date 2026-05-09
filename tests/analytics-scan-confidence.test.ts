@@ -115,8 +115,115 @@ describe("scan confidence analytics", () => {
       provider: "OpenAI",
       tool: "Codex CLI",
       interactions: 1,
-      repairHref: "/pricing"
+      repairHref: "/pricing?model=gpt-later",
+      sourceHref: "/sessions?source=%2Ftmp%2Fsource.jsonl",
+      parserHref: "/parser-debug?source=%2Ftmp%2Fsource.jsonl"
     });
+  });
+
+  it("links sessions to parser provenance and pricing repair targets", async () => {
+    const { getAnalyticsData, sqlite } = await loadAnalytics();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('openai', 'OpenAI', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('codex-cli', 'openai', 'Codex CLI')").run();
+    sqlite.prepare("INSERT INTO projects (id, name, path) VALUES ('project-1', 'Project', '/tmp/project')").run();
+    sqlite
+      .prepare("INSERT INTO sessions (id, source_id, tool_id, project_id, source_file) VALUES ('session-1', 'source-1', 'codex-cli', 'project-1', '/tmp/source.jsonl')")
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO models
+          (id, provider_id, name, input_token_price, output_token_price, currency)
+         VALUES
+          ('model-priced', 'openai', 'gpt-4.1', 2, 8, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, total_tokens, token_confidence, cost)
+         VALUES
+          ('i1', 'i1-source', 'session-1', 'assistant', 'model-priced', 100, 'exact', 0.001)`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO scan_runs
+          (id, started_at, completed_at, files_scanned, records_imported, warnings, errors)
+         VALUES
+          ('scan-1', 10, 20, 1, 1, '[]', '[]')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO scan_files
+          (id, scan_run_id, path, size_bytes, parser, status, records_imported, warnings, errors, raw_metadata)
+         VALUES
+          ('file-1', 'scan-1', '/tmp/source.jsonl', 100, 'codex-cli', 'imported', 1, '[]', '[]', '{"confidence":0.95,"reason":"Codex CLI session artifact path"}')`
+      )
+      .run();
+
+    const session = getAnalyticsData().sessions[0];
+
+    expect(session).toMatchObject({
+      sourceFile: "/tmp/source.jsonl",
+      parser: "codex-cli",
+      parserStatus: "imported",
+      parserConfidence: 0.95,
+      parserReason: "Codex CLI session artifact path",
+      sourceHref: "/sessions?source=%2Ftmp%2Fsource.jsonl",
+      parserHref: "/parser-debug?source=%2Ftmp%2Fsource.jsonl",
+      pricingHref: "/pricing?model=gpt-4.1"
+    });
+  });
+
+  it("suggests model alias repairs without blindly pricing synthetic rows", async () => {
+    const { getAnalyticsData, sqlite } = await loadAnalytics();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('anthropic', 'Anthropic', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('claude-code', 'anthropic', 'Claude Code')").run();
+    sqlite.prepare("INSERT INTO projects (id, name, path) VALUES ('project-1', 'Project', '/tmp/project')").run();
+    sqlite
+      .prepare("INSERT INTO sessions (id, source_id, tool_id, project_id, source_file) VALUES ('session-1', 'source-1', 'claude-code', 'project-1', '/tmp/claude.jsonl')")
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO models
+          (id, provider_id, name, input_token_price, output_token_price, currency)
+         VALUES
+          ('priced-sonnet', 'anthropic', 'claude-sonnet-4-5', 3, 15, 'USD'),
+          ('dated-sonnet', 'anthropic', 'claude-sonnet-4-5-20260201', NULL, NULL, 'USD'),
+          ('synthetic', 'anthropic', '<synthetic>', NULL, NULL, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, total_tokens, token_confidence, cost)
+         VALUES
+          ('i1', 'i1-source', 'session-1', 'assistant', 'dated-sonnet', 100, 'exact', NULL),
+          ('i2', 'i2-source', 'session-1', 'assistant', 'synthetic', 50, 'exact', NULL)`
+      )
+      .run();
+
+    const suggestions = getAnalyticsData().modelAliasSuggestions;
+
+    expect(suggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          model: "claude-sonnet-4-5-20260201",
+          suggestedModel: "claude-sonnet-4-5",
+          confidence: "high",
+          repairHref: "/pricing?model=claude-sonnet-4-5-20260201"
+        }),
+        expect.objectContaining({
+          model: "<synthetic>",
+          suggestedModel: null,
+          confidence: "medium",
+          repairHref: "/parser-debug?source=%2Ftmp%2Fclaude.jsonl"
+        })
+      ])
+    );
   });
 
   it("builds scan trust health from all latest scan files, not only the debug table limit", async () => {

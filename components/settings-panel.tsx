@@ -121,16 +121,16 @@ export function SettingsPanel({
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
             <Label>Database path</Label>
-            <div className="rounded-md border bg-muted/40 p-3">
+            <pre className="overflow-x-auto rounded-md bg-muted/40 p-3">
               <MonoText>{initialSettings.databasePath}</MonoText>
-            </div>
+            </pre>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-md border bg-muted/40 p-3">
+          <div className="grid border-y sm:grid-cols-2 sm:divide-x">
+            <div className="p-3">
               <FieldLabel>TokenTrace version</FieldLabel>
               <DataValue className="mt-1">{formatAppVersion(initialSettings.appVersion)}</DataValue>
             </div>
-            <div className="rounded-md border bg-muted/40 p-3">
+            <div className="p-3">
               <FieldLabel>Release channel</FieldLabel>
               <DataValue className="mt-1">Local npm package</DataValue>
             </div>
@@ -160,7 +160,7 @@ export function SettingsPanel({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid border-y sm:grid-cols-2 sm:divide-x lg:grid-cols-4">
             <div className="p-3">
               <FieldLabel>Last scan</FieldLabel>
               <DataValue className="mt-1">
@@ -192,7 +192,7 @@ export function SettingsPanel({
               </DataValue>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="max-w-[65ch] text-sm text-muted-foreground">
             {initialScanHealth.latestRun
               ? "Data is current as of the latest scan. Run Scan now after new Claude, Codex, or other AI CLI sessions."
               : "No scan has run yet. Start with the default folders, then add custom folders if expected files are missing."}
@@ -220,7 +220,7 @@ export function SettingsPanel({
           <div className="space-y-2">
             {customFolders.length ? (
               customFolders.map((folder) => (
-                <div key={folder} className="flex items-center justify-between gap-3 rounded-md border bg-muted/40 p-2">
+                <div key={folder} className="flex items-center justify-between gap-3 border-y py-2">
                   <MonoText className="min-w-0 truncate text-muted-foreground">{folder}</MonoText>
                   <Button type="button" size="sm" variant="ghost" onClick={() => removeFolder(folder)}>
                     Remove
@@ -260,36 +260,36 @@ export function SettingsPanel({
           </div>
           {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
           {scanResult ? (
-            <div className="grid gap-3 rounded-md border bg-muted/40 p-3 text-sm sm:grid-cols-4">
-              <div>
+            <div className="grid border-y text-sm sm:grid-cols-4 sm:divide-x">
+              <div className="p-3">
                 <FieldLabel>Files scanned</FieldLabel>
                 <DataValue>{scanResult.filesScanned.toLocaleString()}</DataValue>
               </div>
-              <div>
+              <div className="p-3">
                 <FieldLabel>Records imported</FieldLabel>
                 <DataValue>{scanResult.recordsImported.toLocaleString()}</DataValue>
               </div>
-              <div>
+              <div className="p-3">
                 <FieldLabel>Warnings</FieldLabel>
                 <DataValue>{scanResult.warnings.length.toLocaleString()}</DataValue>
               </div>
-              <div>
+              <div className="p-3">
                 <FieldLabel>Errors</FieldLabel>
                 <DataValue>{scanResult.errors.length.toLocaleString()}</DataValue>
               </div>
-              <div>
+              <div className="p-3">
                 <FieldLabel>Costs recalculated</FieldLabel>
                 <DataValue>{scanResult.costsRecalculated.toLocaleString()}</DataValue>
               </div>
-              <div>
+              <div className="p-3">
                 <FieldLabel>Unknown cost</FieldLabel>
                 <DataValue>{scanResult.unknownCostInteractions.toLocaleString()}</DataValue>
               </div>
-              <div>
+              <div className="p-3">
                 <FieldLabel>Stale support imports removed</FieldLabel>
                 <DataValue>{scanResult.staleNonUsageSessionsRemoved.toLocaleString()}</DataValue>
               </div>
-              <div className="sm:col-span-2">
+              <div className="p-3 sm:col-span-2">
                 <FieldLabel>Next step</FieldLabel>
                 <a className="font-medium text-primary underline-offset-4 hover:underline" href="/diagnostics">
                   Review scan doctor

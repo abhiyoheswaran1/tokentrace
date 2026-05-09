@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Plus, RefreshCw, Save } from "lucide-react";
 import type { PricingRow } from "@/src/lib/pricing";
+import type { ModelAliasSuggestion } from "@/src/lib/analytics";
+import { formatTokens } from "@/src/lib/format";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,14 +21,34 @@ function numberInputValue(value: number | null) {
   return value == null ? "" : String(value);
 }
 
-export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) {
+export function PricingSettings({
+  initialRows,
+  initialModel,
+  aliasSuggestions = []
+}: {
+  initialRows: PricingRow[];
+  initialModel?: string;
+  aliasSuggestions?: ModelAliasSuggestion[];
+}) {
   const [rows, setRows] = useState<EditablePricingRow[]>(initialRows);
+  const [filter, setFilter] = useState(initialModel ?? "");
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
 
-  function updateRow(index: number, patch: Partial<EditablePricingRow>) {
+  const visibleRows = useMemo(() => {
+    const normalized = filter.trim().toLowerCase();
+    if (!normalized) return rows;
+    return rows.filter((row) =>
+      [row.providerId, row.providerName ?? row.provider, row.provider, row.model]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalized)
+    );
+  }, [filter, rows]);
+
+  function updateRow(id: string, patch: Partial<EditablePricingRow>) {
     setRows((current) =>
-      current.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row))
+      current.map((row) => (row.id === id ? { ...row, ...patch } : row))
     );
   }
 
@@ -109,6 +132,58 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
 
   return (
     <div className="space-y-4">
+      {aliasSuggestions.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Model Alias Suggestions</CardTitle>
+            <CardDescription>
+              Local repair hints for unknown-cost rows. Review before copying prices across model names.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="table-scroll">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Observed model</TableHead>
+                  <TableHead>Suggested row</TableHead>
+                  <TableHead>Confidence</TableHead>
+                  <TableHead>Evidence</TableHead>
+                  <TableHead>Repair</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {aliasSuggestions.slice(0, 8).map((suggestion) => (
+                  <TableRow key={`${suggestion.model}-${suggestion.sourceFile}`}>
+                    <TableCell className="font-medium">{suggestion.model}</TableCell>
+                    <TableCell>{suggestion.suggestedModel ?? "Parser review needed"}</TableCell>
+                    <TableCell>
+                      <Badge variant={suggestion.confidence === "high" ? "success" : suggestion.confidence === "medium" ? "warning" : "secondary"}>
+                        {suggestion.confidence}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-md text-sm text-muted-foreground">
+                      {suggestion.reason} {suggestion.interactions.toLocaleString()} interactions, {formatTokens(suggestion.totalTokens)}.
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        <a href={suggestion.repairHref} className="font-medium text-primary underline-offset-4 hover:underline">
+                          {suggestion.repairHref.startsWith("/pricing") ? "Open pricing" : "Open parser"}
+                        </a>
+                        {suggestion.repairHref !== suggestion.parserHref ? (
+                          <a href={suggestion.parserHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                            Parser
+                          </a>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -129,6 +204,20 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
           </div>
         </CardHeader>
         <CardContent className="table-scroll">
+          <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,22rem)_auto] sm:items-end">
+            <div className="space-y-1.5">
+              <Label htmlFor="pricing-filter">Find model or provider</Label>
+              <Input
+                id="pricing-filter"
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+                placeholder="claude-sonnet, gpt-4.1, openai"
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Showing {visibleRows.length.toLocaleString()} of {rows.length.toLocaleString()} price rows.
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -144,27 +233,27 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row, index) => (
+              {visibleRows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>
                     <Input
                       className="w-28"
                       value={row.providerId}
-                      onChange={(event) => updateRow(index, { providerId: event.target.value })}
+                      onChange={(event) => updateRow(row.id, { providerId: event.target.value })}
                     />
                   </TableCell>
                   <TableCell>
                     <Input
                       className="w-28"
                       value={row.providerName ?? row.provider}
-                      onChange={(event) => updateRow(index, { providerName: event.target.value })}
+                      onChange={(event) => updateRow(row.id, { providerName: event.target.value })}
                     />
                   </TableCell>
                   <TableCell>
                     <Input
                       className="w-52"
                       value={row.model}
-                      onChange={(event) => updateRow(index, { model: event.target.value })}
+                      onChange={(event) => updateRow(row.id, { model: event.target.value })}
                     />
                   </TableCell>
                   <TableCell>
@@ -172,7 +261,7 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
                       className="w-24"
                       inputMode="decimal"
                       value={numberInputValue(row.inputTokenPrice)}
-                      onChange={(event) => updateRow(index, { inputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
+                      onChange={(event) => updateRow(row.id, { inputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
                     />
                   </TableCell>
                   <TableCell>
@@ -180,7 +269,7 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
                       className="w-24"
                       inputMode="decimal"
                       value={numberInputValue(row.outputTokenPrice)}
-                      onChange={(event) => updateRow(index, { outputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
+                      onChange={(event) => updateRow(row.id, { outputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
                     />
                   </TableCell>
                   <TableCell>
@@ -188,7 +277,7 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
                       className="w-24"
                       inputMode="decimal"
                       value={numberInputValue(row.cachedInputTokenPrice)}
-                      onChange={(event) => updateRow(index, { cachedInputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
+                      onChange={(event) => updateRow(row.id, { cachedInputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
                     />
                   </TableCell>
                   <TableCell>
@@ -196,14 +285,14 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
                       className="w-24"
                       inputMode="decimal"
                       value={numberInputValue(row.cacheWriteTokenPrice)}
-                      onChange={(event) => updateRow(index, { cacheWriteTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
+                      onChange={(event) => updateRow(row.id, { cacheWriteTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
                     />
                   </TableCell>
                   <TableCell>
                     <Input
                       className="w-24"
                       value={row.currency}
-                      onChange={(event) => updateRow(index, { currency: event.target.value })}
+                      onChange={(event) => updateRow(row.id, { currency: event.target.value })}
                     />
                   </TableCell>
                   <TableCell>
@@ -214,6 +303,13 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
                   </TableCell>
                 </TableRow>
               ))}
+              {visibleRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">
+                    No pricing rows match this filter.
+                  </TableCell>
+                </TableRow>
+              ) : null}
             </TableBody>
           </Table>
           {message ? <div className="mt-3 text-sm text-muted-foreground">{message}</div> : null}
@@ -227,12 +323,12 @@ export function PricingSettings({ initialRows }: { initialRows: PricingRow[] }) 
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <Label>Formula</Label>
-          <div className="rounded-md border bg-muted/40 p-3">
-            <MonoText>
+          <pre className="overflow-x-auto rounded-md bg-muted/40 p-3 whitespace-pre-wrap">
+            <MonoText className="break-words">
               input * inputPrice + output * outputPrice + cacheRead * cacheReadPrice + cacheWrite * cacheWritePrice
             </MonoText>
-          </div>
-          <p>
+          </pre>
+          <p className="max-w-[65ch]">
             Cache read and cache write fall back to input price when a model has no separate cache rate.
             TokenTrace separates exact token counts from estimated counts. Unknown model prices produce unknown costs.
           </p>

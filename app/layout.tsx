@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-sm font-semibold">TokenTrace CLI</div>
-                  <div className="text-xs text-muted-foreground">Local analytics dashboard</div>
+                  <div className="text-xs text-muted-foreground">Local only · No telemetry</div>
                 </div>
                 <div className="shrink-0 rounded-md border bg-muted/50 px-2 py-1 text-xs font-medium text-muted-foreground">
                   {formatAppVersion(appVersion)}

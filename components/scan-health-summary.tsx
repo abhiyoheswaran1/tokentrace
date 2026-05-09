@@ -97,7 +97,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid border-y sm:grid-cols-2 sm:divide-x xl:grid-cols-5">
           <StatBlock
             label="Latest scan"
             value={latest ? latest.filesScanned.toLocaleString() : "0"}
@@ -125,8 +125,8 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
           />
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-[1fr_1fr]">
-          <div className="rounded-md border bg-muted/30 p-3">
+        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+          <div className="border-y py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold leading-tight">Token confidence</div>
               <Badge variant={health.tokenCoverage.unknown > 0 ? "warning" : "success"}>
@@ -144,7 +144,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
             </div>
           </div>
 
-          <div className="rounded-md border bg-muted/30 p-3">
+          <div className="border-y py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold leading-tight">Pricing transparency</div>
               <Badge variant={health.costCoverage.unknown > 0 ? "warning" : "success"}>
@@ -165,7 +165,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
         </div>
 
         {health.latestNoteGroups.length ? (
-          <div className="rounded-md border bg-muted/30 p-3">
+          <div className="border-y py-3">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold leading-tight">
               <AlertTriangle className="h-4 w-4 text-amber-700" />
               Latest scan notes

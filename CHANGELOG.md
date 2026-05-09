@@ -2,7 +2,7 @@
 
 All notable changes to TokenTrace are documented here.
 
-## Unreleased
+## [0.4.0] - 2026-05-09
 
 ### Added
 
@@ -17,6 +17,21 @@ All notable changes to TokenTrace are documented here.
 - Scan cleanup for previously imported sessions whose source paths are now classified as non-usage Claude/Codex support files.
 - Scan Doctor health now uses the full latest scan-file set instead of the Raw Data table preview limit.
 - Moved the Overview unknown-cost repair queue below the dashboard charts and current mix section.
+- Refreshed README screenshots for Overview, Scan Doctor, Sessions, Discovery, Pricing, and mobile Overview.
+
+### Changed
+
+- Flattened dashboard, Doctor, Settings, Sessions, Insights, and scan-health layouts so nested mini-cards became divider-based sections.
+- Updated dashboard typography with an explicit UI font stack plus monospace numeric treatment for analytics tables.
+- Kept the mobile app header aligned with the desktop trust copy: local only and no telemetry.
+
+### Fixed
+
+- Restored the Overview period filter as a single-line toolbar after custom dates are applied, with horizontal overflow instead of wrapping.
+- Improved badge and button styling so labels and controls remain visible without being detected as card-like nested surfaces.
+- Fixed heading hierarchy across card-based pages by using second-level card headings under page titles.
+- Darkened the primary teal to meet contrast requirements on muted surfaces.
+- Fixed packed global installs serving production builds when `next` is hoisted outside the package folder.
 
 ## [0.3.0] - 2026-05-09
 

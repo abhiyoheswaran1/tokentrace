@@ -16,7 +16,7 @@ export function PageHeader({
     <div className={cn("flex flex-col justify-between gap-4 sm:flex-row sm:items-end", className)}>
       <div className="min-w-0">
         <h1 className="text-2xl font-semibold leading-tight tracking-normal text-foreground">{title}</h1>
-        <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>
+        <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
       {actions ? <div className="shrink-0">{actions}</div> : null}
     </div>

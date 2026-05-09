@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Download, Filter, RotateCcw } from "lucide-react";
 import type { SessionRow } from "@/src/lib/analytics";
 import { formatCurrency, formatDate, formatDuration, formatTokens } from "@/src/lib/format";
@@ -13,22 +14,35 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DataValue, FieldLabel, MonoText } from "@/components/ui/typography";
 
 type ExactFilter = "all" | "exact" | "estimated";
+type CostFilter = "all" | "priced" | "unknown";
 
 export function SessionExplorer({
   sessions,
-  initialProject
+  initialProject,
+  initialTool,
+  initialModel,
+  initialSource,
+  initialCost,
+  initialCache
 }: {
   sessions: SessionRow[];
   initialProject?: string;
+  initialTool?: string;
+  initialModel?: string;
+  initialSource?: string;
+  initialCost?: CostFilter;
+  initialCache?: boolean;
 }) {
-  const [query, setQuery] = useState("");
-  const [tool, setTool] = useState("all");
-  const [model, setModel] = useState("all");
+  const [query, setQuery] = useState(initialSource ?? "");
+  const [tool, setTool] = useState(initialTool ?? "all");
+  const [model, setModel] = useState(initialModel ?? "all");
   const [project, setProject] = useState(initialProject ?? "all");
   const [exact, setExact] = useState<ExactFilter>("all");
+  const [cost, setCost] = useState<CostFilter>(initialCost ?? "all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [highCost, setHighCost] = useState(false);
+  const [hasCache, setHasCache] = useState(Boolean(initialCache));
 
   const tools = useMemo(() => Array.from(new Set(sessions.map((session) => session.tool))).sort(), [sessions]);
   const models = useMemo(
@@ -68,22 +82,27 @@ export function SessionExplorer({
       if (project !== "all" && session.project !== project) return false;
       if (exact === "exact" && session.estimatedTokens) return false;
       if (exact === "estimated" && !session.estimatedTokens) return false;
+      if (cost === "priced" && session.cost == null) return false;
+      if (cost === "unknown" && session.cost != null) return false;
       if (fromMs && (!session.startedAt || session.startedAt < fromMs)) return false;
       if (toMs && (!session.startedAt || session.startedAt > toMs)) return false;
       if (highCost && (session.cost ?? 0) < highCostThreshold) return false;
+      if (hasCache && session.cachedTokens <= 0) return false;
       if (!normalizedQuery) return true;
       return [
         session.title,
         session.sourceFile,
         session.tool,
         session.project,
-        session.models
+        session.models,
+        session.parser,
+        session.parserStatus
       ]
         .join(" ")
         .toLowerCase()
         .includes(normalizedQuery);
     });
-  }, [exact, from, highCost, highCostThreshold, model, project, query, sessions, to, tool]);
+  }, [cost, exact, from, hasCache, highCost, highCostThreshold, model, project, query, sessions, to, tool]);
   const filteredSummary = useMemo(
     () =>
       filtered.reduce(
@@ -100,7 +119,17 @@ export function SessionExplorer({
     [filtered]
   );
   const hasFilters =
-    query || tool !== "all" || model !== "all" || project !== "all" || exact !== "all" || from || to || highCost;
+    query ||
+    tool !== "all" ||
+    model !== "all" ||
+    project !== "all" ||
+    exact !== "all" ||
+    cost !== "all" ||
+    from ||
+    to ||
+    highCost ||
+    hasCache;
+  const hasEvidenceContext = Boolean(initialProject || initialTool || initialModel || initialSource || initialCost || initialCache);
 
   function clearFilters() {
     setQuery("");
@@ -108,13 +137,38 @@ export function SessionExplorer({
     setModel("all");
     setProject("all");
     setExact("all");
+    setCost("all");
     setFrom("");
     setTo("");
     setHighCost(false);
+    setHasCache(false);
   }
 
   return (
     <div className="space-y-4">
+      {hasEvidenceContext ? (
+        <Card className="border-primary/25 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle>Evidence Trail</CardTitle>
+            <CardDescription>
+              This view is filtered from a dashboard, repair queue, or parser link so you can inspect the sessions behind that number.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2 text-sm">
+            {initialTool ? <Badge variant="secondary">Tool: {initialTool}</Badge> : null}
+            {initialModel ? <Badge variant="secondary">Model: {initialModel}</Badge> : null}
+            {initialProject ? <Badge variant="secondary">Project: {initialProject}</Badge> : null}
+            {initialCost === "unknown" ? <Badge variant="warning">Unknown cost</Badge> : null}
+            {initialCache ? <Badge variant="secondary">Has cache tokens</Badge> : null}
+            {initialSource ? (
+              <Badge variant="secondary" className="max-w-full">
+                <span className="truncate">Source: {initialSource}</span>
+              </Badge>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -172,10 +226,24 @@ export function SessionExplorer({
                 <option value="estimated">Estimated only</option>
               </select>
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cost">Cost status</Label>
+              <select id="cost" className="h-9 w-full rounded-md border bg-card px-3 text-sm" value={cost} onChange={(event) => setCost(event.target.value as CostFilter)}>
+                <option value="all">Priced and unknown</option>
+                <option value="priced">Priced only</option>
+                <option value="unknown">Unknown cost only</option>
+              </select>
+            </div>
             <div className="flex items-end">
               <label className="flex h-9 items-center gap-2 rounded-md border bg-card px-3 text-sm">
                 <input type="checkbox" checked={highCost} onChange={(event) => setHighCost(event.target.checked)} />
                 High-cost sessions
+              </label>
+            </div>
+            <div className="flex items-end">
+              <label className="flex h-9 items-center gap-2 rounded-md border bg-card px-3 text-sm">
+                <input type="checkbox" checked={hasCache} onChange={(event) => setHasCache(event.target.checked)} />
+                Has cache tokens
               </label>
             </div>
           </div>
@@ -206,7 +274,7 @@ export function SessionExplorer({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid border-y sm:grid-cols-2 sm:divide-x lg:grid-cols-5">
             <div className="p-3">
               <FieldLabel>Filtered tokens</FieldLabel>
               <DataValue className="mt-1">{formatTokens(filteredSummary.tokens)}</DataValue>
@@ -229,18 +297,20 @@ export function SessionExplorer({
             </div>
           </div>
           <div className="table-scroll">
-          <Table>
+          <Table className="min-w-[78rem]">
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Tool</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Tokens</TableHead>
-                <TableHead>Cost</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Flag</TableHead>
-                <TableHead>Source file</TableHead>
+                <TableHead className="w-28">Date</TableHead>
+                <TableHead className="w-28">Tool</TableHead>
+                <TableHead className="w-32">Project</TableHead>
+                <TableHead className="w-48">Model</TableHead>
+                <TableHead className="w-24">Tokens</TableHead>
+                <TableHead className="w-24">Cost</TableHead>
+                <TableHead className="w-20">Duration</TableHead>
+                <TableHead className="w-32">Flag</TableHead>
+                <TableHead className="w-36">Parser</TableHead>
+                <TableHead className="w-28">Evidence</TableHead>
+                <TableHead className="w-80">Source file</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -249,7 +319,7 @@ export function SessionExplorer({
                   <TableRow key={session.id}>
                     <TableCell>{formatDate(session.startedAt)}</TableCell>
                     <TableCell className="font-medium">{session.tool}</TableCell>
-                    <TableCell>{session.project}</TableCell>
+                    <TableCell className="max-w-32 truncate" title={session.project}>{session.project}</TableCell>
                     <TableCell className="max-w-44 truncate" title={session.models}>{session.models}</TableCell>
                     <TableCell className="tabular-nums">{formatTokens(session.totalTokens)}</TableCell>
                     <TableCell className="tabular-nums">{formatCurrency(session.cost)}</TableCell>
@@ -259,14 +329,36 @@ export function SessionExplorer({
                         {session.tokenConfidence}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-72 break-all" title={session.sourceFile}>
-                      <MonoText>{session.sourceFile}</MonoText>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="font-medium">{session.parser ?? "unknown"}</div>
+                        {session.parserConfidence != null ? (
+                          <div className="text-xs text-muted-foreground">
+                            {Math.round(session.parserConfidence * 100)}% confidence
+                          </div>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        <Link href={session.parserHref} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+                          Parser
+                        </Link>
+                        {session.pricingHref ? (
+                          <Link href={session.pricingHref} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+                            Pricing
+                          </Link>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-80 truncate" title={session.sourceFile}>
+                      <MonoText className="block truncate">{session.sourceFile}</MonoText>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={11} className="py-8 text-center text-sm text-muted-foreground">
                     No sessions match the current filters.
                   </TableCell>
                 </TableRow>

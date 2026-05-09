@@ -1,7 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { dateRangeOptions, type ResolvedDateRange } from "@/src/lib/date-range";
@@ -11,46 +10,46 @@ function rangeHref(range: string) {
 }
 
 export function PeriodFilter({ range }: { range: ResolvedDateRange }) {
+  const statusLabel = range.key === "custom" ? "Custom range" : range.label;
+
   return (
-    <div className="rounded-lg border bg-card p-3 sm:p-4">
-      <form className="grid grid-cols-[minmax(0,auto)_minmax(0,1fr)] items-center gap-3" action="/">
+    <div className="rounded-lg bg-card p-3 outline outline-1 outline-border sm:p-4">
+      <form className="overflow-x-auto" action="/">
         <input type="hidden" name="range" value="custom" />
-        <div className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-          <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="shrink-0">Period</span>
-          <Badge variant="secondary" className="max-w-[9rem] truncate sm:max-w-[16rem]">
-            {range.label}
-          </Badge>
-        </div>
-        <div className="-mx-1 min-w-0 flex-1 overflow-x-auto px-1">
-          <div className="ml-auto flex min-w-max items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              {dateRangeOptions.map((option) => (
-                <Button
-                  key={option.key}
-                  asChild
-                  size="sm"
-                  variant={range.key === option.key ? "default" : "outline"}
-                >
-                  <Link href={rangeHref(option.key)}>{option.label}</Link>
-                </Button>
-              ))}
-            </div>
-            <div className="h-6 w-px shrink-0 bg-border" />
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">Custom</span>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>From</span>
-                <Input type="date" name="from" defaultValue={range.fromInput} className="h-8 w-[9.5rem]" />
-              </label>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>To</span>
-                <Input type="date" name="to" defaultValue={range.toInput} className="h-8 w-[9.5rem]" />
-              </label>
-              <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>
-                Apply
+        <div className="flex min-w-max items-center gap-2">
+          <div className="flex items-center gap-2 pr-1 text-sm font-semibold">
+            <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span>Period</span>
+            <span className="whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              {statusLabel}
+            </span>
+          </div>
+          <div className="h-6 w-px shrink-0 bg-border" />
+          <div className="flex items-center gap-1.5">
+            {dateRangeOptions.map((option) => (
+              <Button
+                key={option.key}
+                asChild
+                size="sm"
+                variant={range.key === option.key ? "default" : "outline"}
+              >
+                <Link href={rangeHref(option.key)}>{option.label}</Link>
               </Button>
-            </div>
+            ))}
+          </div>
+          <div className="h-6 w-px shrink-0 bg-border" />
+          <div className="flex items-center gap-1.5">
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span>From</span>
+              <Input type="date" name="from" defaultValue={range.fromInput} className="period-date-input h-8 w-36" />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span>To</span>
+              <Input type="date" name="to" defaultValue={range.toInput} className="period-date-input h-8 w-36" />
+            </label>
+            <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>
+              Apply
+            </Button>
           </div>
         </div>
       </form>
