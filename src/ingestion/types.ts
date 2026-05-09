@@ -5,6 +5,10 @@ export type FileCandidate = {
   hash?: string;
 };
 
+export type IgnoredFileCandidate = FileCandidate & {
+  ignoreReason: string;
+};
+
 export type DetectionResult = {
   detected: boolean;
   confidence: number;

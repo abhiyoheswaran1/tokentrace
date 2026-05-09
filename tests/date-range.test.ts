@@ -24,4 +24,17 @@ describe("date range resolution", () => {
     expect(range.filters.from).toBe(new Date(2026, 3, 1).getTime());
     expect(range.filters.to).toBe(new Date(2026, 4, 1).getTime());
   });
+
+  it("rejects custom dates that roll over into a different calendar day", () => {
+    const range = resolveDateRange(
+      new URLSearchParams("range=custom&from=2026-02-31&to=2026-03-01"),
+      now
+    );
+
+    expect(range.label).toBe("Through 2026-03-01");
+    expect(range.filters.from).toBeNull();
+    expect(range.filters.to).toBe(new Date(2026, 2, 2).getTime());
+    expect(range.fromInput).toBe("");
+    expect(range.toInput).toBe("2026-03-01");
+  });
 });

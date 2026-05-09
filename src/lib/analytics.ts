@@ -137,6 +137,7 @@ export type ScanTrustData = {
   scanRuns: DebugScanRun[];
   scanFiles: DebugScanFile[];
   confidence: ScanConfidenceSummary;
+  pricedModelCount: number;
   health: ScanHealth;
 };
 
@@ -689,6 +690,30 @@ export function getScanConfidenceSummary(): ScanConfidenceSummary {
        FROM interactions`
     )
     .get() as ScanConfidenceSummary;
+  const unknownCostCauses = sqlite
+    .prepare(
+      `SELECT
+        COALESCE(SUM(CASE WHEN cost IS NULL AND lower(m.name) = 'unknown' THEN 1 ELSE 0 END), 0) AS missingModelName,
+        COALESCE(SUM(CASE WHEN cost IS NULL
+          AND COALESCE(i.total_tokens, 0) <= 0 THEN 1 ELSE 0 END), 0) AS missingTokenCount,
+        COALESCE(SUM(CASE WHEN cost IS NULL
+          AND lower(m.name) <> 'unknown'
+          AND COALESCE(i.total_tokens, 0) > 0
+          AND (m.input_token_price IS NULL OR m.output_token_price IS NULL)
+          THEN 1 ELSE 0 END), 0) AS missingPricing,
+        COALESCE(SUM(CASE WHEN cost IS NULL
+          AND NOT (
+            lower(m.name) = 'unknown'
+            OR COALESCE(i.total_tokens, 0) <= 0
+            OR (lower(m.name) <> 'unknown'
+              AND COALESCE(i.total_tokens, 0) > 0
+              AND (m.input_token_price IS NULL OR m.output_token_price IS NULL))
+          )
+          THEN 1 ELSE 0 END), 0) AS other
+       FROM interactions i
+       LEFT JOIN models m ON m.id = i.model_id`
+    )
+    .get() as ScanConfidenceSummary["unknownCostCauses"];
 
   return {
     interactions: number(row.interactions),
@@ -699,8 +724,27 @@ export function getScanConfidenceSummary(): ScanConfidenceSummary {
     estimatedTokenInteractions: number(row.estimatedTokenInteractions),
     exactCostInteractions: number(row.exactCostInteractions),
     estimatedCostInteractions: number(row.estimatedCostInteractions),
-    unknownCostInteractions: number(row.unknownCostInteractions)
+    unknownCostInteractions: number(row.unknownCostInteractions),
+    unknownCostCauses: {
+      missingModelName: number(unknownCostCauses.missingModelName),
+      missingPricing: number(unknownCostCauses.missingPricing),
+      missingTokenCount: number(unknownCostCauses.missingTokenCount),
+      other: number(unknownCostCauses.other)
+    }
   };
+}
+
+export function getPricedModelCount() {
+  const row = sqlite
+    .prepare(
+      `SELECT COUNT(*) AS count
+       FROM models
+       WHERE input_token_price IS NOT NULL
+         AND output_token_price IS NOT NULL`
+    )
+    .get() as { count: number };
+
+  return number(row.count);
 }
 
 export function getScanTrustData(): ScanTrustData {
@@ -709,6 +753,7 @@ export function getScanTrustData(): ScanTrustData {
   return {
     ...debug,
     confidence,
+    pricedModelCount: getPricedModelCount(),
     health: buildScanHealth({
       scanRuns: debug.scanRuns,
       scanFiles: debug.scanFiles,

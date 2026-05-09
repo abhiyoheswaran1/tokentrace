@@ -1,4 +1,5 @@
 import path from "node:path";
+import { nonUsageFileReason } from "@/src/ingestion/path-classifier";
 import { IngestionAdapter } from "../types";
 import { buildSessionsFromRecords } from "./generic-records";
 import { asObject, fileLooksLikeJsonl, readFileText, readTextSample, safeJsonParse } from "./helpers";
@@ -9,6 +10,10 @@ export const genericJsonlAdapter: IngestionAdapter = {
 
   async detect(file) {
     const extension = path.extname(file.path).toLowerCase();
+    if (nonUsageFileReason(file.path)) {
+      return { detected: false, confidence: 0 };
+    }
+
     if (extension === ".jsonl" || file.path.endsWith(".jsonl.gz")) {
       return { detected: true, confidence: 0.75, reason: "JSONL extension" };
     }

@@ -29,6 +29,14 @@ CLI commands:
 tokentrace              # Start local dashboard
 tokentrace serve        # Start local dashboard
 tokentrace scan         # Scan local AI CLI usage logs
+tokentrace status --json
+                        # Print local usage status as JSON
+tokentrace statusline claude
+                        # Render a Claude Code status line from stdin
+tokentrace statusline setup claude
+                        # Print Claude Code statusLine setup JSON
+tokentrace watch --session
+                        # Watch local usage status in a terminal split
 tokentrace pricing refresh
                         # Refresh public model prices
 tokentrace run <cmd>    # Optional wrapper mode for command runtime diagnostics
@@ -60,6 +68,7 @@ npm run db:migrate   # Create/update local SQLite tables
 npm run db:seed      # Seed editable provider/model prices
 npm run reset        # Clear imported data and scan history
 npm test             # Run parser and cost tests
+npm run verify       # Run Vitest and TypeScript checks
 ```
 
 In local development, the SQLite database defaults to `.tokentrace/tokentrace.db`. Override it with:
@@ -131,6 +140,33 @@ tokentrace run npm test
 ```
 
 Wrapper mode launches the subprocess, measures duration, counts stdout/stderr bytes, detects structured JSON output when available, and writes a local JSONL diagnostic log under the app-data directory. It does not intercept network traffic.
+
+## Claude Code Status Line
+
+Claude Code can run a local status-line command at the bottom of its terminal UI. TokenTrace supports that path directly:
+
+```bash
+tokentrace statusline setup claude
+```
+
+Add the printed `statusLine` block to `~/.claude/settings.json`. It points Claude Code at:
+
+```bash
+tokentrace statusline claude
+```
+
+Claude Code sends session JSON to the command on stdin. TokenTrace reads the transcript path, model, context usage, and session cost, then prints one compact local line:
+
+![TokenTrace Claude Code status line](docs/assets/claude-statusline.svg)
+
+You can also inspect the same local status outside Claude Code:
+
+```bash
+tokentrace status --json
+tokentrace watch --session
+```
+
+Codex CLI status-line integration is intentionally deferred until its status-line and hook contracts are stable enough to support without fragile terminal output parsing. Use `tokentrace watch --session` in a terminal split or tmux pane as the current fallback.
 
 ## Screenshots
 

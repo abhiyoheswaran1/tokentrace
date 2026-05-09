@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 function variant(status: string) {
   if (status === "imported") return "success";
-  if (status === "skipped_unknown") return "secondary";
+  if (status === "skipped_unknown" || status === "ignored_non_usage") return "secondary";
   if (status === "failed") return "destructive";
   return "warning";
 }
@@ -21,6 +21,7 @@ export default function DiscoveryPage() {
   const unsupported = health.latestStatusCounts.skipped_unknown ?? 0;
   const duplicate = health.latestStatusCounts.skipped_duplicate ?? 0;
   const failed = health.latestStatusCounts.failed ?? 0;
+  const ignored = health.latestStatusCounts.ignored_non_usage ?? 0;
 
   return (
     <div className="space-y-6">
@@ -28,7 +29,7 @@ export default function DiscoveryPage() {
         title="File Discovery Explorer"
         description="Every file shown here was discovered by passive local filesystem scanning."
       />
-      <div className="grid overflow-hidden rounded-md border bg-card sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid overflow-hidden rounded-md border bg-card sm:grid-cols-2 lg:grid-cols-5">
         <div className="p-3">
           <FieldLabel>Latest imported files</FieldLabel>
           <DataValue className="mt-1" size="md">{imported.toLocaleString()}</DataValue>
@@ -45,6 +46,10 @@ export default function DiscoveryPage() {
           <FieldLabel>Failed files</FieldLabel>
           <DataValue className="mt-1" size="md">{failed.toLocaleString()}</DataValue>
         </div>
+        <div className="p-3">
+          <FieldLabel>Ignored non-usage</FieldLabel>
+          <DataValue className="mt-1" size="md">{ignored.toLocaleString()}</DataValue>
+        </div>
       </div>
       {!scanFiles.length ? (
         <EmptyState
@@ -55,7 +60,7 @@ export default function DiscoveryPage() {
         <Card>
           <CardHeader>
             <CardTitle>Discovered Files</CardTitle>
-            <CardDescription>Latest 500 discovered files. Unsupported files are retained so parser gaps are visible.</CardDescription>
+            <CardDescription>Latest 500 discovered files. Ignored files are retained so support-file noise stays visible without becoming usage.</CardDescription>
           </CardHeader>
           <CardContent className="table-scroll">
             <Table>
@@ -80,7 +85,7 @@ export default function DiscoveryPage() {
                     <TableCell>{formatDate(file.modifiedTime)}</TableCell>
                     <TableCell>{file.parser ?? "None"}</TableCell>
                     <TableCell className="max-w-sm whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">
-                      {String(file.rawMetadata.reason ?? file.errors[0] ?? file.warnings[0] ?? "None")}
+                      {String(file.rawMetadata.ignoreReason ?? file.rawMetadata.reason ?? file.errors[0] ?? file.warnings[0] ?? "None")}
                     </TableCell>
                   </TableRow>
                 ))}

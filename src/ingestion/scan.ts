@@ -5,7 +5,7 @@ import { getAppSettings } from "@/src/db/settings";
 import { recalculateInteractionCosts, type CostRecalculationResult } from "@/src/lib/cost-recalculation";
 import { hashContent, stableId } from "@/src/lib/ids";
 import { adapters } from "./adapters";
-import { discoverFiles, expandHome, getDefaultSearchRoots } from "./discovery";
+import { discoverFilesWithIgnored, expandHome, getDefaultSearchRoots } from "./discovery";
 import { importSessions } from "./persist";
 import { FileCandidate, IngestionAdapter } from "./types";
 
@@ -116,6 +116,11 @@ function insertScanFile(args: {
     );
 }
 
+function appendFileMessages(target: string, warnings: string[], errors: string[], allWarnings: string[], allErrors: string[]) {
+  allWarnings.push(...warnings.map((warning) => `${target}: ${warning}`));
+  allErrors.push(...errors.map((error) => `${target}: ${error}`));
+}
+
 export async function runScan(options: RunScanOptions = {}): Promise<RunScanResult> {
   const settings = getAppSettings();
   const explicitFolders = options.folders ?? [];
@@ -123,7 +128,8 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
     options.includeDefaults === false
       ? explicitFolders.map((folder) => path.resolve(expandHome(folder)))
       : await getDefaultSearchRoots([...settings.customFolders, ...explicitFolders]);
-  const candidates = await discoverFiles(roots);
+  const discovery = await discoverFilesWithIgnored(roots);
+  const candidates = discovery.candidates;
   const startedAt = new Date();
   const scanRunId = stableId("scan", [startedAt.getTime(), roots.join("|")]);
   const allWarnings: string[] = [];
@@ -137,6 +143,22 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
     )
     .run(scanRunId, startedAt.getTime());
 
+  for (const ignored of discovery.ignored) {
+    filesScanned += 1;
+    insertScanFile({
+      scanRunId,
+      file: ignored,
+      parser: null,
+      status: "ignored_non_usage",
+      recordsImported: 0,
+      warnings: [],
+      errors: [],
+      rawMetadata: {
+        ignoreReason: ignored.ignoreReason
+      }
+    });
+  }
+
   for (const candidate of candidates) {
     filesScanned += 1;
     let file = candidate;
@@ -146,15 +168,17 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
     try {
       file = await hashFile(candidate);
       if (!options.force && hasImportedFile(file)) {
+        warnings.push("File hash already imported. Use force rescan to parse again.");
         insertScanFile({
           scanRunId,
           file,
           parser: null,
           status: "skipped_duplicate",
           recordsImported: 0,
-          warnings: ["File hash already imported. Use force rescan to parse again."],
+          warnings,
           errors: []
         });
+        appendFileMessages(candidate.path, warnings, errors, allWarnings, allErrors);
         continue;
       }
 
@@ -162,6 +186,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
       warnings.push(...adapterChoice.warnings);
 
       if (!adapterChoice.selected) {
+        errors.push("No parser detected a compatible format.");
         insertScanFile({
           scanRunId,
           file,
@@ -169,8 +194,9 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
           status: "skipped_unknown",
           recordsImported: 0,
           warnings,
-          errors: ["No parser detected a compatible format."]
+          errors
         });
+        appendFileMessages(candidate.path, warnings, errors, allWarnings, allErrors);
         continue;
       }
 
@@ -222,8 +248,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
       });
     }
 
-    allWarnings.push(...warnings.map((warning) => `${candidate.path}: ${warning}`));
-    allErrors.push(...errors.map((error) => `${candidate.path}: ${error}`));
+    appendFileMessages(candidate.path, warnings, errors, allWarnings, allErrors);
   }
 
   sqlite

@@ -1,4 +1,5 @@
 import path from "node:path";
+import { isClaudeCodeUsagePath, isNonUsageClaudePath } from "@/src/ingestion/path-classifier";
 import { IngestionAdapter } from "../types";
 import { buildSessionsFromRecords } from "./generic-records";
 import { asObject, fileLooksLikeJsonl, firstString, readFileText, readTextSample, safeJsonParse } from "./helpers";
@@ -19,8 +20,12 @@ export const claudeCodeAdapter: IngestionAdapter = {
   async detect(file) {
     const normalized = file.path.toLowerCase();
     const extension = path.extname(file.path).toLowerCase();
-    if (normalized.includes(`${path.sep}.claude${path.sep}`) && [".jsonl", ".json"].includes(extension)) {
-      return { detected: true, confidence: 0.95, reason: "Path is inside a .claude directory" };
+    if (isClaudeCodeUsagePath(file.path)) {
+      return { detected: true, confidence: 0.95, reason: "Claude Code project transcript path" };
+    }
+
+    if (isNonUsageClaudePath(file.path)) {
+      return { detected: false, confidence: 0 };
     }
 
     if (![".jsonl", ".json", ".log"].includes(extension)) {

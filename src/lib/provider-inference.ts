@@ -17,7 +17,9 @@ export function inferProviderFromModel(modelName: string | null | undefined): In
   const model = modelName?.trim().toLowerCase();
   if (!model) return null;
 
-  if (/^(gpt|o[0-9]|codex|chatgpt)-/.test(model)) return knownProviders[0];
+  if (/^(gpt(?:[-0-9]|$)|o[0-9](?:-|$)|codex(?:-|$)|chatgpt(?:-|$))/.test(model)) {
+    return knownProviders[0];
+  }
   if (/^(claude|anthropic)\b/.test(model)) return knownProviders[1];
   if (/^(gemini|learnlm)\b/.test(model)) return knownProviders[2];
   if (/^(grok|xai)\b/.test(model)) return knownProviders[3];

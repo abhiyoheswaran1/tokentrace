@@ -1,4 +1,5 @@
 import path from "node:path";
+import { nonUsageFileReason } from "@/src/ingestion/path-classifier";
 import { IngestionAdapter } from "../types";
 import { buildSessionsFromRecords } from "./generic-records";
 import { asArray, asObject, readFileText, readTextSample, safeJsonParse } from "./helpers";
@@ -58,6 +59,10 @@ export const genericJsonAdapter: IngestionAdapter = {
 
   async detect(file) {
     if (path.extname(file.path).toLowerCase() !== ".json") {
+      return { detected: false, confidence: 0 };
+    }
+
+    if (nonUsageFileReason(file.path)) {
       return { detected: false, confidence: 0 };
     }
 

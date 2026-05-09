@@ -12,7 +12,8 @@ const entryPoints = {
   "db-seed": "scripts/db-seed.ts",
   "pricing-refresh": "scripts/pricing-refresh.ts",
   reset: "scripts/reset.ts",
-  scan: "scripts/scan.ts"
+  scan: "scripts/scan.ts",
+  status: "scripts/status.ts"
 };
 
 await Promise.all(

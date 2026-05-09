@@ -2,7 +2,8 @@ import fs from "node:fs/promises";
 import type { Dirent } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { FileCandidate } from "./types";
+import { FileCandidate, IgnoredFileCandidate } from "./types";
+import { nonUsageFileReason } from "./path-classifier";
 
 const supportedExtensions = new Set([
   ".jsonl",
@@ -68,7 +69,41 @@ export async function getDefaultSearchRoots(customFolders: string[] = []) {
   return present;
 }
 
-async function walkDirectory(root: string, depth: number, maxDepth: number, results: FileCandidate[]) {
+type DiscoveryBuckets = {
+  candidates: FileCandidate[];
+  ignored: IgnoredFileCandidate[];
+};
+
+async function addSupportedFile(fullPath: string, buckets: DiscoveryBuckets) {
+  const extension = path.extname(fullPath).toLowerCase();
+  if (!supportedExtensions.has(extension)) return;
+
+  try {
+    const stat = await fs.stat(fullPath);
+    if (stat.size <= 0 || stat.size > 25 * 1024 * 1024) return;
+
+    const ignoreReason = nonUsageFileReason(fullPath);
+    if (ignoreReason) {
+      buckets.ignored.push({
+        path: fullPath,
+        modifiedTime: stat.mtime,
+        sizeBytes: stat.size,
+        ignoreReason
+      });
+      return;
+    }
+
+    buckets.candidates.push({
+      path: fullPath,
+      modifiedTime: stat.mtime,
+      sizeBytes: stat.size
+    });
+  } catch {
+    return;
+  }
+}
+
+async function walkDirectory(root: string, depth: number, maxDepth: number, buckets: DiscoveryBuckets) {
   if (depth > maxDepth) return;
   let entries: Dirent[];
   try {
@@ -81,50 +116,44 @@ async function walkDirectory(root: string, depth: number, maxDepth: number, resu
     const fullPath = path.join(root, entry.name);
     if (entry.isDirectory()) {
       if (skippedDirectories.has(entry.name)) continue;
-      await walkDirectory(fullPath, depth + 1, maxDepth, results);
+      await walkDirectory(fullPath, depth + 1, maxDepth, buckets);
       continue;
     }
 
     if (!entry.isFile()) continue;
-    const extension = path.extname(entry.name).toLowerCase();
-    if (!supportedExtensions.has(extension)) continue;
-
-    try {
-      const stat = await fs.stat(fullPath);
-      if (stat.size <= 0 || stat.size > 25 * 1024 * 1024) continue;
-      results.push({
-        path: fullPath,
-        modifiedTime: stat.mtime,
-        sizeBytes: stat.size
-      });
-    } catch {
-      continue;
-    }
+    await addSupportedFile(fullPath, buckets);
   }
 }
 
-export async function discoverFiles(roots: string[]) {
-  const results: FileCandidate[] = [];
+export async function discoverFilesWithIgnored(roots: string[]) {
+  const buckets: DiscoveryBuckets = {
+    candidates: [],
+    ignored: []
+  };
+
   for (const root of roots) {
     const stat = await fs.stat(root).catch(() => null);
     if (!stat) continue;
     if (stat.isFile()) {
-      const extension = path.extname(root).toLowerCase();
-      if (supportedExtensions.has(extension)) {
-        results.push({
-          path: root,
-          modifiedTime: stat.mtime,
-          sizeBytes: stat.size
-        });
-      }
+      await addSupportedFile(root, buckets);
       continue;
     }
     if (stat.isDirectory()) {
-      await walkDirectory(root, 0, 12, results);
+      await walkDirectory(root, 0, 12, buckets);
     }
   }
 
-  const deduped = new Map<string, FileCandidate>();
-  for (const result of results) deduped.set(result.path, result);
-  return Array.from(deduped.values()).sort((a, b) => a.path.localeCompare(b.path));
+  const candidates = new Map<string, FileCandidate>();
+  const ignored = new Map<string, IgnoredFileCandidate>();
+  for (const result of buckets.candidates) candidates.set(result.path, result);
+  for (const result of buckets.ignored) ignored.set(result.path, result);
+
+  return {
+    candidates: Array.from(candidates.values()).sort((a, b) => a.path.localeCompare(b.path)),
+    ignored: Array.from(ignored.values()).sort((a, b) => a.path.localeCompare(b.path))
+  };
+}
+
+export async function discoverFiles(roots: string[]) {
+  return (await discoverFilesWithIgnored(roots)).candidates;
 }

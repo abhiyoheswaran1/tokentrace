@@ -24,6 +24,14 @@ Usage:
   tokentrace              Start local dashboard
   tokentrace serve        Start local dashboard
   tokentrace scan         Scan local AI CLI usage logs
+  tokentrace status --json
+                          Print local usage status as JSON
+  tokentrace statusline claude
+                          Render a Claude Code status line from stdin
+  tokentrace statusline setup claude
+                          Print Claude Code statusLine setup JSON
+  tokentrace watch --session
+                          Watch local usage status in the terminal
   tokentrace pricing refresh
                           Refresh public model prices
   tokentrace run <cmd>    Run a command and record wrapper diagnostics
@@ -188,6 +196,31 @@ async function refreshPrices(args) {
   await runNodeScript("pricing-refresh", args.length ? args : ["--json"]);
 }
 
+async function status(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("status", args);
+}
+
+async function statusLine(args) {
+  if (args[0] === "claude") {
+    await runNodeScript("status", ["statusline", "claude", ...args.slice(1)]);
+    return;
+  }
+  if (args[0] === "setup" && args[1] === "claude") {
+    await runNodeScript("status", ["setup", "claude"]);
+    return;
+  }
+
+  console.error("Usage: tokentrace statusline claude");
+  console.error("   or: tokentrace statusline setup claude");
+  process.exit(1);
+}
+
+async function watch(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("status", ["watch", ...args]);
+}
+
 async function reset(args) {
   await initializeDatabase({ quiet: true });
   if (!args.includes("--yes")) {
@@ -310,6 +343,18 @@ async function main() {
   }
   if (command === "scan") {
     await scan(args);
+    return;
+  }
+  if (command === "status") {
+    await status(args);
+    return;
+  }
+  if (command === "statusline") {
+    await statusLine(args);
+    return;
+  }
+  if (command === "watch") {
+    await watch(args);
     return;
   }
   if ((command === "pricing" || command === "prices") && args[0] === "refresh") {

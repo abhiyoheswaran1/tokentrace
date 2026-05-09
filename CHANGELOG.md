@@ -4,6 +4,38 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.3.0] - 2026-05-09
+
+### Added
+
+- Claude Code live status-line support through `tokentrace statusline claude`.
+- `tokentrace status --json` for machine-readable local usage status.
+- `tokentrace watch --session` for a terminal-split live status fallback while Codex status-line support remains under review.
+- `tokentrace statusline setup claude` to print the Claude Code `statusLine` configuration block.
+- Claude Code status-line README documentation and preview image.
+- Vitest coverage for live status snapshots, Claude status-line stdin rendering, period filter layout, scan discovery, scan health UI, tooltip rendering, and unknown-cost causes.
+- `npm run verify` as the standard Vitest plus TypeScript verification command.
+- Scan Doctor trust checklist covering pricing, roots, discovered files, imported records, unknown prices, parser warnings, and next action.
+- Ignored non-usage file tracking for local CLI support files.
+
+### Changed
+
+- Tightened Claude and Codex discovery so known support folders and files are ignored instead of parsed as usage.
+- Made generic JSON, JSONL, and log adapters skip known non-usage CLI support paths.
+- Grouped noisy scan notes by reason and examples in Scan Doctor.
+- Broke unknown-cost diagnostics into missing model name, missing pricing, missing token count, and other causes.
+- Expanded parser and provider inference coverage for real-world CLI artifacts.
+- Documented the repo verification flow in README and CONTRIBUTING.
+
+### Fixed
+
+- Kept the overview period selector on one desktop row after custom dates are applied, using horizontal overflow as the fallback.
+- Made metric-card help tooltips visible with an opaque surface and accessible tooltip markup.
+- Avoided treating Claude cache, plugin, and todo files as parser failures.
+- Avoided importing broad Claude support Markdown or Codex support JSON as generic usage.
+- Improved parsing of comma-formatted token counts and numeric timestamp strings.
+- Rejected custom dates that roll over into a different calendar day.
+
 ## [0.2.1] - 2026-05-09
 
 ### Added

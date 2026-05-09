@@ -32,6 +32,12 @@ export type ScanConfidenceSummary = {
   exactCostInteractions: number;
   estimatedCostInteractions: number;
   unknownCostInteractions: number;
+  unknownCostCauses: {
+    missingModelName: number;
+    missingPricing: number;
+    missingTokenCount: number;
+    other: number;
+  };
 };
 
 export type ScanHealthAction = {
@@ -39,6 +45,13 @@ export type ScanHealthAction = {
   href: string;
   reason: string;
   tone: "default" | "warning" | "destructive";
+};
+
+export type ScanHealthNoteGroup = {
+  severity: "warning" | "error";
+  message: string;
+  count: number;
+  examples: string[];
 };
 
 export type ScanHealth = {
@@ -51,6 +64,7 @@ export type ScanHealth = {
   parserCounts: Record<string, number>;
   latestWarnings: string[];
   latestErrors: string[];
+  latestNoteGroups: ScanHealthNoteGroup[];
   tokenCoverage: {
     exact: number;
     highConfidenceEstimate: number;
@@ -64,6 +78,7 @@ export type ScanHealth = {
     exact: number;
     estimated: number;
     unknown: number;
+    unknownCauses: ScanConfidenceSummary["unknownCostCauses"];
     total: number;
   };
   actions: ScanHealthAction[];
@@ -77,12 +92,57 @@ function uniqueMessages(messages: string[]) {
   return Array.from(new Set(messages.map((message) => message.trim()).filter(Boolean))).slice(0, 6);
 }
 
+function groupScanNotes(scanRun: ScanHealthRun | null, files: ScanHealthFile[]): ScanHealthNoteGroup[] {
+  const groups = new Map<string, ScanHealthNoteGroup>();
+
+  function add(severity: ScanHealthNoteGroup["severity"], message: string, example?: string) {
+    const trimmed = message.trim();
+    if (!trimmed) return;
+    const key = `${severity}:${trimmed}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.count += 1;
+      if (example && !existing.examples.includes(example) && existing.examples.length < 3) {
+        existing.examples.push(example);
+      }
+      return;
+    }
+
+    groups.set(key, {
+      severity,
+      message: trimmed,
+      count: 1,
+      examples: example ? [example] : []
+    });
+  }
+
+  for (const error of scanRun?.errors ?? []) add("error", error);
+  for (const warning of scanRun?.warnings ?? []) add("warning", warning);
+  for (const file of files) {
+    const fileErrorSeverity = file.status === "skipped_unknown" ? "warning" : "error";
+    for (const error of file.errors) add(fileErrorSeverity, error, file.path);
+    for (const warning of file.warnings) add("warning", warning, file.path);
+  }
+
+  return Array.from(groups.values())
+    .sort((a, b) => {
+      if (a.severity !== b.severity) return a.severity === "error" ? -1 : 1;
+      return b.count - a.count;
+    })
+    .slice(0, 6);
+}
+
 function action(label: string, href: string, reason: string, tone: ScanHealthAction["tone"] = "default") {
   return { label, href, reason, tone };
 }
 
 function plural(count: number, singular: string, pluralValue = `${singular}s`) {
   return `${count} ${count === 1 ? singular : pluralValue}`;
+}
+
+function joinHealthParts(parts: string[]) {
+  if (parts.length <= 1) return parts[0] ?? "";
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 }
 
 export function buildScanHealth({
@@ -112,6 +172,7 @@ export function buildScanHealth({
     ...(latestRun?.errors ?? []),
     ...latestFiles.flatMap((file) => file.errors.map((error) => `${file.path}: ${error}`))
   ]);
+  const latestNoteGroups = groupScanNotes(latestRun, latestFiles);
 
   const unsupported = latestStatusCounts.skipped_unknown ?? 0;
   const failed = latestStatusCounts.failed ?? 0;
@@ -119,7 +180,11 @@ export function buildScanHealth({
   const duplicates = latestStatusCounts.skipped_duplicate ?? 0;
   const imported = latestStatusCounts.imported ?? 0;
   const warningCount = latestWarnings.length;
-  const errorCount = latestErrors.length;
+  const hardErrorCount =
+    (latestRun?.errors.length ?? 0) +
+    latestFiles
+      .filter((file) => file.status === "failed" || file.status === "imported_with_errors")
+      .reduce((total, file) => total + file.errors.length, 0);
 
   const tokenCoverage = {
     exact: confidence.exactTokenInteractions,
@@ -134,6 +199,7 @@ export function buildScanHealth({
     exact: confidence.exactCostInteractions,
     estimated: confidence.estimatedCostInteractions,
     unknown: confidence.unknownCostInteractions,
+    unknownCauses: confidence.unknownCostCauses,
     total: confidence.interactions
   };
 
@@ -144,9 +210,12 @@ export function buildScanHealth({
 
   if (!latestRun) {
     actions.push(action("Run first scan", "/settings", "Discover local AI CLI usage files."));
-  } else if (failed > 0 || importedWithErrors > 0 || errorCount > 0) {
+  } else if (failed > 0 || importedWithErrors > 0 || hardErrorCount > 0) {
     headline = "Scan needs attention";
-    description = `${plural(failed + importedWithErrors, "file")} failed or imported with errors in the latest scan.`;
+    description = `${joinHealthParts([
+      `${plural(failed + importedWithErrors, "file")} failed or imported with errors`,
+      unsupported > 0 ? `${plural(unsupported, "file")} need parser review` : ""
+    ].filter(Boolean))} in the latest scan.`;
     tone = "destructive";
   } else if (unsupported > 0 || warningCount > 0 || confidence.unknownCostInteractions > 0 || confidence.unknownTokenInteractions > 0) {
     headline = "Review recommended";
@@ -161,7 +230,7 @@ export function buildScanHealth({
     tone = "success";
   }
 
-  if (failed > 0 || importedWithErrors > 0 || errorCount > 0) {
+  if (failed > 0 || importedWithErrors > 0 || hardErrorCount > 0) {
     actions.push(action("Review parser failures", "/parser-debug", "Parser errors can hide usage data.", "destructive"));
   }
   if (unsupported > 0) {
@@ -190,6 +259,7 @@ export function buildScanHealth({
     parserCounts,
     latestWarnings,
     latestErrors,
+    latestNoteGroups,
     tokenCoverage,
     costCoverage,
     actions

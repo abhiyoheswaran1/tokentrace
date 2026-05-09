@@ -1,3 +1,4 @@
+import * as React from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -31,6 +32,20 @@ function ratio(part: number, total: number) {
   return total > 0 ? part / total : 0;
 }
 
+function plural(count: number, singular: string, pluralValue = `${singular}s`) {
+  return `${count.toLocaleString()} ${count === 1 ? singular : pluralValue}`;
+}
+
+function unknownCostCauseItems(health: ScanHealth) {
+  const causes = health.costCoverage.unknownCauses;
+  return [
+    causes.missingPricing > 0 ? `${plural(causes.missingPricing, "missing pricing", "missing pricing")}` : null,
+    causes.missingModelName > 0 ? `${plural(causes.missingModelName, "missing model")}` : null,
+    causes.missingTokenCount > 0 ? `${plural(causes.missingTokenCount, "missing token count")}` : null,
+    causes.other > 0 ? `${plural(causes.other, "other")}` : null
+  ].filter((item): item is string => Boolean(item));
+}
+
 function StatBlock({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
     <div className="p-3">
@@ -48,6 +63,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
   const unsupportedFiles = statusCounts.skipped_unknown ?? 0;
   const failedFiles = statusCounts.failed ?? 0;
   const duplicateFiles = statusCounts.skipped_duplicate ?? 0;
+  const ignoredFiles = statusCounts.ignored_non_usage ?? 0;
   const priced = health.costCoverage.priced;
   const pricedPercent = ratio(priced, health.costCoverage.total);
   const exactTokenPercent = ratio(health.tokenCoverage.exact, health.tokenCoverage.total);
@@ -55,6 +71,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
     health.tokenCoverage.highConfidenceEstimate + health.tokenCoverage.lowConfidenceEstimate,
     health.tokenCoverage.total
   );
+  const costCauseItems = unknownCostCauseItems(health);
 
   return (
     <Card>
@@ -80,14 +97,14 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 xl:grid-cols-5">
           <StatBlock
             label="Latest scan"
             value={latest ? latest.filesScanned.toLocaleString() : "0"}
             helper={latest ? `${latest.recordsImported.toLocaleString()} records imported` : "Run a scan from Settings"}
           />
           <StatBlock
-            label="Files handled"
+            label="Usage files"
             value={importedFiles.toLocaleString()}
             helper={`${duplicateFiles.toLocaleString()} duplicate files skipped`}
           />
@@ -95,6 +112,11 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
             label="Needs parser review"
             value={(unsupportedFiles + failedFiles).toLocaleString()}
             helper={`${unsupportedFiles.toLocaleString()} unsupported, ${failedFiles.toLocaleString()} failed`}
+          />
+          <StatBlock
+            label="Ignored files"
+            value={ignoredFiles.toLocaleString()}
+            helper={`${ignoredFiles.toLocaleString()} ignored as non-usage`}
           />
           <StatBlock
             label="Cost coverage"
@@ -135,21 +157,31 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
               {health.costCoverage.unknown.toLocaleString()} unknown-cost interactions.
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              Unknown cost usually means missing model pricing or missing token counts.
+              {costCauseItems.length
+                ? `Unknown cost causes: ${costCauseItems.join(", ")}.`
+                : "Unknown cost usually means missing model pricing or missing token counts."}
             </div>
           </div>
         </div>
 
-        {health.latestWarnings.length || health.latestErrors.length ? (
+        {health.latestNoteGroups.length ? (
           <div className="rounded-md border bg-muted/30 p-3">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold leading-tight">
               <AlertTriangle className="h-4 w-4 text-amber-700" />
               Latest scan notes
             </div>
             <ul className="space-y-1 text-xs leading-relaxed text-muted-foreground">
-              {[...health.latestErrors, ...health.latestWarnings].slice(0, 5).map((message) => (
-                <li key={message} className="break-words">
-                  {message}
+              {health.latestNoteGroups.map((group) => (
+                <li key={`${group.severity}-${group.message}`} className="break-words">
+                  <span className="font-medium text-foreground">{group.message}</span>
+                  <span className="ml-2 text-muted-foreground">
+                    {plural(group.count, "file")}
+                  </span>
+                  {group.examples.length ? (
+                    <span className="ml-2">
+                      Examples: {group.examples.join(", ")}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>

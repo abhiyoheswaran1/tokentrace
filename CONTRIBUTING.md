@@ -25,7 +25,7 @@ Open `http://localhost:3000`.
 Useful checks:
 
 ```bash
-npm test
+npm run verify
 npm run build
 npm run scan
 ```
@@ -70,7 +70,7 @@ Good pull requests usually include:
 Before opening a pull request, run:
 
 ```bash
-npm test
+npm run verify
 npm run build
 ```
 

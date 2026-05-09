@@ -50,8 +50,15 @@ export function firstString(...values: unknown[]) {
 export function firstNumber(...values: unknown[]) {
   for (const value of values) {
     if (typeof value === "number" && Number.isFinite(value)) return Math.max(0, Math.round(value));
-    if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) {
-      return Math.max(0, Math.round(Number(value)));
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) continue;
+      const normalized = /^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(trimmed)
+        ? trimmed.replace(/,/g, "")
+        : trimmed;
+      if (/^-?\d+(\.\d+)?$/.test(normalized) && Number.isFinite(Number(normalized))) {
+        return Math.max(0, Math.round(Number(normalized)));
+      }
     }
   }
   return null;
@@ -66,7 +73,10 @@ export function parseTimestamp(...values: unknown[]): Date | null {
       if (!Number.isNaN(date.getTime())) return date;
     }
     if (typeof value === "string" && value.trim()) {
-      const date = new Date(value);
+      const trimmed = value.trim();
+      const date = /^\d+(\.\d+)?$/.test(trimmed)
+        ? new Date(Number(trimmed) > 10_000_000_000 ? Number(trimmed) : Number(trimmed) * 1000)
+        : new Date(trimmed);
       if (!Number.isNaN(date.getTime())) return date;
     }
   }

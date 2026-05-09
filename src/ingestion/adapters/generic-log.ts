@@ -1,5 +1,6 @@
 import path from "node:path";
 import { estimateTokensFromText, previewText } from "@/src/lib/token-estimator";
+import { nonUsageFileReason } from "@/src/ingestion/path-classifier";
 import { IngestionAdapter, NormalizedInteraction } from "../types";
 import { firstNumber, parseTimestamp, readFileText, readTextSample, sessionNameFromFile } from "./helpers";
 
@@ -26,6 +27,10 @@ export const genericLogAdapter: IngestionAdapter = {
   async detect(file) {
     const extension = path.extname(file.path).toLowerCase();
     if (![".log", ".txt", ".md", ""].includes(extension)) {
+      return { detected: false, confidence: 0 };
+    }
+
+    if (nonUsageFileReason(file.path)) {
       return { detected: false, confidence: 0 };
     }
 

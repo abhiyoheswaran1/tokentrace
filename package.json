@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {
     "name": "Abhi Yoheswaran",
@@ -52,7 +52,8 @@
     "pricing:refresh": "tsx scripts/pricing-refresh.ts",
     "reset": "tsx scripts/reset.ts",
     "test": "vitest run",
-    "package:test": "npm test && npm pack --dry-run",
+    "verify": "npm test && tsc --noEmit",
+    "package:test": "npm run verify && npm pack --dry-run",
     "prepack": "npm run build"
   },
   "engines": {

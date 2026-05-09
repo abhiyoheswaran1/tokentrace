@@ -1,4 +1,5 @@
 import path from "node:path";
+import { isCodexCliUsagePath, isNonUsageCodexPath } from "@/src/ingestion/path-classifier";
 import { IngestionAdapter } from "../types";
 import { buildSessionsFromRecords } from "./generic-records";
 import { asObject, fileLooksLikeJsonl, firstString, readFileText, readTextSample, safeJsonParse } from "./helpers";
@@ -31,8 +32,12 @@ export const codexCliAdapter: IngestionAdapter = {
   async detect(file) {
     const normalized = file.path.toLowerCase();
     const extension = path.extname(file.path).toLowerCase();
-    if (normalized.includes(`${path.sep}.codex${path.sep}`) && [".jsonl", ".json", ".log"].includes(extension)) {
-      return { detected: true, confidence: 0.95, reason: "Path is inside a .codex directory" };
+    if (isCodexCliUsagePath(file.path)) {
+      return { detected: true, confidence: 0.95, reason: "Codex CLI session artifact path" };
+    }
+
+    if (isNonUsageCodexPath(file.path)) {
+      return { detected: false, confidence: 0 };
     }
 
     if (![".jsonl", ".json", ".log"].includes(extension)) {

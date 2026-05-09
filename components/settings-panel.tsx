@@ -275,7 +275,7 @@ export function SettingsPanel({
               <div className="sm:col-span-2">
                 <FieldLabel>Next step</FieldLabel>
                 <a className="font-medium text-primary underline-offset-4 hover:underline" href="/diagnostics">
-                  Review scan health and parser diagnostics
+                  Review scan doctor
                 </a>
               </div>
             </div>
