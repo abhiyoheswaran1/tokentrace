@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, Info, Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData } from "@/src/lib/analytics";
 
 const severityIcon = {
@@ -22,12 +23,10 @@ export default function OptimisationPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Optimisation Insights</h1>
-        <p className="text-sm text-muted-foreground">
-          Deterministic recommendations based on imported usage patterns.
-        </p>
-      </div>
+      <PageHeader
+        title="Optimisation Insights"
+        description="Deterministic recommendations based on imported usage patterns."
+      />
 
       <div className="grid gap-4">
         {data.insights.map((insight) => {

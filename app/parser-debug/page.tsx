@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MonoText, PageHeader } from "@/components/ui/typography";
 import { EmptyState } from "@/components/empty-state";
 import { getScanTrustData } from "@/src/lib/analytics";
 
@@ -14,12 +15,10 @@ export default function ParserDebugPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Parser Debug</h1>
-        <p className="text-sm text-muted-foreground">
-          Inspect adapter selection, parser confidence, extraction confidence, warnings, and failures.
-        </p>
-      </div>
+      <PageHeader
+        title="Parser Debug"
+        description="Inspect adapter selection, parser confidence, extraction confidence, warnings, and failures."
+      />
 
       <div className="rounded-md border bg-card p-3">
         <div className="text-sm font-medium">Latest parser mix</div>
@@ -67,13 +66,17 @@ export default function ParserDebugPage() {
                     <TableCell>{file.parser ?? "None"}</TableCell>
                     <TableCell><Badge variant={file.errors.length ? "destructive" : file.parser ? "success" : "secondary"}>{file.status}</Badge></TableCell>
                     <TableCell>{file.rawMetadata.confidence == null ? "Unknown" : Number(file.rawMetadata.confidence).toFixed(2)}</TableCell>
-                    <TableCell className="max-w-xs whitespace-normal break-words text-xs">
-                      {JSON.stringify(file.rawMetadata.tokenConfidence ?? { unknown: 0 })}
+                    <TableCell className="max-w-xs whitespace-normal break-words">
+                      <MonoText className="text-muted-foreground">
+                        {JSON.stringify(file.rawMetadata.tokenConfidence ?? { unknown: 0 })}
+                      </MonoText>
                     </TableCell>
                     <TableCell>{file.recordsImported.toLocaleString()}</TableCell>
-                    <TableCell className="max-w-sm whitespace-normal break-words text-xs">{file.warnings.join("; ") || "None"}</TableCell>
-                    <TableCell className="max-w-sm whitespace-normal break-words text-xs">{file.errors.join("; ") || "None"}</TableCell>
-                    <TableCell className="max-w-md break-all font-mono text-xs" title={file.path}>{file.path}</TableCell>
+                    <TableCell className="max-w-sm whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">{file.warnings.join("; ") || "None"}</TableCell>
+                    <TableCell className="max-w-sm whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">{file.errors.join("; ") || "None"}</TableCell>
+                    <TableCell className="max-w-md break-all" title={file.path}>
+                      <MonoText>{file.path}</MonoText>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

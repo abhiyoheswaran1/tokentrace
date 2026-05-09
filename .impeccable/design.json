@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-09T01:29:14+02:00",
+  "title": "Design System: TokenTrace CLI",
+  "extensions": {
+    "colorMeta": {
+      "warm-background": {
+        "role": "neutral",
+        "displayName": "Warm Background",
+        "canonical": "#fcfaf8",
+        "cssVariable": "--background: 40 33% 98%",
+        "purpose": "Page background for the local dashboard."
+      },
+      "ink-foreground": {
+        "role": "neutral",
+        "displayName": "Ink Foreground",
+        "canonical": "#14181f",
+        "cssVariable": "--foreground: 220 20% 10%",
+        "purpose": "Primary text and high-confidence data."
+      },
+      "card-white": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "#ffffff",
+        "cssVariable": "--card: 0 0% 100%",
+        "purpose": "Cards, forms, tables, sidebar, and data surfaces."
+      },
+      "primary-teal": {
+        "role": "primary",
+        "displayName": "Trace Teal",
+        "canonical": "#147b74",
+        "cssVariable": "--primary: 176 72% 28%",
+        "purpose": "Primary action, active state, trusted status, and product mark."
+      },
+      "secondary-orange": {
+        "role": "secondary",
+        "displayName": "Cost Orange",
+        "canonical": "#f2742c",
+        "cssVariable": "--secondary: 22 88% 56%",
+        "purpose": "Secondary emphasis and cost-oriented chart color."
+      },
+      "muted-warm": {
+        "role": "neutral",
+        "displayName": "Muted Warm",
+        "canonical": "#efebe6",
+        "cssVariable": "--muted: 35 24% 92%",
+        "purpose": "Hover surfaces, low-emphasis panels, and secondary badges."
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#646a78",
+        "cssVariable": "--muted-foreground: 220 9% 43%",
+        "purpose": "Supporting copy, helper labels, and inactive navigation."
+      },
+      "accent-yellow": {
+        "role": "tertiary",
+        "displayName": "Audit Yellow",
+        "canonical": "#fbd041",
+        "cssVariable": "--accent: 46 96% 62%",
+        "purpose": "Selection and rare attention states."
+      },
+      "border-warm": {
+        "role": "neutral",
+        "displayName": "Warm Border",
+        "canonical": "#ded7cf",
+        "cssVariable": "--border: 35 18% 84%",
+        "purpose": "Dividers, borders, inputs, cards, and table rows."
+      },
+      "destructive-red": {
+        "role": "destructive",
+        "displayName": "Destructive Red",
+        "canonical": "#d52020",
+        "cssVariable": "--destructive: 0 74% 48%",
+        "purpose": "Errors and destructive actions."
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles such as Overview, Settings, Diagnostics, and Pricing."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles and compact section headers."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Interface copy, form controls, tables, descriptions, and chart labels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Table headers, badges, helper labels, and compact status details."
+      }
+    },
+    "shadows": [
+      {
+        "name": "input-low",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Subtle editability cue for inputs on card surfaces."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-color",
+        "value": "color 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out",
+        "purpose": "Default state feedback for controls and rows."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action button for configuration, scans, applies, and submits.",
+      "html": "<button class=\"ds-button-primary\">Configure scan</button>",
+      "css": ".ds-button-primary { display: inline-flex; height: 36px; align-items: center; justify-content: center; gap: 8px; border-radius: 6px; border: 0; background: #147b74; color: #ffffff; padding: 0 12px; font: 500 14px/1.25 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; transition: background-color 150ms ease-out; } .ds-button-primary:hover { background: color-mix(in srgb, #147b74 90%, #000000); } .ds-button-primary:focus-visible { outline: 2px solid #147b74; outline-offset: 2px; }"
+    },
+    {
+      "name": "Standard Card",
+      "kind": "card",
+      "refersTo": "card-standard",
+      "description": "Bordered white data surface for metrics, charts, filters, and tables.",
+      "html": "<section class=\"ds-card\"><h3>Token Trend</h3><p>Daily, weekly, and monthly token usage.</p></section>",
+      "css": ".ds-card { border: 1px solid #ded7cf; border-radius: 8px; background: #ffffff; color: #14181f; padding: 16px; box-shadow: none; } .ds-card h3 { margin: 0 0 6px; font: 600 14px/1.35 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; } .ds-card p { margin: 0; color: #646a78; font: 400 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }"
+    },
+    {
+      "name": "Default Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Compact field for dates, filters, paths, and pricing settings.",
+      "html": "<input class=\"ds-input\" value=\"2026-05-09\" />",
+      "css": ".ds-input { height: 36px; border-radius: 6px; border: 1px solid #ded7cf; background: #ffffff; color: #14181f; padding: 4px 12px; font: 400 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); } .ds-input:focus-visible { outline: 2px solid #147b74; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Badge",
+      "kind": "chip",
+      "refersTo": "badge-secondary",
+      "description": "Compact status or filter badge for low-emphasis labels.",
+      "html": "<span class=\"ds-badge-secondary\">Last 30 days</span>",
+      "css": ".ds-badge-secondary { display: inline-flex; align-items: center; border-radius: 6px; border: 1px solid transparent; background: #efebe6; color: #646a78; padding: 2px 8px; font: 500 12px/1.25 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }"
+    }
+  ]
+}

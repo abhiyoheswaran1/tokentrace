@@ -12,6 +12,7 @@ import { formatDate, percent } from "@/src/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataValue, FieldLabel } from "@/components/ui/typography";
 
 function badgeVariant(tone: ScanHealth["tone"]) {
   if (tone === "success") return "success";
@@ -33,8 +34,8 @@ function ratio(part: number, total: number) {
 function StatBlock({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
     <div className="p-3">
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      <div className="mt-1 text-xl font-semibold leading-tight">{value}</div>
+      <FieldLabel>{label}</FieldLabel>
+      <DataValue className="mt-1" size="md">{value}</DataValue>
       <div className="mt-1 text-xs leading-snug text-muted-foreground">{helper}</div>
     </div>
   );
@@ -74,7 +75,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
           </div>
           <CardDescription>{health.description}</CardDescription>
         </div>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm leading-6 text-muted-foreground">
           {latest ? `Last scan: ${formatDate(latest.completedAt ?? latest.startedAt)}` : "No scan history"}
         </div>
       </CardHeader>
@@ -105,7 +106,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
         <div className="grid gap-3 lg:grid-cols-[1fr_1fr]">
           <div className="rounded-md border bg-muted/30 p-3">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-medium">Token confidence</div>
+              <div className="text-sm font-semibold leading-tight">Token confidence</div>
               <Badge variant={health.tokenCoverage.unknown > 0 ? "warning" : "success"}>
                 {percent(exactTokenPercent)} exact
               </Badge>
@@ -123,7 +124,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
 
           <div className="rounded-md border bg-muted/30 p-3">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-medium">Pricing transparency</div>
+              <div className="text-sm font-semibold leading-tight">Pricing transparency</div>
               <Badge variant={health.costCoverage.unknown > 0 ? "warning" : "success"}>
                 {percent(pricedPercent)} priced
               </Badge>
@@ -141,7 +142,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
 
         {health.latestWarnings.length || health.latestErrors.length ? (
           <div className="rounded-md border bg-muted/30 p-3">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold leading-tight">
               <AlertTriangle className="h-4 w-4 text-amber-700" />
               Latest scan notes
             </div>
@@ -165,7 +166,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
             </Button>
           ))}
           {health.tone === "success" ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm leading-6 text-muted-foreground">
               <CheckCircle2 className="h-4 w-4 text-primary" />
               Local data is current as of the latest scan.
             </div>

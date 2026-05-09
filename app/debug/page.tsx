@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MonoText, PageHeader } from "@/components/ui/typography";
 import { getDebugData } from "@/src/lib/analytics";
 import { formatDate } from "@/src/lib/format";
 
@@ -18,12 +19,10 @@ export default function DebugPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Raw Data</h1>
-        <p className="text-sm text-muted-foreground">
-          Inspect recent scan runs, parser selection, imported records, warnings, and failures.
-        </p>
-      </div>
+      <PageHeader
+        title="Raw Data"
+        description="Inspect recent scan runs, parser selection, imported records, warnings, and failures."
+      />
 
       <Card>
         <CardHeader>
@@ -79,7 +78,9 @@ export default function DebugPage() {
             <TableBody>
               {data.scanFiles.map((file) => (
                 <TableRow key={file.id}>
-                  <TableCell className="max-w-96 truncate font-mono text-xs">{file.path}</TableCell>
+                  <TableCell className="max-w-96 truncate">
+                    <MonoText>{file.path}</MonoText>
+                  </TableCell>
                   <TableCell>{file.parser ?? "None"}</TableCell>
                   <TableCell>
                     <Badge variant={statusVariant(file.status)}>{file.status}</Badge>
@@ -87,8 +88,8 @@ export default function DebugPage() {
                   <TableCell>{file.recordsImported.toLocaleString()}</TableCell>
                   <TableCell className="max-w-64 truncate">{file.warnings.join("; ") || "None"}</TableCell>
                   <TableCell className="max-w-64 truncate">{file.errors.join("; ") || "None"}</TableCell>
-                  <TableCell className="max-w-80 truncate font-mono text-xs">
-                    {JSON.stringify(file.rawMetadata)}
+                  <TableCell className="max-w-80 truncate">
+                    <MonoText>{JSON.stringify(file.rawMetadata)}</MonoText>
                   </TableCell>
                 </TableRow>
               ))}

@@ -4,6 +4,21 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.2.1] - 2026-05-09
+
+### Added
+
+- Product and design reference docs for TokenTrace.
+- Impeccable design metadata for local UI review.
+
+### Changed
+
+- Tighten dashboard typesetting with shared page headers, data values, monospace text, and denser table defaults.
+
+### Fixed
+
+- Restore the overview period toolbar layout so preset buttons stay grouped cleanly across desktop widths.
+
 ## [0.2.0] - 2026-05-09
 
 ### Added

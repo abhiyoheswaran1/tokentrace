@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
+import { PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData } from "@/src/lib/analytics";
 import { formatCurrency, formatTokens } from "@/src/lib/format";
 
@@ -12,12 +13,10 @@ export default function ModelAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Model Analytics</h1>
-        <p className="text-sm text-muted-foreground">
-          Usage, cost, output length, efficiency, and configured cheaper alternatives.
-        </p>
-      </div>
+      <PageHeader
+        title="Model Analytics"
+        description="Usage, cost, output length, efficiency, and configured cheaper alternatives."
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

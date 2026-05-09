@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { EmptyState } from "@/components/empty-state";
 import { getScanTrustData } from "@/src/lib/analytics";
 import { formatDate } from "@/src/lib/format";
@@ -23,28 +24,26 @@ export default function DiscoveryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">File Discovery Explorer</h1>
-        <p className="text-sm text-muted-foreground">
-          Every file shown here was discovered by passive local filesystem scanning.
-        </p>
-      </div>
+      <PageHeader
+        title="File Discovery Explorer"
+        description="Every file shown here was discovered by passive local filesystem scanning."
+      />
       <div className="grid overflow-hidden rounded-md border bg-card sm:grid-cols-2 lg:grid-cols-4">
         <div className="p-3">
-          <div className="text-xs text-muted-foreground">Latest imported files</div>
-          <div className="mt-1 text-xl font-semibold">{imported.toLocaleString()}</div>
+          <FieldLabel>Latest imported files</FieldLabel>
+          <DataValue className="mt-1" size="md">{imported.toLocaleString()}</DataValue>
         </div>
         <div className="p-3">
-          <div className="text-xs text-muted-foreground">Unsupported files</div>
-          <div className="mt-1 text-xl font-semibold">{unsupported.toLocaleString()}</div>
+          <FieldLabel>Unsupported files</FieldLabel>
+          <DataValue className="mt-1" size="md">{unsupported.toLocaleString()}</DataValue>
         </div>
         <div className="p-3">
-          <div className="text-xs text-muted-foreground">Duplicate files</div>
-          <div className="mt-1 text-xl font-semibold">{duplicate.toLocaleString()}</div>
+          <FieldLabel>Duplicate files</FieldLabel>
+          <DataValue className="mt-1" size="md">{duplicate.toLocaleString()}</DataValue>
         </div>
         <div className="p-3">
-          <div className="text-xs text-muted-foreground">Failed files</div>
-          <div className="mt-1 text-xl font-semibold">{failed.toLocaleString()}</div>
+          <FieldLabel>Failed files</FieldLabel>
+          <DataValue className="mt-1" size="md">{failed.toLocaleString()}</DataValue>
         </div>
       </div>
       {!scanFiles.length ? (
@@ -73,14 +72,14 @@ export default function DiscoveryPage() {
               <TableBody>
                 {scanFiles.map((file) => (
                   <TableRow key={file.id}>
-                    <TableCell className="max-w-xl break-all font-mono text-xs" title={file.path}>
-                      {file.path}
+                    <TableCell className="max-w-xl break-all" title={file.path}>
+                      <MonoText>{file.path}</MonoText>
                     </TableCell>
                     <TableCell><Badge variant={variant(file.status)}>{file.status}</Badge></TableCell>
                     <TableCell>{file.sizeBytes.toLocaleString()} bytes</TableCell>
                     <TableCell>{formatDate(file.modifiedTime)}</TableCell>
                     <TableCell>{file.parser ?? "None"}</TableCell>
-                    <TableCell className="max-w-sm whitespace-normal break-words text-xs">
+                    <TableCell className="max-w-sm whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">
                       {String(file.rawMetadata.reason ?? file.errors[0] ?? file.warnings[0] ?? "None")}
                     </TableCell>
                   </TableRow>

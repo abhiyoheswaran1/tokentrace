@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/typography";
 import { ScanHealthSummary } from "@/components/scan-health-summary";
 import { getScanTrustData } from "@/src/lib/analytics";
 
@@ -12,12 +13,10 @@ export default function DiagnosticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Ingestion Diagnostics</h1>
-        <p className="text-sm text-muted-foreground">
-          Passive filesystem ingestion status, parser coverage, and confidence transparency.
-        </p>
-      </div>
+      <PageHeader
+        title="Ingestion Diagnostics"
+        description="Passive filesystem ingestion status, parser coverage, and confidence transparency."
+      />
 
       <ScanHealthSummary health={data.health} />
 

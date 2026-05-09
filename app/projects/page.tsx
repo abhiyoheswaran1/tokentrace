@@ -3,6 +3,7 @@ import { RankBarChart } from "@/components/charts/rank-bar-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataValue, MonoText, PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData } from "@/src/lib/analytics";
 import { formatCurrency, formatDate, formatTokens } from "@/src/lib/format";
 
@@ -14,12 +15,10 @@ export default function ProjectAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Project Analytics</h1>
-        <p className="text-sm text-muted-foreground">
-          Group usage by local repository or inferred project path.
-        </p>
-      </div>
+      <PageHeader
+        title="Project Analytics"
+        description="Group usage by local repository or inferred project path."
+      />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
         <Card>
@@ -30,8 +29,8 @@ export default function ProjectAnalyticsPage() {
           <CardContent>
             {mostExpensive ? (
               <div className="space-y-2">
-                <div className="text-2xl font-semibold">{mostExpensive.project}</div>
-                <div className="text-sm text-muted-foreground">{mostExpensive.path}</div>
+                <DataValue size="lg">{mostExpensive.project}</DataValue>
+                <MonoText className="block break-all text-muted-foreground">{mostExpensive.path}</MonoText>
                 <div className="text-sm">
                   {formatTokens(mostExpensive.totalTokens)} tokens, {formatCurrency(mostExpensive.cost)}
                 </div>
@@ -93,7 +92,9 @@ export default function ProjectAnalyticsPage() {
                       {project.project}
                     </Link>
                   </TableCell>
-                  <TableCell className="max-w-sm truncate">{project.path}</TableCell>
+                  <TableCell className="max-w-sm truncate">
+                    <MonoText className="text-muted-foreground">{project.path}</MonoText>
+                  </TableCell>
                   <TableCell>{formatTokens(project.totalTokens)}</TableCell>
                   <TableCell>{formatCurrency(project.cost)}</TableCell>
                   <TableCell>{project.sessions.toLocaleString()}</TableCell>

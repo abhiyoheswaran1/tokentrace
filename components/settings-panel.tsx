@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { DataValue, FieldLabel, MonoText } from "@/components/ui/typography";
 
 type SettingsPayload = {
   customFolders: string[];
@@ -117,8 +118,8 @@ export function SettingsPanel({
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
             <Label>Database path</Label>
-            <div className="rounded-md border bg-muted/40 p-3 font-mono text-xs">
-              {initialSettings.databasePath}
+            <div className="rounded-md border bg-muted/40 p-3">
+              <MonoText>{initialSettings.databasePath}</MonoText>
             </div>
           </div>
           <label className="flex items-center gap-3 rounded-md border bg-card p-3 text-sm">
@@ -148,34 +149,34 @@ export function SettingsPanel({
         <CardContent className="space-y-4">
           <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 lg:grid-cols-4">
             <div className="p-3">
-              <div className="text-xs text-muted-foreground">Last scan</div>
-              <div className="mt-1 text-sm font-medium">
+              <FieldLabel>Last scan</FieldLabel>
+              <DataValue className="mt-1">
                 {initialScanHealth.latestRun
                   ? formatDate(initialScanHealth.latestRun.completedAt ?? initialScanHealth.latestRun.startedAt)
                   : "Never"}
-              </div>
+              </DataValue>
             </div>
             <div className="p-3">
-              <div className="text-xs text-muted-foreground">Files scanned</div>
-              <div className="mt-1 text-sm font-medium">
+              <FieldLabel>Files scanned</FieldLabel>
+              <DataValue className="mt-1">
                 {initialScanHealth.latestRun?.filesScanned.toLocaleString() ?? "0"}
-              </div>
+              </DataValue>
             </div>
             <div className="p-3">
-              <div className="text-xs text-muted-foreground">Records imported</div>
-              <div className="mt-1 text-sm font-medium">
+              <FieldLabel>Records imported</FieldLabel>
+              <DataValue className="mt-1">
                 {initialScanHealth.latestRun?.recordsImported.toLocaleString() ?? "0"}
-              </div>
+              </DataValue>
             </div>
             <div className="p-3">
-              <div className="text-xs text-muted-foreground">Priced interactions</div>
-              <div className="mt-1 text-sm font-medium">
+              <FieldLabel>Priced interactions</FieldLabel>
+              <DataValue className="mt-1">
                 {percent(
                   initialScanHealth.costCoverage.total
                     ? initialScanHealth.costCoverage.priced / initialScanHealth.costCoverage.total
                     : 0
                 )}
-              </div>
+              </DataValue>
             </div>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -207,7 +208,7 @@ export function SettingsPanel({
             {customFolders.length ? (
               customFolders.map((folder) => (
                 <div key={folder} className="flex items-center justify-between gap-3 rounded-md border bg-muted/40 p-2">
-                  <span className="min-w-0 truncate font-mono text-xs">{folder}</span>
+                  <MonoText className="min-w-0 truncate text-muted-foreground">{folder}</MonoText>
                   <Button type="button" size="sm" variant="ghost" onClick={() => removeFolder(folder)}>
                     Remove
                   </Button>
@@ -248,31 +249,31 @@ export function SettingsPanel({
           {scanResult ? (
             <div className="grid gap-3 rounded-md border bg-muted/40 p-3 text-sm sm:grid-cols-4">
               <div>
-                <div className="text-xs text-muted-foreground">Files scanned</div>
-                <div className="font-semibold">{scanResult.filesScanned.toLocaleString()}</div>
+                <FieldLabel>Files scanned</FieldLabel>
+                <DataValue>{scanResult.filesScanned.toLocaleString()}</DataValue>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Records imported</div>
-                <div className="font-semibold">{scanResult.recordsImported.toLocaleString()}</div>
+                <FieldLabel>Records imported</FieldLabel>
+                <DataValue>{scanResult.recordsImported.toLocaleString()}</DataValue>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Warnings</div>
-                <div className="font-semibold">{scanResult.warnings.length.toLocaleString()}</div>
+                <FieldLabel>Warnings</FieldLabel>
+                <DataValue>{scanResult.warnings.length.toLocaleString()}</DataValue>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Errors</div>
-                <div className="font-semibold">{scanResult.errors.length.toLocaleString()}</div>
+                <FieldLabel>Errors</FieldLabel>
+                <DataValue>{scanResult.errors.length.toLocaleString()}</DataValue>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Costs recalculated</div>
-                <div className="font-semibold">{scanResult.costsRecalculated.toLocaleString()}</div>
+                <FieldLabel>Costs recalculated</FieldLabel>
+                <DataValue>{scanResult.costsRecalculated.toLocaleString()}</DataValue>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Unknown cost</div>
-                <div className="font-semibold">{scanResult.unknownCostInteractions.toLocaleString()}</div>
+                <FieldLabel>Unknown cost</FieldLabel>
+                <DataValue>{scanResult.unknownCostInteractions.toLocaleString()}</DataValue>
               </div>
               <div className="sm:col-span-2">
-                <div className="text-xs text-muted-foreground">Next step</div>
+                <FieldLabel>Next step</FieldLabel>
                 <a className="font-medium text-primary underline-offset-4 hover:underline" href="/diagnostics">
                   Review scan health and parser diagnostics
                 </a>

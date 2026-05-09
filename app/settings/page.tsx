@@ -2,6 +2,7 @@ import { getDatabasePath } from "@/src/db/client";
 import { getAppSettings } from "@/src/db/settings";
 import { getScanTrustData } from "@/src/lib/analytics";
 import { SettingsPanel } from "@/components/settings-panel";
+import { PageHeader } from "@/components/ui/typography";
 
 export const dynamic = "force-dynamic";
 
@@ -11,12 +12,10 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Configure local discovery folders, privacy controls, scans, and imported data.
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Configure local discovery folders, privacy controls, scans, and imported data."
+      />
       <SettingsPanel
         initialSettings={{
           ...settings,

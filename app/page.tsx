@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataValue, PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData } from "@/src/lib/analytics";
 import { dateRangeOptions, resolveDateRange } from "@/src/lib/date-range";
 import { formatCurrency, formatTokens, percent } from "@/src/lib/format";
+import { cn } from "@/src/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -19,19 +21,23 @@ function MetricCard({
   value,
   detailItems,
   description,
-  icon: Icon
+  icon: Icon,
+  className,
+  valueClassName
 }: {
   label: string;
   value: string;
   detailItems?: string[];
   description?: string;
   icon: typeof Database;
+  className?: string;
+  valueClassName?: string;
 }) {
   return (
-    <Card className="h-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+    <Card className={cn("h-full", className)}>
+      <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-3">
         <div className="flex min-w-0 items-center gap-1.5">
-          <CardTitle>{label}</CardTitle>
+          <CardTitle className="leading-tight">{label}</CardTitle>
           {description ? (
             <span title={description} aria-label={description}>
               <Info className="h-3.5 w-3.5 text-muted-foreground" />
@@ -41,9 +47,9 @@ function MetricCard({
         <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-semibold leading-tight">{value}</div>
+        <DataValue size="lg" className={valueClassName}>{value}</DataValue>
         {detailItems?.length ? (
-          <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs leading-snug text-muted-foreground">
+          <div className="mt-3 flex flex-wrap gap-x-2 gap-y-1 text-xs leading-snug text-muted-foreground">
             {detailItems.map((item) => (
               <span key={item}>{item}</span>
             ))}
@@ -69,23 +75,24 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   const { summary } = data;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-normal">Overview</h1>
-          <p className="text-sm text-muted-foreground">
-            Local token, cost, model, and session analytics across AI CLI tools.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/settings">
-            Configure scan <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Overview"
+        description="Local token, cost, model, and session analytics across AI CLI tools."
+        actions={
+          <Button asChild>
+            <Link href="/settings">
+              Configure scan <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        }
+      />
 
-      <div className="rounded-md border bg-card px-3 py-3">
-        <form className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between" action="/">
+      <div className="rounded-lg border bg-card p-3 sm:p-4">
+        <form
+          className="grid gap-3 xl:grid-cols-[auto_1fr] xl:items-center"
+          action="/"
+        >
           <input type="hidden" name="range" value="custom" />
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <div className="flex items-center gap-2 text-sm font-semibold">
@@ -94,8 +101,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             </div>
             <Badge variant="secondary">{range.label}</Badge>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+            <div className="flex flex-wrap gap-1.5 xl:flex-nowrap">
               {dateRangeOptions.map((option) => (
                 <Button
                   key={option.key}
@@ -108,18 +115,20 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
               ))}
             </div>
             <div className="hidden h-6 w-px bg-border xl:block" />
-            <span className="text-xs font-medium text-muted-foreground">Custom</span>
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>From</span>
-              <Input type="date" name="from" defaultValue={range.fromInput} className="h-8 w-[9.25rem]" />
-            </label>
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>To</span>
-              <Input type="date" name="to" defaultValue={range.toInput} className="h-8 w-[9.25rem]" />
-            </label>
-            <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>
-              Apply
-            </Button>
+            <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
+              <span className="text-xs font-medium text-muted-foreground">Custom</span>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>From</span>
+                <Input type="date" name="from" defaultValue={range.fromInput} className="h-8 w-[9.25rem]" />
+              </label>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>To</span>
+                <Input type="date" name="to" defaultValue={range.toInput} className="h-8 w-[9.25rem]" />
+              </label>
+              <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>
+                Apply
+              </Button>
+            </div>
           </div>
         </form>
       </div>
@@ -131,8 +140,10 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         />
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <MetricCard
+          className="md:col-span-2"
+          valueClassName="text-3xl"
           label="Processed tokens"
           value={formatTokens(summary.totalTokens)}
           description="All tokens processed locally from imported records, including fresh input, output, cache read/write, and reasoning tokens."
@@ -184,7 +195,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
         <Card>
           <CardHeader>
             <CardTitle>Token Trend</CardTitle>
@@ -205,7 +216,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(20rem,0.9fr)_minmax(0,1.1fr)]">
         <Card>
           <CardHeader>
             <CardTitle>Usage By Tool</CardTitle>

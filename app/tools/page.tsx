@@ -1,6 +1,7 @@
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData } from "@/src/lib/analytics";
 import { formatCurrency, formatTokens, percent } from "@/src/lib/format";
 
@@ -11,12 +12,10 @@ export default function ToolComparisonPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Tool Comparison</h1>
-        <p className="text-sm text-muted-foreground">
-          Compare Claude Code, Codex CLI, and generic imported tools.
-        </p>
-      </div>
+      <PageHeader
+        title="Tool Comparison"
+        description="Compare Claude Code, Codex CLI, and generic imported tools."
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

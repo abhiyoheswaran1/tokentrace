@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataValue, FieldLabel, MonoText } from "@/components/ui/typography";
 
 type ExactFilter = "all" | "exact" | "estimated";
 
@@ -207,24 +208,24 @@ export function SessionExplorer({
         <CardContent className="space-y-4">
           <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 lg:grid-cols-5">
             <div className="p-3">
-              <div className="text-xs text-muted-foreground">Filtered tokens</div>
-              <div className="mt-1 text-sm font-semibold">{formatTokens(filteredSummary.tokens)}</div>
+              <FieldLabel>Filtered tokens</FieldLabel>
+              <DataValue className="mt-1">{formatTokens(filteredSummary.tokens)}</DataValue>
             </div>
             <div className="p-3">
-              <div className="text-xs text-muted-foreground">Filtered cost</div>
-              <div className="mt-1 text-sm font-semibold">{formatCurrency(filteredSummary.cost)}</div>
+              <FieldLabel>Filtered cost</FieldLabel>
+              <DataValue className="mt-1">{formatCurrency(filteredSummary.cost)}</DataValue>
             </div>
             <div className="p-3">
-              <div className="text-xs text-muted-foreground">Exact sessions</div>
-              <div className="mt-1 text-sm font-semibold">{filteredSummary.exact.toLocaleString()}</div>
+              <FieldLabel>Exact sessions</FieldLabel>
+              <DataValue className="mt-1">{filteredSummary.exact.toLocaleString()}</DataValue>
             </div>
             <div className="p-3">
-              <div className="text-xs text-muted-foreground">Estimated sessions</div>
-              <div className="mt-1 text-sm font-semibold">{filteredSummary.estimated.toLocaleString()}</div>
+              <FieldLabel>Estimated sessions</FieldLabel>
+              <DataValue className="mt-1">{filteredSummary.estimated.toLocaleString()}</DataValue>
             </div>
             <div className="p-3">
-              <div className="text-xs text-muted-foreground">Unknown confidence</div>
-              <div className="mt-1 text-sm font-semibold">{filteredSummary.unknown.toLocaleString()}</div>
+              <FieldLabel>Unknown confidence</FieldLabel>
+              <DataValue className="mt-1">{filteredSummary.unknown.toLocaleString()}</DataValue>
             </div>
           </div>
           <div className="table-scroll">
@@ -250,15 +251,17 @@ export function SessionExplorer({
                     <TableCell className="font-medium">{session.tool}</TableCell>
                     <TableCell>{session.project}</TableCell>
                     <TableCell className="max-w-44 truncate" title={session.models}>{session.models}</TableCell>
-                    <TableCell>{formatTokens(session.totalTokens)}</TableCell>
-                    <TableCell>{formatCurrency(session.cost)}</TableCell>
+                    <TableCell className="tabular-nums">{formatTokens(session.totalTokens)}</TableCell>
+                    <TableCell className="tabular-nums">{formatCurrency(session.cost)}</TableCell>
                     <TableCell>{formatDuration(session.durationMs)}</TableCell>
                     <TableCell>
                       <Badge variant={session.tokenConfidence === "exact" ? "success" : session.tokenConfidence === "unknown" ? "destructive" : "warning"}>
                         {session.tokenConfidence}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-72 break-all font-mono text-xs" title={session.sourceFile}>{session.sourceFile}</TableCell>
+                    <TableCell className="max-w-72 break-all" title={session.sourceFile}>
+                      <MonoText>{session.sourceFile}</MonoText>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (

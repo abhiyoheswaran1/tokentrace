@@ -32,6 +32,8 @@ body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
