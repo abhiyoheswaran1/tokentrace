@@ -18,6 +18,7 @@ const summary = {
   costsRecalculated: result.costsRecalculated,
   modelAliasesUpdated: result.modelAliasesUpdated,
   unknownCostInteractions: result.unknownCostInteractions,
+  staleNonUsageSessionsRemoved: result.staleNonUsageSessionsRemoved,
   warnings: result.warnings.length,
   errors: result.errors.length
 };
@@ -31,6 +32,7 @@ if (json) {
   console.log(`Costs recalculated: ${summary.costsRecalculated}`);
   console.log(`Model aliases updated: ${summary.modelAliasesUpdated}`);
   console.log(`Unknown cost interactions: ${summary.unknownCostInteractions}`);
+  console.log(`Stale support imports removed: ${summary.staleNonUsageSessionsRemoved}`);
   console.log(`Warnings: ${summary.warnings}`);
   console.log(`Errors: ${summary.errors}`);
 }

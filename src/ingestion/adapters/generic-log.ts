@@ -23,6 +23,7 @@ function textAfter(line: string, patterns: RegExp[]) {
 export const genericLogAdapter: IngestionAdapter = {
   id: "generic-log",
   displayName: "Generic Text Log",
+  version: 1,
 
   async detect(file) {
     const extension = path.extname(file.path).toLowerCase();

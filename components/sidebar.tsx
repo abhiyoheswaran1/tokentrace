@@ -1,3 +1,4 @@
+import * as React from "react";
 import Link from "next/link";
 import {
   BarChart3,
@@ -13,6 +14,7 @@ import {
   Sparkles,
   Terminal
 } from "lucide-react";
+import { formatAppVersion, getAppVersion } from "@/src/lib/app-version";
 
 const navItems = [
   { href: "/", label: "Overview", icon: Gauge },
@@ -29,7 +31,7 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings }
 ];
 
-export function Sidebar() {
+export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string }) {
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r bg-card md:block">
       <div className="flex h-full flex-col">
@@ -60,6 +62,10 @@ export function Sidebar() {
           })}
         </nav>
         <div className="space-y-2 border-t p-4 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between gap-2">
+            <span>TokenTrace version</span>
+            <span className="font-medium text-foreground">{formatAppVersion(appVersion)}</span>
+          </div>
           <p>Local only. No telemetry. Raw content off by default.</p>
           <p>
             Open source by{" "}

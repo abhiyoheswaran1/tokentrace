@@ -78,6 +78,11 @@ npm run build
 
 Maintainers publish releases. Contributors do not need npm access.
 
+During active 0.4.0 development, internal milestone names such as `0.3.2` or
+`0.3.5` are planning labels only. Keep changes under `CHANGELOG.md`
+`Unreleased` and do not bump, tag, create a GitHub Release, or publish npm until
+the maintainer explicitly asks for a public release.
+
 For every public package release, maintainers must:
 
 - Update `CHANGELOG.md`.
@@ -87,3 +92,6 @@ For every public package release, maintainers must:
 - Publish npm only from the same versioned source.
 
 From now on, no npm release should exist without a matching Git tag and GitHub Release.
+
+Use [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) for the exact release
+gate and command sequence.

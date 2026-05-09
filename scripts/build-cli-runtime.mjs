@@ -10,6 +10,8 @@ await fs.mkdir(outdir, { recursive: true });
 const entryPoints = {
   "db-migrate": "scripts/db-migrate.ts",
   "db-seed": "scripts/db-seed.ts",
+  doctor: "scripts/doctor.ts",
+  insights: "scripts/insights.ts",
   "pricing-refresh": "scripts/pricing-refresh.ts",
   reset: "scripts/reset.ts",
   scan: "scripts/scan.ts",

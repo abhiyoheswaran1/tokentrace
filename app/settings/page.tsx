@@ -1,6 +1,7 @@
 import { getDatabasePath } from "@/src/db/client";
 import { getAppSettings } from "@/src/db/settings";
 import { getScanTrustData } from "@/src/lib/analytics";
+import { getAppVersion } from "@/src/lib/app-version";
 import { SettingsPanel } from "@/components/settings-panel";
 import { PageHeader } from "@/components/ui/typography";
 
@@ -19,7 +20,8 @@ export default function SettingsPage() {
       <SettingsPanel
         initialSettings={{
           ...settings,
-          databasePath: getDatabasePath()
+          databasePath: getDatabasePath(),
+          appVersion: getAppVersion()
         }}
         initialScanHealth={scanTrust.health}
       />

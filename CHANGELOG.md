@@ -4,6 +4,19 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Added
+
+- Visible running TokenTrace version in the desktop sidebar, mobile header, and Settings.
+- 0.4.0 roadmap and release checklist documenting internal milestones without intermediate public releases.
+- `tokentrace doctor --json` plus a shared Doctor report model for scan health and repair recommendations.
+- Bundled parser provenance metadata on imported scan files, including parser id, display name, source, and version.
+- Unknown-cost repair queue on Overview, grouped by cause, model, tool, source file, and repair path.
+- Deterministic local recommendations on Overview, Doctor, and `tokentrace insights --json`.
+- Compact and wide live status output modes for `tokentrace statusline claude` and `tokentrace watch --session`.
+- Codex integration spike documentation confirming terminal split/watch mode as the supported 0.4.0 fallback.
+- Scan cleanup for previously imported sessions whose source paths are now classified as non-usage Claude/Codex support files.
+- Scan Doctor health now uses the full latest scan-file set instead of the Raw Data table preview limit.
+
 ## [0.3.0] - 2026-05-09
 
 ### Added

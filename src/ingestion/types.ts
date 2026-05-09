@@ -77,6 +77,7 @@ export type ParseContext = {
 export interface IngestionAdapter {
   id: string;
   displayName: string;
+  version?: number;
   detect(file: FileCandidate): Promise<DetectionResult>;
   parse(file: FileCandidate, context: ParseContext): Promise<AdapterParseResult>;
 }

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { FolderPlus, Play, RotateCcw, Trash2 } from "lucide-react";
 import type { ScanHealth } from "@/src/lib/scan-health";
+import { formatAppVersion } from "@/src/lib/app-version";
 import { formatDate, percent } from "@/src/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ type SettingsPayload = {
   customFolders: string[];
   storeRawMessageContent: boolean;
   databasePath: string;
+  appVersion: string;
 };
 
 type ScanResult = {
@@ -24,6 +26,7 @@ type ScanResult = {
   costsRecalculated: number;
   modelAliasesUpdated: number;
   unknownCostInteractions: number;
+  staleNonUsageSessionsRemoved: number;
   warnings: string[];
   errors: string[];
 };
@@ -120,6 +123,16 @@ export function SettingsPanel({
             <Label>Database path</Label>
             <div className="rounded-md border bg-muted/40 p-3">
               <MonoText>{initialSettings.databasePath}</MonoText>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-md border bg-muted/40 p-3">
+              <FieldLabel>TokenTrace version</FieldLabel>
+              <DataValue className="mt-1">{formatAppVersion(initialSettings.appVersion)}</DataValue>
+            </div>
+            <div className="rounded-md border bg-muted/40 p-3">
+              <FieldLabel>Release channel</FieldLabel>
+              <DataValue className="mt-1">Local npm package</DataValue>
             </div>
           </div>
           <label className="flex items-center gap-3 rounded-md border bg-card p-3 text-sm">
@@ -271,6 +284,10 @@ export function SettingsPanel({
               <div>
                 <FieldLabel>Unknown cost</FieldLabel>
                 <DataValue>{scanResult.unknownCostInteractions.toLocaleString()}</DataValue>
+              </div>
+              <div>
+                <FieldLabel>Stale support imports removed</FieldLabel>
+                <DataValue>{scanResult.staleNonUsageSessionsRemoved.toLocaleString()}</DataValue>
               </div>
               <div className="sm:col-span-2">
                 <FieldLabel>Next step</FieldLabel>

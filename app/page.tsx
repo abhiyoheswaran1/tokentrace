@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DataValue, PageHeader } from "@/components/ui/typography";
+import { DataValue, MonoText, PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData } from "@/src/lib/analytics";
 import { resolveDateRange } from "@/src/lib/date-range";
 import { formatCurrency, formatTokens, percent } from "@/src/lib/format";
@@ -94,6 +94,29 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         />
       ) : null}
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Recommended Next Actions</CardTitle>
+          <CardDescription>
+            Local rules ranked from your scan, pricing, parser, project, and cache data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-2 lg:grid-cols-3">
+          {data.recommendations.slice(0, 3).map((item) => (
+            <Link key={item.id} href={item.href} className="rounded-md border bg-muted/20 p-3 transition-colors hover:bg-muted/40">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm font-semibold">{item.title}</div>
+                <Badge variant={item.severity === "high" ? "destructive" : item.severity === "medium" ? "warning" : "secondary"}>
+                  {item.severity}
+                </Badge>
+              </div>
+              <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.evidence}</div>
+              <div className="mt-2 text-xs font-medium text-primary">{item.action}</div>
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <MetricCard
           className="md:col-span-2"
@@ -148,6 +171,62 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           icon={MessageSquare}
         />
       </div>
+
+      {data.unknownCosts.length ? (
+        <Card>
+          <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle>Unknown Cost Repair Queue</CardTitle>
+              <CardDescription>
+                Why cost is missing, grouped by source file, model, and repair path.
+              </CardDescription>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/diagnostics">
+                Open Doctor <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="table-scroll">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cause</TableHead>
+                  <TableHead>Model</TableHead>
+                  <TableHead>Tool</TableHead>
+                  <TableHead>Interactions</TableHead>
+                  <TableHead>Tokens</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Repair</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.unknownCosts.slice(0, 6).map((row) => (
+                  <TableRow key={`${row.cause}-${row.model}-${row.sourceFile}`}>
+                    <TableCell>
+                      <Badge variant={row.cause === "missing pricing" ? "warning" : "secondary"}>
+                        {row.cause}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{row.model}</TableCell>
+                    <TableCell>{row.tool}</TableCell>
+                    <TableCell>{row.interactions.toLocaleString()}</TableCell>
+                    <TableCell>{formatTokens(row.totalTokens)}</TableCell>
+                    <TableCell className="max-w-72 truncate">
+                      <MonoText className="text-muted-foreground">{row.sourceFile}</MonoText>
+                    </TableCell>
+                    <TableCell>
+                      <Link href={row.repairHref} className="font-medium text-primary underline-offset-4 hover:underline">
+                        {row.repairHref === "/pricing" ? "Configure price" : "Review parser"}
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
         <Card>

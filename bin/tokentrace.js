@@ -24,6 +24,10 @@ Usage:
   tokentrace              Start local dashboard
   tokentrace serve        Start local dashboard
   tokentrace scan         Scan local AI CLI usage logs
+  tokentrace doctor --json
+                          Inspect scan health and repair recommendations
+  tokentrace insights --json
+                          Print local recommendations as JSON
   tokentrace status --json
                           Print local usage status as JSON
   tokentrace statusline claude
@@ -191,6 +195,16 @@ async function scan(args) {
   await runNodeScript("scan", args);
 }
 
+async function doctor(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("doctor", args);
+}
+
+async function insights(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("insights", args);
+}
+
 async function refreshPrices(args) {
   await initializeDatabase({ quiet: true, refreshPrices: false });
   await runNodeScript("pricing-refresh", args.length ? args : ["--json"]);
@@ -343,6 +357,14 @@ async function main() {
   }
   if (command === "scan") {
     await scan(args);
+    return;
+  }
+  if (command === "doctor") {
+    await doctor(args);
+    return;
+  }
+  if (command === "insights") {
+    await insights(args);
     return;
   }
   if (command === "status") {

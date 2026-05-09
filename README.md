@@ -29,14 +29,22 @@ CLI commands:
 tokentrace              # Start local dashboard
 tokentrace serve        # Start local dashboard
 tokentrace scan         # Scan local AI CLI usage logs
+tokentrace doctor --json
+                        # Inspect scan health and repair recommendations
+tokentrace insights --json
+                        # Print local recommendations as JSON
 tokentrace status --json
                         # Print local usage status as JSON
 tokentrace statusline claude
                         # Render a Claude Code status line from stdin
+tokentrace statusline claude --compact
+                        # Render a shorter Claude Code status line
 tokentrace statusline setup claude
                         # Print Claude Code statusLine setup JSON
 tokentrace watch --session
                         # Watch local usage status in a terminal split
+tokentrace watch --session --compact
+                        # Watch a compact live status line
 tokentrace pricing refresh
                         # Refresh public model prices
 tokentrace run <cmd>    # Optional wrapper mode for command runtime diagnostics
@@ -70,6 +78,10 @@ npm run reset        # Clear imported data and scan history
 npm test             # Run parser and cost tests
 npm run verify       # Run Vitest and TypeScript checks
 ```
+
+Release work uses internal milestone commits until the next public minor
+release. See [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) before
+bumping versions, tagging, creating GitHub releases, or publishing npm.
 
 In local development, the SQLite database defaults to `.tokentrace/tokentrace.db`. Override it with:
 
@@ -166,7 +178,7 @@ tokentrace status --json
 tokentrace watch --session
 ```
 
-Codex CLI status-line integration is intentionally deferred until its status-line and hook contracts are stable enough to support without fragile terminal output parsing. Use `tokentrace watch --session` in a terminal split or tmux pane as the current fallback.
+Codex CLI status-line integration is intentionally deferred until its status-line and hook contracts are stable enough to support without fragile terminal output parsing. Use `tokentrace watch --session --compact` in a terminal split or tmux pane as the current fallback. See [docs/CODEX_INTEGRATION_SPIKE.md](docs/CODEX_INTEGRATION_SPIKE.md) for the current decision.
 
 ## Screenshots
 

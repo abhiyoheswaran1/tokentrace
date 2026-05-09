@@ -4,6 +4,7 @@ import { sqlite } from "@/src/db/client";
 import { getAppSettings } from "@/src/db/settings";
 import { recalculateInteractionCosts, type CostRecalculationResult } from "@/src/lib/cost-recalculation";
 import { hashContent, stableId } from "@/src/lib/ids";
+import { nonUsageFileReason } from "@/src/ingestion/path-classifier";
 import { adapters } from "./adapters";
 import { discoverFilesWithIgnored, expandHome, getDefaultSearchRoots } from "./discovery";
 import { importSessions } from "./persist";
@@ -23,6 +24,7 @@ export type RunScanResult = {
   costsRecalculated: number;
   modelAliasesUpdated: number;
   unknownCostInteractions: number;
+  staleNonUsageSessionsRemoved: number;
   warnings: string[];
   errors: string[];
 };
@@ -121,6 +123,40 @@ function appendFileMessages(target: string, warnings: string[], errors: string[]
   allErrors.push(...errors.map((error) => `${target}: ${error}`));
 }
 
+function parserMetadata(adapter: IngestionAdapter) {
+  return {
+    id: adapter.id,
+    displayName: adapter.displayName,
+    source: "bundled",
+    version: adapter.version ?? 1
+  };
+}
+
+function purgeStaleNonUsageSessions() {
+  const sessions = sqlite
+    .prepare("SELECT id, source_file AS sourceFile FROM sessions")
+    .all() as Array<{ id: string; sourceFile: string }>;
+  const staleSessions = sessions.filter((session) => nonUsageFileReason(session.sourceFile));
+  if (!staleSessions.length) return 0;
+
+  const deleteToolCalls = sqlite.prepare(
+    "DELETE FROM tool_calls WHERE interaction_id IN (SELECT id FROM interactions WHERE session_id = ?)"
+  );
+  const deleteInteractions = sqlite.prepare("DELETE FROM interactions WHERE session_id = ?");
+  const deleteSession = sqlite.prepare("DELETE FROM sessions WHERE id = ?");
+
+  const remove = sqlite.transaction((ids: string[]) => {
+    for (const id of ids) {
+      deleteToolCalls.run(id);
+      deleteInteractions.run(id);
+      deleteSession.run(id);
+    }
+  });
+
+  remove(staleSessions.map((session) => session.id));
+  return staleSessions.length;
+}
+
 export async function runScan(options: RunScanOptions = {}): Promise<RunScanResult> {
   const settings = getAppSettings();
   const explicitFolders = options.folders ?? [];
@@ -136,6 +172,14 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
   const allErrors: string[] = [];
   let recordsImported = 0;
   let filesScanned = 0;
+  const staleNonUsageSessionsRemoved = purgeStaleNonUsageSessions();
+  if (staleNonUsageSessionsRemoved > 0) {
+    allWarnings.push(
+      `Removed ${staleNonUsageSessionsRemoved.toLocaleString()} previously imported ${
+        staleNonUsageSessionsRemoved === 1 ? "session" : "sessions"
+      } from paths now classified as non-usage support files.`
+    );
+  }
 
   sqlite
     .prepare(
@@ -226,6 +270,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
         warnings,
         errors,
         rawMetadata: {
+          parser: parserMetadata(adapterChoice.selected.adapter),
           confidence: adapterChoice.selected.confidence,
           reason: adapterChoice.selected.reason,
           tokenConfidence,
@@ -275,6 +320,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
     costsRecalculated: recalculation.interactionsUpdated,
     modelAliasesUpdated: recalculation.modelsUpdated,
     unknownCostInteractions: recalculation.unknownCostInteractions,
+    staleNonUsageSessionsRemoved,
     warnings: allWarnings,
     errors: allErrors
   };

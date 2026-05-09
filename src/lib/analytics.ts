@@ -4,6 +4,7 @@ import {
   type ScanConfidenceSummary,
   type ScanHealth
 } from "@/src/lib/scan-health";
+import { buildLocalRecommendations, type LocalRecommendation } from "@/src/lib/recommendations";
 
 export type TrendPoint = {
   date: string;
@@ -107,6 +108,18 @@ export type Insight = {
   recommendation: string;
 };
 
+export type UnknownCostQueueRow = {
+  cause: "missing model" | "missing pricing" | "missing token count" | "other";
+  model: string;
+  provider: string;
+  tool: string;
+  sourceFile: string;
+  interactions: number;
+  sessions: number;
+  totalTokens: number;
+  repairHref: string;
+};
+
 export type DebugScanFile = {
   id: string;
   scanRunId: string;
@@ -148,6 +161,8 @@ export type AnalyticsData = {
   models: ModelAnalyticsRow[];
   projects: ProjectAnalyticsRow[];
   sessions: SessionRow[];
+  unknownCosts: UnknownCostQueueRow[];
+  recommendations: LocalRecommendation[];
   insights: Insight[];
 };
 
@@ -528,6 +543,99 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
   }));
 }
 
+function getUnknownCostQueue(filters: AnalyticsFilters = {}): UnknownCostQueueRow[] {
+  const filter = timestampJoinCondition(filters, "i");
+  return rows<UnknownCostQueueRow>(
+    `SELECT
+      CASE
+        WHEN lower(COALESCE(m.name, 'unknown')) = 'unknown' THEN 'missing model'
+        WHEN COALESCE(i.total_tokens, 0) <= 0 THEN 'missing token count'
+        WHEN lower(COALESCE(m.name, 'unknown')) <> 'unknown'
+          AND COALESCE(i.total_tokens, 0) > 0
+          AND (m.input_token_price IS NULL OR m.output_token_price IS NULL)
+          THEN 'missing pricing'
+        ELSE 'other'
+      END AS cause,
+      COALESCE(m.name, 'unknown') AS model,
+      COALESCE(p.name, 'Unknown') AS provider,
+      t.name AS tool,
+      s.source_file AS sourceFile,
+      COUNT(i.id) AS interactions,
+      COUNT(DISTINCT s.id) AS sessions,
+      COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
+      CASE
+        WHEN lower(COALESCE(m.name, 'unknown')) = 'unknown' THEN '/parser-debug'
+        WHEN COALESCE(i.total_tokens, 0) <= 0 THEN '/parser-debug'
+        WHEN lower(COALESCE(m.name, 'unknown')) <> 'unknown'
+          AND COALESCE(i.total_tokens, 0) > 0
+          AND (m.input_token_price IS NULL OR m.output_token_price IS NULL)
+          THEN '/pricing'
+        ELSE '/parser-debug'
+      END AS repairHref
+     FROM interactions i
+     JOIN sessions s ON s.id = i.session_id ${filter.sql}
+     JOIN tools t ON t.id = s.tool_id
+     LEFT JOIN models m ON m.id = i.model_id
+     LEFT JOIN providers p ON p.id = m.provider_id
+     WHERE i.cost IS NULL
+     GROUP BY cause, m.id, t.id, s.source_file
+     ORDER BY
+      CASE cause
+        WHEN 'missing pricing' THEN 0
+        WHEN 'missing model' THEN 1
+        WHEN 'missing token count' THEN 2
+        ELSE 3
+      END,
+      interactions DESC,
+      totalTokens DESC
+     LIMIT 20`,
+    ...filter.params
+  ).map((row) => ({
+    ...row,
+    interactions: number(row.interactions),
+    sessions: number(row.sessions),
+    totalTokens: number(row.totalTokens)
+  }));
+}
+
+function getLatestScanRecommendationStats() {
+  const latest = sqlite
+    .prepare(
+      `SELECT id, records_imported AS recordsImported
+       FROM scan_runs
+       ORDER BY started_at DESC
+       LIMIT 1`
+    )
+    .get() as { id: string; recordsImported: number } | undefined;
+
+  if (!latest) {
+    return {
+      latestRecordsImported: 0,
+      duplicateFiles: 0,
+      parserReviewFiles: 0,
+      ignoredFiles: 0
+    };
+  }
+
+  const counts = rows<{ status: string; count: number }>(
+    `SELECT status, COUNT(*) AS count
+     FROM scan_files
+     WHERE scan_run_id = ?
+     GROUP BY status`,
+    latest.id
+  ).reduce<Record<string, number>>((summary, row) => {
+    summary[row.status] = number(row.count);
+    return summary;
+  }, {});
+
+  return {
+    latestRecordsImported: number(latest.recordsImported),
+    duplicateFiles: counts.skipped_duplicate ?? 0,
+    parserReviewFiles: (counts.skipped_unknown ?? 0) + (counts.failed ?? 0) + (counts.imported_with_errors ?? 0),
+    ignoredFiles: counts.ignored_non_usage ?? 0
+  };
+}
+
 function buildInsights(data: {
   summary: SummaryMetrics;
   projects: ProjectAnalyticsRow[];
@@ -629,6 +737,14 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
   const models = getModelRows(filters);
   const projects = getProjectRows(filters);
   const sessions = getSessions(filters);
+  const unknownCosts = getUnknownCostQueue(filters);
+  const recommendations = buildLocalRecommendations({
+    summary,
+    tools,
+    projects,
+    unknownCosts,
+    scan: getLatestScanRecommendationStats()
+  });
   const insights = buildInsights({ summary, trends, models, projects, sessions });
 
   return {
@@ -638,24 +754,38 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
     models,
     projects,
     sessions,
+    unknownCosts,
+    recommendations,
     insights
   };
 }
 
 export function getDebugData() {
-  const scanRuns = rows<DebugScanRun>(
+  return {
+    scanRuns: getScanRunRows(50),
+    scanFiles: getScanFileRows(500)
+  };
+}
+
+function getScanRunRows(limit: number) {
+  return rows<DebugScanRun>(
     `SELECT id, started_at AS startedAt, completed_at AS completedAt,
       files_scanned AS filesScanned, records_imported AS recordsImported, warnings, errors
      FROM scan_runs
      ORDER BY started_at DESC
-     LIMIT 50`
+     LIMIT ?`,
+    limit
   ).map((row) => ({
     ...row,
     warnings: parseJson<string[]>(row.warnings, []),
     errors: parseJson<string[]>(row.errors, [])
   }));
+}
 
-  const scanFiles = rows<DebugScanFile>(
+function getScanFileRows(limit: number | null) {
+  const limitSql = limit == null ? "" : "LIMIT ?";
+  const params = limit == null ? [] : [limit];
+  return rows<DebugScanFile>(
     `SELECT sf.id, sf.scan_run_id AS scanRunId, sf.path, sf.modified_time AS modifiedTime,
       sf.size_bytes AS sizeBytes, sf.file_hash AS fileHash, sf.parser, sf.status,
       sf.records_imported AS recordsImported, sf.warnings, sf.errors, sf.raw_metadata AS rawMetadata,
@@ -663,15 +793,14 @@ export function getDebugData() {
      FROM scan_files sf
      JOIN scan_runs sr ON sr.id = sf.scan_run_id
      ORDER BY sr.started_at DESC, sf.path ASC
-     LIMIT 500`
+     ${limitSql}`,
+    ...params
   ).map((row) => ({
     ...row,
     warnings: parseJson<string[]>(row.warnings, []),
     errors: parseJson<string[]>(row.errors, []),
     rawMetadata: parseJson<Record<string, unknown>>(row.rawMetadata, {})
   }));
-
-  return { scanRuns, scanFiles };
 }
 
 export function getScanConfidenceSummary(): ScanConfidenceSummary {
@@ -748,15 +877,17 @@ export function getPricedModelCount() {
 }
 
 export function getScanTrustData(): ScanTrustData {
-  const debug = getDebugData();
+  const scanRuns = getScanRunRows(50);
+  const scanFiles = getScanFileRows(null);
   const confidence = getScanConfidenceSummary();
   return {
-    ...debug,
+    scanRuns,
+    scanFiles,
     confidence,
     pricedModelCount: getPricedModelCount(),
     health: buildScanHealth({
-      scanRuns: debug.scanRuns,
-      scanFiles: debug.scanFiles,
+      scanRuns,
+      scanFiles,
       confidence
     })
   };

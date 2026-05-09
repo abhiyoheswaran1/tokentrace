@@ -115,6 +115,29 @@ describe("Claude status line integration", () => {
     expect(line).toBe("TokenTrace | Opus | session 3.3K tokens | cache 2.0K | cost $0.1235 | pricing unscanned");
   });
 
+  it("renders compact Claude Code status lines for cramped terminals", async () => {
+    const { buildClaudeStatusLine } = await loadStatusModule();
+
+    const line = await buildClaudeStatusLine(
+      {
+        model: { id: "claude-opus-4-7", display_name: "Opus" },
+        cost: { total_cost_usd: 0.123456 },
+        context_window: {
+          used_percentage: 7,
+          current_usage: {
+            input_tokens: 1000,
+            output_tokens: 250,
+            cache_read_input_tokens: 2000,
+            cache_creation_input_tokens: 0
+          }
+        }
+      },
+      { mode: "compact" }
+    );
+
+    expect(line).toBe("TT | Opus | 3.3K tok | cache 2.0K | $0.1235");
+  });
+
   it("prints Claude setup instructions without mutating user settings", async () => {
     const { claudeStatusLineSetupText } = await loadStatusModule();
     expect(claudeStatusLineSetupText()).toContain("\"statusLine\"");

@@ -17,6 +17,12 @@ function sourceFileArg() {
   return argValue("--source-file") ?? argValue("--transcript-path");
 }
 
+function modeArg() {
+  if (args.includes("--compact")) return "compact" as const;
+  if (args.includes("--wide")) return "wide" as const;
+  return "default" as const;
+}
+
 function intervalArg() {
   const value = argValue("--interval");
   if (!value) return 1000;
@@ -36,7 +42,7 @@ async function renderClaudeStatusLine() {
   const text = await readStdin();
   try {
     const input = JSON.parse(text);
-    console.log(await buildClaudeStatusLine(input));
+    console.log(await buildClaudeStatusLine(input, { mode: modeArg() }));
   } catch {
     console.log("TokenTrace | Claude | status input unavailable");
   }
@@ -47,7 +53,7 @@ function renderStatus(json: boolean) {
   if (json) {
     console.log(JSON.stringify(status, null, 2));
   } else {
-    console.log(renderLiveStatusLine(status));
+    console.log(renderLiveStatusLine(status, { mode: modeArg() }));
   }
 }
 
@@ -55,7 +61,7 @@ async function watchStatus() {
   const interval = intervalArg();
   let previousLength = 0;
   const write = () => {
-    const line = renderLiveStatusLine(getLiveStatusSnapshot({ sourceFile: sourceFileArg() }));
+    const line = renderLiveStatusLine(getLiveStatusSnapshot({ sourceFile: sourceFileArg() }), { mode: modeArg() });
     const padded = line.padEnd(previousLength, " ");
     previousLength = line.length;
     process.stdout.write(`\r${padded}`);

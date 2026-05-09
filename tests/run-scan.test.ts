@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 let activeSqlite: {
   close: () => void;
-  prepare: (sql: string) => { all: () => unknown[] };
+  prepare: (sql: string) => { all: (...params: any[]) => unknown[] };
 } | null = null;
 const tempDirs: string[] = [];
 
@@ -24,7 +24,7 @@ async function loadRunScan() {
     import("@/src/db/client")
   ]);
   activeSqlite = sqlite;
-  return { runScan, scanDir };
+  return { runScan, scanDir, sqlite };
 }
 
 afterEach(async () => {
@@ -97,5 +97,62 @@ describe("runScan result messages", () => {
     expect(JSON.parse(rows[0].rawMetadata)).toMatchObject({
       ignoreReason: "Claude support file outside project transcripts"
     });
+  });
+
+  it("records bundled parser provenance for imported usage files", async () => {
+    const { runScan, scanDir } = await loadRunScan();
+    const transcriptPath = path.join(scanDir, ".claude", "projects", "-Users-abhyoh-project", "session.jsonl");
+
+    await fs.mkdir(path.dirname(transcriptPath), { recursive: true });
+    await fs.writeFile(
+      transcriptPath,
+      JSON.stringify({
+        type: "assistant",
+        message: { role: "assistant", model: "claude-sonnet-4-5-20250929" },
+        usage: { input_tokens: 10, output_tokens: 20 }
+      }) + "\n"
+    );
+
+    await runScan({ folders: [scanDir], includeDefaults: false });
+    const rows = activeSqlite
+      ?.prepare("SELECT parser, raw_metadata AS rawMetadata FROM scan_files WHERE path = ?")
+      .all(transcriptPath) as Array<{ parser: string; rawMetadata: string }>;
+
+    expect(rows[0].parser).toBe("claude-code");
+    expect(JSON.parse(rows[0].rawMetadata)).toMatchObject({
+      parser: {
+        id: "claude-code",
+        displayName: "Claude Code",
+        source: "bundled",
+        version: 1
+      }
+    });
+  });
+
+  it("purges previously imported sessions from paths now classified as non-usage support files", async () => {
+    const { runScan, scanDir, sqlite } = await loadRunScan();
+    const stalePath = path.join(scanDir, ".claude", "plugins", "marketplace", "README.md");
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('generic', 'Generic', 'local-log')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('generic-log', 'generic', 'Generic Log')").run();
+    sqlite
+      .prepare("INSERT INTO sessions (id, source_id, tool_id, source_file) VALUES ('stale-session', 'stale-source', 'generic-log', ?)")
+      .run(stalePath);
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, total_tokens, token_confidence)
+         VALUES ('stale-interaction', 'stale-interaction-source', 'stale-session', 'assistant', 100, 'low-confidence estimate')`
+      )
+      .run();
+
+    const result = await runScan({ folders: [scanDir], includeDefaults: false });
+    const sessions = sqlite.prepare("SELECT id FROM sessions").all();
+
+    expect(result.staleNonUsageSessionsRemoved).toBe(1);
+    expect(sessions).toEqual([]);
+    expect(result.warnings).toContain(
+      "Removed 1 previously imported session from paths now classified as non-usage support files."
+    );
   });
 });

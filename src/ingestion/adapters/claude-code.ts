@@ -16,6 +16,7 @@ function projectPathFromClaudeProjectFile(filePath: string) {
 export const claudeCodeAdapter: IngestionAdapter = {
   id: "claude-code",
   displayName: "Claude Code",
+  version: 1,
 
   async detect(file) {
     const normalized = file.path.toLowerCase();

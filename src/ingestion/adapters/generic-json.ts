@@ -56,6 +56,7 @@ function collectRecords(value: unknown): Record<string, unknown>[] {
 export const genericJsonAdapter: IngestionAdapter = {
   id: "generic-json",
   displayName: "Generic JSON",
+  version: 1,
 
   async detect(file) {
     if (path.extname(file.path).toLowerCase() !== ".json") {

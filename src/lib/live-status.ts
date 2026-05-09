@@ -37,6 +37,8 @@ export type ClaudeTranscriptSummary = {
   reasoningTokens: number;
 };
 
+export type StatusLineMode = "default" | "compact" | "wide";
+
 type ClaudeStatusInput = {
   transcript_path?: unknown;
   model?: {
@@ -163,8 +165,33 @@ export function getLiveStatusSnapshot(options: { sourceFile?: string | null } = 
   };
 }
 
-export function renderLiveStatusLine(status: LiveStatusSnapshot) {
+export function renderLiveStatusLine(status: LiveStatusSnapshot, options: { mode?: StatusLineMode } = {}) {
   const cost = status.totalCost == null ? "Unknown" : formatCurrency(status.totalCost);
+  if (options.mode === "compact") {
+    return [
+      "TT",
+      status.scope === "source-file" ? "session" : "all",
+      `${formatTokens(status.totalTokens)} tok`,
+      cost,
+      `${status.unknownCostInteractions.toLocaleString()} unk`
+    ].join(" | ");
+  }
+
+  if (options.mode === "wide") {
+    return [
+      "TokenTrace",
+      status.scope === "source-file" ? "session" : "all",
+      `${formatTokens(status.totalTokens)} tokens`,
+      `input ${formatTokens(status.inputTokens)}`,
+      `output ${formatTokens(status.outputTokens)}`,
+      `cache read ${formatTokens(status.cacheReadTokens)}`,
+      `cache write ${formatTokens(status.cacheWriteTokens)}`,
+      `reasoning ${formatTokens(status.reasoningTokens)}`,
+      `cost ${cost}`,
+      `${status.unknownCostInteractions.toLocaleString()} unknown`
+    ].join(" | ");
+  }
+
   return [
     "TokenTrace",
     status.scope === "source-file" ? "session" : "all",
@@ -247,7 +274,7 @@ function summarizeClaudeContext(input: ClaudeStatusInput): ClaudeTranscriptSumma
   };
 }
 
-export async function buildClaudeStatusLine(input: ClaudeStatusInput) {
+export async function buildClaudeStatusLine(input: ClaudeStatusInput, options: { mode?: StatusLineMode } = {}) {
   const transcriptPath = string(input.transcript_path);
   const transcriptSummary = transcriptPath ? await summarizeClaudeTranscript(transcriptPath) : null;
   const summary = transcriptSummary ?? summarizeClaudeContext(input);
@@ -260,6 +287,9 @@ export async function buildClaudeStatusLine(input: ClaudeStatusInput) {
       : "pricing unscanned";
 
   if (!summary) {
+    if (options.mode === "compact") {
+      return ["TT", model, "no tokens", formatCurrency(cost)].join(" | ");
+    }
     return [
       "TokenTrace",
       model,
@@ -270,6 +300,31 @@ export async function buildClaudeStatusLine(input: ClaudeStatusInput) {
   }
 
   const scope = summary.source === "transcript" ? "session" : "ctx";
+  if (options.mode === "compact") {
+    return [
+      "TT",
+      model,
+      `${formatTokens(summary.totalTokens)} tok`,
+      `cache ${formatTokens(summary.cachedTokens)}`,
+      formatCurrency(cost)
+    ].join(" | ");
+  }
+
+  if (options.mode === "wide") {
+    return [
+      "TokenTrace",
+      model,
+      `${scope} ${formatTokens(summary.totalTokens)} tokens`,
+      `input ${formatTokens(summary.inputTokens)}`,
+      `output ${formatTokens(summary.outputTokens)}`,
+      `cache read ${formatTokens(summary.cacheReadTokens)}`,
+      `cache write ${formatTokens(summary.cacheWriteTokens)}`,
+      `reasoning ${formatTokens(summary.reasoningTokens)}`,
+      `cost ${formatCurrency(cost)}`,
+      pricing
+    ].join(" | ");
+  }
+
   return [
     "TokenTrace",
     model,

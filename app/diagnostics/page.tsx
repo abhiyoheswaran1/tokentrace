@@ -2,9 +2,10 @@ import Link from "next/link";
 import { AlertTriangle, ArrowRight, CheckCircle2, CircleDashed } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/typography";
+import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { ScanHealthSummary } from "@/components/scan-health-summary";
-import { getScanTrustData } from "@/src/lib/analytics";
+import { getAnalyticsData, getScanTrustData } from "@/src/lib/analytics";
+import { buildDoctorReport, type DoctorReport } from "@/src/lib/doctor";
 import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
 
 export const dynamic = "force-dynamic";
@@ -131,9 +132,110 @@ function TrustChecklist({
   );
 }
 
+function DoctorReportPanel({ report }: { report: DoctorReport }) {
+  const statusRows = [
+    ["Imported", report.fileStatus.imported],
+    ["Duplicates", report.fileStatus.duplicates],
+    ["Ignored", report.fileStatus.ignored],
+    ["Unsupported", report.fileStatus.unsupported],
+    ["Failed", report.fileStatus.failed]
+  ];
+  const fixCommands = [
+    "tokentrace scan",
+    "tokentrace doctor --json",
+    "tokentrace pricing refresh",
+    "tokentrace status --json"
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Doctor report</CardTitle>
+        <CardDescription>
+          A shared report used by this page and `tokentrace doctor --json`.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid overflow-hidden rounded-md border sm:grid-cols-2 xl:grid-cols-4">
+          <div className="p-3">
+            <FieldLabel>Readable roots</FieldLabel>
+            <DataValue className="mt-1" size="md">{report.roots.count.toLocaleString()}</DataValue>
+          </div>
+          <div className="p-3">
+            <FieldLabel>Latest files</FieldLabel>
+            <DataValue className="mt-1" size="md">{report.latestScan.filesScanned.toLocaleString()}</DataValue>
+          </div>
+          <div className="p-3">
+            <FieldLabel>Imported records</FieldLabel>
+            <DataValue className="mt-1" size="md">{report.latestScan.recordsImported.toLocaleString()}</DataValue>
+          </div>
+          <div className="p-3">
+            <FieldLabel>Unknown cost</FieldLabel>
+            <DataValue className="mt-1" size="md">{report.pricing.unknown.toLocaleString()}</DataValue>
+          </div>
+        </div>
+
+        {report.latestScan.zeroImportExplanation ? (
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+            {report.latestScan.zeroImportExplanation}
+          </div>
+        ) : null}
+
+        <div className="grid gap-3 xl:grid-cols-[1fr_1fr]">
+          <div className="rounded-md border bg-muted/30 p-3">
+            <div className="mb-3 text-sm font-semibold">File handling</div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 xl:grid-cols-2">
+              {statusRows.map(([label, value]) => (
+                <div key={label} className="rounded-md bg-card p-2">
+                  <FieldLabel>{label}</FieldLabel>
+                  <DataValue className="mt-1">{Number(value).toLocaleString()}</DataValue>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-md border bg-muted/30 p-3">
+            <div className="mb-3 text-sm font-semibold">Copyable fixes</div>
+            <div className="space-y-2">
+              {fixCommands.map((command) => (
+                <div key={command} className="rounded-md border bg-card px-3 py-2">
+                  <MonoText>{command}</MonoText>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-sm font-semibold">Repair recommendations</div>
+          <div className="grid gap-2 lg:grid-cols-2">
+            {report.recommendations.slice(0, 6).map((item) => (
+              <Link key={item.id} href={item.href ?? "/diagnostics"} className="rounded-md border bg-card p-3 transition-colors hover:bg-muted/40">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-sm font-semibold">{item.title}</div>
+                  <Badge variant={item.severity === "high" ? "destructive" : item.severity === "medium" ? "warning" : "secondary"}>
+                    {item.severity}
+                  </Badge>
+                </div>
+                <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</div>
+                <div className="mt-2 text-xs font-medium text-primary">{item.action}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function DiagnosticsPage() {
   const data = getScanTrustData();
+  const analytics = getAnalyticsData();
   const roots = await getDefaultSearchRoots();
+  const doctorReport = buildDoctorReport({
+    ...data,
+    roots
+  });
 
   return (
     <div className="space-y-6">
@@ -143,6 +245,29 @@ export default async function DiagnosticsPage() {
       />
 
       <TrustChecklist data={data} rootCount={roots.length} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Local recommendations</CardTitle>
+          <CardDescription>Deterministic next actions from local scan, pricing, parser, project, and cache data.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-2 lg:grid-cols-3">
+          {analytics.recommendations.slice(0, 3).map((item) => (
+            <Link key={item.id} href={item.href} className="rounded-md border bg-muted/20 p-3 transition-colors hover:bg-muted/40">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm font-semibold">{item.title}</div>
+                <Badge variant={item.severity === "high" ? "destructive" : item.severity === "medium" ? "warning" : "secondary"}>
+                  {item.severity}
+                </Badge>
+              </div>
+              <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.evidence}</div>
+              <div className="mt-2 text-xs font-medium text-primary">{item.action}</div>
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
+
+      <DoctorReportPanel report={doctorReport} />
 
       <ScanHealthSummary health={data.health} />
 

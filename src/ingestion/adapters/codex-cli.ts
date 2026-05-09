@@ -28,6 +28,7 @@ function flattenCodexRecord(record: Record<string, unknown>) {
 export const codexCliAdapter: IngestionAdapter = {
   id: "codex-cli",
   displayName: "Codex CLI",
+  version: 1,
 
   async detect(file) {
     const normalized = file.path.toLowerCase();
