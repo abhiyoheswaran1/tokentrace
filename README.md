@@ -8,7 +8,7 @@ Local-first analytics for AI CLI usage. TokenTrace scans local CLI logs, normali
 
 TokenTrace is designed for local development machines first, with macOS-oriented defaults. It does not require a cloud account and does not send telemetry or logs anywhere.
 
-![TokenTrace overview dashboard](docs/assets/overview.png)
+![TokenTrace 0.6.0 overview dashboard](docs/assets/overview-0.6.0.png)
 
 ## Start In Seconds
 
@@ -190,6 +190,14 @@ tokentrace watch --session
 Codex CLI status-line integration is intentionally deferred until its status-line and hook contracts are stable enough to support without fragile terminal output parsing. Use `tokentrace watch --session --compact` in a terminal split or tmux pane as the current fallback. See [docs/CODEX_INTEGRATION_SPIKE.md](docs/CODEX_INTEGRATION_SPIKE.md) for the current decision.
 
 ## Screenshots
+
+Stable Daily Tool views from `0.6.0`:
+
+![TokenTrace 0.6.0 overview dashboard](docs/assets/overview-0.6.0.png)
+
+![TokenTrace 0.6.0 Scan Doctor](docs/assets/doctor-0.6.0.png)
+
+![TokenTrace 0.6.0 package trust settings](docs/assets/settings-package-trust-0.6.0.png)
 
 CLI startup and help:
 
