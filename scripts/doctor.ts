@@ -17,8 +17,10 @@ function renderText(report: DoctorReport) {
     "",
     `Roots: ${report.roots.count}`,
     `Latest scan: ${report.latestScan.filesScanned.toLocaleString()} files, ${report.latestScan.recordsImported.toLocaleString()} records imported`,
+    `Freshness: ${report.scanFreshness.state} (${report.scanFreshness.description})`,
     `Files: ${report.fileStatus.imported.toLocaleString()} imported, ${report.fileStatus.duplicates.toLocaleString()} duplicates, ${report.fileStatus.ignored.toLocaleString()} ignored, ${report.fileStatus.unsupported.toLocaleString()} unsupported, ${report.fileStatus.failed.toLocaleString()} failed`,
     `Pricing: ${report.pricing.priced.toLocaleString()} priced, ${report.pricing.unknown.toLocaleString()} unknown`,
+    `Support: ${report.supportMatrix.summary.stable.toLocaleString()} stable, ${report.supportMatrix.summary.bestEffort.toLocaleString()} best-effort, ${report.supportMatrix.summary.ignored.toLocaleString()} ignored, ${report.supportMatrix.summary.unsupported.toLocaleString()} unsupported`,
     report.latestScan.zeroImportExplanation ? `Zero import: ${report.latestScan.zeroImportExplanation}` : null,
     "",
     "Recommendations:"

@@ -4,6 +4,20 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Added
+
+- 0.6.0 Stable Daily Tool roadmap with explicit release cards and gates.
+- Support matrix for stable, best-effort, ignored, and unsupported TokenTrace surfaces.
+- Scan Doctor support matrix and scan freshness status.
+- Overview first-run checklist that explains missing roots, no scans, zero imports, and next actions.
+- `npm run smoke:cli` for clean-home CLI checks across scan, serve, doctor, status, Claude status-line, and watch-mode commands.
+
+### Changed
+
+- Model alias suggestions now handle OpenAI/Codex provider-prefixed and dated snapshot names.
+- README documents the support matrix and unsupported product boundaries.
+- `npm run release:check` now includes the CLI smoke check before package security inspection.
+
 ## [0.5.1] - 2026-05-10
 
 ### Added

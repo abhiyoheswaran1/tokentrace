@@ -35,12 +35,26 @@ function addClaudeCandidates(name: string, candidates: string[]) {
   }
 }
 
+function addProviderPrefixCandidates(name: string, candidates: string[]) {
+  const withoutProvider = name.replace(/^[a-z0-9_.-]+\//i, "");
+  if (withoutProvider !== name) candidates.push(withoutProvider);
+}
+
+function addSnapshotDateCandidates(name: string, candidates: string[]) {
+  const withoutProvider = name.replace(/^[a-z0-9_.-]+\//i, "");
+  const lower = withoutProvider.toLowerCase();
+  const stripped = lower.replace(/[-_.]\d{4}[-_.]?\d{2}[-_.]?\d{2}$/, "");
+  if (stripped !== lower) candidates.push(stripped);
+}
+
 export function modelNameCandidates(modelName: string | null | undefined) {
   const trimmed = modelName?.trim();
   if (!trimmed) return ["unknown"];
 
   const candidates = [trimmed];
+  addProviderPrefixCandidates(trimmed, candidates);
   addClaudeCandidates(trimmed, candidates);
+  addSnapshotDateCandidates(trimmed, candidates);
 
   return unique(candidates);
 }

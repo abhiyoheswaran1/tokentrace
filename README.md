@@ -291,6 +291,21 @@ Adapters live under `src/ingestion/adapters/`:
 
 Formats for Claude Code and Codex CLI can vary across versions, so these adapters are defensive and best-effort. Unknown files fail safely and show warnings in the Raw Data page.
 
+## Support Matrix
+
+TokenTrace keeps a visible support contract so daily scans are easier to trust:
+
+| Surface | Support level | Notes |
+| --- | --- | --- |
+| Claude Code project transcripts | Stable | Primary local CLI ingestion source. |
+| Codex CLI session artifacts | Best-effort | Parsed defensively while CLI formats evolve. |
+| Generic JSONL, JSON, and text logs | Best-effort | Conservative usage-shaped records only. |
+| Claude/Codex cache, plugin, todo, config, and support files | Ignored | Tracked as non-usage files, not parser failures. |
+| Editable model pricing | Stable | Local pricing rows drive costs and unknown-cost repair queues. |
+| Claude Code status line | Stable | Uses Claude Code's documented statusLine stdin contract. |
+| Codex sticky status line | Best-effort fallback | Use `tokentrace watch --session --compact` in a split or tmux pane. |
+| Desktop app scraping, browser extensions, proxying, packet capture, telemetry | Unsupported | Outside TokenTrace's product boundary. |
+
 ## Extending Parsers
 
 Example generic JSONL fixtures are in `fixtures/generic-jsonl/`.

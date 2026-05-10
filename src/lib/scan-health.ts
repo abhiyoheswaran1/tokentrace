@@ -56,6 +56,7 @@ export type ScanHealthNoteGroup = {
 
 export type ScanHealth = {
   latestRun: ScanHealthRun | null;
+  lastSuccessfulRun: ScanHealthRun | null;
   latestFiles: ScanHealthFile[];
   headline: string;
   description: string;
@@ -65,6 +66,12 @@ export type ScanHealth = {
   latestWarnings: string[];
   latestErrors: string[];
   latestNoteGroups: ScanHealthNoteGroup[];
+  freshness: {
+    state: "no-scan" | "no-successful-scan" | "fresh" | "stale";
+    lastSuccessfulCompletedAt: number | null;
+    staleAfterMs: number;
+    description: string;
+  };
   tokenCoverage: {
     exact: number;
     highConfidenceEstimate: number;
@@ -145,16 +152,70 @@ function joinHealthParts(parts: string[]) {
   return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 }
 
+const staleAfterMs = 7 * 24 * 60 * 60 * 1000;
+
+function isSuccessfulRun(scanRun: ScanHealthRun) {
+  return scanRun.completedAt != null && scanRun.recordsImported > 0 && scanRun.errors.length === 0;
+}
+
+function buildFreshness({
+  latestRun,
+  lastSuccessfulRun,
+  now
+}: {
+  latestRun: ScanHealthRun | null;
+  lastSuccessfulRun: ScanHealthRun | null;
+  now: number;
+}): ScanHealth["freshness"] {
+  if (!latestRun) {
+    return {
+      state: "no-scan",
+      lastSuccessfulCompletedAt: null,
+      staleAfterMs,
+      description: "No local scan has run yet."
+    };
+  }
+
+  if (!lastSuccessfulRun?.completedAt) {
+    return {
+      state: "no-successful-scan",
+      lastSuccessfulCompletedAt: null,
+      staleAfterMs,
+      description: "No completed scan has imported usage records yet."
+    };
+  }
+
+  if (now - lastSuccessfulRun.completedAt > staleAfterMs) {
+    return {
+      state: "stale",
+      lastSuccessfulCompletedAt: lastSuccessfulRun.completedAt,
+      staleAfterMs,
+      description: "The last successful import is more than seven days old."
+    };
+  }
+
+  return {
+    state: "fresh",
+    lastSuccessfulCompletedAt: lastSuccessfulRun.completedAt,
+    staleAfterMs,
+    description: "Recent scan history includes a successful import."
+  };
+}
+
 export function buildScanHealth({
   scanRuns,
   scanFiles,
-  confidence
+  confidence,
+  now = Date.now()
 }: {
   scanRuns: ScanHealthRun[];
   scanFiles: ScanHealthFile[];
   confidence: ScanConfidenceSummary;
+  now?: number;
 }): ScanHealth {
   const latestRun = scanRuns[0] ?? null;
+  const lastSuccessfulRun = scanRuns.find(isSuccessfulRun) ?? null;
+  const freshness = buildFreshness({ latestRun, lastSuccessfulRun, now });
   const latestFiles = latestRun ? scanFiles.filter((file) => file.scanRunId === latestRun.id) : [];
   const latestStatusCounts: Record<string, number> = {};
   const parserCounts: Record<string, number> = {};
@@ -242,6 +303,9 @@ export function buildScanHealth({
   if (confidence.unknownTokenInteractions > 0 || confidence.estimatedTokenInteractions > 0) {
     actions.push(action("Review token confidence", "/parser-debug", "Estimated or unknown token counts should stay visible.", "warning"));
   }
+  if (freshness.state === "stale") {
+    actions.push(action("Run a fresh scan", "/settings", freshness.description, "warning"));
+  }
   if (latestRun && imported === 0 && duplicates === 0 && unsupported === 0 && failed === 0) {
     actions.push(action("Add custom folders", "/settings", "No files were imported by the latest scan.", "warning"));
   }
@@ -251,6 +315,7 @@ export function buildScanHealth({
 
   return {
     latestRun,
+    lastSuccessfulRun,
     latestFiles,
     headline,
     description,
@@ -260,6 +325,7 @@ export function buildScanHealth({
     latestWarnings,
     latestErrors,
     latestNoteGroups,
+    freshness,
     tokenCoverage,
     costCoverage,
     actions

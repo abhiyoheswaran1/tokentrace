@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight, Coins, Database, MessageSquare, Minus, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
-import { EmptyState } from "@/components/empty-state";
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { PeriodFilter } from "@/components/period-filter";
@@ -10,7 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
-import { getAnalyticsData } from "@/src/lib/analytics";
+import { getAnalyticsData, getScanTrustData } from "@/src/lib/analytics";
+import { buildDoctorReport } from "@/src/lib/doctor";
+import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
+import { buildFirstRunStatus, type FirstRunStatus } from "@/src/lib/first-run-status";
 import { resolveDateRange } from "@/src/lib/date-range";
 import { formatCurrency, formatTokens, percent } from "@/src/lib/format";
 import { cn } from "@/src/lib/utils";
@@ -125,6 +127,39 @@ function DeltaMetric({
   );
 }
 
+function FirstRunPanel({ status }: { status: FirstRunStatus }) {
+  return (
+    <Card className={status.tone === "warning" ? "border-amber-300 bg-amber-50/50" : undefined}>
+      <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <CardTitle>{status.title}</CardTitle>
+          <CardDescription>{status.description}</CardDescription>
+        </div>
+        <Button asChild variant={status.tone === "warning" ? "outline" : "default"}>
+          <Link href={status.primaryAction.href}>
+            {status.primaryAction.label} <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="grid divide-y border-y md:grid-cols-5 md:divide-x md:divide-y-0">
+          {status.checks.map((check) => (
+            <div key={check.id} className="p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm font-semibold">{check.label}</div>
+                <Badge variant={check.state === "pass" ? "success" : check.state === "warn" ? "warning" : "secondary"}>
+                  {check.state}
+                </Badge>
+              </div>
+              <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{check.detail}</div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 type OverviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -133,6 +168,22 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   const params = (await searchParams) ?? {};
   const range = resolveDateRange(params);
   const data = getAnalyticsData(range.filters);
+  const trust = getScanTrustData();
+  const roots = await getDefaultSearchRoots();
+  const doctorReport = buildDoctorReport({ ...trust, roots });
+  const firstRunStatus = buildFirstRunStatus({
+    rootCount: roots.length,
+    pricedModelCount: trust.pricedModelCount,
+    latestScan: doctorReport.latestScan.id
+      ? {
+          filesScanned: doctorReport.latestScan.filesScanned,
+          recordsImported: doctorReport.latestScan.recordsImported,
+          zeroImportExplanation: doctorReport.latestScan.zeroImportExplanation
+        }
+      : null,
+    interactions: trust.confidence.interactions,
+    unknownCostInteractions: trust.confidence.unknownCostInteractions
+  });
   const { summary } = data;
 
   return (
@@ -152,10 +203,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
       <PeriodFilter range={range} />
 
       {summary.interactions === 0 ? (
-        <EmptyState
-          title="No usage imported yet"
-          description="Add custom folders if needed, run a scan from Settings, then return here for analytics."
-        />
+        <FirstRunPanel status={firstRunStatus} />
       ) : null}
 
       <Card>

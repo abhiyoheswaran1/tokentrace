@@ -191,6 +191,11 @@ describe("model aliases", () => {
     expect(modelNameCandidates("claude-haiku-4-5-20251001")).toContain("claude-haiku-4-5");
     expect(modelNameCandidates("claude-3-5-haiku-20241022")).toContain("claude-haiku-3-5");
   });
+
+  it("maps OpenAI snapshot and provider-prefixed model names to pricing candidates", () => {
+    expect(modelNameCandidates("openai/gpt-4.1-2025-04-14")).toContain("gpt-4.1");
+    expect(modelNameCandidates("gpt-5.1-codex-20260110")).toContain("gpt-5.1-codex");
+  });
 });
 
 describe("provider inference", () => {

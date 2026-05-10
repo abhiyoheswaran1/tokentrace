@@ -5,6 +5,12 @@ import {
   type ScanHealthFile,
   type ScanHealthRun
 } from "@/src/lib/scan-health";
+import {
+  getSupportMatrix,
+  summarizeSupportMatrix,
+  type SupportMatrixItem,
+  type SupportMatrixSummary
+} from "@/src/lib/support-matrix";
 
 export type DoctorRecommendation = {
   id: string;
@@ -31,6 +37,7 @@ export type DoctorReport = {
     recordsImported: number;
     zeroImportExplanation: string | null;
   };
+  scanFreshness: ScanHealth["freshness"];
   fileStatus: {
     imported: number;
     importedWithErrors: number;
@@ -52,6 +59,10 @@ export type DoctorReport = {
     estimated: number;
     unknown: number;
     unknownCauses: ScanConfidenceSummary["unknownCostCauses"];
+  };
+  supportMatrix: {
+    summary: SupportMatrixSummary;
+    items: SupportMatrixItem[];
   };
   recommendations: DoctorRecommendation[];
 };
@@ -273,6 +284,7 @@ export function buildDoctorReport({
   roots: string[];
 }): DoctorReport {
   const health = buildScanHealth({ scanRuns, scanFiles, confidence });
+  const supportMatrix = getSupportMatrix();
   const statusCounts = health.latestStatusCounts;
   const zeroImport = zeroImportExplanation({
     latestRun: health.latestRun,
@@ -296,6 +308,7 @@ export function buildDoctorReport({
       recordsImported: health.latestRun?.recordsImported ?? 0,
       zeroImportExplanation: zeroImport
     },
+    scanFreshness: health.freshness,
     fileStatus: {
       imported: count(statusCounts, "imported"),
       importedWithErrors: count(statusCounts, "imported_with_errors"),
@@ -317,6 +330,10 @@ export function buildDoctorReport({
       estimated: health.costCoverage.estimated,
       unknown: health.costCoverage.unknown,
       unknownCauses: health.costCoverage.unknownCauses
+    },
+    supportMatrix: {
+      summary: summarizeSupportMatrix(supportMatrix),
+      items: supportMatrix
     },
     recommendations: buildRecommendations({
       health,

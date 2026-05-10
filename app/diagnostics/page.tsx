@@ -176,6 +176,13 @@ function DoctorReportPanel({ report }: { report: DoctorReport }) {
           </div>
         </div>
 
+        <div className="rounded-md border bg-muted/30 p-3">
+          <div className="text-sm font-semibold">Scan freshness</div>
+          <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {report.scanFreshness.description}
+          </div>
+        </div>
+
         {report.latestScan.zeroImportExplanation ? (
           <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
             {report.latestScan.zeroImportExplanation}
@@ -221,6 +228,31 @@ function DoctorReportPanel({ report }: { report: DoctorReport }) {
                 <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</div>
                 <div className="mt-2 text-xs font-medium text-emerald-800">{item.action}</div>
               </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <div className="text-sm font-semibold">Support matrix</div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {report.supportMatrix.summary.stable.toLocaleString()} stable,{" "}
+              {report.supportMatrix.summary.bestEffort.toLocaleString()} best-effort,{" "}
+              {report.supportMatrix.summary.ignored.toLocaleString()} ignored,{" "}
+              {report.supportMatrix.summary.unsupported.toLocaleString()} unsupported.
+            </div>
+          </div>
+          <div className="grid divide-y border-y lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+            {report.supportMatrix.items.map((item) => (
+              <div key={item.id} className="p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-sm font-semibold">{item.label}</div>
+                  <Badge variant={item.level === "stable" ? "success" : item.level === "unsupported" ? "destructive" : item.level === "best-effort" ? "warning" : "secondary"}>
+                    {item.level}
+                  </Badge>
+                </div>
+                <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.description}</div>
+              </div>
             ))}
           </div>
         </div>

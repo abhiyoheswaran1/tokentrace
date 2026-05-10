@@ -21,6 +21,20 @@ const confidence: ScanConfidenceSummary = {
 };
 
 describe("doctor report", () => {
+  it("includes support matrix and scan freshness in the JSON report", () => {
+    const report = buildDoctorReport({
+      roots: ["/Users/test/.claude"],
+      pricedModelCount: 12,
+      confidence,
+      scanRuns: [],
+      scanFiles: []
+    });
+
+    expect(report.supportMatrix.summary.stable).toBeGreaterThan(0);
+    expect(report.supportMatrix.items.map((item) => item.id)).toContain("claude-code");
+    expect(report.scanFreshness.state).toBe("no-scan");
+  });
+
   it("explains a zero-import duplicate-only scan", () => {
     const report = buildDoctorReport({
       roots: ["/Users/test/.claude"],

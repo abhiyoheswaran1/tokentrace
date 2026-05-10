@@ -20,6 +20,39 @@ const emptyConfidence: ScanConfidenceSummary = {
 };
 
 describe("scan health", () => {
+  it("tracks the last successful scan and warns when it is stale", () => {
+    const eightDays = 8 * 24 * 60 * 60 * 1000;
+    const health = buildScanHealth({
+      now: 10_000 + eightDays,
+      scanRuns: [
+        {
+          id: "scan-2",
+          startedAt: 20_000,
+          completedAt: 21_000,
+          filesScanned: 4,
+          recordsImported: 0,
+          warnings: [],
+          errors: []
+        },
+        {
+          id: "scan-1",
+          startedAt: 1_000,
+          completedAt: 10_000,
+          filesScanned: 4,
+          recordsImported: 3,
+          warnings: [],
+          errors: []
+        }
+      ],
+      scanFiles: [],
+      confidence: emptyConfidence
+    });
+
+    expect(health.lastSuccessfulRun?.id).toBe("scan-1");
+    expect(health.freshness.state).toBe("stale");
+    expect(health.actions.some((item) => item.label === "Run a fresh scan")).toBe(true);
+  });
+
   it("prompts for a first scan when there is no scan history", () => {
     const health = buildScanHealth({
       scanRuns: [],
