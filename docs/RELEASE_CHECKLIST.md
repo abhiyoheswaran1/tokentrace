@@ -11,8 +11,8 @@ asks for that public release.
 - Add user-facing changes to `CHANGELOG.md` under `Unreleased`.
 - Run targeted tests for the slice.
 - Run `npm run verify` before considering the slice stable.
-- Run `npm run package:inspect` after a production build when package contents
-  or dependencies change.
+- Run `npm run package:inspect` when package contents or dependencies change.
+  It verifies the publish tarball does not contain generated Next.js output.
 - Keep the release-note extractor green when release documentation changes:
   `npm run release:notes -- v0.4.0`.
 - Commit the slice with a plain milestone message.

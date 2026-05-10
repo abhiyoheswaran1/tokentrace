@@ -22,6 +22,7 @@ const dbPath = process.env.TOKENTRACE_DB ?? databaseUrlPath(process.env.DATABASE
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 export const sqlite = new Database(dbPath);
+sqlite.pragma("busy_timeout = 10000");
 sqlite.pragma("foreign_keys = ON");
 applyMigrations(sqlite);
 

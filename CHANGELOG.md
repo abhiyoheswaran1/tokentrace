@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.6.0] - 2026-05-10
+
 ### Added
 
 - 0.6.0 Stable Daily Tool roadmap with explicit release cards and gates.
@@ -21,6 +23,17 @@ All notable changes to TokenTrace are documented here.
 - Local development config declares localhost/127.0.0.1 dev origins and disables the standard Next.js dev indicator preference.
 - README documents the support matrix and unsupported product boundaries.
 - `npm run release:check` now includes CLI and packed-install smoke checks before package security inspection.
+- The npm package now excludes generated `.next` output and prepares the dashboard build in the user's TokenTrace app-data directory on first `tokentrace serve`.
+- Package trust inspection now verifies the publish tarball directly and fails if generated Next.js build output is included.
+- Packed-install smoke now starts `tokentrace serve` from the packed tarball and allows dependency install scripts needed by native SQLite bindings while keeping TokenTrace itself free of lifecycle scripts.
+- Dev security posture is cleaner: Vitest is updated to the Node 18-compatible patched line, and the unused `drizzle-kit` dev dependency has been removed.
+- `npm run security:package` now audits the full dependency graph at moderate-or-higher severity instead of checking only production high-severity advisories.
+
+### Fixed
+
+- Package inspection no longer depends on the user's global npm cache, which can contain root-owned files on some machines.
+- First-run dashboard preparation from a packed install no longer hits SQLite `database is locked` errors while Next.js imports API routes during build.
+- `tokentrace serve` now exits nonzero when the underlying Next.js server fails before readiness.
 
 ## [0.5.1] - 2026-05-10
 

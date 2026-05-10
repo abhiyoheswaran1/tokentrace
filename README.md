@@ -235,11 +235,12 @@ Stop the server with `Ctrl+C` in the terminal where `tokentrace` is running.
 
 ## Package Trust
 
-- The npm package has no `preinstall`, `install`, or `postinstall` scripts.
-- Published Next.js server bundles are intentionally left readable instead of server-minified so Socket, npm, maintainers, and users can inspect generated runtime code.
-- `npm run package:inspect` fails if generated app route bundles look packed or unreadable.
+- The TokenTrace npm package has no `preinstall`, `install`, or `postinstall` scripts.
+- The published package ships readable application source and the compiled CLI runtime, not generated `.next/server` route bundles.
+- `tokentrace serve` prepares the local dashboard build in the user's TokenTrace app-data directory the first time it is needed.
+- `npm run package:inspect` fails if generated Next.js build output appears in the published tarball.
 - Public npm publishing is configured through GitHub Actions Trusted Publishing and provenance from version tags.
-- Socket GitHub checks and ProjScan are used as release guardrails, alongside `npm audit --omit=dev --audit-level=high`.
+- Socket GitHub checks and ProjScan are used as release guardrails, alongside `npm audit --audit-level=moderate`.
 - Release notes are published directly in GitHub Releases from the relevant changelog section, not as a link-only summary.
 
 See [SECURITY.md](SECURITY.md) for the full security and privacy model.

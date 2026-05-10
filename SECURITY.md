@@ -8,14 +8,17 @@ downloads.
 
 - No telemetry, cloud sync, traffic interception, proxying, packet sniffing, or
   browser extension is part of the product.
-- No `preinstall`, `install`, or `postinstall` npm lifecycle scripts are used.
+- The TokenTrace package has no `preinstall`, `install`, or `postinstall`
+  npm lifecycle scripts.
 - Runtime state is stored locally in the user's TokenTrace app-data directory.
 - Raw full prompts and responses are off by default.
 - Pricing refresh downloads a public model-pricing manifest only. It does not
   send usage logs, prompts, file paths, analytics, or identifiers. Set
   `TOKENTRACE_DISABLE_PRICE_REFRESH=1` to use bundled prices only.
-- Generated Next.js server bundles are intentionally published without server
-  minification so package scanners and maintainers can inspect them.
+- The published package ships readable application source and the compiled CLI
+  runtime, not generated `.next/server` route bundles. `tokentrace serve`
+  prepares the local dashboard build in the user's app-data directory when
+  needed.
 
 ## What TokenTrace Reads
 

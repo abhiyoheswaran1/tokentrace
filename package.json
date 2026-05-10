@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {
     "name": "Abhi Yoheswaran",
@@ -20,10 +20,6 @@
   },
   "files": [
     "bin",
-    ".next/BUILD_ID",
-    ".next/*.json",
-    ".next/server",
-    ".next/static",
     "public",
     "app",
     "components",
@@ -45,7 +41,9 @@
   ],
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/build-cli-runtime.mjs",
+    "build": "npm run build:app && npm run build:runtime",
+    "build:app": "next build",
+    "build:runtime": "node scripts/build-cli-runtime.mjs",
     "start": "next start",
     "scan": "tsx scripts/scan.ts",
     "db:migrate": "tsx scripts/db-migrate.ts",
@@ -57,13 +55,13 @@
     "verify": "npm test && tsc --noEmit && npm run lint",
     "package:inspect": "node scripts/package-inspect.mjs",
     "release:notes": "node scripts/extract-release-notes.mjs",
-    "security:package": "npm run package:inspect && npm audit --omit=dev --audit-level=high",
+    "security:package": "npm run package:inspect && npm audit --audit-level=moderate",
     "smoke:cli": "npm run build && node scripts/smoke-cli.mjs",
     "smoke:packed": "node scripts/smoke-packed-install.mjs",
     "package:test": "npm run verify && npm pack --dry-run",
     "release:check": "npm run package:test && npm run smoke:cli && npm run smoke:packed && npm run security:package",
     "projscan:doctor": "npx --yes projscan@latest doctor",
-    "prepack": "npm run build"
+    "prepack": "npm run build:runtime"
   },
   "overrides": {
     "postcss": "^8.5.14"
@@ -84,6 +82,8 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.4",
     "@radix-ui/react-slot": "^1.1.1",
     "better-sqlite3": "^11.7.0",
     "class-variance-authority": "^0.7.1",
@@ -93,25 +93,22 @@
     "lucide-react": "^0.468.0",
     "next": "^15.5.18",
     "open": "^10.1.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.14",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.0",
-    "tailwind-merge": "^2.6.0"
+    "tailwindcss": "^3.4.17",
+    "tailwind-merge": "^2.6.0",
+    "typescript": "^5.7.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
-    "@types/node": "^22.10.5",
-    "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
-    "autoprefixer": "^10.4.20",
-    "drizzle-kit": "^0.30.1",
     "esbuild": "^0.28.0",
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.4",
-    "postcss": "^8.5.14",
-    "tailwindcss": "^3.4.17",
     "tsx": "^4.21.0",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^3.2.4"
   }
 }

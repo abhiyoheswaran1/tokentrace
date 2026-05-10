@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import fs from "node:fs/promises";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import process from "node:process";
 
 const root = process.cwd();
@@ -45,6 +46,84 @@ function parsePackOutput(stdout) {
   return first;
 }
 
+function findFreePort(hostname) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.unref();
+    server.on("error", reject);
+    server.listen(0, hostname, () => {
+      const address = server.address();
+      const port = typeof address === "object" && address ? address.port : null;
+      server.close(() => {
+        if (port) resolve(port);
+        else reject(new Error("Could not allocate a free port."));
+      });
+    });
+  });
+}
+
+async function waitForServe(url, child, output) {
+  const deadline = Date.now() + 240_000;
+  while (Date.now() < deadline) {
+    if (child.exitCode != null) {
+      throw new Error(
+        `tokentrace serve exited before becoming ready with code ${child.exitCode}\n${output()}`
+      );
+    }
+    try {
+      const response = await fetch(url, { method: "HEAD" });
+      if (response.ok) return;
+    } catch {
+      // Keep polling until the server is ready or the timeout expires.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  throw new Error(`Timed out waiting for packed tokentrace serve.\n${output()}`);
+}
+
+async function runServeSmoke(bin, cwd, env) {
+  const hostname = "127.0.0.1";
+  const port = await findFreePort(hostname);
+  const url = `http://${hostname}:${port}`;
+  let stdout = "";
+  let stderr = "";
+  const child = spawn(
+    bin,
+    ["serve", "--hostname", hostname, "--port", String(port), "--no-open"],
+    {
+      cwd,
+      env,
+      stdio: ["ignore", "pipe", "pipe"]
+    }
+  );
+
+  child.stdout.on("data", (chunk) => {
+    stdout += chunk.toString("utf8");
+    stdout = stdout.slice(-20_000);
+  });
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk.toString("utf8");
+    stderr = stderr.slice(-20_000);
+  });
+
+  try {
+    await waitForServe(url, child, () => `stdout:\n${stdout}\nstderr:\n${stderr}`);
+  } finally {
+    if (child.exitCode == null) {
+      child.kill("SIGTERM");
+      await new Promise((resolve) => {
+        const timeout = setTimeout(resolve, 5_000);
+        child.once("exit", () => {
+          clearTimeout(timeout);
+          resolve();
+        });
+      });
+      if (child.exitCode == null) child.kill("SIGKILL");
+    }
+  }
+}
+
 try {
   const packageJson = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
   const packed = parsePackOutput(run("npm", ["pack", "--json"]));
@@ -61,7 +140,6 @@ try {
       "--omit=dev",
       "--no-audit",
       "--no-fund",
-      "--ignore-scripts",
       tarballPath
     ]);
 
@@ -81,6 +159,14 @@ try {
     if (!help.includes("tokentrace scan") || !help.includes("tokentrace statusline claude")) {
       throw new Error("Packed tokentrace --help is missing expected commands.");
     }
+
+    await runServeSmoke(bin, tempRoot, {
+      ...process.env,
+      CI: "true",
+      NEXT_TELEMETRY_DISABLED: "1",
+      TOKENTRACE_HOME: path.join(tempRoot, "home"),
+      TOKENTRACE_NO_OPEN: "1"
+    });
 
     console.log(`TokenTrace packed install smoke passed for ${packed.filename}`);
   }

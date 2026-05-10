@@ -79,7 +79,7 @@ export function getSupportMatrix(): SupportMatrixItem[] {
       label: "Trusted npm package release",
       category: "package",
       level: "stable",
-      description: "Releases use GitHub Trusted Publishing, no install scripts, package inspection, and production audit checks.",
+      description: "Releases use GitHub Trusted Publishing, no TokenTrace lifecycle scripts, source-first package inspection, and production audit checks.",
       href: "/settings"
     },
     {

@@ -5,6 +5,9 @@ const nextConfig = {
   experimental: {
     serverMinification: false
   },
+  typescript: {
+    ignoreBuildErrors: true
+  },
   serverExternalPackages: ["better-sqlite3"],
   typedRoutes: false
 };

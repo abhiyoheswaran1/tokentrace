@@ -1,4 +1,5 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 import process from "node:process";
 
@@ -12,17 +13,6 @@ const notes = [];
 
 function fail(message) {
   failures.push(message);
-}
-
-function walk(dir) {
-  const entries = readdirSync(dir, { withFileTypes: true });
-  return entries.flatMap((entry) => {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      return walk(fullPath);
-    }
-    return [fullPath];
-  });
 }
 
 const lifecycleScripts = ["preinstall", "install", "postinstall"];
@@ -44,40 +34,62 @@ if (packageJson.overrides?.postcss !== "^8.5.14") {
   fail("Keep the PostCSS override at ^8.5.14 or newer.");
 }
 
-const nextServerDir = path.join(root, ".next", "server", "app");
-if (!existsSync(nextServerDir)) {
-  fail("Run npm run build before package inspection; .next/server/app is missing.");
-} else {
-  const routeFiles = walk(nextServerDir).filter(
-    (filePath) =>
-      filePath.endsWith(`${path.sep}page.js`) ||
-      filePath.endsWith(`${path.sep}route.js`)
-  );
-
-  if (routeFiles.length === 0) {
-    fail("No generated Next.js app route bundles were found for inspection.");
+const blockedPackageEntries = [
+  ".next/BUILD_ID",
+  ".next/*.json",
+  ".next/server",
+  ".next/static"
+];
+for (const entry of blockedPackageEntries) {
+  if (packageJson.files?.includes(entry)) {
+    fail(`Do not publish generated Next.js output: remove "${entry}" from package.json files.`);
   }
+}
 
-  for (const filePath of routeFiles) {
-    const source = readFileSync(filePath, "utf8");
-    const size = statSync(filePath).size;
-    const lineCount = source.split("\n").length;
-    const relative = path.relative(root, filePath);
-    const firstChunk = source.slice(0, 1000);
-    const looksPacked =
-      size > 10_000 &&
-      (lineCount < 20 ||
-        firstChunk.startsWith("(()=>{") ||
-        firstChunk.startsWith("!function("));
+const pack = spawnSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
+  cwd: root,
+  encoding: "utf8",
+  env: {
+    ...process.env,
+    npm_config_cache: path.join(
+      process.env.TMPDIR ?? "/tmp",
+      "tokentrace-package-inspect-npm-cache"
+    ),
+    NPM_CONFIG_CACHE: path.join(
+      process.env.TMPDIR ?? "/tmp",
+      "tokentrace-package-inspect-npm-cache"
+    ),
+    NEXT_TELEMETRY_DISABLED: "1"
+  }
+});
 
-    if (looksPacked) {
+if (pack.status !== 0) {
+  fail(`npm pack --dry-run failed:\n${pack.stdout}\n${pack.stderr}`);
+} else {
+  try {
+    const jsonStart = pack.stdout.indexOf("[");
+    const packed = JSON.parse(pack.stdout.slice(jsonStart));
+    const files = packed[0]?.files?.map((file) => file.path) ?? [];
+    const generatedNextFiles = files.filter(
+      (file) => file.startsWith(".next/") || file.includes("/.next/")
+    );
+
+    if (generatedNextFiles.length > 0) {
       fail(
-        `${relative} looks minified or packed; keep Next serverMinification disabled for scanner readability.`
+        `npm package includes generated Next.js output: ${generatedNextFiles
+          .slice(0, 8)
+          .join(", ")}`
       );
     }
-  }
 
-  notes.push(`inspected ${routeFiles.length} generated Next.js app route bundles`);
+    notes.push(`inspected ${files.length} files from npm pack dry-run`);
+  } catch (error) {
+    fail(
+      `Could not parse npm pack --dry-run JSON output: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
 }
 
 if (failures.length > 0) {
@@ -92,6 +104,7 @@ console.log("Package trust inspection passed:");
 console.log("- no npm install lifecycle scripts");
 console.log("- Next.js dependency floor is pinned to the patched range");
 console.log("- Drizzle ORM and PostCSS floors are pinned to patched ranges");
+console.log("- generated Next.js build output is excluded from the package");
 for (const note of notes) {
   console.log(`- ${note}`);
 }

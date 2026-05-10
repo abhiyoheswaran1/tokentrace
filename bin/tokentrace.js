@@ -94,6 +94,96 @@ function nextBin() {
   }
 }
 
+function dashboardBuildId() {
+  return path.join(dashboardWorkdir(), ".next", "BUILD_ID");
+}
+
+function dashboardWorkdir() {
+  return path.join(appDataDir(), "dashboard-runtime");
+}
+
+function dashboardBuildMarker() {
+  return path.join(dashboardWorkdir(), ".tokentrace-dashboard-version");
+}
+
+function dependencyModulesDir() {
+  const localNodeModules = path.join(packageRoot, "node_modules");
+  if (fs.existsSync(localNodeModules)) return localNodeModules;
+
+  const parent = path.dirname(packageRoot);
+  if (path.basename(parent) === "node_modules") return parent;
+
+  return localNodeModules;
+}
+
+function copyDashboardSource(targetRoot) {
+  const directories = ["app", "components", "pricing", "public", "src"];
+  const files = [
+    "components.json",
+    "next.config.mjs",
+    "package.json",
+    "postcss.config.mjs",
+    "tailwind.config.ts",
+    "tsconfig.json"
+  ];
+
+  fs.rmSync(targetRoot, { recursive: true, force: true });
+  fs.mkdirSync(targetRoot, { recursive: true });
+
+  for (const directory of directories) {
+    const source = path.join(packageRoot, directory);
+    if (fs.existsSync(source)) {
+      fs.cpSync(source, path.join(targetRoot, directory), { recursive: true });
+    }
+  }
+
+  for (const file of files) {
+    const source = path.join(packageRoot, file);
+    if (fs.existsSync(source)) {
+      fs.copyFileSync(source, path.join(targetRoot, file));
+    }
+  }
+
+  const nodeModulesTarget = dependencyModulesDir();
+  const nodeModulesLink = path.join(targetRoot, "node_modules");
+  fs.symlinkSync(
+    nodeModulesTarget,
+    nodeModulesLink,
+    process.platform === "win32" ? "junction" : "dir"
+  );
+}
+
+function runNextBuild(cwd) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [nextBin(), "build"], {
+      cwd,
+      env: runtimeEnv(),
+      stdio: "inherit"
+    });
+    child.on("error", reject);
+    child.on("exit", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`next build exited with code ${code}`));
+    });
+  });
+}
+
+async function ensureDashboardBuild() {
+  const workdir = dashboardWorkdir();
+  const marker = dashboardBuildMarker();
+  const builtVersion = fs.existsSync(marker) ? fs.readFileSync(marker, "utf8").trim() : null;
+  if (fs.existsSync(dashboardBuildId()) && builtVersion === packageJson.version) {
+    return workdir;
+  }
+
+  console.log("Preparing TokenTrace dashboard for this install...");
+  console.log("This runs locally and may take a moment the first time.");
+  copyDashboardSource(workdir);
+  await runNextBuild(workdir);
+  fs.writeFileSync(marker, `${packageJson.version}\n`);
+  return workdir;
+}
+
 function runtimeScriptPath(scriptName) {
   const compiled = path.join(packageRoot, "dist", "runtime", `${scriptName}.mjs`);
   if (fs.existsSync(compiled)) return compiled;
@@ -220,13 +310,8 @@ async function serve(args = []) {
     return;
   }
 
-  const buildId = path.join(packageRoot, ".next", "BUILD_ID");
-  if (!fs.existsSync(buildId)) {
-    console.error("TokenTrace is not built yet. Run `npm run build` before using the package CLI from a source checkout.");
-    process.exit(1);
-  }
-
   await initializeDatabase();
+  const dashboardRoot = await ensureDashboardBuild();
   const hostname = options.hostname;
   const port = options.port ?? (await getPort({ port: portNumbers(3030, 3999), host: hostname }));
   const url = `http://${hostname}:${port}`;
@@ -238,7 +323,7 @@ async function serve(args = []) {
     process.execPath,
     [nextBin(), "start", "--hostname", hostname, "--port", String(port)],
     {
-      cwd: packageRoot,
+      cwd: dashboardRoot,
       env: {
         ...runtimeEnv(),
         PORT: String(port),
@@ -263,6 +348,8 @@ async function serve(args = []) {
     }
   } catch (error) {
     console.error(error instanceof Error ? error.message : "Failed to start TokenTrace.");
+    stop();
+    process.exit(1);
   }
 
   child.on("exit", (code) => process.exit(code ?? 0));

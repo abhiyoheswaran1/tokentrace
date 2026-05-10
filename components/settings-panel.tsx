@@ -164,7 +164,7 @@ export function SettingsPanel({
             {
               label: "Install scripts",
               value: "None",
-              detail: "No preinstall, install, or postinstall lifecycle scripts."
+              detail: "The TokenTrace package has no preinstall, install, or postinstall lifecycle scripts."
             },
             {
               label: "Network behavior",
@@ -174,7 +174,7 @@ export function SettingsPanel({
             {
               label: "Release proof",
               value: "Tag based",
-              detail: "Future npm releases publish through GitHub Trusted Publishing."
+              detail: "npm releases publish through GitHub Trusted Publishing."
             }
           ].map((item) => (
             <div key={item.label} className="p-3">

@@ -16,6 +16,13 @@ describe("package trust policy", () => {
     expect(nextConfig).toContain("serverMinification: false");
   });
 
+  it("does not publish generated Next.js output in the npm package", () => {
+    expect(packageJson.files).not.toContain(".next/BUILD_ID");
+    expect(packageJson.files).not.toContain(".next/*.json");
+    expect(packageJson.files).not.toContain(".next/server");
+    expect(packageJson.files).not.toContain(".next/static");
+  });
+
   it("declares common local dev origins and the dev indicator preference", () => {
     const nextConfig = readFileSync(join(process.cwd(), "next.config.mjs"), "utf8");
 
