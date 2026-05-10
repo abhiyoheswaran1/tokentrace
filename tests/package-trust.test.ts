@@ -16,6 +16,15 @@ describe("package trust policy", () => {
     expect(nextConfig).toContain("serverMinification: false");
   });
 
+  it("declares common local dev origins and the dev indicator preference", () => {
+    const nextConfig = readFileSync(join(process.cwd(), "next.config.mjs"), "utf8");
+
+    expect(nextConfig).toContain("allowedDevOrigins");
+    expect(nextConfig).toContain("devIndicators: false");
+    expect(nextConfig).toContain('"127.0.0.1"');
+    expect(nextConfig).toContain('"localhost"');
+  });
+
   it("declares a patched Next.js dependency floor", () => {
     expect(packageJson.dependencies.next).toBe("^15.5.18");
   });
@@ -24,5 +33,13 @@ describe("package trust policy", () => {
     expect(packageJson.dependencies["drizzle-orm"]).toBe("^0.45.2");
     expect(packageJson.overrides?.postcss).toBe("^8.5.14");
     expect(packageJson.dependencies).not.toHaveProperty("date-fns");
+  });
+
+  it("runs CLI and packed-install smoke checks before package release checks complete", () => {
+    expect(packageJson.scripts["smoke:cli"]).toContain("scripts/smoke-cli.mjs");
+    expect(packageJson.scripts["smoke:packed"]).toContain("scripts/smoke-packed-install.mjs");
+    expect(packageJson.scripts["release:check"]).toContain("npm run smoke:cli");
+    expect(packageJson.scripts["release:check"]).toContain("npm run smoke:packed");
+    expect(packageJson.scripts["release:check"]).toContain("npm run security:package");
   });
 });

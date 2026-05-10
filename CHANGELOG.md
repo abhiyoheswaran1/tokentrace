@@ -11,12 +11,16 @@ All notable changes to TokenTrace are documented here.
 - Scan Doctor support matrix and scan freshness status.
 - Overview first-run checklist that explains missing roots, no scans, zero imports, and next actions.
 - `npm run smoke:cli` for clean-home CLI checks across scan, serve, doctor, status, Claude status-line, and watch-mode commands.
+- `npm run smoke:packed` for installing the packed tarball into a temp project and verifying the published CLI entrypoint.
 
 ### Changed
 
+- Claude Code and Codex JSONL parsers now keep valid records when a transcript contains malformed lines.
 - Model alias suggestions now handle OpenAI/Codex provider-prefixed and dated snapshot names.
+- Overview period filter keeps the custom date fields and Apply button visible on desktop while presets absorb overflow.
+- Local development config declares localhost/127.0.0.1 dev origins and disables the standard Next.js dev indicator preference.
 - README documents the support matrix and unsupported product boundaries.
-- `npm run release:check` now includes the CLI smoke check before package security inspection.
+- `npm run release:check` now includes CLI and packed-install smoke checks before package security inspection.
 
 ## [0.5.1] - 2026-05-10
 

@@ -134,6 +134,45 @@ describe("Claude Code adapter", () => {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  it("keeps valid Claude JSONL records when a transcript has a malformed line", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-claude-malformed-"));
+    try {
+      const filePath = path.join(tempDir, ".claude", "projects", "-Users-abhyoh-project", "session.jsonl");
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(
+        filePath,
+        [
+          JSON.stringify({
+            type: "assistant",
+            message: { role: "assistant", model: "claude-sonnet-4-5-20250929" },
+            usage: { input_tokens: 10, output_tokens: 20 }
+          }),
+          "{not-json",
+          JSON.stringify({
+            type: "user",
+            message: { role: "user", content: "please inspect this" }
+          })
+        ].join("\n")
+      );
+      const stat = await fs.stat(filePath);
+
+      const parsed = await claudeCodeAdapter.parse(
+        {
+          path: filePath,
+          modifiedTime: stat.mtime,
+          sizeBytes: stat.size
+        },
+        { storeRawMessageContent: false }
+      );
+
+      expect(parsed.warnings).toContain("Line 2 is not a JSON object.");
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.sessions[0].interactions).toHaveLength(2);
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("Codex CLI adapter", () => {
@@ -173,6 +212,51 @@ describe("Codex CLI adapter", () => {
 
       expect(detection.detected).toBe(true);
       expect(detection.confidence).toBeGreaterThan(0.9);
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps valid Codex JSONL records when a session has a malformed line", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-codex-malformed-"));
+    try {
+      const filePath = path.join(tempDir, ".codex", "sessions", "2026", "05", "09", "session.jsonl");
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(
+        filePath,
+        [
+          JSON.stringify({
+            type: "response.completed",
+            payload: {
+              response: {
+                id: "resp-1",
+                model: "openai/gpt-4.1-2025-04-14",
+                usage: { input_tokens: 12, output_tokens: 34 }
+              }
+            }
+          }),
+          "not json",
+          JSON.stringify({
+            type: "message",
+            payload: { role: "user", content: "summarize this" }
+          })
+        ].join("\n")
+      );
+      const stat = await fs.stat(filePath);
+
+      const parsed = await codexCliAdapter.parse(
+        {
+          path: filePath,
+          modifiedTime: stat.mtime,
+          sizeBytes: stat.size
+        },
+        { storeRawMessageContent: false }
+      );
+
+      expect(parsed.warnings).toContain("Line 2 is not a JSON object.");
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.sessions[0].interactions).toHaveLength(2);
+      expect(parsed.sessions[0].interactions[0].modelName).toBe("openai/gpt-4.1-2025-04-14");
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }

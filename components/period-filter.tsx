@@ -16,36 +16,38 @@ export function PeriodFilter({ range }: { range: ResolvedDateRange }) {
     <div className="rounded-lg bg-card p-3 outline outline-1 outline-border sm:p-4">
       <form className="overflow-x-auto" action="/">
         <input type="hidden" name="range" value="custom" />
-        <div className="flex min-w-max items-center gap-2">
-          <div className="flex items-center gap-2 pr-1 text-sm font-semibold">
+        <div className="flex min-w-[720px] items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 pr-1 text-sm font-semibold">
             <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span>Period</span>
-            <span className="whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            <span className="hidden whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground 2xl:inline-flex">
               {statusLabel}
             </span>
           </div>
           <div className="h-6 w-px shrink-0 bg-border" />
-          <div className="flex items-center gap-1.5">
-            {dateRangeOptions.map((option) => (
-              <Button
-                key={option.key}
-                asChild
-                size="sm"
-                variant={range.key === option.key ? "default" : "outline"}
-              >
-                <Link href={rangeHref(option.key)}>{option.label}</Link>
-              </Button>
-            ))}
+          <div className="min-w-0 flex-1 overflow-x-auto">
+            <div className="flex w-max items-center gap-1.5 pr-1">
+              {dateRangeOptions.map((option) => (
+                <Button
+                  key={option.key}
+                  asChild
+                  size="sm"
+                  variant={range.key === option.key ? "default" : "outline"}
+                >
+                  <Link href={rangeHref(option.key)}>{option.label}</Link>
+                </Button>
+              ))}
+            </div>
           </div>
           <div className="h-6 w-px shrink-0 bg-border" />
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1.5">
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span>From</span>
-              <Input type="date" name="from" defaultValue={range.fromInput} className="period-date-input h-8 w-36" />
+              <Input type="date" name="from" defaultValue={range.fromInput} className="period-date-input h-8 w-32" />
             </label>
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span>To</span>
-              <Input type="date" name="to" defaultValue={range.toInput} className="period-date-input h-8 w-36" />
+              <Input type="date" name="to" defaultValue={range.toInput} className="period-date-input h-8 w-32" />
             </label>
             <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>
               Apply

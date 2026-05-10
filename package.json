@@ -59,8 +59,9 @@
     "release:notes": "node scripts/extract-release-notes.mjs",
     "security:package": "npm run package:inspect && npm audit --omit=dev --audit-level=high",
     "smoke:cli": "npm run build && node scripts/smoke-cli.mjs",
+    "smoke:packed": "node scripts/smoke-packed-install.mjs",
     "package:test": "npm run verify && npm pack --dry-run",
-    "release:check": "npm run package:test && npm run smoke:cli && npm run security:package",
+    "release:check": "npm run package:test && npm run smoke:cli && npm run smoke:packed && npm run security:package",
     "projscan:doctor": "npx --yes projscan@latest doctor",
     "prepack": "npm run build"
   },

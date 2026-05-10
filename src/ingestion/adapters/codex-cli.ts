@@ -55,8 +55,9 @@ export const codexCliAdapter: IngestionAdapter = {
     const warnings: string[] = [];
     const records: Record<string, unknown>[] = [];
     const text = await readFileText(file.path);
+    const extension = path.extname(file.path).toLowerCase();
 
-    if (fileLooksLikeJsonl(text)) {
+    if (extension === ".jsonl" || fileLooksLikeJsonl(text)) {
       text.split(/\r?\n/).forEach((line, index) => {
         const trimmed = line.trim();
         if (!trimmed) return;
