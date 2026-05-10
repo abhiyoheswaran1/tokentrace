@@ -31,7 +31,6 @@ export const codexCliAdapter: IngestionAdapter = {
   version: 1,
 
   async detect(file) {
-    const normalized = file.path.toLowerCase();
     const extension = path.extname(file.path).toLowerCase();
     if (isCodexCliUsagePath(file.path)) {
       return { detected: true, confidence: 0.95, reason: "Codex CLI session artifact path" };

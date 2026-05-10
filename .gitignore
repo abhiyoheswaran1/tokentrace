@@ -6,6 +6,8 @@ coverage
 .vercel
 .turbo
 .cache
+.projscan-memory
+tsconfig.tsbuildinfo
 
 .env*
 .npmrc

@@ -1,12 +1,10 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import type { Database as SqliteDatabase } from "better-sqlite3";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-let activeSqlite: {
-  close: () => void;
-  prepare: (sql: string) => { all: (...params: any[]) => unknown[] };
-} | null = null;
+let activeSqlite: SqliteDatabase | null = null;
 const tempDirs: string[] = [];
 
 async function loadRunScan() {

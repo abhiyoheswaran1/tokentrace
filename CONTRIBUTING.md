@@ -72,16 +72,17 @@ Before opening a pull request, run:
 ```bash
 npm run verify
 npm run build
+npm run package:inspect
 ```
 
 ## Release Policy
 
 Maintainers publish releases. Contributors do not need npm access.
 
-During active 0.4.0 development, internal milestone names such as `0.3.2` or
-`0.3.5` are planning labels only. Keep changes under `CHANGELOG.md`
-`Unreleased` and do not bump, tag, create a GitHub Release, or publish npm until
-the maintainer explicitly asks for a public release.
+During active development, internal milestone names are planning labels only.
+Keep changes under `CHANGELOG.md` `Unreleased` and do not bump, tag, create a
+GitHub Release, or publish npm until the maintainer explicitly asks for a public
+release.
 
 For every public package release, maintainers must:
 
@@ -89,7 +90,9 @@ For every public package release, maintainers must:
 - Use semantic versioning.
 - Push a matching Git tag, for example `v0.1.1`.
 - Create a GitHub Release for the tag with user-facing release notes.
-- Publish npm only from the same versioned source.
+- Let the GitHub Actions Trusted Publishing workflow publish npm from the same
+  versioned source.
+- Run package trust checks before tagging.
 
 From now on, no npm release should exist without a matching Git tag and GitHub Release.
 

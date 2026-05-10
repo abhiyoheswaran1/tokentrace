@@ -19,7 +19,6 @@ export const claudeCodeAdapter: IngestionAdapter = {
   version: 1,
 
   async detect(file) {
-    const normalized = file.path.toLowerCase();
     const extension = path.extname(file.path).toLowerCase();
     if (isClaudeCodeUsagePath(file.path)) {
       return { detected: true, confidence: 0.95, reason: "Claude Code project transcript path" };

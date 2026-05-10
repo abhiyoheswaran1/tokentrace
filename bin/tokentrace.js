@@ -45,6 +45,21 @@ Usage:
   tokentrace --version    Print version`;
 }
 
+function serveHelp() {
+  return `TokenTrace dashboard server
+
+Usage:
+  tokentrace serve
+  tokentrace serve --port 3210
+  tokentrace serve --hostname 127.0.0.1 --no-open
+
+Options:
+  -p, --port <port>          Use a fixed port. Also reads TOKENTRACE_PORT or PORT.
+  -H, --hostname <host>      Bind to a fixed host. Defaults to 127.0.0.1.
+      --no-open              Do not open a browser after the server starts.
+  -h, --help                 Print serve help`;
+}
+
 function appDataDir() {
   if (process.env.TOKENTRACE_HOME) return path.resolve(process.env.TOKENTRACE_HOME);
   const home = os.homedir();
@@ -132,6 +147,55 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function parsePort(value) {
+  const port = Number(value);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new Error(`Invalid port: ${value}`);
+  }
+  return port;
+}
+
+function parseServeOptions(args) {
+  const options = {
+    help: false,
+    hostname: process.env.TOKENTRACE_HOSTNAME ?? "127.0.0.1",
+    port:
+      process.env.TOKENTRACE_PORT || process.env.PORT
+        ? parsePort(process.env.TOKENTRACE_PORT ?? process.env.PORT)
+        : null,
+    openBrowser: process.env.TOKENTRACE_NO_OPEN !== "1" && process.env.CI !== "true"
+  };
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--help" || arg === "-h") {
+      options.help = true;
+      continue;
+    }
+    if (arg === "--no-open") {
+      options.openBrowser = false;
+      continue;
+    }
+    if (arg === "--port" || arg === "-p") {
+      const value = args[index + 1];
+      if (!value) throw new Error(`${arg} requires a port value.`);
+      options.port = parsePort(value);
+      index += 1;
+      continue;
+    }
+    if (arg === "--hostname" || arg === "-H") {
+      const value = args[index + 1];
+      if (!value) throw new Error(`${arg} requires a hostname value.`);
+      options.hostname = value;
+      index += 1;
+      continue;
+    }
+    throw new Error(`Unknown serve option: ${arg}`);
+  }
+
+  return options;
+}
+
 async function waitForServer(url, child) {
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
@@ -149,7 +213,13 @@ async function waitForServer(url, child) {
   throw new Error("Timed out waiting for the TokenTrace server to start.");
 }
 
-async function serve() {
+async function serve(args = []) {
+  const options = parseServeOptions(args);
+  if (options.help) {
+    console.log(serveHelp());
+    return;
+  }
+
   const buildId = path.join(packageRoot, ".next", "BUILD_ID");
   if (!fs.existsSync(buildId)) {
     console.error("TokenTrace is not built yet. Run `npm run build` before using the package CLI from a source checkout.");
@@ -157,9 +227,9 @@ async function serve() {
   }
 
   await initializeDatabase();
-  const port = await getPort({ port: portNumbers(3030, 3999) });
-  const hostname = "127.0.0.1";
-  const url = `http://localhost:${port}`;
+  const hostname = options.hostname;
+  const port = options.port ?? (await getPort({ port: portNumbers(3030, 3999), host: hostname }));
+  const url = `http://${hostname}:${port}`;
 
   console.log(`Starting TokenTrace at ${url}`);
   console.log("Press Ctrl+C to stop the server.");
@@ -186,9 +256,11 @@ async function serve() {
 
   try {
     await waitForServer(url, child);
-    await open(url).catch(() => {
-      console.log(`Open this URL in your browser: ${url}`);
-    });
+    if (options.openBrowser) {
+      await open(url).catch(() => {
+        console.log(`Open this URL in your browser: ${url}`);
+      });
+    }
   } catch (error) {
     console.error(error instanceof Error ? error.message : "Failed to start TokenTrace.");
   }
@@ -313,7 +385,6 @@ async function runWrapped(args) {
   const endedAt = new Date();
   const durationMs = endedAt.getTime() - startedAt.getTime();
   const stdoutSample = Buffer.concat(stdoutChunks).toString("utf8");
-  const stderrSample = Buffer.concat(stderrChunks).toString("utf8");
   const structuredOutput = looksStructured(stdoutSample);
   const sessionId = `wrapper-${randomUUID()}`;
   const record = {
@@ -358,7 +429,7 @@ async function main() {
     return;
   }
   if (command === "serve") {
-    await serve();
+    await serve(args);
     return;
   }
   if (command === "scan") {

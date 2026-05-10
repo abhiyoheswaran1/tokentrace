@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {
     "name": "Abhi Yoheswaran",
@@ -30,6 +30,7 @@
     "docs/assets",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
+    "SECURITY.md",
     "pricing",
     "src",
     "scripts",
@@ -52,9 +53,18 @@
     "pricing:refresh": "tsx scripts/pricing-refresh.ts",
     "reset": "tsx scripts/reset.ts",
     "test": "vitest run",
-    "verify": "npm test && tsc --noEmit",
+    "lint": "eslint .",
+    "verify": "npm test && tsc --noEmit && npm run lint",
+    "package:inspect": "node scripts/package-inspect.mjs",
+    "release:notes": "node scripts/extract-release-notes.mjs",
+    "security:package": "npm run package:inspect && npm audit --omit=dev --audit-level=high",
     "package:test": "npm run verify && npm pack --dry-run",
+    "release:check": "npm run package:test && npm run security:package",
+    "projscan:doctor": "npx --yes projscan@latest doctor",
     "prepack": "npm run build"
+  },
+  "overrides": {
+    "postcss": "^8.5.14"
   },
   "engines": {
     "node": ">=18.18.0"
@@ -76,11 +86,10 @@
     "better-sqlite3": "^11.7.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "^0.45.2",
     "get-port": "^7.2.0",
     "lucide-react": "^0.468.0",
-    "next": "^15.1.4",
+    "next": "^15.5.18",
     "open": "^10.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -97,7 +106,7 @@
     "esbuild": "^0.28.0",
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.4",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.14",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.21.0",
     "typescript": "^5.7.2",

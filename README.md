@@ -28,6 +28,8 @@ CLI commands:
 ```bash
 tokentrace              # Start local dashboard
 tokentrace serve        # Start local dashboard
+tokentrace serve --port 3210 --no-open
+                        # Start on a fixed port without opening a browser
 tokentrace scan         # Scan local AI CLI usage logs
 tokentrace doctor --json
                         # Inspect scan health and repair recommendations
@@ -77,6 +79,9 @@ npm run db:seed      # Seed editable provider/model prices
 npm run reset        # Clear imported data and scan history
 npm test             # Run parser and cost tests
 npm run verify       # Run Vitest and TypeScript checks
+npm run package:test # Verify, build, and dry-run the npm package
+npm run package:inspect
+                    # Check package transparency guardrails
 ```
 
 Release work uses internal milestone commits until the next public minor
@@ -223,6 +228,17 @@ Mobile overview:
 - Turn on **Store raw message content** in Settings only if you want full local message text preserved in SQLite.
 
 Stop the server with `Ctrl+C` in the terminal where `tokentrace` is running.
+
+## Package Trust
+
+- The npm package has no `preinstall`, `install`, or `postinstall` scripts.
+- Published Next.js server bundles are intentionally left readable instead of server-minified so Socket, npm, maintainers, and users can inspect generated runtime code.
+- `npm run package:inspect` fails if generated app route bundles look packed or unreadable.
+- Public npm publishing is configured through GitHub Actions Trusted Publishing and provenance from version tags.
+- Socket GitHub checks and ProjScan are used as release guardrails, alongside `npm audit --omit=dev --audit-level=high`.
+- Release notes are published directly in GitHub Releases from the relevant changelog section, not as a link-only summary.
+
+See [SECURITY.md](SECURITY.md) for the full security and privacy model.
 
 ## Pricing
 

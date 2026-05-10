@@ -1,0 +1,52 @@
+name: Publish Package
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify release package
+        run: npm run release:check
+
+      - name: Verify tag matches package version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          test "v$VERSION" = "$GITHUB_REF_NAME"
+
+      - name: Extract full changelog release notes
+        run: node scripts/extract-release-notes.mjs "$GITHUB_REF_NAME" --out /tmp/tokentrace-release-notes.md
+
+      - name: Publish package
+        run: npm publish --access public --provenance
+
+      - name: Publish GitHub release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RELEASE_TITLE="TokenTrace ${GITHUB_REF_NAME#v}"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "$RELEASE_TITLE" --notes-file /tmp/tokentrace-release-notes.md --latest
+          else
+            gh release create "$GITHUB_REF_NAME" --verify-tag --title "$RELEASE_TITLE" --notes-file /tmp/tokentrace-release-notes.md --latest
+          fi

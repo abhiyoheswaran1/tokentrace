@@ -36,6 +36,27 @@ export type SummaryMetrics = {
   mostUsedModel: string;
 };
 
+export type UsageComparisonSnapshot = Pick<
+  SummaryMetrics,
+  "totalTokens" | "totalCost" | "sessions" | "interactions" | "unknownCostInteractions"
+>;
+
+export type UsageComparison = {
+  mode: "selected-period" | "latest-seven-days" | "empty";
+  label: string;
+  current: UsageComparisonSnapshot;
+  previous: UsageComparisonSnapshot;
+  delta: UsageComparisonSnapshot & {
+    totalTokensPercent: number | null;
+    totalCostPercent: number | null;
+    sessionsPercent: number | null;
+    interactionsPercent: number | null;
+    unknownCostInteractionsPercent: number | null;
+  };
+  headline: string;
+  detail: string;
+};
+
 export type ToolComparisonRow = {
   tool: string;
   provider: string;
@@ -181,6 +202,7 @@ export type ScanTrustData = {
 
 export type AnalyticsData = {
   summary: SummaryMetrics;
+  comparison: UsageComparison;
   trends: TrendPoint[];
   tools: ToolComparisonRow[];
   models: ModelAnalyticsRow[];
@@ -338,6 +360,107 @@ function getSummary(filters: AnalyticsFilters = {}): SummaryMetrics {
     interactions: number(aggregate.interactions),
     mostUsedTool: tool?.name ?? "No data",
     mostUsedModel: model?.name ?? "No data"
+  };
+}
+
+const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+function comparisonSnapshot(summary: SummaryMetrics): UsageComparisonSnapshot {
+  return {
+    totalTokens: summary.totalTokens,
+    totalCost: summary.totalCost,
+    sessions: summary.sessions,
+    interactions: summary.interactions,
+    unknownCostInteractions: summary.unknownCostInteractions
+  };
+}
+
+function percentDelta(current: number, previous: number) {
+  if (previous === 0) return current === 0 ? 0 : null;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+function deltaLabel(percentValue: number | null, absolute: number, noun: string) {
+  if (percentValue == null) {
+    return absolute > 0 ? `New ${noun} activity` : `No ${noun} activity yet`;
+  }
+  if (percentValue === 0) return `${noun} unchanged`;
+  return `${Math.abs(percentValue)}% ${percentValue > 0 ? "more" : "less"} ${noun}`;
+}
+
+function getComparisonWindow(filters: AnalyticsFilters = {}) {
+  if (filters.from != null && filters.to != null && filters.to > filters.from) {
+    const duration = filters.to - filters.from;
+    return {
+      mode: "selected-period" as const,
+      label: "Previous matching period",
+      current: { from: filters.from, to: filters.to },
+      previous: { from: filters.from - duration, to: filters.from }
+    };
+  }
+
+  const latest = sqlite.prepare("SELECT MAX(timestamp) AS latest FROM interactions WHERE timestamp IS NOT NULL").get() as
+    | { latest: number | null }
+    | undefined;
+  const latestTimestamp = latest?.latest;
+  if (latestTimestamp == null) {
+    return {
+      mode: "empty" as const,
+      label: "Previous period",
+      current: {},
+      previous: {}
+    };
+  }
+
+  const currentTo = latestTimestamp + 1;
+  const currentFrom = currentTo - sevenDaysMs;
+  return {
+    mode: "latest-seven-days" as const,
+    label: "Previous 7 days",
+    current: { from: currentFrom, to: currentTo },
+    previous: { from: currentFrom - sevenDaysMs, to: currentFrom }
+  };
+}
+
+function getUsageComparison(filters: AnalyticsFilters = {}): UsageComparison {
+  const window = getComparisonWindow(filters);
+  const current = comparisonSnapshot(getSummary(window.current));
+  const previous = comparisonSnapshot(getSummary(window.previous));
+  const delta = {
+    totalTokens: current.totalTokens - previous.totalTokens,
+    totalCost: current.totalCost - previous.totalCost,
+    sessions: current.sessions - previous.sessions,
+    interactions: current.interactions - previous.interactions,
+    unknownCostInteractions: current.unknownCostInteractions - previous.unknownCostInteractions,
+    totalTokensPercent: percentDelta(current.totalTokens, previous.totalTokens),
+    totalCostPercent: percentDelta(current.totalCost, previous.totalCost),
+    sessionsPercent: percentDelta(current.sessions, previous.sessions),
+    interactionsPercent: percentDelta(current.interactions, previous.interactions),
+    unknownCostInteractionsPercent: percentDelta(
+      current.unknownCostInteractions,
+      previous.unknownCostInteractions
+    )
+  };
+
+  const headline =
+    window.mode === "empty"
+      ? "No previous usage to compare yet"
+      : deltaLabel(delta.totalTokensPercent, delta.totalTokens, "tokens");
+  const detail =
+    window.mode === "selected-period"
+      ? "Compared with the immediately previous matching period."
+      : window.mode === "latest-seven-days"
+        ? "Compared with the seven days before the latest imported interaction."
+        : "Run a scan after CLI sessions to build a local comparison baseline.";
+
+  return {
+    mode: window.mode,
+    label: window.label,
+    current,
+    previous,
+    delta,
+    headline,
+    detail
   };
 }
 
@@ -726,7 +849,12 @@ function getModelAliasSuggestions(filters: AnalyticsFilters = {}): ModelAliasSug
      LIMIT 40`,
     ...filter.params
   ).map((row): ModelAliasSuggestion => {
-    const { providerId: _providerId, ...baseRow } = row;
+    const baseRow = {
+      model: row.model,
+      provider: row.provider,
+      tool: row.tool,
+      sourceFile: row.sourceFile
+    };
     const normalizedModel = row.model.trim().toLowerCase();
     const parserHref = withQuery("/parser-debug", { source: row.sourceFile });
     const repairHref = withQuery("/pricing", { model: row.model });
@@ -931,6 +1059,7 @@ function buildInsights(data: {
 
 export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData {
   const summary = getSummary(filters);
+  const comparison = getUsageComparison(filters);
   const trends = getTrends(filters);
   const tools = getToolComparison(filters);
   const models = getModelRows(filters);
@@ -949,6 +1078,7 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
 
   return {
     summary,
+    comparison,
     trends,
     tools,
     models,

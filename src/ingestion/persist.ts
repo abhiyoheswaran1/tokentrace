@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { sqlite } from "@/src/db/client";
 import { calculateInteractionCost } from "@/src/lib/cost";
-import { stableId, slugify } from "@/src/lib/ids";
+import { stableId } from "@/src/lib/ids";
 import { inferProviderFromModel } from "@/src/lib/provider-inference";
 import { estimateTokensFromText, previewText } from "@/src/lib/token-estimator";
 import { NormalizedInteraction, NormalizedSession } from "./types";

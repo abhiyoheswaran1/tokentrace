@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { ScanHealthSummary } from "@/components/scan-health-summary";
-import { getAnalyticsData, getScanTrustData } from "@/src/lib/analytics";
+import { getAnalyticsData, getScanTrustData, type DebugScanRun } from "@/src/lib/analytics";
 import { buildDoctorReport, type DoctorReport } from "@/src/lib/doctor";
 import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
+import { formatDate } from "@/src/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -228,6 +229,70 @@ function DoctorReportPanel({ report }: { report: DoctorReport }) {
   );
 }
 
+function scanRunVariant(scanRun: DebugScanRun) {
+  if (scanRun.errors.length > 0) return "destructive";
+  if (scanRun.warnings.length > 0) return "warning";
+  if (scanRun.recordsImported > 0) return "success";
+  return "secondary";
+}
+
+function scanRunLabel(scanRun: DebugScanRun) {
+  if (scanRun.errors.length > 0) return "errors";
+  if (scanRun.warnings.length > 0) return "warnings";
+  if (scanRun.recordsImported > 0) return "imported";
+  return "no new records";
+}
+
+function ScanHistoryPanel({ scanRuns }: { scanRuns: DebugScanRun[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Scan history</CardTitle>
+        <CardDescription>
+          Recent local scans, ordered by newest first, so repeated runs are easy to audit.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        {scanRuns.length ? (
+          <div className="divide-y border-y">
+            {scanRuns.slice(0, 8).map((scanRun) => (
+              <div key={scanRun.id} className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(12rem,1fr)_repeat(4,minmax(7rem,auto))] md:items-center">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold">
+                    {formatDate(scanRun.completedAt ?? scanRun.startedAt)}
+                  </div>
+                  <MonoText className="mt-1 block truncate text-xs text-muted-foreground">{scanRun.id}</MonoText>
+                </div>
+                <div>
+                  <FieldLabel>Files</FieldLabel>
+                  <DataValue className="mt-1">{scanRun.filesScanned.toLocaleString()}</DataValue>
+                </div>
+                <div>
+                  <FieldLabel>Imported</FieldLabel>
+                  <DataValue className="mt-1">{scanRun.recordsImported.toLocaleString()}</DataValue>
+                </div>
+                <div>
+                  <FieldLabel>Notes</FieldLabel>
+                  <DataValue className="mt-1">
+                    {(scanRun.warnings.length + scanRun.errors.length).toLocaleString()}
+                  </DataValue>
+                </div>
+                <div className="md:text-right">
+                  <Badge variant={scanRunVariant(scanRun)}>{scanRunLabel(scanRun)}</Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="border-y px-4 py-6 text-sm text-muted-foreground">
+            No scan history yet. Run `tokentrace scan` or use Settings / Scan now.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function DiagnosticsPage() {
   const data = getScanTrustData();
   const analytics = getAnalyticsData();
@@ -268,6 +333,8 @@ export default async function DiagnosticsPage() {
       </Card>
 
       <DoctorReportPanel report={doctorReport} />
+
+      <ScanHistoryPanel scanRuns={data.scanRuns} />
 
       <ScanHealthSummary health={data.health} />
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Coins, Database, MessageSquare, Sparkles } from "lucide-react";
+import { ArrowRight, Coins, Database, MessageSquare, Minus, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DataValue, MonoText, PageHeader } from "@/components/ui/typography";
+import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData } from "@/src/lib/analytics";
 import { resolveDateRange } from "@/src/lib/date-range";
 import { formatCurrency, formatTokens, percent } from "@/src/lib/format";
@@ -70,6 +70,61 @@ function MetricCard({
   );
 }
 
+function formatSignedNumber(value: number) {
+  if (value === 0) return "0";
+  return `${value > 0 ? "+" : "-"}${Math.abs(value).toLocaleString()}`;
+}
+
+function formatSignedCurrency(value: number) {
+  if (value === 0) return "$0.00";
+  return `${value > 0 ? "+" : "-"}${formatCurrency(Math.abs(value))}`;
+}
+
+function formatPercentValue(value: number | null) {
+  if (value == null) return "new";
+  if (value === 0) return "flat";
+  return `${value > 0 ? "+" : "-"}${Math.abs(value)}%`;
+}
+
+function DeltaMetric({
+  label,
+  value,
+  delta,
+  percentValue,
+  previous
+}: {
+  label: string;
+  value: string;
+  delta: string;
+  percentValue: number | null;
+  previous: string;
+}) {
+  const ToneIcon = percentValue == null || percentValue > 0 ? TrendingUp : percentValue < 0 ? TrendingDown : Minus;
+  const toneClass = percentValue == null
+    ? "text-primary"
+    : percentValue > 0
+      ? "text-emerald-800"
+      : percentValue < 0
+        ? "text-orange-700"
+        : "text-muted-foreground";
+
+  return (
+    <div className="min-w-44 border-t p-3 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
+      <div className="flex items-center justify-between gap-3">
+        <FieldLabel>{label}</FieldLabel>
+        <span className={cn("inline-flex items-center gap-1 text-xs font-semibold", toneClass)}>
+          <ToneIcon className="h-3.5 w-3.5" />
+          {formatPercentValue(percentValue)}
+        </span>
+      </div>
+      <DataValue className="mt-1" size="md">{value}</DataValue>
+      <div className="mt-1 text-xs text-muted-foreground">
+        {delta} vs {previous}
+      </div>
+    </div>
+  );
+}
+
 type OverviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -102,6 +157,53 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           description="Add custom folders if needed, run a scan from Settings, then return here for analytics."
         />
       ) : null}
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle>Usage Pulse</CardTitle>
+              <CardDescription>{data.comparison.detail}</CardDescription>
+            </div>
+            <Badge variant="secondary">{data.comparison.label}</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="border-t px-4 py-3">
+            <div className="text-sm font-semibold">{data.comparison.headline}</div>
+          </div>
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4">
+            <DeltaMetric
+              label="Tokens"
+              value={formatTokens(data.comparison.current.totalTokens)}
+              delta={formatSignedNumber(data.comparison.delta.totalTokens)}
+              percentValue={data.comparison.delta.totalTokensPercent}
+              previous={formatTokens(data.comparison.previous.totalTokens)}
+            />
+            <DeltaMetric
+              label="Cost"
+              value={formatCurrency(data.comparison.current.totalCost)}
+              delta={formatSignedCurrency(data.comparison.delta.totalCost)}
+              percentValue={data.comparison.delta.totalCostPercent}
+              previous={formatCurrency(data.comparison.previous.totalCost)}
+            />
+            <DeltaMetric
+              label="Sessions"
+              value={data.comparison.current.sessions.toLocaleString()}
+              delta={formatSignedNumber(data.comparison.delta.sessions)}
+              percentValue={data.comparison.delta.sessionsPercent}
+              previous={data.comparison.previous.sessions.toLocaleString()}
+            />
+            <DeltaMetric
+              label="Unknown cost"
+              value={data.comparison.current.unknownCostInteractions.toLocaleString()}
+              delta={formatSignedNumber(data.comparison.delta.unknownCostInteractions)}
+              percentValue={data.comparison.delta.unknownCostInteractionsPercent}
+              previous={data.comparison.previous.unknownCostInteractions.toLocaleString()}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

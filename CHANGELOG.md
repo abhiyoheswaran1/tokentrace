@@ -2,6 +2,38 @@
 
 All notable changes to TokenTrace are documented here.
 
+## Unreleased
+
+## [0.5.0] - 2026-05-10
+
+### Added
+
+- Package trust inspection that fails if generated Next.js route bundles look packed or unreadable.
+- GitHub Actions Trusted Publishing workflow for provenance-backed npm releases from version tags.
+- GitHub security workflow with package verification, production dependency audit, and ProjScan doctor checks.
+- Release-note extraction for publishing full changelog sections into GitHub Releases.
+- Security policy documenting local-only behavior, package install guarantees, and vulnerability reporting.
+- Package trust documentation for Socket, npm, maintainers, and users.
+- ESLint, Prettier, EditorConfig, and ProjScan configuration for cleaner automated review.
+- `npm run lint` in the verification path.
+- `tokentrace serve --port`, `--hostname`, and `--no-open` options for predictable local and package smoke tests.
+- 0.5.0 roadmap, design spec, and implementation plan for package trust and usage intelligence.
+- Overview Usage Pulse comparing token, cost, session, and unknown-cost movement against the previous period.
+- Scan Doctor recent scan history.
+- Settings package trust panel summarizing install-script, network, and release guarantees.
+
+### Changed
+
+- Published Next.js server bundles are no longer server-minified so package scanners can inspect generated runtime code.
+- Raised the declared Next.js dependency floor to `^15.5.18` to match the patched locked runtime.
+- Raised the declared `drizzle-orm` dependency floor to `^0.45.2` and forced patched `postcss` resolution through npm overrides.
+- Updated release documentation so future npm publishes happen through GitHub Trusted Publishing after tag verification.
+- `npm run verify` now runs Vitest, TypeScript, and ESLint.
+
+### Removed
+
+- Removed the unused `date-fns` dependency from the published package graph.
+
 ## [0.4.0] - 2026-05-09
 
 ### Added

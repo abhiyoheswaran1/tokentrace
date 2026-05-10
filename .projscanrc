@@ -1,0 +1,8 @@
+{
+  "disableRules": [
+    "large-lib-dir",
+    "unused-dependency-autoprefixer",
+    "unused-dependency-postcss",
+    "unused-exports-*"
+  ]
+}

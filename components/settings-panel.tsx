@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { FolderPlus, Play, RotateCcw, Trash2 } from "lucide-react";
+import { FolderPlus, Play, RotateCcw, ShieldCheck, Trash2 } from "lucide-react";
 import type { ScanHealth } from "@/src/lib/scan-health";
 import { formatAppVersion } from "@/src/lib/app-version";
 import { formatDate, percent } from "@/src/lib/format";
@@ -146,6 +146,46 @@ export function SettingsPanel({
               {storeRaw ? "On" : "Default off"}
             </Badge>
           </label>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            Package Trust
+          </CardTitle>
+          <CardDescription>
+            Runtime and release guarantees for the installed TokenTrace package.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid border-y md:grid-cols-3 md:divide-x">
+          {[
+            {
+              label: "Install scripts",
+              value: "None",
+              detail: "No preinstall, install, or postinstall lifecycle scripts."
+            },
+            {
+              label: "Network behavior",
+              value: "Local first",
+              detail: "No telemetry. Optional pricing refresh downloads only public model prices."
+            },
+            {
+              label: "Release proof",
+              value: "Tag based",
+              detail: "Future npm releases publish through GitHub Trusted Publishing."
+            }
+          ].map((item) => (
+            <div key={item.label} className="p-3">
+              <div className="flex items-center justify-between gap-3">
+                <FieldLabel>{item.label}</FieldLabel>
+                <Badge variant="success">checked</Badge>
+              </div>
+              <DataValue className="mt-1" size="md">{item.value}</DataValue>
+              <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</div>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
