@@ -7,13 +7,13 @@ import {
   ClipboardList,
   FolderGit2,
   Gauge,
-  LineChart,
   Search,
   Settings,
   SlidersHorizontal,
   Sparkles,
   Terminal
 } from "lucide-react";
+import { TokenTraceLogo } from "@/components/token-trace-logo";
 import { formatAppVersion, getAppVersion } from "@/src/lib/app-version";
 
 const navItems = [
@@ -37,9 +37,7 @@ export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string 
       <div className="flex h-full flex-col">
         <div className="border-b p-5">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <LineChart className="h-5 w-5" />
-            </div>
+            <TokenTraceLogo className="h-9 w-9 shrink-0" />
             <div>
               <div className="text-sm font-semibold">TokenTrace CLI</div>
               <div className="text-xs text-muted-foreground">Local only · No telemetry</div>

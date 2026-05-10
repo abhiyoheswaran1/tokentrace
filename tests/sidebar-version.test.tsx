@@ -13,5 +13,6 @@ describe("Sidebar version display", () => {
     expect(text).toContain("v0.4.0");
     expect(text).toContain("Open source by Abhi Yoheswaran.");
     expect(html).toContain('href="https://github.com/abhiyoheswaran1"');
+    expect(html).toContain('aria-label="TokenTrace logo"');
   });
 });

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/tokentrace-logo.svg" alt="TokenTrace logo" width="96" height="96">
+</p>
+
 # TokenTrace CLI
 
 Local-first analytics for AI CLI usage. TokenTrace scans local CLI logs, normalizes token usage, estimates missing counts, and shows cost, model, project, and session analytics in a browser dashboard.

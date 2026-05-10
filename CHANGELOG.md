@@ -4,6 +4,16 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.5.1] - 2026-05-10
+
+### Added
+
+- TokenTrace logo SVG asset and Next.js app icon.
+
+### Changed
+
+- App shell and README now use the TokenTrace logo instead of the generic chart mark.
+
 ## [0.5.0] - 2026-05-10
 
 ### Added
