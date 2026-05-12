@@ -128,6 +128,13 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL,
   updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
+
+CREATE TABLE IF NOT EXISTS unknown_cost_reviews (
+  key TEXT PRIMARY KEY,
+  state TEXT NOT NULL DEFAULT 'unresolved',
+  note TEXT NOT NULL DEFAULT '',
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+);
 `;
 
 export function applyMigrations(sqlite: Database.Database) {

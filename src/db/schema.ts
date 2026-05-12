@@ -200,6 +200,15 @@ export const settings = sqliteTable("settings", {
     .$defaultFn(() => new Date())
 });
 
+export const unknownCostReviews = sqliteTable("unknown_cost_reviews", {
+  key: text("key").primaryKey(),
+  state: text("state").notNull().default("unresolved"),
+  note: text("note").notNull().default(""),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date())
+});
+
 export const providerRelations = relations(providers, ({ many }) => ({
   tools: many(tools),
   models: many(models)
@@ -258,3 +267,4 @@ export type Interaction = typeof interactions.$inferSelect;
 export type ToolCall = typeof toolCalls.$inferSelect;
 export type ScanRun = typeof scanRuns.$inferSelect;
 export type ScanFile = typeof scanFiles.$inferSelect;
+export type UnknownCostReview = typeof unknownCostReviews.$inferSelect;
