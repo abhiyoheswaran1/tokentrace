@@ -119,6 +119,14 @@ type EvidenceSessionRow = {
   interactions: number;
 };
 
+type EvidenceTotalsRow = {
+  tokens: number;
+  cost: number;
+  sessions: number;
+  interactions: number;
+  unknownCostInteractions: number;
+};
+
 function currentMonthWindow(now = new Date()) {
   const from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
   const to = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
@@ -152,6 +160,18 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
   const pricingWhere = metricWhere(metric, "i2", "AND");
   const tokenExpression = metricTokenExpression(metric);
   const pricingTokenExpression = metricTokenExpression(metric, "i2");
+  const totals = sqlite
+    .prepare(
+      `SELECT
+        COALESCE(SUM(${tokenExpression}), 0) AS tokens,
+        COALESCE(SUM(i.cost), 0) AS cost,
+        COUNT(DISTINCT i.session_id) AS sessions,
+        COUNT(i.id) AS interactions,
+        SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END) AS unknownCostInteractions
+       FROM interactions i
+       ${where}`
+    )
+    .get() as EvidenceTotalsRow;
   const sessions = sqlite
     .prepare(
       `SELECT
@@ -207,7 +227,20 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
          FROM scan_files sf2
          JOIN scan_runs sr2 ON sr2.id = sf2.scan_run_id
          WHERE sf2.path = s.source_file
-         ORDER BY sr2.started_at DESC, sf2.id ASC
+         ORDER BY
+           CASE
+             WHEN sf2.status IN ('imported', 'imported_with_errors')
+               AND sf2.parser IS NOT NULL
+               AND sf2.raw_metadata IS NOT NULL
+               AND sf2.raw_metadata <> '{}'
+               THEN 0
+             WHEN sf2.status IN ('imported', 'imported_with_errors')
+               AND sf2.parser IS NOT NULL
+               THEN 1
+             ELSE 2
+           END,
+           sr2.started_at DESC,
+           sf2.id ASC
          LIMIT 1
        )
        ${where}
@@ -244,23 +277,17 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
     };
   });
 
-  const totals = mapped.reduce(
-    (summary, session, index) => {
-      summary.tokens += session.totalTokens;
-      summary.cost += session.cost ?? 0;
-      summary.sessions += 1;
-      summary.interactions += session.interactions;
-      summary.unknownCostInteractions += number(sessions[index]?.unknownCostInteractions);
-      return summary;
-    },
-    { tokens: 0, cost: 0, sessions: 0, interactions: 0, unknownCostInteractions: 0 }
-  );
-
   return {
     metric,
     title: config.title,
     description: config.description,
-    totals,
+    totals: {
+      tokens: number(totals.tokens),
+      cost: number(totals.cost),
+      sessions: number(totals.sessions),
+      interactions: number(totals.interactions),
+      unknownCostInteractions: number(totals.unknownCostInteractions)
+    },
     sessions: mapped
   };
 }

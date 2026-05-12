@@ -244,4 +244,93 @@ describe("evidence trail", () => {
       totalTokens: 125
     });
   });
+
+  it("totals the full metric set even when the session evidence preview is capped", async () => {
+    const { buildEvidenceTrail, sqlite } = await loadEvidence();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('anthropic', 'Anthropic', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('claude-code', 'anthropic', 'Claude Code')").run();
+    sqlite.prepare("INSERT INTO projects (id, name, path) VALUES ('project-1', 'TokenTrace', '/repo/tokentrace')").run();
+    sqlite
+      .prepare(
+        "INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES ('sonnet', 'anthropic', 'claude-sonnet-4-5', 3, 15, 'USD')"
+      )
+      .run();
+
+    const insertSession = sqlite.prepare(
+      "INSERT INTO sessions (id, source_id, tool_id, project_id, started_at, title, source_file) VALUES (?, ?, 'claude-code', 'project-1', 10, ?, ?)"
+    );
+    const insertInteraction = sqlite.prepare(
+      `INSERT INTO interactions
+       (id, source_id, session_id, role, model_id, input_tokens, output_tokens, total_tokens, token_confidence, cost)
+       VALUES
+        (?, ?, ?, 'assistant', 'sonnet', 1, 0, 1, 'exact', 1)`
+    );
+    for (let index = 0; index < 101; index += 1) {
+      const id = `session-${String(index).padStart(3, "0")}`;
+      insertSession.run(id, `source-${index}`, `Session ${index}`, `/tmp/${id}.jsonl`);
+      insertInteraction.run(`interaction-${index}`, `interaction-source-${index}`, id);
+    }
+
+    const trail = buildEvidenceTrail({ metric: "processed-tokens" });
+
+    expect(trail.sessions).toHaveLength(100);
+    expect(trail.totals).toMatchObject({
+      tokens: 101,
+      cost: 101,
+      sessions: 101,
+      interactions: 101,
+      unknownCostInteractions: 0
+    });
+  });
+
+  it("prefers useful imported parser metadata over a later duplicate scan row", async () => {
+    const { buildEvidenceTrail, sqlite } = await loadEvidence();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('anthropic', 'Anthropic', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('claude-code', 'anthropic', 'Claude Code')").run();
+    sqlite.prepare("INSERT INTO projects (id, name, path) VALUES ('project-1', 'TokenTrace', '/repo/tokentrace')").run();
+    sqlite
+      .prepare(
+        "INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES ('sonnet', 'anthropic', 'claude-sonnet-4-5', 3, 15, 'USD')"
+      )
+      .run();
+    sqlite
+      .prepare(
+        "INSERT INTO sessions (id, source_id, tool_id, project_id, started_at, title, source_file) VALUES ('session-1', 'source-1', 'claude-code', 'project-1', 10, 'Parser metadata', '/tmp/parser.jsonl')"
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, input_tokens, output_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('i1', 'i1-source', 'session-1', 'assistant', 'sonnet', 10, 5, 15, 'exact', 0.01)`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO scan_runs (id, started_at, completed_at, files_scanned, records_imported, warnings, errors) VALUES
+          ('scan-imported', 1, 2, 1, 1, '[]', '[]'),
+          ('scan-duplicate', 3, 4, 1, 0, '[]', '[]')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO scan_files
+          (id, scan_run_id, path, size_bytes, parser, status, records_imported, warnings, errors, raw_metadata)
+         VALUES
+          ('file-imported', 'scan-imported', '/tmp/parser.jsonl', 100, 'claude-code', 'imported', 1, '[]', '[]', '{"confidence":0.95,"reason":"Claude transcript"}'),
+          ('file-duplicate', 'scan-duplicate', '/tmp/parser.jsonl', 100, NULL, 'skipped_duplicate', 0, '[]', '[]', '{}')`
+      )
+      .run();
+
+    const trail = buildEvidenceTrail({ metric: "processed-tokens" });
+
+    expect(trail.sessions[0]).toMatchObject({
+      parser: "claude-code",
+      parserStatus: "imported",
+      parserConfidence: 0.95
+    });
+  });
 });
