@@ -119,6 +119,29 @@ dashboard.
   changes.
 - Run release gates before any public release.
 
+## Implementation Status
+
+Status on `main` as of 2026-05-12:
+
+- TT-080-01 Evidence Trail V1: implemented with a reusable evidence builder,
+  Overview metric links, focused evidence detail pages, and CLI JSON output.
+- TT-080-02 Unknown Cost Repair Workbench: implemented with grouped causes,
+  local review state, alias suggestions, source/session links, and CLI JSON
+  output.
+- TT-080-03 Parser Trust Report: implemented in Scan Doctor with parser id,
+  parser version, source family, scan status, imported counts, ignored support
+  files, unsupported candidates, duplicates, and failures separated.
+- TT-080-04 Scan History Diff: implemented in Doctor and `doctor --json` with
+  latest-vs-previous scan explanations, including zero-import cases.
+- TT-080-05 CLI Repair And Evidence Commands: implemented through
+  `tokentrace evidence --json` and `tokentrace repair --json`.
+- TT-080-06 Visual QA And Release Hardening: implemented with public-safe
+  README screenshots, removal of obsolete packaged screenshots, dense-table
+  scroll handling, and regression tests for the period toolbar, app shell, and
+  page header width constraints.
+
+Release gates still remain mandatory before a public 0.8.0 tag or npm publish.
+
 ## Release Criteria
 
 0.8.0 is not releasable until:
