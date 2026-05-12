@@ -69,6 +69,20 @@ describe("doctor report", () => {
         latestReason: "Synthetic doctor input"
       })
     ]);
+    expect(report.scanDiff).toMatchObject({
+      latestScanId: "scan-1",
+      previousScanId: null,
+      current: {
+        filesScanned: 1,
+        recordsImported: 1,
+        importedWithErrors: 1
+      },
+      delta: {
+        filesScanned: 1,
+        recordsImported: 1,
+        importedWithErrors: 1
+      }
+    });
   });
 
   it("includes support matrix and scan freshness in the JSON report", () => {

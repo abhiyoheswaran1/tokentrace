@@ -22,6 +22,8 @@ function renderText(report: DoctorReport) {
     `Pricing: ${report.pricing.priced.toLocaleString()} priced, ${report.pricing.unknown.toLocaleString()} unknown`,
     `Support: ${report.supportMatrix.summary.stable.toLocaleString()} stable, ${report.supportMatrix.summary.bestEffort.toLocaleString()} best-effort, ${report.supportMatrix.summary.ignored.toLocaleString()} ignored, ${report.supportMatrix.summary.unsupported.toLocaleString()} unsupported`,
     report.latestScan.zeroImportExplanation ? `Zero import: ${report.latestScan.zeroImportExplanation}` : null,
+    report.scanDiff.explanation ? `Scan diff: ${report.scanDiff.explanation}` : null,
+    `Scan delta: ${report.scanDiff.delta.filesScanned.toLocaleString()} files, ${report.scanDiff.delta.recordsImported.toLocaleString()} records`,
     "",
     "Recommendations:"
   ].filter((line): line is string => line != null);

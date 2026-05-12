@@ -324,6 +324,82 @@ function ParserTrustPanel({ report }: { report: DoctorReport["parserTrust"] }) {
   );
 }
 
+function formatDelta(value: number) {
+  if (value > 0) return `+${value.toLocaleString()}`;
+  return value.toLocaleString();
+}
+
+function ScanDiffPanel({ report }: { report: DoctorReport["scanDiff"] }) {
+  const rows: Array<[string, keyof DoctorReport["scanDiff"]["current"]]> = [
+    ["Files scanned", "filesScanned"],
+    ["Records imported", "recordsImported"],
+    ["Imported", "imported"],
+    ["With errors", "importedWithErrors"],
+    ["Duplicates", "duplicates"],
+    ["Ignored", "ignored"],
+    ["Unsupported", "unsupported"],
+    ["Failed", "failed"]
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Scan History Diff</CardTitle>
+        <CardDescription>
+          Latest scan compared with the previous scan using deterministic scan ordering.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid border-y md:grid-cols-2 md:divide-x">
+          <div className="min-w-0 p-3">
+            <FieldLabel>Latest scan</FieldLabel>
+            <div className="mt-1 text-sm font-semibold">{formatDate(report.latestCompletedAt ?? report.latestStartedAt)}</div>
+            <MonoText className="mt-1 block truncate text-xs text-muted-foreground">
+              {report.latestScanId ?? "No scan"}
+            </MonoText>
+          </div>
+          <div className="min-w-0 p-3">
+            <FieldLabel>Previous scan</FieldLabel>
+            <div className="mt-1 text-sm font-semibold">{formatDate(report.previousCompletedAt ?? report.previousStartedAt)}</div>
+            <MonoText className="mt-1 block truncate text-xs text-muted-foreground">
+              {report.previousScanId ?? "No previous scan"}
+            </MonoText>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto border-y">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Count</TableHead>
+                <TableHead className="text-right">Current</TableHead>
+                <TableHead className="text-right">Previous</TableHead>
+                <TableHead className="text-right">Delta</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map(([label, key]) => (
+                <TableRow key={key}>
+                  <TableCell className="font-medium">{label}</TableCell>
+                  <TableCell className="text-right">{report.current[key].toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{report.previous[key].toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{formatDelta(report.delta[key])}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {report.explanation ? (
+          <div className="rounded-md border bg-muted/30 p-3 text-sm leading-relaxed text-muted-foreground">
+            {report.explanation}
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
 function scanRunVariant(scanRun: DebugScanRun) {
   if (scanRun.errors.length > 0) return "destructive";
   if (scanRun.warnings.length > 0) return "warning";
@@ -430,6 +506,8 @@ export default async function DiagnosticsPage() {
       <DoctorReportPanel report={doctorReport} />
 
       <ParserTrustPanel report={doctorReport.parserTrust} />
+
+      <ScanDiffPanel report={doctorReport.scanDiff} />
 
       <ScanHistoryPanel scanRuns={data.scanRuns} />
 
