@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   buildUnknownCostRepairWorkbench,
+  getUnknownCostReview,
   saveUnknownCostReview,
   type UnknownCostRepairStatus
 } from "@/src/lib/unknown-cost-repair";
@@ -46,16 +47,32 @@ export async function PUT(request: Request) {
   }
 
   const group = workbenchGroupForKey(key);
-  const sourceFile = group?.sourceFile ?? text(body.sourceFile, 1000);
-  const model = group?.model ?? text(body.model, 500);
-  const cause = group?.cause ?? text(body.cause, 100);
+  const existing = group ? null : getUnknownCostReview(key);
+  if (!group && (!existing || existing.updatedAt == null)) {
+    return NextResponse.json({ error: "repair key was not found in current workbench evidence" }, { status: 404 });
+  }
+
+  const metadata = {
+    sourceFile: "",
+    model: "",
+    cause: ""
+  };
+  if (group) {
+    metadata.sourceFile = group.sourceFile;
+    metadata.model = group.model;
+    metadata.cause = group.cause;
+  } else if (existing) {
+    metadata.sourceFile = existing.sourceFile;
+    metadata.model = existing.model;
+    metadata.cause = existing.cause;
+  }
   const review = saveUnknownCostReview({
     key,
     status,
     notes: text(body.notes ?? body.note, 500),
-    sourceFile,
-    model,
-    cause
+    sourceFile: metadata.sourceFile,
+    model: metadata.model,
+    cause: metadata.cause
   });
 
   return NextResponse.json({ review });

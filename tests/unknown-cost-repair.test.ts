@@ -113,6 +113,34 @@ describe("unknown cost repair state", () => {
     });
   });
 
+  it("rejects API updates for unknown repair keys with spoofed metadata", async () => {
+    const { getUnknownCostReview } = await loadRepair();
+    const { PUT } = await import("@/app/api/repair-items/route");
+
+    const response = await PUT(new Request("http://localhost/api/repair-items", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        key: "repair:v1:missing%20pricing:Fake:Tool:fake-model:%2Ftmp%2Fspoofed.jsonl",
+        status: "ignored",
+        notes: "Should not persist.",
+        sourceFile: "/tmp/spoofed.jsonl",
+        model: "fake-model",
+        cause: "missing pricing"
+      })
+    }));
+
+    expect(response.status).toBe(404);
+    expect(getUnknownCostReview("repair:v1:missing%20pricing:Fake:Tool:fake-model:%2Ftmp%2Fspoofed.jsonl")).toMatchObject({
+      sourceFile: "",
+      model: "",
+      cause: "",
+      status: "unresolved",
+      notes: "",
+      updatedAt: null
+    });
+  });
+
   it("builds grouped workbench rows with review state, links, and model alias suggestions", async () => {
     const { buildUnknownCostRepairWorkbench, saveUnknownCostReview, sqlite } = await loadRepair();
 
