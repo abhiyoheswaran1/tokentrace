@@ -13,6 +13,7 @@ import { getAnalyticsData, getScanTrustData } from "@/src/lib/analytics";
 import { buildDoctorReport } from "@/src/lib/doctor";
 import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
 import { buildFirstRunStatus, type FirstRunStatus } from "@/src/lib/first-run-status";
+import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
 import { resolveDateRange } from "@/src/lib/date-range";
 import { formatCurrency, formatTokens, percent } from "@/src/lib/format";
 import { cn } from "@/src/lib/utils";
@@ -264,6 +265,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   const trust = getScanTrustData();
   const roots = await getDefaultSearchRoots();
   const doctorReport = buildDoctorReport({ ...trust, roots });
+  const repairWorkbench = buildUnknownCostRepairWorkbench();
   const firstRunStatus = buildFirstRunStatus({
     rootCount: roots.length,
     pricedModelCount: trust.pricedModelCount,
@@ -509,7 +511,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         </Card>
       </div>
 
-      {data.unknownCosts.length ? (
+      {repairWorkbench.groups.length ? (
         <Card>
           <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -528,6 +530,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>State</TableHead>
                   <TableHead>Cause</TableHead>
                   <TableHead>Model</TableHead>
                   <TableHead>Tool</TableHead>
@@ -538,8 +541,13 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.unknownCosts.slice(0, 6).map((row) => (
-                  <TableRow key={`${row.cause}-${row.model}-${row.sourceFile}`}>
+                {repairWorkbench.groups.slice(0, 6).map((row) => (
+                  <TableRow key={row.key}>
+                    <TableCell>
+                      <Badge variant={row.state === "resolved" ? "success" : row.state === "needs-parser-review" ? "warning" : row.state === "ignored" ? "secondary" : "destructive"}>
+                        {row.state}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={row.cause === "missing pricing" ? "warning" : "secondary"}>
                         {row.cause}

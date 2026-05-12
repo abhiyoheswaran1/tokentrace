@@ -283,21 +283,21 @@ function findWorkbenchGroupByKey(key: string): UnknownCostRepairWorkbenchGroup |
 }
 
 function fallbackMetadataForKey(key: string) {
-  const parsed = parseRepairKey(key);
-  if (parsed) {
-    return {
-      sourceFile: parsed.sourceFile,
-      model: parsed.model,
-      cause: parsed.cause
-    };
-  }
-
   const group = findWorkbenchGroupByKey(key);
   if (group) {
     return {
       sourceFile: group.sourceFile,
       model: group.model,
       cause: group.cause
+    };
+  }
+
+  const parsed = parseRepairKey(key);
+  if (parsed) {
+    return {
+      sourceFile: parsed.sourceFile,
+      model: parsed.model,
+      cause: parsed.cause
     };
   }
 
@@ -335,12 +335,12 @@ export function saveUnknownCostReview(input: {
 }) {
   const existing = db.select().from(unknownCostReviews).where(eq(unknownCostReviews.key, input.key)).get();
   const now = new Date();
-  const fallbackMetadata = existing ? null : fallbackMetadataForKey(input.key);
+  const authoritativeMetadata = fallbackMetadataForKey(input.key);
   const next = {
     key: input.key,
-    sourceFile: normalizeText(input.sourceFile ?? existing?.sourceFile ?? fallbackMetadata?.sourceFile, 1000),
-    model: normalizeText(input.model ?? existing?.model ?? fallbackMetadata?.model),
-    cause: normalizeText(input.cause ?? existing?.cause ?? fallbackMetadata?.cause),
+    sourceFile: normalizeText(authoritativeMetadata.sourceFile || input.sourceFile || existing?.sourceFile, 1000),
+    model: normalizeText(authoritativeMetadata.model || input.model || existing?.model),
+    cause: normalizeText(authoritativeMetadata.cause || input.cause || existing?.cause),
     status: normalizeStatus(input.status ?? input.state ?? existing?.status),
     notes: nextNotes(input, existing?.notes),
     createdAt: existing?.createdAt ?? now,

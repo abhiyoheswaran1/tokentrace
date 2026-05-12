@@ -93,6 +93,24 @@ describe("unknown cost repair state", () => {
       status: "needs-parser-review",
       notes: "API-style update with only key, state, and note."
     });
+
+    saveUnknownCostReview({
+      key: underscoreGroup!.key,
+      sourceFile: "/tmp/wrong.jsonl",
+      model: "wrong-model",
+      cause: "wrong-cause",
+      status: "ignored",
+      notes: "Attempted metadata override."
+    });
+
+    expect(getUnknownCostReview(underscoreGroup!.key)).toMatchObject({
+      key: underscoreGroup!.key,
+      sourceFile: "/tmp/source:one.jsonl",
+      model: "model_alpha",
+      cause: "missing pricing",
+      status: "ignored",
+      notes: "Attempted metadata override."
+    });
   });
 
   it("builds grouped workbench rows with review state, links, and model alias suggestions", async () => {

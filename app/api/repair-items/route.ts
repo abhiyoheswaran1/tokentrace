@@ -46,9 +46,9 @@ export async function PUT(request: Request) {
   }
 
   const group = workbenchGroupForKey(key);
-  const sourceFile = text(body.sourceFile, 1000) || group?.sourceFile;
-  const model = text(body.model, 500) || group?.model;
-  const cause = text(body.cause, 100) || group?.cause;
+  const sourceFile = group?.sourceFile ?? text(body.sourceFile, 1000);
+  const model = group?.model ?? text(body.model, 500);
+  const cause = group?.cause ?? text(body.cause, 100);
   const review = saveUnknownCostReview({
     key,
     status,
