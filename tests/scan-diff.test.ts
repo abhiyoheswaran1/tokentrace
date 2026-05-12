@@ -104,4 +104,33 @@ describe("scan history diff", () => {
       }
     });
   });
+
+  it("mentions parser errors for mixed zero-import scans with imported-with-errors files", async () => {
+    const { buildScanDiff, sqlite } = await loadScanDiff();
+
+    sqlite.prepare(
+      `INSERT INTO scan_runs (id, started_at, completed_at, files_scanned, records_imported, warnings, errors)
+       VALUES
+        ('scan-old', 1, 2, 1, 1, '[]', '[]'),
+        ('scan-new', 3, 4, 2, 0, '[]', '[]')`
+    ).run();
+    sqlite.prepare(
+      `INSERT INTO scan_files
+        (id, scan_run_id, path, size_bytes, parser, status, records_imported, warnings, errors, raw_metadata)
+       VALUES
+        ('old-1', 'scan-old', '/tmp/a.jsonl', 100, 'claude-code', 'imported', 1, '[]', '[]', '{}'),
+        ('new-1', 'scan-new', '/tmp/a.jsonl', 100, 'claude-code', 'imported_with_errors', 0, '["partial import"]', '["bad payload"]', '{}'),
+        ('new-2', 'scan-new', '/tmp/b.jsonl', 100, 'claude-code', 'skipped_duplicate', 0, '[]', '[]', '{}')`
+    ).run();
+
+    const diff = buildScanDiff();
+
+    expect(diff.current).toMatchObject({
+      importedWithErrors: 1,
+      duplicates: 1,
+      recordsImported: 0
+    });
+    expect(diff.explanation).toContain("parser errors");
+    expect(diff.explanation).toContain("duplicates");
+  });
 });
