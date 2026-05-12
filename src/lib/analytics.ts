@@ -10,6 +10,7 @@ import { getUsageGuardrailProgress, type UsageGuardrailProgress } from "@/src/li
 import { buildReviewQueue, type ReviewQueueItem } from "@/src/lib/review-queue";
 import { buildSessionComparisons, type SessionComparisonRow } from "@/src/lib/session-comparison";
 import { buildProjectSignals, type ProjectSignalRow } from "@/src/lib/project-signals";
+import { evidenceHref, type EvidenceMetric } from "@/src/lib/evidence-trail";
 
 export type TrendPoint = {
   date: string;
@@ -39,6 +40,8 @@ export type SummaryMetrics = {
   mostUsedTool: string;
   mostUsedModel: string;
 };
+
+export type EvidenceLinkMap = Record<EvidenceMetric, string>;
 
 export type UsageComparisonSnapshot = Pick<
   SummaryMetrics,
@@ -206,6 +209,7 @@ export type ScanTrustData = {
 
 export type AnalyticsData = {
   summary: SummaryMetrics;
+  evidenceLinks: EvidenceLinkMap;
   comparison: UsageComparison;
   trends: TrendPoint[];
   tools: ToolComparisonRow[];
@@ -1067,6 +1071,16 @@ function buildInsights(data: {
 
 export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData {
   const summary = getSummary(filters);
+  const evidenceLinks: EvidenceLinkMap = {
+    "processed-tokens": evidenceHref("processed-tokens"),
+    "non-cache-tokens": evidenceHref("non-cache-tokens"),
+    "cached-tokens": evidenceHref("cached-tokens"),
+    "estimated-cost": evidenceHref("estimated-cost"),
+    sessions: evidenceHref("sessions"),
+    "unknown-cost": evidenceHref("unknown-cost"),
+    guardrails: evidenceHref("guardrails"),
+    "review-queue": evidenceHref("review-queue")
+  };
   const comparison = getUsageComparison(filters);
   const usageGuardrails = getUsageGuardrailProgress();
   const trends = getTrends(filters);
@@ -1103,6 +1117,7 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
 
   return {
     summary,
+    evidenceLinks,
     comparison,
     trends,
     tools,
