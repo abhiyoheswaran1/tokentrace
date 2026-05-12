@@ -11,6 +11,7 @@ import {
   type SupportMatrixItem,
   type SupportMatrixSummary
 } from "@/src/lib/support-matrix";
+import { buildParserTrustReport, type ParserTrustReport } from "@/src/lib/parser-trust";
 
 export type DoctorRecommendation = {
   id: string;
@@ -64,6 +65,7 @@ export type DoctorReport = {
     summary: SupportMatrixSummary;
     items: SupportMatrixItem[];
   };
+  parserTrust: ParserTrustReport;
   recommendations: DoctorRecommendation[];
 };
 
@@ -285,6 +287,7 @@ export function buildDoctorReport({
 }): DoctorReport {
   const health = buildScanHealth({ scanRuns, scanFiles, confidence });
   const supportMatrix = getSupportMatrix();
+  const parserTrust = buildParserTrustReport();
   const statusCounts = health.latestStatusCounts;
   const zeroImport = zeroImportExplanation({
     latestRun: health.latestRun,
@@ -335,6 +338,7 @@ export function buildDoctorReport({
       summary: summarizeSupportMatrix(supportMatrix),
       items: supportMatrix
     },
+    parserTrust,
     recommendations: buildRecommendations({
       health,
       rootCount: roots.length,

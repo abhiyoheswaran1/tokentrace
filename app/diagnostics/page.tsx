@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, ArrowRight, CheckCircle2, CircleDashed } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { ScanHealthSummary } from "@/components/scan-health-summary";
 import { getAnalyticsData, getScanTrustData, type DebugScanRun } from "@/src/lib/analytics";
@@ -261,6 +262,63 @@ function DoctorReportPanel({ report }: { report: DoctorReport }) {
   );
 }
 
+function ParserTrustPanel({ report }: { report: DoctorReport["parserTrust"] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Parser Trust Report</CardTitle>
+        <CardDescription>
+          Latest scan files grouped by parser, source family, version, status, and import yield.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        {report.parsers.length ? (
+          <div className="overflow-x-auto border-y">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Parser</TableHead>
+                  <TableHead>Version</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead className="text-right">Imported</TableHead>
+                  <TableHead className="text-right">Ignored</TableHead>
+                  <TableHead className="text-right">Unsupported</TableHead>
+                  <TableHead className="text-right">Failed</TableHead>
+                  <TableHead className="text-right">Records</TableHead>
+                  <TableHead className="min-w-56">Latest reason</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {report.parsers.map((row) => (
+                  <TableRow key={`${row.parser}:${row.version}:${row.sourceFamily}`}>
+                    <TableCell className="font-medium">{row.parser}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{row.version}</Badge>
+                    </TableCell>
+                    <TableCell>{row.sourceFamily}</TableCell>
+                    <TableCell className="text-right">{row.imported.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{row.ignored.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{row.unsupported.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{row.failed.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{row.recordsImported.toLocaleString()}</TableCell>
+                    <TableCell className="max-w-md text-xs text-muted-foreground">
+                      {row.latestReason || "No parser reason recorded."}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="border-y px-4 py-6 text-sm text-muted-foreground">
+            No parser trust data yet. Run `tokentrace scan` to populate the latest scan report.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function scanRunVariant(scanRun: DebugScanRun) {
   if (scanRun.errors.length > 0) return "destructive";
   if (scanRun.warnings.length > 0) return "warning";
@@ -365,6 +423,8 @@ export default async function DiagnosticsPage() {
       </Card>
 
       <DoctorReportPanel report={doctorReport} />
+
+      <ParserTrustPanel report={doctorReport.parserTrust} />
 
       <ScanHistoryPanel scanRuns={data.scanRuns} />
 
