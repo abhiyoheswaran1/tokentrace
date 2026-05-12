@@ -9,6 +9,31 @@ function rangeHref(range: string) {
   return range === "all" ? "/" : `/?range=${range}`;
 }
 
+function PeriodDateField({
+  label,
+  name,
+  defaultValue
+}: {
+  label: string;
+  name: "from" | "to";
+  defaultValue: string;
+}) {
+  return (
+    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span>{label}</span>
+      <span className="period-date-field relative block h-8 w-32 shrink-0">
+        <Input
+          type="date"
+          name={name}
+          defaultValue={defaultValue}
+          className="period-date-input h-8 w-32 pr-8"
+        />
+        <CalendarDays className="period-date-icon pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      </span>
+    </label>
+  );
+}
+
 export function PeriodFilter({ range }: { range: ResolvedDateRange }) {
   const statusLabel = range.key === "custom" ? "Custom range" : range.label;
 
@@ -41,14 +66,8 @@ export function PeriodFilter({ range }: { range: ResolvedDateRange }) {
           </div>
           <div className="h-6 w-px shrink-0 bg-border" />
           <div className="flex shrink-0 items-center gap-1.5">
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span>From</span>
-              <Input type="date" name="from" defaultValue={range.fromInput} className="period-date-input h-8 w-32" />
-            </label>
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span>To</span>
-              <Input type="date" name="to" defaultValue={range.toInput} className="period-date-input h-8 w-32" />
-            </label>
+            <PeriodDateField label="From" name="from" defaultValue={range.fromInput} />
+            <PeriodDateField label="To" name="to" defaultValue={range.toInput} />
             <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>
               Apply
             </Button>

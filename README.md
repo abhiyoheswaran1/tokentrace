@@ -37,6 +37,10 @@ tokentrace serve --port 3210 --no-open
 tokentrace scan         # Scan local AI CLI usage logs
 tokentrace doctor --json
                         # Inspect scan health and repair recommendations
+tokentrace evidence --json
+                        # Print metric evidence trails as JSON
+tokentrace repair --json
+                        # Print unknown-cost repair groups as JSON
 tokentrace digest --json
                         # Print current-month local usage digest
 tokentrace insights --json

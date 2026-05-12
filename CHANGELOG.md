@@ -2,6 +2,24 @@
 
 All notable changes to TokenTrace are documented here.
 
+## [0.8.0] - 2026-05-12
+
+### Added
+
+- Evidence detail pages and `tokentrace evidence --json` for tracing metric totals back to sessions, source files, parser status, and pricing context.
+- Unknown Cost Repair workbench and `tokentrace repair --json` for grouped local repair state, alias hints, parser review links, and pricing follow-up.
+- Parser Trust Report and Scan History Diff panels in Diagnostics for latest scan parser coverage and scan-to-scan import changes.
+
+### Changed
+
+- Overview metric cards now link major totals to evidence trails and route unknown cost work to Unknown Cost Repair.
+- Dense evidence, repair, parser trust, and scan diff tables preserve horizontal scrolling and stable source-path truncation.
+- Evidence and repair copy now states local-first behavior, support-file ignores, and parser-review requirements for unsupported files.
+
+### Fixed
+
+- Overview custom period date fields now use an intentionally inset calendar icon while preserving native `type="date"` submission fields and the single-line desktop toolbar.
+
 ## [0.7.0] - 2026-05-12
 
 ### Added

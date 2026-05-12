@@ -517,7 +517,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             <div>
               <CardTitle>Unknown Cost Repair Queue</CardTitle>
               <CardDescription>
-                Why cost is missing, grouped by source file, model, and repair path.
+                Why cost is missing, grouped by source file, model, and repair path. Local review state only affects repair workflow labels. It does not delete imported usage.
               </CardDescription>
             </div>
             <Button asChild variant="outline" size="sm">
@@ -527,7 +527,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             </Button>
           </CardHeader>
           <CardContent className="table-scroll">
-            <Table>
+            <Table className="min-w-[72rem]">
               <TableHeader>
                 <TableRow>
                   <TableHead>State</TableHead>

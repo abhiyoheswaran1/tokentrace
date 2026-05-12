@@ -54,11 +54,10 @@ body {
 }
 
 .period-date-input {
-  padding-inline-end: 0.5rem;
+  color-scheme: light;
 }
 
 .period-date-input::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  margin-inline-end: 0.25rem;
-  opacity: 0.8;
+  opacity: 0;
 }

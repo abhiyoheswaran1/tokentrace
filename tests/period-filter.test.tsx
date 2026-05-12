@@ -20,7 +20,10 @@ describe("PeriodFilter", () => {
     expect(html).toContain("min-w-[720px]");
     expect(html).toContain("flex-1 overflow-x-auto");
     expect(html).toContain("shrink-0");
+    expect(html).toContain("period-date-field");
     expect(html).toContain("period-date-input");
+    expect(html).toContain("period-date-icon");
+    expect(html).toContain("pointer-events-none absolute right-2");
     expect(html).not.toContain("flex-wrap");
   });
 });

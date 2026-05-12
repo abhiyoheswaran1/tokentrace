@@ -269,53 +269,51 @@ function ParserTrustPanel({ report }: { report: DoctorReport["parserTrust"] }) {
       <CardHeader>
         <CardTitle>Parser Trust Report</CardTitle>
         <CardDescription>
-          Latest scan files grouped by parser, source family, version, status, and import yield.
+          Latest scan files grouped by parser, source family, version, status, and import yield. Ignored files are known support files, not usage transcripts. Unsupported files need parser review before they become usage.
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="table-scroll">
         {report.parsers.length ? (
-          <div className="overflow-x-auto border-y">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Parser</TableHead>
-                  <TableHead>Version</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead className="text-right">Imported</TableHead>
-                  <TableHead className="text-right">With errors</TableHead>
-                  <TableHead className="text-right">Ignored</TableHead>
-                  <TableHead className="text-right">Unsupported</TableHead>
-                  <TableHead className="text-right">Failed</TableHead>
-                  <TableHead className="text-right">Duplicate</TableHead>
-                  <TableHead className="text-right">Records</TableHead>
-                  <TableHead className="min-w-56">Latest reason</TableHead>
+          <Table className="min-w-[72rem]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Parser</TableHead>
+                <TableHead>Version</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead className="text-right">Imported</TableHead>
+                <TableHead className="text-right">With errors</TableHead>
+                <TableHead className="text-right">Ignored</TableHead>
+                <TableHead className="text-right">Unsupported</TableHead>
+                <TableHead className="text-right">Failed</TableHead>
+                <TableHead className="text-right">Duplicate</TableHead>
+                <TableHead className="text-right">Records</TableHead>
+                <TableHead className="min-w-56">Latest reason</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {report.parsers.map((row) => (
+                <TableRow key={`${row.parser}:${row.version}:${row.sourceFamily}`}>
+                  <TableCell className="font-medium">{row.parser}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{row.version}</Badge>
+                  </TableCell>
+                  <TableCell>{row.sourceFamily}</TableCell>
+                  <TableCell className="text-right">{row.imported.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{row.importedWithErrors.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{row.ignored.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{row.unsupported.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{row.failed.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{row.duplicate.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{row.recordsImported.toLocaleString()}</TableCell>
+                  <TableCell className="max-w-md text-xs text-muted-foreground">
+                    {row.latestReason || "No parser reason recorded."}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {report.parsers.map((row) => (
-                  <TableRow key={`${row.parser}:${row.version}:${row.sourceFamily}`}>
-                    <TableCell className="font-medium">{row.parser}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{row.version}</Badge>
-                    </TableCell>
-                    <TableCell>{row.sourceFamily}</TableCell>
-                    <TableCell className="text-right">{row.imported.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{row.importedWithErrors.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{row.ignored.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{row.unsupported.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{row.failed.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{row.duplicate.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{row.recordsImported.toLocaleString()}</TableCell>
-                    <TableCell className="max-w-md text-xs text-muted-foreground">
-                      {row.latestReason || "No parser reason recorded."}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
-          <div className="border-y px-4 py-6 text-sm text-muted-foreground">
+          <div className="px-4 py-6 text-sm text-muted-foreground">
             No parser trust data yet. Run `tokentrace scan` to populate the latest scan report.
           </div>
         )}
@@ -346,10 +344,10 @@ function ScanDiffPanel({ report }: { report: DoctorReport["scanDiff"] }) {
       <CardHeader>
         <CardTitle>Scan History Diff</CardTitle>
         <CardDescription>
-          Latest scan compared with the previous scan using deterministic scan ordering.
+          Latest scan compared with the previous scan using deterministic scan ordering. Ignored files are known support files, not usage transcripts.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="table-scroll space-y-4">
         <div className="grid border-y md:grid-cols-2 md:divide-x">
           <div className="min-w-0 p-3">
             <FieldLabel>Latest scan</FieldLabel>
@@ -367,28 +365,26 @@ function ScanDiffPanel({ report }: { report: DoctorReport["scanDiff"] }) {
           </div>
         </div>
 
-        <div className="overflow-x-auto border-y">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Count</TableHead>
-                <TableHead className="text-right">Current</TableHead>
-                <TableHead className="text-right">Previous</TableHead>
-                <TableHead className="text-right">Delta</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Count</TableHead>
+              <TableHead className="text-right">Current</TableHead>
+              <TableHead className="text-right">Previous</TableHead>
+              <TableHead className="text-right">Delta</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map(([label, key]) => (
+              <TableRow key={key}>
+                <TableCell className="font-medium">{label}</TableCell>
+                <TableCell className="text-right">{report.current[key].toLocaleString()}</TableCell>
+                <TableCell className="text-right">{report.previous[key].toLocaleString()}</TableCell>
+                <TableCell className="text-right">{formatDelta(report.delta[key])}</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map(([label, key]) => (
-                <TableRow key={key}>
-                  <TableCell className="font-medium">{label}</TableCell>
-                  <TableCell className="text-right">{report.current[key].toLocaleString()}</TableCell>
-                  <TableCell className="text-right">{report.previous[key].toLocaleString()}</TableCell>
-                  <TableCell className="text-right">{formatDelta(report.delta[key])}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
 
         {report.explanation ? (
           <div className="rounded-md border bg-muted/30 p-3 text-sm leading-relaxed text-muted-foreground">
