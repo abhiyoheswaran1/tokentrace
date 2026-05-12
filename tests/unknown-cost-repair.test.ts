@@ -142,6 +142,40 @@ describe("unknown cost repair state", () => {
     });
   });
 
+  it("preserves long existing notes when marking resolved or ignored without new notes", async () => {
+    const {
+      getUnknownCostReview,
+      markUnknownCostRepairIgnored,
+      markUnknownCostRepairResolved,
+      saveUnknownCostReview
+    } = await loadRepair();
+    const longNotes = "Long local review note. ".repeat(40);
+
+    saveUnknownCostReview({
+      key: "missing-pricing:Anthropic:claude-long-note",
+      sourceFile: "/tmp/claude/long-note.jsonl",
+      model: "claude-long-note",
+      cause: "missing-pricing",
+      status: "unresolved",
+      notes: "Initial note."
+    });
+    activeSqlite
+      ?.prepare("UPDATE unknown_cost_reviews SET notes = ? WHERE key = ?")
+      .run(longNotes, "missing-pricing:Anthropic:claude-long-note");
+
+    markUnknownCostRepairResolved("missing-pricing:Anthropic:claude-long-note");
+    expect(getUnknownCostReview("missing-pricing:Anthropic:claude-long-note")).toMatchObject({
+      status: "resolved",
+      notes: longNotes
+    });
+
+    markUnknownCostRepairIgnored("missing-pricing:Anthropic:claude-long-note");
+    expect(getUnknownCostReview("missing-pricing:Anthropic:claude-long-note")).toMatchObject({
+      status: "ignored",
+      notes: longNotes
+    });
+  });
+
   it("upgrades existing thin review tables without losing local decisions", async () => {
     const dbPath = await createTempDbPath();
     const sqlite = new Database(dbPath);

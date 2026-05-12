@@ -41,7 +41,7 @@ function toModel(row: typeof unknownCostReviews.$inferSelect): UnknownCostReview
     model: normalizeText(row.model),
     cause: normalizeText(row.cause),
     status: normalizeStatus(row.status),
-    notes: normalizeText(row.notes),
+    notes: row.notes,
     createdAt: row.createdAt.getTime(),
     updatedAt: row.updatedAt.getTime()
   };
@@ -49,6 +49,12 @@ function toModel(row: typeof unknownCostReviews.$inferSelect): UnknownCostReview
 
 function normalizeNote(value: unknown) {
   return typeof value === "string" ? value.slice(0, 500) : "";
+}
+
+function nextNotes(input: { notes?: string; note?: string }, existingNotes: string | undefined) {
+  if (input.notes !== undefined) return normalizeNote(input.notes);
+  if (input.note !== undefined) return normalizeNote(input.note);
+  return existingNotes ?? "";
 }
 
 export function getUnknownCostReview(key: string): UnknownCostReviewModel {
@@ -84,7 +90,7 @@ export function saveUnknownCostReview(input: {
     model: normalizeText(input.model ?? existing?.model ?? parseModelFromKey(input.key)),
     cause: normalizeText(input.cause ?? existing?.cause ?? parseCauseFromKey(input.key)),
     status: normalizeStatus(input.status ?? input.state ?? existing?.status),
-    notes: normalizeNote(input.notes ?? input.note ?? existing?.notes),
+    notes: nextNotes(input, existing?.notes),
     createdAt: existing?.createdAt ?? now,
     updatedAt: now
   };
