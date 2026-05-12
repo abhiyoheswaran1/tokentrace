@@ -9,18 +9,10 @@ import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typ
 import { formatTokens } from "@/src/lib/format";
 import {
   buildUnknownCostRepairWorkbench,
-  type UnknownCostRepairStatus,
   type UnknownCostRepairWorkbenchGroup
 } from "@/src/lib/unknown-cost-repair";
 
 export const dynamic = "force-dynamic";
-
-function statusVariant(status: UnknownCostRepairStatus) {
-  if (status === "resolved") return "success";
-  if (status === "ignored") return "secondary";
-  if (status === "needs-parser-review") return "warning";
-  return "destructive";
-}
 
 function causeVariant(cause: UnknownCostRepairWorkbenchGroup["cause"]) {
   if (cause === "missing pricing") return "warning";
@@ -132,14 +124,15 @@ export default function RepairPage() {
                 {workbench.groups.map((group) => (
                   <TableRow key={group.key}>
                     <TableCell className="align-top">
-                      <div className="space-y-2">
-                        <Badge variant={statusVariant(group.review.status)}>{group.review.status}</Badge>
-                        <RepairStateControl
-                          repairKey={group.key}
-                          initialStatus={group.review.status}
-                          initialNotes={group.review.notes}
-                        />
-                      </div>
+                      <RepairStateControl
+                        repairKey={group.key}
+                        initialStatus={group.review.status}
+                        initialNotes={group.review.notes}
+                        sourceFile={group.sourceFile}
+                        model={group.model}
+                        provider={group.provider}
+                        cause={group.cause}
+                      />
                     </TableCell>
                     <TableCell className="align-top">
                       <Badge variant={causeVariant(group.cause)}>{group.cause}</Badge>

@@ -121,26 +121,65 @@ function withQuery(path: string, params: Record<string, string | null | undefine
   return serialized ? `${path}?${serialized}` : path;
 }
 
-function keyPart(value: string) {
-  return value.replaceAll(":", "_").trim() || "unknown";
-}
-
-function toolKeyPart(value: string) {
-  return keyPart(value).toLowerCase().replace(/\s+/g, "-");
-}
-
 function causeKey(cause: string) {
   return cause.replace(/\s+/g, "-");
 }
 
-function repairKey(row: Pick<UnknownCostRepairWorkbenchGroup, "cause" | "provider" | "tool" | "model" | "sourceFile">) {
+type RepairKeyParts = Pick<UnknownCostRepairWorkbenchGroup, "cause" | "provider" | "tool" | "model" | "sourceFile">;
+
+function encodeKeyPart(value: string) {
+  return encodeURIComponent(value);
+}
+
+function decodeKeyPart(value: string) {
+  return decodeURIComponent(value);
+}
+
+function repairKey(row: RepairKeyParts) {
+  return `repair:v1:${[
+    row.cause,
+    row.provider,
+    row.tool,
+    row.model,
+    row.sourceFile
+  ].map(encodeKeyPart).join(":")}`;
+}
+
+function legacyKeyPart(value: string) {
+  return value.replaceAll(":", "_").trim() || "unknown";
+}
+
+function legacyToolKeyPart(value: string) {
+  return legacyKeyPart(value).toLowerCase().replace(/\s+/g, "-");
+}
+
+function legacyRepairKey(row: RepairKeyParts) {
   return [
     causeKey(row.cause),
-    keyPart(row.provider),
-    toolKeyPart(row.tool),
-    keyPart(row.model),
+    legacyKeyPart(row.provider),
+    legacyToolKeyPart(row.tool),
+    legacyKeyPart(row.model),
     row.sourceFile
   ].join(":");
+}
+
+function parseRepairKey(key: string): RepairKeyParts | null {
+  if (!key.startsWith("repair:v1:")) return null;
+  let parts: string[];
+  try {
+    parts = key.slice("repair:v1:".length).split(":").map(decodeKeyPart);
+  } catch {
+    return null;
+  }
+  if (parts.length !== 5) return null;
+  const [cause, provider, tool, model, sourceFile] = parts;
+  return {
+    cause: cause as UnknownCostRepairCause,
+    provider,
+    tool,
+    model,
+    sourceFile
+  };
 }
 
 function buildPricedModelLookup() {
@@ -237,6 +276,38 @@ function nextNotes(input: { notes?: string; note?: string }, existingNotes: stri
   return existingNotes ?? "";
 }
 
+function findWorkbenchGroupByKey(key: string): UnknownCostRepairWorkbenchGroup | null {
+  return buildUnknownCostRepairWorkbench().groups.find((group) => (
+    group.key === key || legacyRepairKey(group) === key
+  )) ?? null;
+}
+
+function fallbackMetadataForKey(key: string) {
+  const parsed = parseRepairKey(key);
+  if (parsed) {
+    return {
+      sourceFile: parsed.sourceFile,
+      model: parsed.model,
+      cause: parsed.cause
+    };
+  }
+
+  const group = findWorkbenchGroupByKey(key);
+  if (group) {
+    return {
+      sourceFile: group.sourceFile,
+      model: group.model,
+      cause: group.cause
+    };
+  }
+
+  return {
+    sourceFile: "",
+    model: parseModelFromKey(key),
+    cause: parseCauseFromKey(key)
+  };
+}
+
 export function getUnknownCostReview(key: string): UnknownCostReviewModel {
   const row = db.select().from(unknownCostReviews).where(eq(unknownCostReviews.key, key)).get();
   if (row) return toModel(row);
@@ -264,11 +335,12 @@ export function saveUnknownCostReview(input: {
 }) {
   const existing = db.select().from(unknownCostReviews).where(eq(unknownCostReviews.key, input.key)).get();
   const now = new Date();
+  const fallbackMetadata = existing ? null : fallbackMetadataForKey(input.key);
   const next = {
     key: input.key,
-    sourceFile: normalizeText(input.sourceFile ?? existing?.sourceFile, 1000),
-    model: normalizeText(input.model ?? existing?.model ?? parseModelFromKey(input.key)),
-    cause: normalizeText(input.cause ?? existing?.cause ?? parseCauseFromKey(input.key)),
+    sourceFile: normalizeText(input.sourceFile ?? existing?.sourceFile ?? fallbackMetadata?.sourceFile, 1000),
+    model: normalizeText(input.model ?? existing?.model ?? fallbackMetadata?.model),
+    cause: normalizeText(input.cause ?? existing?.cause ?? fallbackMetadata?.cause),
     status: normalizeStatus(input.status ?? input.state ?? existing?.status),
     notes: nextNotes(input, existing?.notes),
     createdAt: existing?.createdAt ?? now,
@@ -395,7 +467,9 @@ export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
       sourceFile: row.sourceFile
     };
     const key = repairKey(base);
-    const review = getUnknownCostReview(key);
+    const legacyKey = legacyRepairKey(base);
+    const currentReview = getUnknownCostReview(key);
+    const review = currentReview.updatedAt == null ? getUnknownCostReview(legacyKey) : currentReview;
     const suggestion = aliasSuggestion({
       cause,
       model: row.model,

@@ -24,6 +24,10 @@ function reviewState(value: unknown): UnknownCostRepairStatus | null {
     : null;
 }
 
+function workbenchGroupForKey(key: string) {
+  return buildUnknownCostRepairWorkbench().groups.find((group) => group.key === key) ?? null;
+}
+
 export async function GET() {
   return NextResponse.json(buildUnknownCostRepairWorkbench());
 }
@@ -41,10 +45,17 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "status must be unresolved, ignored, resolved, or needs-parser-review" }, { status: 400 });
   }
 
+  const group = workbenchGroupForKey(key);
+  const sourceFile = text(body.sourceFile, 1000) || group?.sourceFile;
+  const model = text(body.model, 500) || group?.model;
+  const cause = text(body.cause, 100) || group?.cause;
   const review = saveUnknownCostReview({
     key,
     status,
-    notes: text(body.notes ?? body.note, 500)
+    notes: text(body.notes ?? body.note, 500),
+    sourceFile,
+    model,
+    cause
   });
 
   return NextResponse.json({ review });

@@ -39,6 +39,62 @@ afterEach(async () => {
 });
 
 describe("unknown cost repair state", () => {
+  it("uses unambiguous workbench keys and preserves metadata on API-style saves", async () => {
+    const { buildUnknownCostRepairWorkbench, getUnknownCostReview, saveUnknownCostReview, sqlite } = await loadRepair();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('p-colon', 'Provider:A', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('p-underscore', 'Provider_A', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('tool-colon', 'p-colon', 'Repair Tool')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('tool-underscore', 'p-underscore', 'Repair Tool')").run();
+    sqlite
+      .prepare(
+        `INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES
+          ('model-colon', 'p-colon', 'model:alpha', NULL, NULL, 'USD'),
+          ('model-underscore', 'p-underscore', 'model_alpha', NULL, NULL, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO sessions (id, source_id, tool_id, started_at, title, source_file) VALUES
+          ('session-colon', 'source-colon', 'tool-colon', 10, 'Colon source', '/tmp/source:one.jsonl'),
+          ('session-underscore', 'source-underscore', 'tool-underscore', 20, 'Underscore source', '/tmp/source:one.jsonl')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, input_tokens, output_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('i-colon', 'i-colon-source', 'session-colon', 'assistant', 'model-colon', 10, 5, 15, 'exact', NULL),
+          ('i-underscore', 'i-underscore-source', 'session-underscore', 'assistant', 'model-underscore', 8, 7, 15, 'exact', NULL)`
+      )
+      .run();
+
+    const groups = buildUnknownCostRepairWorkbench().groups;
+    const colonGroup = groups.find((group) => group.provider === "Provider:A");
+    const underscoreGroup = groups.find((group) => group.provider === "Provider_A");
+
+    expect(colonGroup).toBeDefined();
+    expect(underscoreGroup).toBeDefined();
+    expect(colonGroup?.key).not.toBe(underscoreGroup?.key);
+    expect(colonGroup?.key).toMatch(/^repair:v1:/);
+
+    saveUnknownCostReview({
+      key: colonGroup!.key,
+      status: "needs-parser-review",
+      notes: "API-style update with only key, state, and note."
+    });
+
+    expect(getUnknownCostReview(colonGroup!.key)).toMatchObject({
+      key: colonGroup!.key,
+      sourceFile: "/tmp/source:one.jsonl",
+      model: "model:alpha",
+      cause: "missing pricing",
+      status: "needs-parser-review",
+      notes: "API-style update with only key, state, and note."
+    });
+  });
+
   it("builds grouped workbench rows with review state, links, and model alias suggestions", async () => {
     const { buildUnknownCostRepairWorkbench, saveUnknownCostReview, sqlite } = await loadRepair();
 
@@ -102,7 +158,7 @@ describe("unknown cost repair state", () => {
     });
     expect(workbench.groups).toHaveLength(2);
     expect(workbench.groups[0]).toMatchObject({
-      key: "missing-pricing:Anthropic:claude-code:claude-sonnet-4-5-20250929:/tmp/claude/a.jsonl",
+      key: expect.stringMatching(/^repair:v1:/),
       cause: "missing pricing",
       sourceFile: "/tmp/claude/a.jsonl",
       provider: "Anthropic",
@@ -129,7 +185,7 @@ describe("unknown cost repair state", () => {
       repairHref: "/pricing?model=claude-sonnet-4-5-20250929"
     });
     expect(workbench.groups[1]).toMatchObject({
-      key: "missing-model:Anthropic:claude-code:unknown:/tmp/claude/b.jsonl",
+      key: expect.stringMatching(/^repair:v1:/),
       cause: "missing model",
       sourceFile: "/tmp/claude/b.jsonl",
       state: "unresolved",
