@@ -154,6 +154,9 @@ try {
   const doctor = jsonCommand(["doctor", "--json"]);
   if (!doctor.supportMatrix?.summary) throw new Error("Doctor JSON is missing support matrix.");
 
+  const digest = jsonCommand(["digest", "--json"]);
+  if (!digest.topReviewItem?.title) throw new Error("Digest JSON is missing topReviewItem.");
+
   const status = jsonCommand(["status", "--json"]);
   if (typeof status.totalTokens !== "number") throw new Error("Status JSON is missing totalTokens.");
 

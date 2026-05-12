@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDatabasePath } from "@/src/db/client";
-import { getAppSettings, saveAppSettings } from "@/src/db/settings";
+import { getAppSettings, normalizeUsageGuardrails, saveAppSettings } from "@/src/db/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,8 @@ export async function PUT(request: Request) {
     : [];
   const saved = saveAppSettings({
     customFolders,
-    storeRawMessageContent: Boolean(body.storeRawMessageContent)
+    storeRawMessageContent: Boolean(body.storeRawMessageContent),
+    usageGuardrails: normalizeUsageGuardrails(body.usageGuardrails)
   });
 
   return NextResponse.json(saved);

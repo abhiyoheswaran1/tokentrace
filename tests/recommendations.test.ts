@@ -74,4 +74,43 @@ describe("local recommendations", () => {
       severity: "low"
     });
   });
+
+  it("prioritizes exceeded local guardrails before low-priority tuning advice", () => {
+    const recommendations = buildLocalRecommendations({
+      summary: {
+        totalTokens: 120_000,
+        cachedTokens: 0,
+        inputTokens: 80_000,
+        unknownCostInteractions: 0
+      },
+      tools: [],
+      projects: [],
+      unknownCosts: [],
+      guardrails: {
+        monthLabel: "May 2026",
+        cost: {
+          configured: true,
+          used: 120,
+          limit: 100,
+          percent: 1.2,
+          remaining: 0,
+          status: "exceeded"
+        },
+        tokens: {
+          configured: true,
+          used: 120_000,
+          limit: 200_000,
+          percent: 0.6,
+          remaining: 80_000,
+          status: "ok"
+        }
+      }
+    });
+
+    expect(recommendations[0]).toMatchObject({
+      id: "monthly-cost-limit-exceeded",
+      severity: "high",
+      href: "/sessions"
+    });
+  });
 });

@@ -6,6 +6,10 @@ import {
 } from "@/src/lib/scan-health";
 import { modelNameCandidates } from "@/src/lib/model-aliases";
 import { buildLocalRecommendations, type LocalRecommendation } from "@/src/lib/recommendations";
+import { getUsageGuardrailProgress, type UsageGuardrailProgress } from "@/src/lib/usage-guardrails";
+import { buildReviewQueue, type ReviewQueueItem } from "@/src/lib/review-queue";
+import { buildSessionComparisons, type SessionComparisonRow } from "@/src/lib/session-comparison";
+import { buildProjectSignals, type ProjectSignalRow } from "@/src/lib/project-signals";
 
 export type TrendPoint = {
   date: string;
@@ -210,6 +214,10 @@ export type AnalyticsData = {
   sessions: SessionRow[];
   unknownCosts: UnknownCostQueueRow[];
   modelAliasSuggestions: ModelAliasSuggestion[];
+  usageGuardrails: UsageGuardrailProgress;
+  reviewQueue: ReviewQueueItem[];
+  sessionComparisons: SessionComparisonRow[];
+  projectSignals: ProjectSignalRow[];
   recommendations: LocalRecommendation[];
   insights: Insight[];
 };
@@ -1060,6 +1068,7 @@ function buildInsights(data: {
 export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData {
   const summary = getSummary(filters);
   const comparison = getUsageComparison(filters);
+  const usageGuardrails = getUsageGuardrailProgress();
   const trends = getTrends(filters);
   const tools = getToolComparison(filters);
   const models = getModelRows(filters);
@@ -1067,12 +1076,28 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
   const sessions = getSessions(filters);
   const unknownCosts = getUnknownCostQueue(filters);
   const modelAliasSuggestions = getModelAliasSuggestions(filters);
+  const sessionComparisons = buildSessionComparisons(sessions);
+  const projectSignals = buildProjectSignals({
+    totalTokens: summary.totalTokens,
+    projects,
+    sessions
+  });
   const recommendations = buildLocalRecommendations({
     summary,
     tools,
     projects,
     unknownCosts,
+    guardrails: usageGuardrails,
     scan: getLatestScanRecommendationStats()
+  });
+  const reviewQueue = buildReviewQueue({
+    summary,
+    guardrails: usageGuardrails,
+    unknownCosts,
+    sessions,
+    projects,
+    models,
+    tools
   });
   const insights = buildInsights({ summary, trends, models, projects, sessions });
 
@@ -1086,6 +1111,10 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
     sessions,
     unknownCosts,
     modelAliasSuggestions,
+    usageGuardrails,
+    reviewQueue,
+    sessionComparisons,
+    projectSignals,
     recommendations,
     insights
   };

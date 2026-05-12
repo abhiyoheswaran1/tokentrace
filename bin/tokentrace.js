@@ -28,6 +28,8 @@ Usage:
   tokentrace scan         Scan local AI CLI usage logs
   tokentrace doctor --json
                           Inspect scan health and repair recommendations
+  tokentrace digest --json
+                          Print current-month local usage digest
   tokentrace insights --json
                           Print local recommendations as JSON
   tokentrace status --json
@@ -365,6 +367,11 @@ async function doctor(args) {
   await runNodeScript("doctor", args);
 }
 
+async function digest(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("digest", args);
+}
+
 async function insights(args) {
   await initializeDatabase({ quiet: true, refreshPrices: false });
   await runNodeScript("insights", args);
@@ -525,6 +532,10 @@ async function main() {
   }
   if (command === "doctor") {
     await doctor(args);
+    return;
+  }
+  if (command === "digest") {
+    await digest(args);
     return;
   }
   if (command === "insights") {

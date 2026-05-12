@@ -2,7 +2,28 @@
 
 All notable changes to TokenTrace are documented here.
 
-## Unreleased
+## [0.7.0] - 2026-05-12
+
+### Added
+
+- 0.7.0 Usage Intelligence roadmap for local guardrails, savings review, session comparison, project intelligence, and daily digest work.
+- Local monthly cost and token guardrails stored in Settings.
+- Overview Monthly Guardrails panel showing month-to-date local usage against configured limits.
+- Recommendation rules for monthly guardrails that are near or over limit.
+- Evidence-backed Review Queue on Insights, ranked from guardrails, unknown cost repair, high-impact sessions, dominant projects, model review, and cache reuse.
+- `tokentrace insights --json` now includes the Review Queue for local automation.
+- `tokentrace digest` and `tokentrace digest --json` for current-month local usage, guardrails, top review item, unknown-cost count, top project, and latest scan status.
+- Session Comparison Flags on Sessions to highlight token and cost outliers compared with matching project, tool, and primary-model peers.
+- Project Signals on Projects for dominant usage, unknown cost, estimated-token confidence, and model concentration patterns.
+
+### Changed
+
+- Renamed the Insights page header to Usage Intelligence to match the 0.7.0 product theme.
+- Refreshed README screenshots for Overview, Usage Intelligence, Sessions, Projects, and local guardrail Settings using public-safe synthetic local data.
+
+### Fixed
+
+- Increased the forced packed-install smoke test timeout so native SQLite dependency installation is not killed on slower machines.
 
 ## [0.6.0] - 2026-05-10
 

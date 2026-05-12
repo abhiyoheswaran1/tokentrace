@@ -141,7 +141,7 @@ try {
       "--no-audit",
       "--no-fund",
       tarballPath
-    ]);
+    ], { timeout: 300_000 });
 
     const bin = path.join(tempRoot, "node_modules", ".bin", process.platform === "win32" ? "tokentrace.cmd" : "tokentrace");
     const version = run(bin, ["--version"], {

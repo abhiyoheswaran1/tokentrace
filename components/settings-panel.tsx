@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { FolderPlus, Play, RotateCcw, ShieldCheck, Trash2 } from "lucide-react";
+import { FolderPlus, Gauge, Play, RotateCcw, ShieldCheck, Trash2 } from "lucide-react";
 import type { ScanHealth } from "@/src/lib/scan-health";
 import { formatAppVersion } from "@/src/lib/app-version";
 import { formatDate, percent } from "@/src/lib/format";
@@ -15,6 +15,10 @@ import { DataValue, FieldLabel, MonoText } from "@/components/ui/typography";
 type SettingsPayload = {
   customFolders: string[];
   storeRawMessageContent: boolean;
+  usageGuardrails: {
+    monthlyCostLimitUsd: number | null;
+    monthlyTokenLimit: number | null;
+  };
   databasePath: string;
   appVersion: string;
 };
@@ -38,6 +42,13 @@ function toneVariant(tone: ScanHealth["tone"]) {
   return "secondary";
 }
 
+function parseLimitInput(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 export function SettingsPanel({
   initialSettings,
   initialScanHealth
@@ -47,6 +58,12 @@ export function SettingsPanel({
 }) {
   const [customFolders, setCustomFolders] = useState(initialSettings.customFolders);
   const [storeRaw, setStoreRaw] = useState(initialSettings.storeRawMessageContent);
+  const [monthlyCostLimitUsd, setMonthlyCostLimitUsd] = useState(
+    initialSettings.usageGuardrails.monthlyCostLimitUsd?.toString() ?? ""
+  );
+  const [monthlyTokenLimit, setMonthlyTokenLimit] = useState(
+    initialSettings.usageGuardrails.monthlyTokenLimit?.toString() ?? ""
+  );
   const [newFolder, setNewFolder] = useState("");
   const [force, setForce] = useState(false);
   const [message, setMessage] = useState("");
@@ -64,16 +81,24 @@ export function SettingsPanel({
     setCustomFolders((current) => current.filter((item) => item !== folder));
   }
 
+  function settingsPayload() {
+    return {
+      customFolders,
+      storeRawMessageContent: storeRaw,
+      usageGuardrails: {
+        monthlyCostLimitUsd: parseLimitInput(monthlyCostLimitUsd),
+        monthlyTokenLimit: parseLimitInput(monthlyTokenLimit)
+      }
+    };
+  }
+
   function saveSettings() {
     startTransition(async () => {
       setMessage("");
       const response = await fetch("/api/settings", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          customFolders,
-          storeRawMessageContent: storeRaw
-        })
+        body: JSON.stringify(settingsPayload())
       });
       setMessage(response.ok ? "Settings saved." : "Settings save failed.");
     });
@@ -86,10 +111,7 @@ export function SettingsPanel({
       await fetch("/api/settings", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          customFolders,
-          storeRawMessageContent: storeRaw
-        })
+        body: JSON.stringify(settingsPayload())
       });
       const response = await fetch("/api/scan", {
         method: "POST",
@@ -186,6 +208,48 @@ export function SettingsPanel({
               <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</div>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gauge className="h-4 w-4 text-primary" />
+            Local Usage Guardrails
+          </CardTitle>
+          <CardDescription>
+            Optional month-to-date limits for local cost and token awareness.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 border-y p-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="monthly-cost-limit">Monthly cost limit</Label>
+            <Input
+              id="monthly-cost-limit"
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={monthlyCostLimitUsd}
+              onChange={(event) => setMonthlyCostLimitUsd(event.target.value)}
+              placeholder="250"
+            />
+            <p className="text-xs text-muted-foreground">USD limit for imported CLI usage this calendar month.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="monthly-token-limit">Monthly token limit</Label>
+            <Input
+              id="monthly-token-limit"
+              type="number"
+              min="0"
+              step="1000"
+              inputMode="numeric"
+              value={monthlyTokenLimit}
+              onChange={(event) => setMonthlyTokenLimit(event.target.value)}
+              placeholder="10000000"
+            />
+            <p className="text-xs text-muted-foreground">Leave either field blank to disable that guardrail.</p>
+          </div>
         </CardContent>
       </Card>
 

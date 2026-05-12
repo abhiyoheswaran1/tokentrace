@@ -1,3 +1,6 @@
+import { formatCurrency, formatTokens } from "@/src/lib/format";
+import type { UsageGuardrailProgress, UsageGuardrailMetric } from "@/src/lib/usage-guardrails";
+
 export type LocalRecommendation = {
   id: string;
   severity: "high" | "medium" | "low";
@@ -37,6 +40,7 @@ type RecommendationInput = {
     parserReviewFiles: number;
     ignoredFiles: number;
   };
+  guardrails?: Pick<UsageGuardrailProgress, "monthLabel" | "cost" | "tokens">;
 };
 
 function recommendation(
@@ -48,6 +52,30 @@ function recommendation(
   href: string
 ): LocalRecommendation {
   return { id, severity, title, evidence, action, href };
+}
+
+function guardrailRecommendation(
+  metric: UsageGuardrailMetric,
+  kind: "cost" | "tokens",
+  monthLabel: string
+) {
+  if (!metric.configured || metric.status === "ok") return null;
+  const exceeded = metric.status === "exceeded";
+  const formattedUsed = kind === "cost" ? formatCurrency(metric.used) : formatTokens(metric.used);
+  const formattedLimit = kind === "cost" ? formatCurrency(metric.limit) : formatTokens(metric.limit);
+  const noun = kind === "cost" ? "cost" : "token";
+  const percent = Math.round(metric.percent * 100);
+
+  return recommendation(
+    `monthly-${noun}-limit-${metric.status}`,
+    exceeded ? "high" : "medium",
+    exceeded ? `Monthly ${noun} guardrail exceeded` : `Monthly ${noun} guardrail is close`,
+    `${monthLabel} is at ${formattedUsed} of ${formattedLimit} (${percent}%).`,
+    exceeded
+      ? "Review current-month sessions before starting more long CLI runs."
+      : "Watch the next few sessions or adjust the local guardrail in Settings.",
+    "/sessions"
+  );
 }
 
 export function buildLocalRecommendations(input: RecommendationInput): LocalRecommendation[] {
@@ -75,6 +103,14 @@ export function buildLocalRecommendations(input: RecommendationInput): LocalReco
       "Use the repair queue to decide whether pricing, model names, or token counts are missing.",
       "/diagnostics"
     ));
+  }
+
+  if (input.guardrails) {
+    const guardrailItems = [
+      guardrailRecommendation(input.guardrails.cost, "cost", input.guardrails.monthLabel),
+      guardrailRecommendation(input.guardrails.tokens, "tokens", input.guardrails.monthLabel)
+    ].filter((item): item is LocalRecommendation => Boolean(item));
+    recommendations.push(...guardrailItems);
   }
 
   const topProject = input.projects[0];
