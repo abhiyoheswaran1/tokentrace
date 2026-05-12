@@ -154,6 +154,12 @@ try {
   const doctor = jsonCommand(["doctor", "--json"]);
   if (!doctor.supportMatrix?.summary) throw new Error("Doctor JSON is missing support matrix.");
 
+  const evidence = jsonCommand(["evidence", "--json"]);
+  if (!evidence.metric || !evidence.totals) throw new Error("Evidence JSON is missing trail data.");
+
+  const repair = jsonCommand(["repair", "--json"]);
+  if (!repair.summary || !Array.isArray(repair.groups)) throw new Error("Repair JSON is missing workbench data.");
+
   const digest = jsonCommand(["digest", "--json"]);
   if (!digest.topReviewItem?.title) throw new Error("Digest JSON is missing topReviewItem.");
 

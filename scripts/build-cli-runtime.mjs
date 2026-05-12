@@ -12,8 +12,10 @@ const entryPoints = {
   "db-seed": "scripts/db-seed.ts",
   digest: "scripts/digest.ts",
   doctor: "scripts/doctor.ts",
+  evidence: "scripts/evidence.ts",
   insights: "scripts/insights.ts",
   "pricing-refresh": "scripts/pricing-refresh.ts",
+  repair: "scripts/repair.ts",
   reset: "scripts/reset.ts",
   scan: "scripts/scan.ts",
   status: "scripts/status.ts"

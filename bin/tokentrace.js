@@ -28,10 +28,14 @@ Usage:
   tokentrace scan         Scan local AI CLI usage logs
   tokentrace doctor --json
                           Inspect scan health and repair recommendations
+  tokentrace evidence --json
+                          Print metric evidence trail as JSON
   tokentrace digest --json
                           Print current-month local usage digest
   tokentrace insights --json
                           Print local recommendations as JSON
+  tokentrace repair --json
+                          Print unknown-cost repair queue as JSON
   tokentrace status --json
                           Print local usage status as JSON
   tokentrace statusline claude
@@ -367,6 +371,11 @@ async function doctor(args) {
   await runNodeScript("doctor", args);
 }
 
+async function evidence(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("evidence", args);
+}
+
 async function digest(args) {
   await initializeDatabase({ quiet: true, refreshPrices: false });
   await runNodeScript("digest", args);
@@ -375,6 +384,11 @@ async function digest(args) {
 async function insights(args) {
   await initializeDatabase({ quiet: true, refreshPrices: false });
   await runNodeScript("insights", args);
+}
+
+async function repair(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("repair", args);
 }
 
 async function refreshPrices(args) {
@@ -534,12 +548,20 @@ async function main() {
     await doctor(args);
     return;
   }
+  if (command === "evidence") {
+    await evidence(args);
+    return;
+  }
   if (command === "digest") {
     await digest(args);
     return;
   }
   if (command === "insights") {
     await insights(args);
+    return;
+  }
+  if (command === "repair") {
+    await repair(args);
     return;
   }
   if (command === "status") {
