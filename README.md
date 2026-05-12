@@ -8,7 +8,7 @@ Local-first analytics for AI CLI usage. TokenTrace scans local CLI logs, normali
 
 TokenTrace is designed for local development machines first, with macOS-oriented defaults. It does not require a cloud account and does not send telemetry or logs anywhere.
 
-![TokenTrace 0.7.0 overview dashboard](docs/assets/overview-0.7.0.png)
+![TokenTrace overview dashboard](docs/assets/overview-0.8.0.png)
 
 ## Start In Seconds
 
@@ -201,21 +201,15 @@ Codex CLI status-line integration is intentionally deferred until its status-lin
 
 ## Screenshots
 
-Usage Intelligence views from `0.7.0`:
+Evidence + Repair views:
 
-![TokenTrace 0.7.0 overview dashboard](docs/assets/overview-0.7.0.png)
+![TokenTrace overview dashboard](docs/assets/overview-0.8.0.png)
 
-![TokenTrace 0.7.0 Usage Intelligence review queue](docs/assets/usage-intelligence-0.7.0.png)
+![TokenTrace processed tokens evidence trail](docs/assets/evidence-0.8.0.png)
 
-![TokenTrace 0.7.0 session comparison flags](docs/assets/sessions-0.7.0.png)
+![TokenTrace unknown cost repair queue](docs/assets/repair-0.8.0.png)
 
-![TokenTrace 0.7.0 project signals](docs/assets/projects-0.7.0.png)
-
-![TokenTrace 0.7.0 local guardrail settings](docs/assets/settings-guardrails-0.7.0.png)
-
-Stable Daily Tool views from `0.6.0`:
-
-![TokenTrace 0.6.0 Scan Doctor](docs/assets/doctor-0.6.0.png)
+![TokenTrace Scan Doctor parser trust report](docs/assets/doctor-parser-trust-0.8.0.png)
 
 CLI startup and help:
 
@@ -228,24 +222,6 @@ Local scan output:
 Optional wrapper diagnostics:
 
 ![TokenTrace wrapper command](docs/assets/cli-wrapper.gif)
-
-Session exploration:
-
-![TokenTrace session explorer](docs/assets/session-explorer.png)
-
-Scan Doctor and file discovery:
-
-![TokenTrace ingestion diagnostics](docs/assets/diagnostics.png)
-
-![TokenTrace file discovery](docs/assets/discovery.png)
-
-Editable model pricing:
-
-![TokenTrace pricing configuration](docs/assets/pricing.png)
-
-Mobile overview:
-
-![TokenTrace mobile overview](docs/assets/mobile-overview.png)
 
 ## Privacy Model
 

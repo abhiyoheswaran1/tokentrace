@@ -1,3 +1,4 @@
+import * as React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
 import { MobileNav, Sidebar } from "@/components/sidebar";
@@ -17,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <div className="flex min-h-screen">
           <Sidebar appVersion={appVersion} />
-          <main className="min-w-0 flex-1">
+          <main className="min-w-0 flex-1 overflow-x-hidden">
             <div className="border-b bg-card px-4 py-3 md:hidden">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
             <MobileNav />
-            <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <div className="mx-auto w-full min-w-0 max-w-[100vw] px-4 py-6 sm:px-6 md:max-w-7xl lg:px-8">
               {children}
             </div>
           </main>

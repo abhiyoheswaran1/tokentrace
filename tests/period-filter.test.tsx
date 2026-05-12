@@ -17,6 +17,8 @@ describe("PeriodFilter", () => {
     expect(html).toContain('value="2026-04-01"');
     expect(html).toContain('value="2026-04-30"');
     expect(html).toContain("overflow-x-auto");
+    expect(html).toContain("min-w-0 max-w-full");
+    expect(html).toContain("max-w-full overflow-x-auto");
     expect(html).toContain("min-w-[720px]");
     expect(html).toContain("flex-1 overflow-x-auto");
     expect(html).toContain("shrink-0");

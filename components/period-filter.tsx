@@ -38,8 +38,8 @@ export function PeriodFilter({ range }: { range: ResolvedDateRange }) {
   const statusLabel = range.key === "custom" ? "Custom range" : range.label;
 
   return (
-    <div className="rounded-lg bg-card p-3 outline outline-1 outline-border sm:p-4">
-      <form className="overflow-x-auto" action="/">
+    <div className="min-w-0 max-w-full rounded-lg bg-card p-3 outline outline-1 outline-border sm:p-4">
+      <form className="max-w-full overflow-x-auto" action="/">
         <input type="hidden" name="range" value="custom" />
         <div className="flex min-w-[720px] items-center gap-2">
           <div className="flex shrink-0 items-center gap-2 pr-1 text-sm font-semibold">
