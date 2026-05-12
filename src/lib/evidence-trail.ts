@@ -119,10 +119,12 @@ type EvidenceSessionRow = {
   interactions: number;
 };
 
-function metricWhere(metric: EvidenceMetric) {
-  if (metric === "cached-tokens") return "WHERE (i.cache_read_tokens + i.cache_write_tokens) > 0";
-  if (metric === "unknown-cost") return "WHERE i.cost IS NULL";
-  if (metric === "non-cache-tokens") return "WHERE (i.input_tokens + i.output_tokens + i.reasoning_tokens) > 0";
+function metricWhere(metric: EvidenceMetric, alias = "i", prefix = "WHERE") {
+  if (metric === "cached-tokens") return `${prefix} (${alias}.cache_read_tokens + ${alias}.cache_write_tokens) > 0`;
+  if (metric === "unknown-cost") return `${prefix} ${alias}.cost IS NULL`;
+  if (metric === "non-cache-tokens") {
+    return `${prefix} (${alias}.input_tokens + ${alias}.output_tokens + ${alias}.reasoning_tokens) > 0`;
+  }
   return "";
 }
 
@@ -130,6 +132,8 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
   const metric = input.metric;
   const config = metricTitles[metric] ?? metricTitles["processed-tokens"];
   const where = metricWhere(metric);
+  const modelWhere = metricWhere(metric, "i3", "AND");
+  const pricingWhere = metricWhere(metric, "i2", "AND");
   const sessions = sqlite
     .prepare(
       `SELECT
@@ -145,6 +149,7 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
             FROM interactions i3
             LEFT JOIN models m3 ON m3.id = i3.model_id
             WHERE i3.session_id = s.id
+            ${modelWhere}
             ORDER BY model_name ASC
           )
         ), 'unknown') AS model,
@@ -152,7 +157,9 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
           SELECT m2.name
           FROM interactions i2
           LEFT JOIN models m2 ON m2.id = i2.model_id
-          WHERE i2.session_id = s.id AND m2.name IS NOT NULL
+          WHERE i2.session_id = s.id
+            ${pricingWhere}
+            AND m2.name IS NOT NULL
           GROUP BY m2.id, m2.name
           ORDER BY SUM(i2.total_tokens) DESC, m2.name ASC
           LIMIT 1

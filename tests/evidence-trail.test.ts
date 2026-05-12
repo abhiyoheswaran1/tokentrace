@@ -108,4 +108,51 @@ describe("evidence trail", () => {
       pricingHref: "/pricing?model=claude-sonnet-4-5"
     });
   });
+
+  it("attributes filtered metric evidence to only the contributing interactions", async () => {
+    const { buildEvidenceTrail, sqlite } = await loadEvidence();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('anthropic', 'Anthropic', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('claude-code', 'anthropic', 'Claude Code')").run();
+    sqlite.prepare("INSERT INTO projects (id, name, path) VALUES ('project-1', 'TokenTrace', '/repo/tokentrace')").run();
+    sqlite
+      .prepare(
+        `INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES
+          ('priced', 'anthropic', 'claude-priced', 3, 15, 'USD'),
+          ('unknown-cost', 'anthropic', 'claude-unpriced', NULL, NULL, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        "INSERT INTO sessions (id, source_id, tool_id, project_id, started_at, title, source_file) VALUES ('session-1', 'source-1', 'claude-code', 'project-1', 10, 'Mixed cost session', '/tmp/mixed.jsonl')"
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, input_tokens, output_tokens, cache_read_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('priced-interaction', 'priced-source', 'session-1', 'assistant', 'priced', 100, 50, 0, 1000, 'exact', 0.25),
+          ('unknown-interaction', 'unknown-source', 'session-1', 'assistant', 'unknown-cost', 40, 10, 0, 50, 'exact', NULL)`
+      )
+      .run();
+
+    const trail = buildEvidenceTrail({ metric: "unknown-cost" });
+
+    expect(trail.totals).toMatchObject({
+      tokens: 50,
+      cost: 0,
+      sessions: 1,
+      interactions: 1,
+      unknownCostInteractions: 1
+    });
+    expect(trail.sessions[0]).toMatchObject({
+      id: "session-1",
+      model: "claude-unpriced",
+      totalTokens: 50,
+      cost: null,
+      interactions: 1,
+      pricingHref: "/pricing?model=claude-unpriced"
+    });
+  });
 });
