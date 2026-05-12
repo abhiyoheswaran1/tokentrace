@@ -519,8 +519,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
               </CardDescription>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link href="/diagnostics">
-                Open Doctor <ArrowRight className="h-4 w-4" />
+              <Link href="/repair">
+                Open Repair <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </CardHeader>

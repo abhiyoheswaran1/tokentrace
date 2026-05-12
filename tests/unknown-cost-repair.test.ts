@@ -39,6 +39,109 @@ afterEach(async () => {
 });
 
 describe("unknown cost repair state", () => {
+  it("builds grouped workbench rows with review state, links, and model alias suggestions", async () => {
+    const { buildUnknownCostRepairWorkbench, saveUnknownCostReview, sqlite } = await loadRepair();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('anthropic', 'Anthropic', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('claude-code', 'anthropic', 'Claude Code')").run();
+    sqlite
+      .prepare(
+        `INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES
+          ('sonnet-priced', 'anthropic', 'claude-sonnet-4-5', 3, 15, 'USD'),
+          ('sonnet-snapshot', 'anthropic', 'claude-sonnet-4-5-20250929', NULL, NULL, 'USD'),
+          ('unknown-model', 'anthropic', 'unknown', NULL, NULL, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO sessions (id, source_id, tool_id, started_at, title, source_file) VALUES
+          ('session-1', 'source-1', 'claude-code', 10, 'Snapshot pricing gap', '/tmp/claude/a.jsonl'),
+          ('session-2', 'source-2', 'claude-code', 20, 'Parser model gap', '/tmp/claude/b.jsonl')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, input_tokens, output_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('i1', 'i1-source', 'session-1', 'assistant', 'sonnet-snapshot', 100, 50, 150, 'exact', NULL),
+          ('i2', 'i2-source', 'session-1', 'assistant', 'sonnet-snapshot', 20, 30, 50, 'exact', NULL),
+          ('i3', 'i3-source', 'session-2', 'assistant', 'unknown-model', 0, 0, 0, 'unknown', NULL)`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO scan_runs (id, started_at, completed_at, files_scanned, records_imported, warnings, errors)
+         VALUES ('scan-1', 1, 2, 2, 3, '[]', '[]')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO scan_files
+          (id, scan_run_id, path, size_bytes, parser, status, records_imported, warnings, errors, raw_metadata)
+         VALUES
+          ('file-1', 'scan-1', '/tmp/claude/a.jsonl', 100, 'claude-code', 'imported', 2, '[]', '[]', '{"confidence":0.96}'),
+          ('file-2', 'scan-1', '/tmp/claude/b.jsonl', 100, 'claude-code', 'imported_with_errors', 1, '["missing model"]', '[]', '{"confidence":0.42}')`
+      )
+      .run();
+
+    saveUnknownCostReview({
+      key: "missing-pricing:Anthropic:claude-code:claude-sonnet-4-5-20250929:/tmp/claude/a.jsonl",
+      status: "ignored",
+      notes: "Waiting for provider price card."
+    });
+
+    const workbench = buildUnknownCostRepairWorkbench();
+
+    expect(workbench.summary).toEqual({
+      unresolved: 1,
+      needsParserReview: 0,
+      ignored: 1,
+      resolved: 0,
+      totalInteractions: 3
+    });
+    expect(workbench.groups).toHaveLength(2);
+    expect(workbench.groups[0]).toMatchObject({
+      key: "missing-pricing:Anthropic:claude-code:claude-sonnet-4-5-20250929:/tmp/claude/a.jsonl",
+      cause: "missing pricing",
+      sourceFile: "/tmp/claude/a.jsonl",
+      provider: "Anthropic",
+      model: "claude-sonnet-4-5-20250929",
+      tool: "Claude Code",
+      interactions: 2,
+      totalTokens: 200,
+      review: {
+        status: "ignored",
+        notes: "Waiting for provider price card."
+      },
+      suggestion: {
+        suggestedModel: "claude-sonnet-4-5",
+        confidence: "high"
+      },
+      pricingHref: "/pricing?model=claude-sonnet-4-5-20250929",
+      sourceHref: "/sessions?source=%2Ftmp%2Fclaude%2Fa.jsonl&cost=unknown",
+      parserHref: "/parser-debug?source=%2Ftmp%2Fclaude%2Fa.jsonl",
+      sessionHref: "/sessions?source=%2Ftmp%2Fclaude%2Fa.jsonl&cost=unknown",
+      repairHref: "/pricing?model=claude-sonnet-4-5-20250929"
+    });
+    expect(workbench.groups[1]).toMatchObject({
+      key: "missing-model:Anthropic:claude-code:unknown:/tmp/claude/b.jsonl",
+      cause: "missing model",
+      sourceFile: "/tmp/claude/b.jsonl",
+      interactions: 1,
+      totalTokens: 0,
+      review: {
+        status: "unresolved",
+        notes: ""
+      },
+      suggestion: {
+        suggestedModel: null,
+        confidence: "low"
+      },
+      repairHref: "/parser-debug?source=%2Ftmp%2Fclaude%2Fb.jsonl"
+    });
+  });
+
   it("persists source, model, cause, status, notes, and timestamps by stable repair key", async () => {
     const { dbPath, getUnknownCostReview, saveUnknownCostReview } = await loadRepair();
 
