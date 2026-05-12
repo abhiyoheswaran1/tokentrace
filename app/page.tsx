@@ -383,7 +383,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatTokens(summary.outputTokens)} output`,
             `${formatTokens(summary.cachedTokens)} cached`
           ]}
-          href="/sessions"
+          href={data.evidenceLinks["processed-tokens"]}
+          actionLabel="View evidence"
           icon={Database}
         />
         <MetricCard
@@ -395,7 +396,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatTokens(summary.outputTokens)} output`,
             `${formatTokens(summary.reasoningTokens)} reasoning`
           ]}
-          href="/sessions"
+          href={data.evidenceLinks["non-cache-tokens"]}
+          actionLabel="View evidence"
           icon={Database}
         />
         <MetricCard
@@ -406,8 +408,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatTokens(summary.cacheReadTokens)} read`,
             `${formatTokens(summary.cacheWriteTokens)} write`
           ]}
-          href="/sessions?cache=1"
-          actionLabel="Inspect cached sessions"
+          href={data.evidenceLinks["cached-tokens"]}
+          actionLabel="View evidence"
           icon={Sparkles}
         />
         <MetricCard
@@ -419,8 +421,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatCurrency(summary.estimatedCost)} estimated`,
             `${summary.unknownCostInteractions.toLocaleString()} unknown`
           ]}
-          href={summary.unknownCostInteractions > 0 ? "/sessions?cost=unknown" : "/sessions"}
-          actionLabel={summary.unknownCostInteractions > 0 ? "Inspect unknown costs" : "Inspect sessions"}
+          href={summary.unknownCostInteractions > 0 ? "/repair" : data.evidenceLinks["estimated-cost"]}
+          actionLabel={summary.unknownCostInteractions > 0 ? "Repair unknown costs" : "View evidence"}
           icon={Coins}
         />
         <MetricCard
@@ -428,7 +430,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           value={summary.sessions.toLocaleString()}
           description="Imported local CLI sessions and interactions in the selected period."
           detailItems={[`${summary.interactions.toLocaleString()} interactions`]}
-          href="/sessions"
+          href={data.evidenceLinks.sessions}
+          actionLabel="View evidence"
           icon={MessageSquare}
         />
       </div>

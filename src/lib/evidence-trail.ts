@@ -45,6 +45,17 @@ export type EvidenceTrail = {
   sessions: EvidenceTrailSession[];
 };
 
+const evidenceMetrics: EvidenceMetric[] = [
+  "processed-tokens",
+  "non-cache-tokens",
+  "cached-tokens",
+  "estimated-cost",
+  "sessions",
+  "unknown-cost",
+  "guardrails",
+  "review-queue"
+];
+
 const metricTitles: Record<EvidenceMetric, { title: string; description: string }> = {
   "processed-tokens": {
     title: "Processed tokens",
@@ -91,6 +102,11 @@ function withQuery(path: string, params: Record<string, string | null | undefine
 
 function number(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+export function parseEvidenceMetric(value: unknown): EvidenceMetric {
+  if (typeof value !== "string") return "processed-tokens";
+  return evidenceMetrics.includes(value as EvidenceMetric) ? (value as EvidenceMetric) : "processed-tokens";
 }
 
 export function evidenceHref(

@@ -32,6 +32,16 @@ afterEach(async () => {
 });
 
 describe("evidence trail", () => {
+  it("validates route metric parameters before building evidence", async () => {
+    const { parseEvidenceMetric } = await loadEvidence();
+
+    expect(parseEvidenceMetric("cached-tokens")).toBe("cached-tokens");
+    expect(parseEvidenceMetric("estimated-cost")).toBe("estimated-cost");
+    expect(parseEvidenceMetric(["sessions"])).toBe("processed-tokens");
+    expect(parseEvidenceMetric("../../../pricing")).toBe("processed-tokens");
+    expect(parseEvidenceMetric(undefined)).toBe("processed-tokens");
+  });
+
   it("builds metric evidence from sessions, source files, parser data, and pricing rows", async () => {
     const { buildEvidenceTrail, evidenceHref, sqlite } = await loadEvidence();
 
