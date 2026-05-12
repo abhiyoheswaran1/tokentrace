@@ -95,6 +95,12 @@ function zeroImportExplanation(counts: ScanDiffCounts) {
   if (counts.filesScanned === 0) return "The latest scan checked no files.";
 
   const blockers = counts.imported + counts.duplicates + counts.ignored + counts.unsupported + counts.failed + counts.importedWithErrors;
+  if (counts.importedWithErrors > 0 && counts.importedWithErrors === blockers) {
+    return "The latest scan imported nothing because parser errors prevented complete imports.";
+  }
+  if (counts.importedWithErrors > 0) {
+    return "The latest scan imported nothing because candidates had parser errors, duplicates, ignored support files, unsupported formats, or failures.";
+  }
   if (counts.imported > 0) {
     return "The latest scan marked files as imported, but they produced no usage records.";
   }
@@ -112,12 +118,6 @@ function zeroImportExplanation(counts: ScanDiffCounts) {
   }
   if (counts.failed > 0 && counts.failed === blockers) {
     return "The latest scan imported nothing because parser failures blocked imports.";
-  }
-  if (counts.importedWithErrors > 0 && counts.importedWithErrors === blockers) {
-    return "The latest scan imported nothing because parser errors prevented complete imports.";
-  }
-  if (counts.importedWithErrors > 0) {
-    return "The latest scan imported nothing because candidates had parser errors, duplicates, ignored support files, unsupported formats, or failures.";
   }
   return "The latest scan imported nothing because candidates were duplicates, ignored, unsupported, or failed.";
 }
