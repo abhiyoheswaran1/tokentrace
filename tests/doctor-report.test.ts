@@ -137,6 +137,58 @@ describe("doctor report", () => {
     expect(report.fileStatus.duplicates).toBe(1);
   });
 
+  it("explains zero-import parser errors without recommending duplicate-only or setup advice", () => {
+    const report = buildDoctorReport({
+      roots: ["/Users/test/.claude"],
+      pricedModelCount: 12,
+      confidence,
+      scanRuns: [
+        {
+          id: "scan-1",
+          startedAt: 1,
+          completedAt: 2,
+          filesScanned: 2,
+          recordsImported: 0,
+          warnings: [],
+          errors: []
+        }
+      ],
+      scanFiles: [
+        {
+          id: "file-1",
+          scanRunId: "scan-1",
+          path: "/Users/test/.claude/projects/a.jsonl",
+          modifiedTime: 1,
+          sizeBytes: 100,
+          parser: "claude-code",
+          status: "imported_with_errors",
+          recordsImported: 0,
+          warnings: ["partial import"],
+          errors: ["Could not parse message payload."],
+          rawMetadata: {}
+        },
+        {
+          id: "file-2",
+          scanRunId: "scan-1",
+          path: "/Users/test/.claude/projects/b.jsonl",
+          modifiedTime: 1,
+          sizeBytes: 100,
+          parser: "claude-code",
+          status: "skipped_duplicate",
+          recordsImported: 0,
+          warnings: [],
+          errors: [],
+          rawMetadata: {}
+        }
+      ]
+    });
+
+    expect(report.latestScan.zeroImportExplanation).toBe("The latest scan found candidate files, but parser errors prevented complete imports.");
+    expect(report.recommendations[0].id).toBe("parser-failures");
+    expect(report.recommendations.map((item) => item.id)).not.toContain("scan-duplicates-only");
+    expect(report.recommendations.map((item) => item.action).join(" ")).not.toContain("Add a custom folder");
+  });
+
   it("separates ignored support files from unsupported parser-review files", () => {
     const report = buildDoctorReport({
       roots: ["/Users/test/.claude"],

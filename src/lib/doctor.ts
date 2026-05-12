@@ -97,13 +97,17 @@ function zeroImportExplanation(args: {
   if (rootCount === 0) return "No readable CLI roots were found, so TokenTrace had nowhere to discover usage files.";
   if (latestRun.filesScanned === 0) return "The latest scan checked no files in the configured roots.";
 
-  const imported = count(statusCounts, "imported") + count(statusCounts, "imported_with_errors");
+  const imported = count(statusCounts, "imported");
+  const importedWithErrors = count(statusCounts, "imported_with_errors");
   const duplicates = count(statusCounts, "skipped_duplicate");
   const ignored = count(statusCounts, "ignored_non_usage");
   const unsupported = count(statusCounts, "skipped_unknown");
   const failed = count(statusCounts, "failed");
-  const totalKnown = imported + duplicates + ignored + unsupported + failed;
+  const totalKnown = imported + importedWithErrors + duplicates + ignored + unsupported + failed;
 
+  if (importedWithErrors > 0) {
+    return "The latest scan found candidate files, but parser errors prevented complete imports.";
+  }
   if (duplicates > 0 && duplicates === totalKnown) {
     return "The latest scan imported nothing because all usage candidates were already imported duplicates.";
   }
@@ -160,7 +164,7 @@ function buildRecommendations(args: {
     ));
   }
 
-  if (zeroImport && duplicates > 0 && unsupported === 0 && failed === 0) {
+  if (zeroImport && duplicates > 0 && unsupported === 0 && failed === 0 && importedWithErrors === 0) {
     recommendations.push(recommendation(
       "scan-duplicates-only",
       "low",
