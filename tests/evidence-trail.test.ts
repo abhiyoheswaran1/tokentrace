@@ -155,4 +155,93 @@ describe("evidence trail", () => {
       pricingHref: "/pricing?model=claude-unpriced"
     });
   });
+
+  it("uses metric-specific token totals for cached and non-cache evidence", async () => {
+    const { buildEvidenceTrail, sqlite } = await loadEvidence();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('anthropic', 'Anthropic', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('claude-code', 'anthropic', 'Claude Code')").run();
+    sqlite.prepare("INSERT INTO projects (id, name, path) VALUES ('project-1', 'TokenTrace', '/repo/tokentrace')").run();
+    sqlite
+      .prepare(
+        "INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES ('sonnet', 'anthropic', 'claude-sonnet-4-5', 3, 15, 'USD')"
+      )
+      .run();
+    sqlite
+      .prepare(
+        "INSERT INTO sessions (id, source_id, tool_id, project_id, started_at, title, source_file) VALUES ('session-1', 'source-1', 'claude-code', 'project-1', 10, 'Mixed token session', '/tmp/tokens.jsonl')"
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, reasoning_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('i1', 'i1-source', 'session-1', 'assistant', 'sonnet', 100, 40, 300, 20, 10, 470, 'exact', 0.01)`
+      )
+      .run();
+
+    const cachedTrail = buildEvidenceTrail({ metric: "cached-tokens" });
+    const nonCacheTrail = buildEvidenceTrail({ metric: "non-cache-tokens" });
+
+    expect(cachedTrail.totals.tokens).toBe(320);
+    expect(cachedTrail.sessions[0]).toMatchObject({
+      totalTokens: 320,
+      interactions: 1
+    });
+    expect(nonCacheTrail.totals.tokens).toBe(150);
+    expect(nonCacheTrail.sessions[0]).toMatchObject({
+      totalTokens: 150,
+      interactions: 1
+    });
+  });
+
+  it("limits guardrail evidence to current-month usage", async () => {
+    const { buildEvidenceTrail, sqlite } = await loadEvidence();
+    const now = new Date();
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 2).getTime();
+    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 2).getTime();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('anthropic', 'Anthropic', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('claude-code', 'anthropic', 'Claude Code')").run();
+    sqlite.prepare("INSERT INTO projects (id, name, path) VALUES ('project-1', 'TokenTrace', '/repo/tokentrace')").run();
+    sqlite
+      .prepare(
+        "INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES ('sonnet', 'anthropic', 'claude-sonnet-4-5', 3, 15, 'USD')"
+      )
+      .run();
+    sqlite
+      .prepare(
+        "INSERT INTO sessions (id, source_id, tool_id, project_id, started_at, title, source_file) VALUES ('session-current', 'source-current', 'claude-code', 'project-1', ?, 'Current month', '/tmp/current.jsonl')"
+      )
+      .run(currentMonth);
+    sqlite
+      .prepare(
+        "INSERT INTO sessions (id, source_id, tool_id, project_id, started_at, title, source_file) VALUES ('session-old', 'source-old', 'claude-code', 'project-1', ?, 'Previous month', '/tmp/old.jsonl')"
+      )
+      .run(previousMonth);
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, timestamp, role, model_id, input_tokens, output_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('current-interaction', 'current-interaction-source', 'session-current', ?, 'assistant', 'sonnet', 100, 25, 125, 'exact', 0.03),
+          ('old-interaction', 'old-interaction-source', 'session-old', ?, 'assistant', 'sonnet', 900, 100, 1000, 'exact', 0.50)`
+      )
+      .run(currentMonth, previousMonth);
+
+    const trail = buildEvidenceTrail({ metric: "guardrails" });
+
+    expect(trail.totals).toMatchObject({
+      tokens: 125,
+      cost: 0.03,
+      sessions: 1,
+      interactions: 1
+    });
+    expect(trail.sessions).toHaveLength(1);
+    expect(trail.sessions[0]).toMatchObject({
+      id: "session-current",
+      totalTokens: 125
+    });
+  });
 });

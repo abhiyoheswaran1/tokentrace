@@ -119,11 +119,27 @@ type EvidenceSessionRow = {
   interactions: number;
 };
 
+function currentMonthWindow(now = new Date()) {
+  const from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+  return { from, to };
+}
+
+function metricTokenExpression(metric: EvidenceMetric, alias = "i") {
+  if (metric === "cached-tokens") return `${alias}.cache_read_tokens + ${alias}.cache_write_tokens`;
+  if (metric === "non-cache-tokens") return `${alias}.input_tokens + ${alias}.output_tokens + ${alias}.reasoning_tokens`;
+  return `${alias}.total_tokens`;
+}
+
 function metricWhere(metric: EvidenceMetric, alias = "i", prefix = "WHERE") {
   if (metric === "cached-tokens") return `${prefix} (${alias}.cache_read_tokens + ${alias}.cache_write_tokens) > 0`;
   if (metric === "unknown-cost") return `${prefix} ${alias}.cost IS NULL`;
   if (metric === "non-cache-tokens") {
     return `${prefix} (${alias}.input_tokens + ${alias}.output_tokens + ${alias}.reasoning_tokens) > 0`;
+  }
+  if (metric === "guardrails") {
+    const window = currentMonthWindow();
+    return `${prefix} ${alias}.timestamp >= ${window.from} AND ${alias}.timestamp < ${window.to}`;
   }
   return "";
 }
@@ -134,6 +150,8 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
   const where = metricWhere(metric);
   const modelWhere = metricWhere(metric, "i3", "AND");
   const pricingWhere = metricWhere(metric, "i2", "AND");
+  const tokenExpression = metricTokenExpression(metric);
+  const pricingTokenExpression = metricTokenExpression(metric, "i2");
   const sessions = sqlite
     .prepare(
       `SELECT
@@ -161,7 +179,7 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
             ${pricingWhere}
             AND m2.name IS NOT NULL
           GROUP BY m2.id, m2.name
-          ORDER BY SUM(i2.total_tokens) DESC, m2.name ASC
+          ORDER BY SUM(${pricingTokenExpression}) DESC, m2.name ASC
           LIMIT 1
         ) AS pricingModel,
         s.source_file AS sourceFile,
@@ -175,7 +193,7 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
           WHEN SUM(CASE WHEN i.estimated_tokens = 1 THEN 1 ELSE 0 END) > 0 THEN 'estimated'
           ELSE 'exact'
         END AS tokenConfidence,
-        COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
+        COALESCE(SUM(${tokenExpression}), 0) AS totalTokens,
         SUM(i.cost) AS cost,
         SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END) AS unknownCostInteractions,
         COUNT(i.id) AS interactions
