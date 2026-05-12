@@ -1,4 +1,8 @@
-import { sqlite } from "@/src/db/client";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import Database from "better-sqlite3";
+import { applyMigrations } from "@/src/db/migrate-core";
 import type { ScanHealthFile } from "@/src/lib/scan-health";
 
 export type ParserTrustStatusBucket = "imported" | "importedWithErrors" | "ignored" | "unsupported" | "failed" | "duplicate";
@@ -31,6 +35,27 @@ type ParserTrustInputFile = {
   recordsImported: number;
   rawMetadata: Record<string, unknown> | string | null;
 };
+
+function databaseUrlPath(value: string | undefined) {
+  if (!value?.startsWith("file:")) return null;
+  try {
+    return fileURLToPath(value);
+  } catch {
+    return value.slice("file:".length);
+  }
+}
+
+function openSqlite() {
+  const dbPath = process.env.TOKENTRACE_DB
+    ?? databaseUrlPath(process.env.DATABASE_URL)
+    ?? path.join(process.cwd(), ".tokentrace", "tokentrace.db");
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  const sqlite = new Database(dbPath);
+  sqlite.pragma("busy_timeout = 10000");
+  sqlite.pragma("foreign_keys = ON");
+  applyMigrations(sqlite);
+  return sqlite;
+}
 
 function emptySummary(): ParserTrustReport["summary"] {
   return {
@@ -134,25 +159,30 @@ export function buildParserTrustReportForScanFiles(scanFiles: ScanHealthFile[], 
 }
 
 export function buildParserTrustReport(): ParserTrustReport {
-  const latest = sqlite.prepare(
-    "SELECT id FROM scan_runs ORDER BY started_at DESC, completed_at DESC, id DESC LIMIT 1"
-  ).get() as { id: string } | undefined;
+  const sqlite = openSqlite();
+  try {
+    const latest = sqlite.prepare(
+      "SELECT id FROM scan_runs ORDER BY started_at DESC, completed_at DESC, id DESC LIMIT 1"
+    ).get() as { id: string } | undefined;
 
-  if (!latest) {
-    return { summary: emptySummary(), parsers: [] };
+    if (!latest) {
+      return { summary: emptySummary(), parsers: [] };
+    }
+
+    const files = sqlite.prepare(
+      `SELECT path, parser, status, records_imported AS recordsImported, raw_metadata AS rawMetadata
+       FROM scan_files
+       WHERE scan_run_id = ?`
+    ).all(latest.id) as Array<{
+      path: string;
+      parser: string | null;
+      status: string;
+      recordsImported: number;
+      rawMetadata: string | null;
+    }>;
+
+    return buildParserTrustReportFromFiles(files);
+  } finally {
+    sqlite.close();
   }
-
-  const files = sqlite.prepare(
-    `SELECT path, parser, status, records_imported AS recordsImported, raw_metadata AS rawMetadata
-     FROM scan_files
-     WHERE scan_run_id = ?`
-  ).all(latest.id) as Array<{
-    path: string;
-    parser: string | null;
-    status: string;
-    recordsImported: number;
-    rawMetadata: string | null;
-  }>;
-
-  return buildParserTrustReportFromFiles(files);
 }

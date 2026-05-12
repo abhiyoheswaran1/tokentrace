@@ -164,7 +164,7 @@ function buildRecommendations(args: {
     ));
   }
 
-  if (zeroImport && duplicates > 0 && unsupported === 0 && failed === 0 && importedWithErrors === 0) {
+  if (zeroImport && duplicates > 0 && ignored === 0 && unsupported === 0 && failed === 0 && importedWithErrors === 0) {
     recommendations.push(recommendation(
       "scan-duplicates-only",
       "low",

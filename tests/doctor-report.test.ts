@@ -137,6 +137,60 @@ describe("doctor report", () => {
     expect(report.fileStatus.duplicates).toBe(1);
   });
 
+  it("uses general zero-import advice when duplicates and ignored files are mixed", () => {
+    const report = buildDoctorReport({
+      roots: ["/Users/test/.claude"],
+      pricedModelCount: 12,
+      confidence,
+      scanRuns: [
+        {
+          id: "scan-1",
+          startedAt: 1,
+          completedAt: 2,
+          filesScanned: 2,
+          recordsImported: 0,
+          warnings: [],
+          errors: []
+        }
+      ],
+      scanFiles: [
+        {
+          id: "file-1",
+          scanRunId: "scan-1",
+          path: "/Users/test/.claude/projects/a.jsonl",
+          modifiedTime: 1,
+          sizeBytes: 100,
+          parser: null,
+          status: "skipped_duplicate",
+          recordsImported: 0,
+          warnings: ["File hash already imported. Use force rescan to parse again."],
+          errors: [],
+          rawMetadata: {}
+        },
+        {
+          id: "file-2",
+          scanRunId: "scan-1",
+          path: "/Users/test/.claude/cache/support.json",
+          modifiedTime: 1,
+          sizeBytes: 100,
+          parser: null,
+          status: "ignored_non_usage",
+          recordsImported: 0,
+          warnings: [],
+          errors: [],
+          rawMetadata: { ignoreReason: "Claude support cache" }
+        }
+      ]
+    });
+
+    expect(report.recommendations.map((item) => item.id)).not.toContain("scan-duplicates-only");
+    expect(report.recommendations[0]).toMatchObject({
+      id: "zero-import",
+      title: "Latest scan imported no records",
+      action: "Inspect Discovery to see which files were found and why they were not imported."
+    });
+  });
+
   it("explains zero-import parser errors without recommending duplicate-only or setup advice", () => {
     const report = buildDoctorReport({
       roots: ["/Users/test/.claude"],

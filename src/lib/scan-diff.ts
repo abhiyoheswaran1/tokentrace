@@ -1,4 +1,8 @@
-import { sqlite } from "@/src/db/client";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import Database from "better-sqlite3";
+import { applyMigrations } from "@/src/db/migrate-core";
 import type { ScanHealthFile, ScanHealthRun } from "@/src/lib/scan-health";
 
 export type ScanDiffCounts = {
@@ -138,26 +142,52 @@ function buildFromRunsAndFiles(scanRuns: ScanRunRow[], scanFiles: ScanHealthFile
   };
 }
 
+function databaseUrlPath(value: string | undefined) {
+  if (!value?.startsWith("file:")) return null;
+  try {
+    return fileURLToPath(value);
+  } catch {
+    return value.slice("file:".length);
+  }
+}
+
+function openSqlite() {
+  const dbPath = process.env.TOKENTRACE_DB
+    ?? databaseUrlPath(process.env.DATABASE_URL)
+    ?? path.join(process.cwd(), ".tokentrace", "tokentrace.db");
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  const sqlite = new Database(dbPath);
+  sqlite.pragma("busy_timeout = 10000");
+  sqlite.pragma("foreign_keys = ON");
+  applyMigrations(sqlite);
+  return sqlite;
+}
+
 function buildFromDatabase(): ScanDiff {
-  const runs = sqlite.prepare(
-    `SELECT id, started_at AS startedAt, completed_at AS completedAt,
-      files_scanned AS filesScanned, records_imported AS recordsImported
-     FROM scan_runs
-     ORDER BY started_at DESC, completed_at DESC, id DESC
-     LIMIT 2`
-  ).all() as ScanRunRow[];
+  const sqlite = openSqlite();
+  try {
+    const runs = sqlite.prepare(
+      `SELECT id, started_at AS startedAt, completed_at AS completedAt,
+        files_scanned AS filesScanned, records_imported AS recordsImported
+       FROM scan_runs
+       ORDER BY started_at DESC, completed_at DESC, id DESC
+       LIMIT 2`
+    ).all() as ScanRunRow[];
 
-  if (runs.length === 0) return buildFromRunsAndFiles([], []);
+    if (runs.length === 0) return buildFromRunsAndFiles([], []);
 
-  const scanFiles = sqlite.prepare(
-    `SELECT id, scan_run_id AS scanRunId, path, modified_time AS modifiedTime,
-      size_bytes AS sizeBytes, parser, status, records_imported AS recordsImported,
-      warnings, errors, raw_metadata AS rawMetadata
-     FROM scan_files
-     WHERE scan_run_id IN (${runs.map(() => "?").join(", ")})`
-  ).all(...runs.map((run) => run.id)) as ScanHealthFile[];
+    const scanFiles = sqlite.prepare(
+      `SELECT id, scan_run_id AS scanRunId, path, modified_time AS modifiedTime,
+        size_bytes AS sizeBytes, parser, status, records_imported AS recordsImported,
+        warnings, errors, raw_metadata AS rawMetadata
+       FROM scan_files
+       WHERE scan_run_id IN (${runs.map(() => "?").join(", ")})`
+    ).all(...runs.map((run) => run.id)) as ScanHealthFile[];
 
-  return buildFromRunsAndFiles(runs, scanFiles);
+    return buildFromRunsAndFiles(runs, scanFiles);
+  } finally {
+    sqlite.close();
+  }
 }
 
 export function buildScanDiff(input?: {
