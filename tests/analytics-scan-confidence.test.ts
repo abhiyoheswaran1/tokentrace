@@ -250,4 +250,32 @@ describe("scan confidence analytics", () => {
     expect(trust.health.latestStatusCounts.ignored_non_usage).toBe(500);
     expect(trust.health.latestStatusCounts.imported).toBe(1);
   });
+
+  it("orders tied scan runs deterministically for scan trust health", async () => {
+    const { getScanTrustData, sqlite } = await loadAnalytics();
+
+    sqlite
+      .prepare(
+        `INSERT INTO scan_runs (id, started_at, completed_at, files_scanned, records_imported, warnings, errors) VALUES
+          ('scan-a', 10, 20, 1, 1, '[]', '[]'),
+          ('scan-z', 10, 20, 1, 0, '[]', '[]')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO scan_files
+          (id, scan_run_id, path, size_bytes, parser, status, records_imported, warnings, errors, raw_metadata)
+         VALUES
+          ('file-a', 'scan-a', '/tmp/older.jsonl', 100, 'claude-code', 'imported', 1, '[]', '[]', '{}'),
+          ('file-z', 'scan-z', '/tmp/newer.jsonl', 100, 'codex-cli', 'skipped_unknown', 0, '[]', '[]', '{}')`
+      )
+      .run();
+
+    const trust = getScanTrustData();
+
+    expect(trust.scanRuns[0].id).toBe("scan-z");
+    expect(trust.health.latestRun?.id).toBe("scan-z");
+    expect(trust.health.latestStatusCounts.skipped_unknown).toBe(1);
+    expect(trust.health.latestStatusCounts.imported ?? 0).toBe(0);
+  });
 });

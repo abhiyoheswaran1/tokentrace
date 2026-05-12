@@ -137,6 +137,7 @@ function TrustChecklist({
 function DoctorReportPanel({ report }: { report: DoctorReport }) {
   const statusRows = [
     ["Imported", report.fileStatus.imported],
+    ["With errors", report.fileStatus.importedWithErrors],
     ["Duplicates", report.fileStatus.duplicates],
     ["Ignored", report.fileStatus.ignored],
     ["Unsupported", report.fileStatus.unsupported],
@@ -193,7 +194,7 @@ function DoctorReportPanel({ report }: { report: DoctorReport }) {
         <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
           <div className="space-y-3">
             <div className="mb-3 text-sm font-semibold">File handling</div>
-            <div className="grid border-y sm:grid-cols-5 sm:divide-x xl:grid-cols-2">
+            <div className="grid border-y sm:grid-cols-6 sm:divide-x xl:grid-cols-2">
               {statusRows.map(([label, value]) => (
                 <div key={label} className="p-2">
                   <FieldLabel>{label}</FieldLabel>

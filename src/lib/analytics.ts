@@ -942,7 +942,7 @@ function getLatestScanRecommendationStats() {
     .prepare(
       `SELECT id, records_imported AS recordsImported
        FROM scan_runs
-       ORDER BY started_at DESC
+       ORDER BY started_at DESC, completed_at DESC, id DESC
        LIMIT 1`
     )
     .get() as { id: string; recordsImported: number } | undefined;
@@ -1147,7 +1147,7 @@ function getScanRunRows(limit: number) {
     `SELECT id, started_at AS startedAt, completed_at AS completedAt,
       files_scanned AS filesScanned, records_imported AS recordsImported, warnings, errors
      FROM scan_runs
-     ORDER BY started_at DESC
+     ORDER BY started_at DESC, completed_at DESC, id DESC
      LIMIT ?`,
     limit
   ).map((row) => ({
@@ -1167,7 +1167,7 @@ function getScanFileRows(limit: number | null) {
       sr.started_at AS scanStartedAt
      FROM scan_files sf
      JOIN scan_runs sr ON sr.id = sf.scan_run_id
-     ORDER BY sr.started_at DESC, sf.path ASC
+     ORDER BY sr.started_at DESC, sr.completed_at DESC, sr.id DESC, sf.path ASC
      ${limitSql}`,
     ...params
   ).map((row) => ({
