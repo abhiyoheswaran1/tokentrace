@@ -108,6 +108,9 @@ describe("unknown cost repair state", () => {
       provider: "Anthropic",
       model: "claude-sonnet-4-5-20250929",
       tool: "Claude Code",
+      state: "ignored",
+      note: "Waiting for provider price card.",
+      suggestedModel: "claude-sonnet-4-5",
       interactions: 2,
       totalTokens: 200,
       review: {
@@ -122,12 +125,16 @@ describe("unknown cost repair state", () => {
       sourceHref: "/sessions?source=%2Ftmp%2Fclaude%2Fa.jsonl&cost=unknown",
       parserHref: "/parser-debug?source=%2Ftmp%2Fclaude%2Fa.jsonl",
       sessionHref: "/sessions?source=%2Ftmp%2Fclaude%2Fa.jsonl&cost=unknown",
+      sessionsHref: "/sessions?source=%2Ftmp%2Fclaude%2Fa.jsonl&cost=unknown",
       repairHref: "/pricing?model=claude-sonnet-4-5-20250929"
     });
     expect(workbench.groups[1]).toMatchObject({
       key: "missing-model:Anthropic:claude-code:unknown:/tmp/claude/b.jsonl",
       cause: "missing model",
       sourceFile: "/tmp/claude/b.jsonl",
+      state: "unresolved",
+      note: "",
+      suggestedModel: null,
       interactions: 1,
       totalTokens: 0,
       review: {
@@ -140,6 +147,85 @@ describe("unknown cost repair state", () => {
       },
       repairHref: "/parser-debug?source=%2Ftmp%2Fclaude%2Fb.jsonl"
     });
+  });
+
+  it("classifies missing provider and parser-review workbench groups", async () => {
+    const { buildUnknownCostRepairWorkbench, sqlite } = await loadRepair();
+
+    sqlite.prepare("PRAGMA foreign_keys = OFF").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('orphan-tool', 'missing-provider', 'Detached Tool')").run();
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('openai', 'OpenAI', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('codex', 'openai', 'Codex CLI')").run();
+    sqlite
+      .prepare(
+        `INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES
+          ('orphan-model', 'missing-provider', 'orphan-model', NULL, NULL, 'USD'),
+          ('priced-model', 'openai', 'gpt-5', 1, 10, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO sessions (id, source_id, tool_id, started_at, title, source_file) VALUES
+          ('provider-session', 'provider-source', 'orphan-tool', 10, 'Provider gap', '/tmp/orphan.jsonl'),
+          ('parser-session', 'parser-source', 'codex', 20, 'Parser review', '/tmp/parser.jsonl')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, input_tokens, output_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('provider-i1', 'provider-i1-source', 'provider-session', 'assistant', 'orphan-model', 10, 5, 15, 'exact', NULL),
+          ('parser-i1', 'parser-i1-source', 'parser-session', 'assistant', 'priced-model', 40, 10, 50, 'exact', NULL)`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO scan_runs (id, started_at, completed_at, files_scanned, records_imported, warnings, errors)
+         VALUES ('scan-1', 1, 2, 2, 2, '[]', '[]')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO scan_files
+          (id, scan_run_id, path, size_bytes, parser, status, records_imported, warnings, errors, raw_metadata)
+         VALUES
+          ('provider-file', 'scan-1', '/tmp/orphan.jsonl', 100, 'generic-jsonl', 'imported', 1, '[]', '[]', '{}'),
+          ('parser-file', 'scan-1', '/tmp/parser.jsonl', 100, 'codex-cli', 'imported_with_errors', 1, '["cost metadata changed"]', '[]', '{}')`
+      )
+      .run();
+    sqlite.prepare("PRAGMA foreign_keys = ON").run();
+
+    const causes = buildUnknownCostRepairWorkbench().groups.map((group) => ({
+      cause: group.cause,
+      key: group.key,
+      provider: group.provider,
+      state: group.state,
+      note: group.note,
+      suggestedModel: group.suggestedModel,
+      sessionsHref: group.sessionsHref
+    }));
+
+    expect(causes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          cause: "missing provider",
+          provider: "Unknown",
+          state: "unresolved",
+          note: "",
+          suggestedModel: null,
+          sessionsHref: "/sessions?source=%2Ftmp%2Forphan.jsonl&cost=unknown"
+        }),
+        expect.objectContaining({
+          cause: "parser review",
+          provider: "OpenAI",
+          state: "unresolved",
+          note: "",
+          suggestedModel: null,
+          sessionsHref: "/sessions?source=%2Ftmp%2Fparser.jsonl&cost=unknown"
+        })
+      ])
+    );
   });
 
   it("persists source, model, cause, status, notes, and timestamps by stable repair key", async () => {

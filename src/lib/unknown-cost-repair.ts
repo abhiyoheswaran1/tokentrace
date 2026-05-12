@@ -23,13 +23,24 @@ export type UnknownCostRepairSuggestion = {
   reason: string;
 };
 
+export type UnknownCostRepairCause =
+  | "missing provider"
+  | "missing model"
+  | "missing pricing"
+  | "missing token count"
+  | "parser review"
+  | "other";
+
 export type UnknownCostRepairWorkbenchGroup = {
   key: string;
-  cause: "missing model" | "missing pricing" | "missing token count" | "other";
+  cause: UnknownCostRepairCause;
   sourceFile: string;
   provider: string;
   model: string;
   tool: string;
+  state: UnknownCostRepairStatus;
+  note: string;
+  suggestedModel: string | null;
   interactions: number;
   sessions: number;
   totalTokens: number;
@@ -42,6 +53,7 @@ export type UnknownCostRepairWorkbenchGroup = {
   repairHref: string;
   sourceHref: string;
   sessionHref: string;
+  sessionsHref: string;
   parserHref: string;
   pricingHref: string | null;
 };
@@ -166,11 +178,27 @@ function aliasSuggestion({
 }): UnknownCostRepairSuggestion {
   const normalizedModel = model.trim().toLowerCase();
 
+  if (cause === "missing provider") {
+    return {
+      suggestedModel: null,
+      confidence: "low",
+      reason: "The provider reference is missing. Review local parser output before adding pricing."
+    };
+  }
+
   if (cause === "missing model" || normalizedModel === "unknown") {
     return {
       suggestedModel: null,
       confidence: "low",
       reason: "The parser did not extract a model name. Inspect parser evidence before adding pricing."
+    };
+  }
+
+  if (cause === "parser review") {
+    return {
+      suggestedModel: null,
+      confidence: "medium",
+      reason: "Parser status indicates this source needs review before pricing can be trusted."
     };
   }
 
@@ -307,17 +335,25 @@ export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
   }>(
     `SELECT
       CASE
+        WHEN (m.id IS NOT NULL AND p.id IS NULL) OR tool_provider.id IS NULL THEN 'missing provider'
         WHEN lower(COALESCE(m.name, 'unknown')) = 'unknown' THEN 'missing model'
         WHEN COALESCE(i.total_tokens, 0) <= 0 THEN 'missing token count'
         WHEN lower(COALESCE(m.name, 'unknown')) <> 'unknown'
           AND COALESCE(i.total_tokens, 0) > 0
           AND (m.input_token_price IS NULL OR m.output_token_price IS NULL)
           THEN 'missing pricing'
+        WHEN EXISTS (
+          SELECT 1
+          FROM scan_files sf
+          WHERE sf.path = s.source_file
+            AND sf.status IN ('imported_with_errors', 'failed', 'skipped_unknown')
+        )
+          THEN 'parser review'
         ELSE 'other'
       END AS cause,
       COALESCE(m.name, 'unknown') AS model,
-      COALESCE(p.id, tool_provider.id) AS providerId,
-      COALESCE(p.name, tool_provider.name) AS provider,
+      COALESCE(p.id, tool_provider.id, 'unknown-provider') AS providerId,
+      COALESCE(p.name, tool_provider.name, 'Unknown') AS provider,
       t.name AS tool,
       s.source_file AS sourceFile,
       COUNT(i.id) AS interactions,
@@ -330,16 +366,18 @@ export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
      FROM interactions i
      JOIN sessions s ON s.id = i.session_id
      JOIN tools t ON t.id = s.tool_id
-     JOIN providers tool_provider ON tool_provider.id = t.provider_id
+     LEFT JOIN providers tool_provider ON tool_provider.id = t.provider_id
      LEFT JOIN models m ON m.id = i.model_id
      LEFT JOIN providers p ON p.id = m.provider_id
      WHERE i.cost IS NULL
      GROUP BY cause, providerId, t.id, m.id, s.source_file
      ORDER BY
       CASE cause
+        WHEN 'missing provider' THEN 0
         WHEN 'missing pricing' THEN 0
         WHEN 'missing model' THEN 1
         WHEN 'missing token count' THEN 2
+        WHEN 'parser review' THEN 3
         ELSE 3
       END,
       interactions DESC,
@@ -358,6 +396,13 @@ export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
     };
     const key = repairKey(base);
     const review = getUnknownCostReview(key);
+    const suggestion = aliasSuggestion({
+      cause,
+      model: row.model,
+      providerId: row.providerId,
+      pricedByProvider,
+      displayByProviderModel
+    });
     const parserHref = withQuery("/parser-debug", { source: row.sourceFile });
     const pricingHref = cause === "missing pricing" && row.model !== "unknown"
       ? withQuery("/pricing", { model: row.model })
@@ -367,6 +412,9 @@ export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
     return {
       key,
       ...base,
+      state: review.status,
+      note: review.notes,
+      suggestedModel: suggestion.suggestedModel,
       interactions: number(row.interactions),
       sessions: number(row.sessions),
       totalTokens: number(row.totalTokens),
@@ -380,16 +428,11 @@ export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
         createdAt: review.createdAt,
         updatedAt: review.updatedAt
       },
-      suggestion: aliasSuggestion({
-        cause,
-        model: row.model,
-        providerId: row.providerId,
-        pricedByProvider,
-        displayByProviderModel
-      }),
+      suggestion,
       repairHref: pricingHref ?? parserHref,
       sourceHref,
       sessionHref: sourceHref,
+      sessionsHref: sourceHref,
       parserHref,
       pricingHref
     };
