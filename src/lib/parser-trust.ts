@@ -1,4 +1,5 @@
 import { sqlite } from "@/src/db/client";
+import type { ScanHealthFile } from "@/src/lib/scan-health";
 
 export type ParserTrustStatusBucket = "imported" | "importedWithErrors" | "ignored" | "unsupported" | "failed" | "duplicate";
 
@@ -21,6 +22,14 @@ export type ParserTrustRow = {
 export type ParserTrustReport = {
   summary: Record<ParserTrustStatusBucket, number>;
   parsers: ParserTrustRow[];
+};
+
+type ParserTrustInputFile = {
+  path: string;
+  parser: string | null;
+  status: string;
+  recordsImported: number;
+  rawMetadata: Record<string, unknown> | string | null;
 };
 
 function emptySummary(): ParserTrustReport["summary"] {
@@ -52,8 +61,9 @@ function statusBucket(status: string): ParserTrustStatusBucket {
   return "unsupported";
 }
 
-function parseMetadata(rawMetadata: string | null): Record<string, unknown> {
-  if (!rawMetadata) return {};
+function parseMetadata(rawMetadata: ParserTrustInputFile["rawMetadata"]): Record<string, unknown> {
+  if (rawMetadata && typeof rawMetadata === "object" && !Array.isArray(rawMetadata)) return rawMetadata;
+  if (typeof rawMetadata !== "string") return {};
   try {
     const parsed = JSON.parse(rawMetadata);
     return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
@@ -66,32 +76,22 @@ function metadataText(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
-export function buildParserTrustReport(): ParserTrustReport {
-  const latest = sqlite.prepare("SELECT id FROM scan_runs ORDER BY started_at DESC LIMIT 1").get() as { id: string } | undefined;
+function parserVersion(metadata: Record<string, unknown>) {
+  const parser = metadata.parser;
+  const nestedVersion = parser && typeof parser === "object" && !Array.isArray(parser)
+    ? (parser as Record<string, unknown>).version
+    : undefined;
+  return String(nestedVersion ?? metadata.parserVersion ?? metadata.version ?? "unknown");
+}
+
+export function buildParserTrustReportFromFiles(files: ParserTrustInputFile[]): ParserTrustReport {
   const summary = emptySummary();
-
-  if (!latest) {
-    return { summary, parsers: [] };
-  }
-
-  const files = sqlite.prepare(
-    `SELECT path, parser, status, records_imported AS recordsImported, raw_metadata AS rawMetadata
-     FROM scan_files
-     WHERE scan_run_id = ?`
-  ).all(latest.id) as Array<{
-    path: string;
-    parser: string | null;
-    status: string;
-    recordsImported: number;
-    rawMetadata: string | null;
-  }>;
-
   const rows = new Map<string, ParserTrustRow>();
 
   for (const file of files) {
     const metadata = parseMetadata(file.rawMetadata);
     const parser = file.parser ?? "none";
-    const version = String(metadata.parserVersion ?? metadata.version ?? "unknown");
+    const version = parserVersion(metadata);
     const family = sourceFamily(file.path);
     const bucket = statusBucket(file.status);
     const key = `${parser}:${version}:${family}`;
@@ -126,4 +126,33 @@ export function buildParserTrustReport(): ParserTrustReport {
       || a.version.localeCompare(b.version)
     ))
   };
+}
+
+export function buildParserTrustReportForScanFiles(scanFiles: ScanHealthFile[], latestScanId: string | null): ParserTrustReport {
+  if (!latestScanId) return { summary: emptySummary(), parsers: [] };
+  return buildParserTrustReportFromFiles(scanFiles.filter((file) => file.scanRunId === latestScanId));
+}
+
+export function buildParserTrustReport(): ParserTrustReport {
+  const latest = sqlite.prepare(
+    "SELECT id FROM scan_runs ORDER BY started_at DESC, completed_at DESC, id DESC LIMIT 1"
+  ).get() as { id: string } | undefined;
+
+  if (!latest) {
+    return { summary: emptySummary(), parsers: [] };
+  }
+
+  const files = sqlite.prepare(
+    `SELECT path, parser, status, records_imported AS recordsImported, raw_metadata AS rawMetadata
+     FROM scan_files
+     WHERE scan_run_id = ?`
+  ).all(latest.id) as Array<{
+    path: string;
+    parser: string | null;
+    status: string;
+    recordsImported: number;
+    rawMetadata: string | null;
+  }>;
+
+  return buildParserTrustReportFromFiles(files);
 }

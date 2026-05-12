@@ -281,9 +281,11 @@ function ParserTrustPanel({ report }: { report: DoctorReport["parserTrust"] }) {
                   <TableHead>Version</TableHead>
                   <TableHead>Source</TableHead>
                   <TableHead className="text-right">Imported</TableHead>
+                  <TableHead className="text-right">With errors</TableHead>
                   <TableHead className="text-right">Ignored</TableHead>
                   <TableHead className="text-right">Unsupported</TableHead>
                   <TableHead className="text-right">Failed</TableHead>
+                  <TableHead className="text-right">Duplicate</TableHead>
                   <TableHead className="text-right">Records</TableHead>
                   <TableHead className="min-w-56">Latest reason</TableHead>
                 </TableRow>
@@ -297,9 +299,11 @@ function ParserTrustPanel({ report }: { report: DoctorReport["parserTrust"] }) {
                     </TableCell>
                     <TableCell>{row.sourceFamily}</TableCell>
                     <TableCell className="text-right">{row.imported.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{row.importedWithErrors.toLocaleString()}</TableCell>
                     <TableCell className="text-right">{row.ignored.toLocaleString()}</TableCell>
                     <TableCell className="text-right">{row.unsupported.toLocaleString()}</TableCell>
                     <TableCell className="text-right">{row.failed.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{row.duplicate.toLocaleString()}</TableCell>
                     <TableCell className="text-right">{row.recordsImported.toLocaleString()}</TableCell>
                     <TableCell className="max-w-md text-xs text-muted-foreground">
                       {row.latestReason || "No parser reason recorded."}

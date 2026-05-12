@@ -21,6 +21,56 @@ const confidence: ScanConfidenceSummary = {
 };
 
 describe("doctor report", () => {
+  it("derives parser trust from supplied scan files without ambient database state", () => {
+    const report = buildDoctorReport({
+      roots: ["/Users/test/.claude"],
+      pricedModelCount: 12,
+      confidence,
+      scanRuns: [
+        {
+          id: "scan-1",
+          startedAt: 1,
+          completedAt: 2,
+          filesScanned: 1,
+          recordsImported: 1,
+          warnings: [],
+          errors: []
+        }
+      ],
+      scanFiles: [
+        {
+          id: "file-1",
+          scanRunId: "scan-1",
+          path: "/Users/test/.claude/projects/a.jsonl",
+          modifiedTime: 1,
+          sizeBytes: 100,
+          parser: "claude-code",
+          status: "imported_with_errors",
+          recordsImported: 1,
+          warnings: ["partial import"],
+          errors: [],
+          rawMetadata: {
+            parser: {
+              name: "claude-code",
+              version: "2"
+            },
+            reason: "Synthetic doctor input"
+          }
+        }
+      ]
+    });
+
+    expect(report.parserTrust.summary.importedWithErrors).toBe(1);
+    expect(report.parserTrust.parsers).toEqual([
+      expect.objectContaining({
+        parser: "claude-code",
+        version: "2",
+        importedWithErrors: 1,
+        latestReason: "Synthetic doctor input"
+      })
+    ]);
+  });
+
   it("includes support matrix and scan freshness in the JSON report", () => {
     const report = buildDoctorReport({
       roots: ["/Users/test/.claude"],

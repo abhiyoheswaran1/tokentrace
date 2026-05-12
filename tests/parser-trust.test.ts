@@ -43,7 +43,7 @@ describe("parser trust report", () => {
       `INSERT INTO scan_files
         (id, scan_run_id, path, size_bytes, parser, status, records_imported, warnings, errors, raw_metadata)
        VALUES
-        ('file-1', 'scan-1', '/home/demo/.claude/projects/a.jsonl', 100, 'claude-code', 'imported', 1, '[]', '[]', '{"parserVersion":1,"confidence":0.95,"reason":"Claude transcript"}'),
+        ('file-1', 'scan-1', '/home/demo/.claude/projects/a.jsonl', 100, 'claude-code', 'imported', 1, '[]', '[]', '{"parser":{"name":"claude-code","version":"1"},"confidence":0.95,"reason":"Claude transcript"}'),
         ('file-2', 'scan-1', '/home/demo/.claude/cache/noise.json', 100, 'ignored', 'ignored_non_usage', 0, '[]', '[]', '{"ignoreReason":"Claude support cache"}'),
         ('file-3', 'scan-1', '/home/demo/.codex/session.jsonl', 100, 'codex-cli', 'skipped_unknown', 0, '[]', '[]', '{"reason":"Unrecognized Codex shape"}')`
     ).run();
@@ -109,5 +109,37 @@ describe("parser trust report", () => {
         })
       ])
     );
+  });
+
+  it("selects the latest scan deterministically when timestamps tie", async () => {
+    const { buildParserTrustReport, sqlite } = await loadParserTrust();
+
+    sqlite.prepare(
+      `INSERT INTO scan_runs (id, started_at, completed_at, files_scanned, records_imported, warnings, errors) VALUES
+        ('scan-a', 10, 20, 1, 1, '[]', '[]'),
+        ('scan-z', 10, 20, 1, 0, '[]', '[]')`
+    ).run();
+    sqlite.prepare(
+      `INSERT INTO scan_files
+        (id, scan_run_id, path, size_bytes, parser, status, records_imported, warnings, errors, raw_metadata)
+       VALUES
+        ('file-a', 'scan-a', '/home/demo/.claude/projects/a.jsonl', 100, 'claude-code', 'imported', 1, '[]', '[]', '{"parser":{"version":"old"},"reason":"Older tied scan"}'),
+        ('file-z', 'scan-z', '/home/demo/.codex/session.jsonl', 100, 'codex-cli', 'skipped_unknown', 0, '[]', '[]', '{"parser":{"version":"new"},"reason":"Newer tied scan"}')`
+    ).run();
+
+    const report = buildParserTrustReport();
+
+    expect(report.summary).toMatchObject({
+      imported: 0,
+      unsupported: 1
+    });
+    expect(report.parsers).toEqual([
+      expect.objectContaining({
+        parser: "codex-cli",
+        version: "new",
+        sourceFamily: "Codex",
+        latestReason: "Newer tied scan"
+      })
+    ]);
   });
 });
