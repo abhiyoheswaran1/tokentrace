@@ -131,8 +131,12 @@ CREATE TABLE IF NOT EXISTS settings (
 
 CREATE TABLE IF NOT EXISTS unknown_cost_reviews (
   key TEXT PRIMARY KEY,
-  state TEXT NOT NULL DEFAULT 'unresolved',
-  note TEXT NOT NULL DEFAULT '',
+  source_file TEXT NOT NULL DEFAULT '',
+  model TEXT NOT NULL DEFAULT '',
+  cause TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'unresolved',
+  notes TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
 `;
@@ -168,5 +172,70 @@ export function applyMigrations(sqlite: Database.Database) {
         throw error;
       }
     }
+  }
+
+  const reviewColumns = sqlite.prepare("PRAGMA table_info(unknown_cost_reviews)").all() as Array<{
+    name: string;
+  }>;
+  const reviewColumnNames = new Set(reviewColumns.map((column) => column.name));
+  const addReviewColumn = (name: string, definition: string) => {
+    if (reviewColumnNames.has(name)) return;
+    try {
+      sqlite.exec(`ALTER TABLE unknown_cost_reviews ADD COLUMN ${definition}`);
+      reviewColumnNames.add(name);
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        !error.message.toLowerCase().includes("duplicate column")
+      ) {
+        throw error;
+      }
+    }
+  };
+
+  addReviewColumn("source_file", "source_file TEXT NOT NULL DEFAULT ''");
+  addReviewColumn("model", "model TEXT NOT NULL DEFAULT ''");
+  addReviewColumn("cause", "cause TEXT NOT NULL DEFAULT ''");
+  addReviewColumn("status", "status TEXT NOT NULL DEFAULT 'unresolved'");
+  addReviewColumn("notes", "notes TEXT NOT NULL DEFAULT ''");
+  addReviewColumn("created_at", "created_at INTEGER NOT NULL DEFAULT 0");
+  addReviewColumn("updated_at", "updated_at INTEGER NOT NULL DEFAULT 0");
+
+  const upgradedReviewColumns = sqlite.prepare("PRAGMA table_info(unknown_cost_reviews)").all() as Array<{
+    name: string;
+  }>;
+  const upgradedReviewColumnNames = new Set(upgradedReviewColumns.map((column) => column.name));
+  if (upgradedReviewColumnNames.has("state")) {
+    sqlite.exec("UPDATE unknown_cost_reviews SET status = state WHERE status = 'unresolved' AND state <> ''");
+  }
+  if (upgradedReviewColumnNames.has("note")) {
+    sqlite.exec("UPDATE unknown_cost_reviews SET notes = note WHERE notes = '' AND note <> ''");
+  }
+  sqlite.exec(`
+    UPDATE unknown_cost_reviews
+    SET cause = substr(key, 1, instr(key, ':') - 1)
+    WHERE cause = '' AND instr(key, ':') > 0;
+
+    UPDATE unknown_cost_reviews
+    SET created_at = updated_at
+    WHERE created_at = 0 AND updated_at > 0;
+
+    UPDATE unknown_cost_reviews
+    SET created_at = unixepoch() * 1000
+    WHERE created_at = 0;
+
+    UPDATE unknown_cost_reviews
+    SET updated_at = created_at
+    WHERE updated_at = 0;
+  `);
+
+  const repairRows = sqlite.prepare("SELECT key, model FROM unknown_cost_reviews WHERE model = ''").all() as Array<{
+    key: string;
+    model: string;
+  }>;
+  const updateModel = sqlite.prepare("UPDATE unknown_cost_reviews SET model = ? WHERE key = ?");
+  for (const row of repairRows) {
+    const model = row.key.split(":").at(-1) ?? "";
+    updateModel.run(model, row.key);
   }
 }

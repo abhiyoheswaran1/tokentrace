@@ -202,8 +202,14 @@ export const settings = sqliteTable("settings", {
 
 export const unknownCostReviews = sqliteTable("unknown_cost_reviews", {
   key: text("key").primaryKey(),
-  state: text("state").notNull().default("unresolved"),
-  note: text("note").notNull().default(""),
+  sourceFile: text("source_file").notNull().default(""),
+  model: text("model").notNull().default(""),
+  cause: text("cause").notNull().default(""),
+  status: text("status").notNull().default("unresolved"),
+  notes: text("notes").notNull().default(""),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date())
