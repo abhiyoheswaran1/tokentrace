@@ -191,6 +191,60 @@ describe("doctor report", () => {
     });
   });
 
+  it("uses general zero-import advice when imported files produce zero records", () => {
+    const report = buildDoctorReport({
+      roots: ["/Users/test/.claude"],
+      pricedModelCount: 12,
+      confidence,
+      scanRuns: [
+        {
+          id: "scan-1",
+          startedAt: 1,
+          completedAt: 2,
+          filesScanned: 2,
+          recordsImported: 0,
+          warnings: [],
+          errors: []
+        }
+      ],
+      scanFiles: [
+        {
+          id: "file-1",
+          scanRunId: "scan-1",
+          path: "/Users/test/.claude/projects/a.jsonl",
+          modifiedTime: 1,
+          sizeBytes: 100,
+          parser: "claude-code",
+          status: "imported",
+          recordsImported: 0,
+          warnings: [],
+          errors: [],
+          rawMetadata: {}
+        },
+        {
+          id: "file-2",
+          scanRunId: "scan-1",
+          path: "/Users/test/.claude/projects/b.jsonl",
+          modifiedTime: 1,
+          sizeBytes: 100,
+          parser: null,
+          status: "skipped_duplicate",
+          recordsImported: 0,
+          warnings: ["File hash already imported. Use force rescan to parse again."],
+          errors: [],
+          rawMetadata: {}
+        }
+      ]
+    });
+
+    expect(report.latestScan.zeroImportExplanation).toBe("The latest scan marked files as imported, but they produced no usage records.");
+    expect(report.recommendations.map((item) => item.id)).not.toContain("scan-duplicates-only");
+    expect(report.recommendations[0]).toMatchObject({
+      id: "zero-import",
+      action: "Inspect Discovery to see which files were found and why they were not imported."
+    });
+  });
+
   it("explains zero-import parser errors without recommending duplicate-only or setup advice", () => {
     const report = buildDoctorReport({
       roots: ["/Users/test/.claude"],

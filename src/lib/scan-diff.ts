@@ -94,7 +94,10 @@ function zeroImportExplanation(counts: ScanDiffCounts) {
   if (counts.recordsImported > 0) return null;
   if (counts.filesScanned === 0) return "The latest scan checked no files.";
 
-  const blockers = counts.duplicates + counts.ignored + counts.unsupported + counts.failed + counts.importedWithErrors;
+  const blockers = counts.imported + counts.duplicates + counts.ignored + counts.unsupported + counts.failed + counts.importedWithErrors;
+  if (counts.imported > 0) {
+    return "The latest scan marked files as imported, but they produced no usage records.";
+  }
   if (counts.duplicates > 0 && counts.ignored > 0 && counts.unsupported === 0 && counts.failed === 0 && counts.importedWithErrors === 0) {
     return "The latest scan imported nothing because files were already imported duplicates or known non-usage support files.";
   }

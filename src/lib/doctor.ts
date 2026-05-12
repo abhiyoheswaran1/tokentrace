@@ -108,6 +108,9 @@ function zeroImportExplanation(args: {
   if (importedWithErrors > 0) {
     return "The latest scan found candidate files, but parser errors prevented complete imports.";
   }
+  if (imported > 0) {
+    return "The latest scan marked files as imported, but they produced no usage records.";
+  }
   if (duplicates > 0 && duplicates === totalKnown) {
     return "The latest scan imported nothing because all usage candidates were already imported duplicates.";
   }
@@ -139,6 +142,7 @@ function buildRecommendations(args: {
   const ignored = count(statusCounts, "ignored_non_usage");
   const unsupported = count(statusCounts, "skipped_unknown");
   const failed = count(statusCounts, "failed");
+  const imported = count(statusCounts, "imported");
   const importedWithErrors = count(statusCounts, "imported_with_errors");
   const unknownCauses = health.costCoverage.unknownCauses;
 
@@ -164,7 +168,7 @@ function buildRecommendations(args: {
     ));
   }
 
-  if (zeroImport && duplicates > 0 && ignored === 0 && unsupported === 0 && failed === 0 && importedWithErrors === 0) {
+  if (zeroImport && duplicates > 0 && imported === 0 && ignored === 0 && unsupported === 0 && failed === 0 && importedWithErrors === 0) {
     recommendations.push(recommendation(
       "scan-duplicates-only",
       "low",
