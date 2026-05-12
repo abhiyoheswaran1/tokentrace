@@ -9,6 +9,7 @@ import process from "node:process";
 const root = process.cwd();
 const bin = path.join(root, "bin", "tokentrace.js");
 const home = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-cli-smoke-"));
+const packageJson = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
 const env = {
   ...process.env,
   TOKENTRACE_HOME: home,
@@ -40,6 +41,24 @@ function run(args, options = {}) {
 function jsonCommand(args) {
   const output = run(args);
   return JSON.parse(output);
+}
+
+function expectFailure(args, expectedStderr) {
+  const result = spawnSync(process.execPath, [bin, ...args], {
+    cwd: root,
+    env,
+    encoding: "utf8",
+    timeout: 30_000
+  });
+
+  if (result.status === 0) {
+    throw new Error(`tokentrace ${args.join(" ")} unexpectedly succeeded`);
+  }
+  if (!result.stderr.includes(expectedStderr)) {
+    throw new Error(
+      `tokentrace ${args.join(" ")} failed with unexpected stderr\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+    );
+  }
 }
 
 async function waitFor(url, child) {
@@ -88,6 +107,38 @@ async function smokeServe() {
     await fs.access(buildId);
   } catch {
     console.log("skip serve smoke: .next/BUILD_ID is missing");
+    return;
+  }
+
+  const dashboardRoot = path.join(home, "dashboard-runtime");
+  try {
+    await fs.rm(dashboardRoot, { recursive: true, force: true });
+    await fs.mkdir(dashboardRoot, { recursive: true });
+    await fs.cp(path.join(root, ".next"), path.join(dashboardRoot, ".next"), { recursive: true });
+    await fs.copyFile(path.join(root, "package.json"), path.join(dashboardRoot, "package.json"));
+
+    const publicDir = path.join(root, "public");
+    try {
+      await fs.cp(publicDir, path.join(dashboardRoot, "public"), { recursive: true });
+    } catch {
+      // Static assets are optional for this smoke path.
+    }
+
+    const nodeModules = path.join(root, "node_modules");
+    try {
+      await fs.symlink(nodeModules, path.join(dashboardRoot, "node_modules"), "dir");
+    } catch {
+      // next start can still work when modules resolve from the package root.
+    }
+
+    await fs.writeFile(
+      path.join(dashboardRoot, ".tokentrace-dashboard-version"),
+      `${packageJson.version}\n`
+    );
+  } catch (error) {
+    console.log(
+      `skip serve smoke: could not reuse root dashboard build (${error instanceof Error ? error.message : String(error)})`
+    );
     return;
   }
 
@@ -156,9 +207,12 @@ try {
 
   const evidence = jsonCommand(["evidence", "--json"]);
   if (!evidence.metric || !evidence.totals) throw new Error("Evidence JSON is missing trail data.");
+  expectFailure(["evidence", "--metric=not-real", "--json"], "Invalid evidence metric");
+  expectFailure(["evidence", "--json", "--bogus"], "Unknown option");
 
   const repair = jsonCommand(["repair", "--json"]);
   if (!repair.summary || !Array.isArray(repair.groups)) throw new Error("Repair JSON is missing workbench data.");
+  expectFailure(["repair", "--json", "--bogus"], "Unknown option");
 
   const digest = jsonCommand(["digest", "--json"]);
   if (!digest.topReviewItem?.title) throw new Error("Digest JSON is missing topReviewItem.");

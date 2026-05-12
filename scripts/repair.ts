@@ -1,9 +1,42 @@
 import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
 
 const args = process.argv.slice(2);
+
+function usage() {
+  return "Usage: tokentrace repair --json";
+}
+
+function fail(message: string): never {
+  console.error(message);
+  console.error(usage());
+  process.exit(1);
+}
+
+function parseArgs(argv: string[]) {
+  let json = false;
+
+  for (const arg of argv) {
+    if (arg === "--help" || arg === "-h") {
+      console.log(usage());
+      process.exit(0);
+    }
+    if (arg === "--json") {
+      json = true;
+      continue;
+    }
+    if (arg.startsWith("-")) {
+      fail(`Unknown option: ${arg}`);
+    }
+    fail(`Unknown argument: ${arg}`);
+  }
+
+  return { json };
+}
+
+const options = parseArgs(args);
 const workbench = buildUnknownCostRepairWorkbench();
 
-if (args.includes("--json")) {
+if (options.json) {
   console.log(
     JSON.stringify(
       {
