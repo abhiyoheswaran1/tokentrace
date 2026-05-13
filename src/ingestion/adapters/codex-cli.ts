@@ -155,18 +155,18 @@ function deltaFromUsage(current: CodexUsageTotal, previous: CodexUsageTotal | nu
 }
 
 function normalizedUsageFromDelta(delta: CodexUsageTotal) {
-  const inputTokens = delta.inputTokens;
+  const cacheReadTokens = delta.cachedInputTokens;
+  const inputTokens = Math.max(0, delta.inputTokens - cacheReadTokens);
   const outputTokens = Math.max(0, delta.outputTokens - delta.reasoningOutputTokens);
-  const displayedTotalWithCache = delta.totalTokens + delta.cachedInputTokens;
   const computedTotal =
-    inputTokens + delta.cachedInputTokens + outputTokens + delta.reasoningOutputTokens;
+    inputTokens + cacheReadTokens + outputTokens + delta.reasoningOutputTokens;
 
   return {
     input_tokens: inputTokens,
     output_tokens: outputTokens,
-    cache_read_input_tokens: delta.cachedInputTokens,
+    cache_read_input_tokens: cacheReadTokens,
     reasoning_tokens: delta.reasoningOutputTokens,
-    total_tokens: Math.max(displayedTotalWithCache, computedTotal)
+    total_tokens: Math.max(delta.totalTokens, computedTotal)
   };
 }
 
@@ -208,7 +208,7 @@ function exactTokenCountRecords(records: Record<string, unknown>[], fallbackSess
 export const codexCliAdapter: IngestionAdapter = {
   id: "codex-cli",
   displayName: "Codex CLI",
-  version: 3,
+  version: 4,
 
   async detect(file) {
     const extension = path.extname(file.path).toLowerCase();

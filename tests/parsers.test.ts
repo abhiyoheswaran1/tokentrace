@@ -469,19 +469,19 @@ describe("Codex CLI adapter", () => {
       expect(parsed.sessions[0].interactions).toHaveLength(2);
       expect(parsed.sessions[0].interactions[0]).toMatchObject({
         modelName: "gpt-5.5",
-        inputTokens: 1000,
+        inputTokens: 300,
         cacheReadTokens: 700,
         outputTokens: 60,
         reasoningTokens: 40,
-        totalTokens: 1800,
+        totalTokens: 1100,
         tokenConfidence: "exact"
       });
       expect(parsed.sessions[0].interactions[1]).toMatchObject({
-        inputTokens: 500,
+        inputTokens: 300,
         cacheReadTokens: 200,
         outputTokens: 80,
         reasoningTokens: 20,
-        totalTokens: 800,
+        totalTokens: 600,
         tokenConfidence: "exact"
       });
     } finally {

@@ -2,6 +2,13 @@
 
 All notable changes to TokenTrace are documented here.
 
+## [0.8.3] - 2026-05-13
+
+### Fixed
+
+- Codex CLI `token_count` JSON imports now subtract cached input from non-cached input and keep cached input separate, so processed Codex totals count cache exactly once instead of double-counting it.
+- Codex parser provenance is bumped to version 4 so previously imported version-3 Codex session rows are reprocessed on the next scan with corrected token and cost totals.
+
 ## [0.8.2] - 2026-05-13
 
 ### Fixed

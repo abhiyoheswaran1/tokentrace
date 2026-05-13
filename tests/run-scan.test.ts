@@ -223,11 +223,11 @@ describe("runScan result messages", () => {
     expect(result.recordsImported).toBe(1);
     expect(result.errors).toEqual([]);
     expect(interaction).toMatchObject({
-      inputTokens: 1000,
+      inputTokens: 300,
       cacheReadTokens: 700,
       outputTokens: 60,
       reasoningTokens: 40,
-      totalTokens: 1800
+      totalTokens: 1100
     });
   });
 
@@ -411,11 +411,11 @@ describe("runScan result messages", () => {
     );
     expect(interactions).toEqual([
       {
-        inputTokens: 1000,
+        inputTokens: 300,
         cacheReadTokens: 700,
         outputTokens: 60,
         reasoningTokens: 40,
-        totalTokens: 1800
+        totalTokens: 1100
       }
     ]);
   });
