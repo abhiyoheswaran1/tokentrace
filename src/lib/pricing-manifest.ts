@@ -31,8 +31,16 @@ export type PricingManifest = {
 
 function nullableNumber(value: unknown) {
   if (value == null) return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value >= 0 ? value : null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const number = Number(trimmed);
+    return Number.isFinite(number) && number >= 0 ? number : null;
+  }
+  return null;
 }
 
 function validModel(value: unknown): PricingManifestModel | null {

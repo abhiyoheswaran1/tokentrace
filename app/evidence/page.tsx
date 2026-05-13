@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { buildEvidenceTrail, parseEvidenceMetric } from "@/src/lib/evidence-trail";
-import { formatCurrency, formatTokens, percent } from "@/src/lib/format";
+import { formatCurrency, formatExactTokens, percent } from "@/src/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +57,7 @@ export default async function EvidencePage({ searchParams }: EvidencePageProps) 
           <div className="grid divide-y border-t sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-5">
             <div className="p-3">
               <FieldLabel>Tokens</FieldLabel>
-              <DataValue className="mt-1" size="md">{formatTokens(trail.totals.tokens)}</DataValue>
+              <DataValue className="mt-1" size="md">{formatExactTokens(trail.totals.tokens)}</DataValue>
             </div>
             <div className="p-3">
               <FieldLabel>Cost</FieldLabel>
@@ -111,7 +111,7 @@ export default async function EvidencePage({ searchParams }: EvidencePageProps) 
                         {session.tool} / {session.provider} / {session.project}
                       </div>
                     </TableCell>
-                    <TableCell>{formatTokens(session.totalTokens)}</TableCell>
+                    <TableCell>{formatExactTokens(session.totalTokens)}</TableCell>
                     <TableCell>{formatCurrency(session.cost)}</TableCell>
                     <TableCell className="max-w-80">
                       <Link href={session.sourceHref} title={session.sourceFile}>

@@ -223,11 +223,11 @@ describe("runScan result messages", () => {
     expect(result.recordsImported).toBe(1);
     expect(result.errors).toEqual([]);
     expect(interaction).toMatchObject({
-      inputTokens: 300,
+      inputTokens: 1000,
       cacheReadTokens: 700,
       outputTokens: 60,
       reasoningTokens: 40,
-      totalTokens: 1100
+      totalTokens: 1800
     });
   });
 
@@ -386,7 +386,7 @@ describe("runScan result messages", () => {
         transcriptPath,
         Buffer.byteLength(content),
         hashContent(content),
-        JSON.stringify({ parser: { id: "codex-cli", version: 1 } })
+        JSON.stringify({ parser: { id: "codex-cli", version: 2 } })
       );
 
     const result = await runScan({ folders: [scanDir], includeDefaults: false });
@@ -411,11 +411,11 @@ describe("runScan result messages", () => {
     );
     expect(interactions).toEqual([
       {
-        inputTokens: 300,
+        inputTokens: 1000,
         cacheReadTokens: 700,
         outputTokens: 60,
         reasoningTokens: 40,
-        totalTokens: 1100
+        totalTokens: 1800
       }
     ]);
   });

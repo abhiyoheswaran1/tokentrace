@@ -11,6 +11,9 @@ function requiredText(value: unknown) {
 function nullablePrice(value: unknown, field: string) {
   if (value == null) return { ok: true as const, value: null };
   if (typeof value === "string" && value.trim() === "") return { ok: true as const, value: null };
+  if (typeof value !== "number" && typeof value !== "string") {
+    return { ok: false as const, error: `${field} must be a non-negative number or empty` };
+  }
   const number = Number(value);
   if (!Number.isFinite(number) || number < 0) {
     return { ok: false as const, error: `${field} must be a non-negative number or empty` };

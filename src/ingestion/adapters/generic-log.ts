@@ -57,23 +57,32 @@ export const genericLogAdapter: IngestionAdapter = {
       projectPath =
         projectPath ?? textAfter(line, [/(?:cwd|project|path)\s*[:=]\s*(.+)$/i]);
 
+      const codexSummaryLine =
+        /\bToken usage:/i.test(line) || /\(\s*\+\s*[0-9,]+\s+cached\s*\)/i.test(line);
       const model = textAfter(line, [/model\s*[:=]\s*([A-Za-z0-9_.:/-]+)/i]);
       const inputTokens = numberAfter(line, [
+        /\binput\s*[:=]\s*([0-9,]+)/i,
         /(?:input_tokens|prompt_tokens|input tokens|prompt tokens)\s*[:=]\s*([0-9,]+)/i
       ]);
       const outputTokens = numberAfter(line, [
+        /\boutput\s*[:=]\s*([0-9,]+)/i,
         /(?:output_tokens|completion_tokens|output tokens|completion tokens)\s*[:=]\s*([0-9,]+)/i
       ]);
       const cacheReadTokens = numberAfter(line, [
+        /\(\s*\+\s*([0-9,]+)\s+cached\s*\)/i,
+        /\bcached\s*[:=]\s*([0-9,]+)/i,
         /(?:cache_read_input_tokens|cached_input_tokens|cache read tokens|cached tokens)\s*[:=]\s*([0-9,]+)/i
       ]);
       const cacheWriteTokens = numberAfter(line, [
         /(?:cache_creation_input_tokens|cache_write_input_tokens|cache write tokens|cache creation tokens)\s*[:=]\s*([0-9,]+)/i
       ]);
       const reasoningTokens = numberAfter(line, [
+        /\(\s*reasoning\s+([0-9,]+)\s*\)/i,
+        /\breasoning\s*[:=]\s*([0-9,]+)/i,
         /(?:reasoning_output_tokens|reasoning_tokens|reasoning output tokens|reasoning tokens)\s*[:=]\s*([0-9,]+)/i
       ]);
       const explicitTotalTokens = numberAfter(line, [
+        /\btotal\s*[:=]\s*([0-9,]+)/i,
         /(?:total_tokens|total tokens)\s*[:=]\s*([0-9,]+)/i
       ]);
       const fallbackTotalTokens =
@@ -109,6 +118,7 @@ export const genericLogAdapter: IngestionAdapter = {
         normalizedCacheWriteTokens +
         normalizedReasoningTokens;
       if (
+        !codexSummaryLine &&
         inputTokens != null &&
         totalTokens != null &&
         normalizedCacheReadTokens + normalizedCacheWriteTokens > 0 &&
@@ -128,7 +138,9 @@ export const genericLogAdapter: IngestionAdapter = {
         normalizedOutputTokens = Math.max(0, normalizedOutputTokens - normalizedReasoningTokens);
       }
       const structuredTotal =
-        totalTokens ?? partSum();
+        codexSummaryLine && totalTokens != null
+          ? Math.max(totalTokens + normalizedCacheReadTokens + normalizedCacheWriteTokens, partSum())
+          : totalTokens ?? partSum();
       interactions.push({
         externalId: `${currentSession}-${index}`,
         timestamp,

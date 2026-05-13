@@ -1,8 +1,19 @@
 export function formatTokens(value: number | null | undefined) {
   const number = value ?? 0;
-  if (number >= 1_000_000) return `${(number / 1_000_000).toFixed(2)}M`;
+  if (number >= 999_995_000) return `${(number / 1_000_000_000).toFixed(2)}B`;
+  if (number >= 999_950) return `${(number / 1_000_000).toFixed(2)}M`;
   if (number >= 1_000) return `${(number / 1_000).toFixed(1)}K`;
   return number.toLocaleString();
+}
+
+export function formatSignedTokens(value: number | null | undefined) {
+  const number = value ?? 0;
+  if (number === 0) return "0";
+  return `${number > 0 ? "+" : "-"}${formatTokens(Math.abs(number))}`;
+}
+
+export function formatExactTokens(value: number | null | undefined) {
+  return (value ?? 0).toLocaleString();
 }
 
 export function formatCurrency(value: number | null | undefined, currency = "USD") {

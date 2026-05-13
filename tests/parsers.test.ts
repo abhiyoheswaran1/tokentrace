@@ -138,6 +138,39 @@ describe("generic text log adapter", () => {
     }
   });
 
+  it("parses Codex token usage summary lines with cached tokens kept separate", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-log-codex-summary-"));
+    try {
+      const filePath = path.join(tempDir, "codex-summary.log");
+      await fs.writeFile(
+        filePath,
+        "Token usage: total=1,100 input=1,000 (+ 700 cached) output=100 (reasoning 40)\n"
+      );
+      const stat = await fs.stat(filePath);
+
+      const parsed = await genericLogAdapter.parse(
+        {
+          path: filePath,
+          modifiedTime: stat.mtime,
+          sizeBytes: stat.size
+        },
+        { storeRawMessageContent: false }
+      );
+
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+        inputTokens: 1000,
+        cacheReadTokens: 700,
+        outputTokens: 60,
+        reasoningTokens: 40,
+        totalTokens: 1800,
+        estimatedTokens: false
+      });
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it("does not treat Claude support markdown as usage logs", async () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-claude-support-"));
     try {
@@ -436,19 +469,19 @@ describe("Codex CLI adapter", () => {
       expect(parsed.sessions[0].interactions).toHaveLength(2);
       expect(parsed.sessions[0].interactions[0]).toMatchObject({
         modelName: "gpt-5.5",
-        inputTokens: 300,
+        inputTokens: 1000,
         cacheReadTokens: 700,
         outputTokens: 60,
         reasoningTokens: 40,
-        totalTokens: 1100,
+        totalTokens: 1800,
         tokenConfidence: "exact"
       });
       expect(parsed.sessions[0].interactions[1]).toMatchObject({
-        inputTokens: 300,
+        inputTokens: 500,
         cacheReadTokens: 200,
         outputTokens: 80,
         reasoningTokens: 20,
-        totalTokens: 600,
+        totalTokens: 800,
         tokenConfidence: "exact"
       });
     } finally {

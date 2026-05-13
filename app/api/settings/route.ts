@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDatabasePath } from "@/src/db/client";
 import { getAppSettings, normalizeUsageGuardrails, saveAppSettings } from "@/src/db/settings";
-import { readJsonObject } from "@/src/lib/api-json";
+import { jsonBooleanFlag, readJsonObject } from "@/src/lib/api-json";
 
 export const dynamic = "force-dynamic";
 
@@ -19,11 +19,14 @@ export async function PUT(request: Request) {
   }
   const body = parsed.body;
   const customFolders = Array.isArray(body.customFolders)
-    ? body.customFolders.filter((folder: unknown): folder is string => typeof folder === "string")
+    ? body.customFolders
+        .filter((folder: unknown): folder is string => typeof folder === "string")
+        .map((folder) => folder.trim())
+        .filter(Boolean)
     : [];
   const saved = saveAppSettings({
     customFolders,
-    storeRawMessageContent: Boolean(body.storeRawMessageContent),
+    storeRawMessageContent: jsonBooleanFlag(body.storeRawMessageContent),
     usageGuardrails: normalizeUsageGuardrails(body.usageGuardrails)
   });
 

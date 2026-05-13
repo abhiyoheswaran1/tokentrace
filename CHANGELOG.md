@@ -2,6 +2,18 @@
 
 All notable changes to TokenTrace are documented here.
 
+## [0.8.2] - 2026-05-13
+
+### Fixed
+
+- Codex CLI `token_count` imports now preserve non-cached input tokens and add cached input tokens to processed totals, matching Codex's `input (+ cached)` session summary.
+- Codex parser provenance is bumped to version 3 so previously imported Codex session files are reprocessed on the next scan instead of keeping stale undercounted rows.
+- Generic text-log parsing now recognizes Codex `Token usage: total=... input=... (+ ... cached) output=...` summary lines as structured usage instead of weak text estimates.
+- Overview and evidence token totals now switch to billions at large scales instead of displaying multi-thousand million values.
+- Scan, settings, pricing, and pricing-refresh API writes now reject malformed JSON and avoid JavaScript truthiness coercion for boolean flags.
+- Settings and scan custom folders are trimmed and blank entries are discarded before persistence or scan execution.
+- Pricing manifest imports now ignore invalid, boolean, array, blank, and negative price values instead of coercing them into trusted numeric prices.
+
 ## [0.8.1] - 2026-05-13
 
 ### Fixed

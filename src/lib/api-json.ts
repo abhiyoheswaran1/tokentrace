@@ -4,11 +4,24 @@ export type JsonObjectResult =
   | { ok: true; body: JsonObject }
   | { ok: false; error: string };
 
-export async function readJsonObject(request: Request): Promise<JsonObjectResult> {
-  let body: unknown;
+async function readJsonObjectText(request: Request, allowEmpty: boolean): Promise<JsonObjectResult> {
+  let text: string;
 
   try {
-    body = await request.json();
+    text = await request.text();
+  } catch {
+    return { ok: false, error: "request body must be valid JSON" };
+  }
+
+  if (!text.trim()) {
+    return allowEmpty
+      ? { ok: true, body: {} }
+      : { ok: false, error: "request body must be valid JSON" };
+  }
+
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
   } catch {
     return { ok: false, error: "request body must be valid JSON" };
   }
@@ -18,4 +31,16 @@ export async function readJsonObject(request: Request): Promise<JsonObjectResult
   }
 
   return { ok: true, body: body as JsonObject };
+}
+
+export function readJsonObject(request: Request): Promise<JsonObjectResult> {
+  return readJsonObjectText(request, false);
+}
+
+export function readOptionalJsonObject(request: Request): Promise<JsonObjectResult> {
+  return readJsonObjectText(request, true);
+}
+
+export function jsonBooleanFlag(value: unknown) {
+  return value === true;
 }

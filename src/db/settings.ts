@@ -45,9 +45,12 @@ function normalizeSettings(value: unknown): AppSettings {
   const candidate = value as Partial<AppSettings>;
   return {
     customFolders: Array.isArray(candidate.customFolders)
-      ? candidate.customFolders.filter((item): item is string => typeof item === "string")
+      ? candidate.customFolders
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
       : [],
-    storeRawMessageContent: Boolean(candidate.storeRawMessageContent),
+    storeRawMessageContent: candidate.storeRawMessageContent === true,
     usageGuardrails: normalizeUsageGuardrails(candidate.usageGuardrails)
   };
 }

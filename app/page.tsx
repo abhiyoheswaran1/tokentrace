@@ -15,7 +15,7 @@ import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
 import { buildFirstRunStatus, type FirstRunStatus } from "@/src/lib/first-run-status";
 import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
 import { resolveDateRange } from "@/src/lib/date-range";
-import { formatCurrency, formatTokens, percent } from "@/src/lib/format";
+import { formatCurrency, formatSignedTokens, formatTokens, percent } from "@/src/lib/format";
 import { cn } from "@/src/lib/utils";
 import type { UsageGuardrailMetric } from "@/src/lib/usage-guardrails";
 
@@ -74,14 +74,14 @@ function MetricCard({
   );
 }
 
-function formatSignedNumber(value: number) {
-  if (value === 0) return "0";
-  return `${value > 0 ? "+" : "-"}${Math.abs(value).toLocaleString()}`;
-}
-
 function formatSignedCurrency(value: number) {
   if (value === 0) return "$0.00";
   return `${value > 0 ? "+" : "-"}${formatCurrency(Math.abs(value))}`;
+}
+
+function formatSignedNumber(value: number) {
+  if (value === 0) return "0";
+  return `${value > 0 ? "+" : "-"}${Math.abs(value).toLocaleString()}`;
 }
 
 function formatPercentValue(value: number | null) {
@@ -319,7 +319,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             <DeltaMetric
               label="Tokens"
               value={formatTokens(data.comparison.current.totalTokens)}
-              delta={formatSignedNumber(data.comparison.delta.totalTokens)}
+              delta={formatSignedTokens(data.comparison.delta.totalTokens)}
               percentValue={data.comparison.delta.totalTokensPercent}
               previous={formatTokens(data.comparison.previous.totalTokens)}
             />

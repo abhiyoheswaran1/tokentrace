@@ -27,6 +27,36 @@ describe("write API validation", () => {
     expect(runScan).not.toHaveBeenCalled();
   });
 
+  it("allows scan requests without a body and trims explicit folder values", async () => {
+    const runScan = vi.fn(() => ({ scanRunId: "scan-1" }));
+    vi.doMock("@/src/ingestion/scan", () => ({ runScan }));
+    const { POST } = await import("@/app/api/scan/route");
+
+    const emptyResponse = await POST(new Request("http://localhost/api/scan", { method: "POST" }));
+    expect(emptyResponse.status).toBe(200);
+    expect(runScan).toHaveBeenLastCalledWith({ folders: undefined, force: false });
+
+    const explicitResponse = await POST(new Request("http://localhost/api/scan", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        folders: [" /tmp/usage ", "", "   ", 42, "/tmp/other"],
+        force: true
+      })
+    }));
+
+    expect(explicitResponse.status).toBe(200);
+    expect(runScan).toHaveBeenLastCalledWith({ folders: ["/tmp/usage", "/tmp/other"], force: true });
+
+    const stringFalseResponse = await POST(new Request("http://localhost/api/scan", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ force: "false" })
+    }));
+    expect(stringFalseResponse.status).toBe(200);
+    expect(runScan).toHaveBeenLastCalledWith({ folders: undefined, force: false });
+  });
+
   it("rejects malformed pricing JSON without saving a price row", async () => {
     const upsertPricing = vi.fn();
     vi.doMock("@/src/lib/pricing", () => ({
@@ -59,6 +89,32 @@ describe("write API validation", () => {
         model: "gpt-test",
         inputTokenPrice: "not-a-number",
         outputTokenPrice: 10,
+        currency: "USD"
+      })
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({ error: "inputTokenPrice must be a non-negative number or empty" });
+    expect(upsertPricing).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-string and non-number pricing values without coercing them", async () => {
+    const upsertPricing = vi.fn();
+    vi.doMock("@/src/lib/pricing", () => ({
+      getPricingRows: vi.fn(() => []),
+      upsertPricing
+    }));
+    const { POST } = await import("@/app/api/prices/route");
+
+    const response = await POST(new Request("http://localhost/api/prices", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        providerId: "openai",
+        model: "gpt-test",
+        inputTokenPrice: true,
+        outputTokenPrice: [],
         currency: "USD"
       })
     }));
@@ -107,6 +163,35 @@ describe("write API validation", () => {
     expect(refreshPricing).not.toHaveBeenCalled();
   });
 
+  it("allows pricing refresh requests without a body and rejects invalid sources", async () => {
+    const refreshPricing = vi.fn(() => ({ source: "remote" }));
+    vi.doMock("@/src/lib/pricing-refresh", () => ({ refreshPricing }));
+    const { POST } = await import("@/app/api/prices/refresh/route");
+
+    const emptyResponse = await POST(new Request("http://localhost/api/prices/refresh", { method: "POST" }));
+    expect(emptyResponse.status).toBe(200);
+    expect(refreshPricing).toHaveBeenLastCalledWith({ source: "remote", force: false });
+
+    const stringFalseResponse = await POST(new Request("http://localhost/api/prices/refresh", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ force: "false" })
+    }));
+    expect(stringFalseResponse.status).toBe(200);
+    expect(refreshPricing).toHaveBeenLastCalledWith({ source: "remote", force: false });
+
+    const invalidResponse = await POST(new Request("http://localhost/api/prices/refresh", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ source: "bundle" })
+    }));
+    const body = await invalidResponse.json();
+
+    expect(invalidResponse.status).toBe(400);
+    expect(body).toEqual({ error: "source must be remote or bundled" });
+    expect(refreshPricing).toHaveBeenCalledTimes(2);
+  });
+
   it("rejects malformed settings JSON without saving settings", async () => {
     const saveAppSettings = vi.fn();
     vi.doMock("@/src/db/client", () => ({ getDatabasePath: vi.fn(() => "/tmp/tokentrace.db") }));
@@ -123,5 +208,32 @@ describe("write API validation", () => {
     expect(response.status).toBe(400);
     expect(body).toEqual({ error: "request body must be valid JSON" });
     expect(saveAppSettings).not.toHaveBeenCalled();
+  });
+
+  it("trims settings custom folders and drops blank entries before saving", async () => {
+    const saveAppSettings = vi.fn((settings) => settings);
+    vi.doMock("@/src/db/client", () => ({ getDatabasePath: vi.fn(() => "/tmp/tokentrace.db") }));
+    vi.doMock("@/src/db/settings", () => ({
+      getAppSettings: vi.fn(() => ({})),
+      normalizeUsageGuardrails: vi.fn(() => ({ monthlyCostLimitUsd: null, monthlyTokenLimit: null })),
+      saveAppSettings
+    }));
+    const { PUT } = await import("@/app/api/settings/route");
+
+    const response = await PUT(new Request("http://localhost/api/settings", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        customFolders: [" /tmp/usage ", "", "   ", 42, "/tmp/other"],
+        storeRawMessageContent: "false"
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(saveAppSettings).toHaveBeenCalledWith({
+      customFolders: ["/tmp/usage", "/tmp/other"],
+      storeRawMessageContent: false,
+      usageGuardrails: { monthlyCostLimitUsd: null, monthlyTokenLimit: null }
+    });
   });
 });
