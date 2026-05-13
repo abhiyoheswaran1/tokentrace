@@ -1,4 +1,5 @@
 import { sqlite } from "@/src/db/client";
+import type { AnalyticsFilters } from "@/src/lib/analytics";
 
 export type EvidenceMetric =
   | "processed-tokens"
@@ -42,6 +43,20 @@ export type EvidenceTrail = {
     interactions: number;
     unknownCostInteractions: number;
   };
+  confidence: {
+    exact: number;
+    estimated: number;
+    unknown: number;
+  };
+  sourceFiles: Array<{
+    sourceFile: string;
+    tokens: number;
+    sessions: number;
+    interactions: number;
+    unknownCostInteractions: number;
+    sourceHref: string;
+    parserHref: string;
+  }>;
   sessions: EvidenceTrailSession[];
 };
 
@@ -143,6 +158,20 @@ type EvidenceTotalsRow = {
   unknownCostInteractions: number;
 };
 
+type EvidenceConfidenceRow = {
+  exact: number;
+  estimated: number;
+  unknown: number;
+};
+
+type EvidenceSourceFileRow = {
+  sourceFile: string;
+  tokens: number;
+  sessions: number;
+  interactions: number;
+  unknownCostInteractions: number;
+};
+
 function currentMonthWindow(now = new Date()) {
   const from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
   const to = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
@@ -155,25 +184,52 @@ function metricTokenExpression(metric: EvidenceMetric, alias = "i") {
   return `${alias}.total_tokens`;
 }
 
-function metricWhere(metric: EvidenceMetric, alias = "i", prefix = "WHERE") {
-  if (metric === "cached-tokens") return `${prefix} (${alias}.cache_read_tokens + ${alias}.cache_write_tokens) > 0`;
-  if (metric === "unknown-cost") return `${prefix} ${alias}.cost IS NULL`;
+function metricClauses(metric: EvidenceMetric, alias = "i") {
+  if (metric === "cached-tokens") return [`(${alias}.cache_read_tokens + ${alias}.cache_write_tokens) > 0`];
+  if (metric === "unknown-cost") return [`${alias}.cost IS NULL`];
   if (metric === "non-cache-tokens") {
-    return `${prefix} (${alias}.input_tokens + ${alias}.output_tokens + ${alias}.reasoning_tokens) > 0`;
+    return [`(${alias}.input_tokens + ${alias}.output_tokens + ${alias}.reasoning_tokens) > 0`];
   }
   if (metric === "guardrails") {
     const window = currentMonthWindow();
-    return `${prefix} ${alias}.timestamp >= ${window.from} AND ${alias}.timestamp < ${window.to}`;
+    return [`${alias}.timestamp >= ${window.from}`, `${alias}.timestamp < ${window.to}`];
   }
-  return "";
+  return [];
 }
 
-export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceTrail {
+function evidenceWhere(
+  metric: EvidenceMetric,
+  filters: AnalyticsFilters = {},
+  alias = "i",
+  prefix = "WHERE"
+) {
+  const clauses = metricClauses(metric, alias);
+  const params: number[] = [];
+  if (typeof filters.from === "number" && Number.isFinite(filters.from)) {
+    clauses.push(`${alias}.timestamp >= ?`);
+    params.push(filters.from);
+  }
+  if (typeof filters.to === "number" && Number.isFinite(filters.to)) {
+    clauses.push(`${alias}.timestamp < ?`);
+    params.push(filters.to);
+  }
+
+  return {
+    sql: clauses.length ? `${prefix} ${clauses.join(" AND ")}` : "",
+    params
+  };
+}
+
+export function buildEvidenceTrail(input: {
+  metric: EvidenceMetric;
+  filters?: AnalyticsFilters;
+}): EvidenceTrail {
   const metric = input.metric;
+  const filters = input.filters ?? {};
   const config = metricTitles[metric] ?? metricTitles["processed-tokens"];
-  const where = metricWhere(metric);
-  const modelWhere = metricWhere(metric, "i3", "AND");
-  const pricingWhere = metricWhere(metric, "i2", "AND");
+  const where = evidenceWhere(metric, filters);
+  const modelWhere = evidenceWhere(metric, filters, "i3", "AND");
+  const pricingWhere = evidenceWhere(metric, filters, "i2", "AND");
   const tokenExpression = metricTokenExpression(metric);
   const pricingTokenExpression = metricTokenExpression(metric, "i2");
   const totals = sqlite
@@ -185,9 +241,35 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
         COUNT(i.id) AS interactions,
         SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END) AS unknownCostInteractions
        FROM interactions i
-       ${where}`
+       ${where.sql}`
     )
-    .get() as EvidenceTotalsRow;
+    .get(...where.params) as EvidenceTotalsRow;
+  const confidence = sqlite
+    .prepare(
+      `SELECT
+        COALESCE(SUM(CASE WHEN i.token_confidence = 'exact' AND i.estimated_tokens = 0 THEN 1 ELSE 0 END), 0) AS exact,
+        COALESCE(SUM(CASE WHEN i.estimated_tokens = 1 OR i.token_confidence LIKE '%estimate%' THEN 1 ELSE 0 END), 0) AS estimated,
+        COALESCE(SUM(CASE WHEN i.token_confidence = 'unknown' THEN 1 ELSE 0 END), 0) AS unknown
+       FROM interactions i
+       ${where.sql}`
+    )
+    .get(...where.params) as EvidenceConfidenceRow;
+  const sourceFiles = sqlite
+    .prepare(
+      `SELECT
+        s.source_file AS sourceFile,
+        COALESCE(SUM(${tokenExpression}), 0) AS tokens,
+        COUNT(DISTINCT s.id) AS sessions,
+        COUNT(i.id) AS interactions,
+        SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END) AS unknownCostInteractions
+       FROM interactions i
+       JOIN sessions s ON s.id = i.session_id
+       ${where.sql}
+       GROUP BY s.source_file
+       ORDER BY tokens DESC, interactions DESC, sourceFile ASC
+       LIMIT 8`
+    )
+    .all(...where.params) as EvidenceSourceFileRow[];
   const sessions = sqlite
     .prepare(
       `SELECT
@@ -203,7 +285,7 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
             FROM interactions i3
             LEFT JOIN models m3 ON m3.id = i3.model_id
             WHERE i3.session_id = s.id
-            ${modelWhere}
+            ${modelWhere.sql}
             ORDER BY model_name ASC
           )
         ), 'unknown') AS model,
@@ -212,7 +294,7 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
           FROM interactions i2
           LEFT JOIN models m2 ON m2.id = i2.model_id
           WHERE i2.session_id = s.id
-            ${pricingWhere}
+            ${pricingWhere.sql}
             AND m2.name IS NOT NULL
           GROUP BY m2.id, m2.name
           ORDER BY SUM(${pricingTokenExpression}) DESC, m2.name ASC
@@ -259,12 +341,12 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
            sf2.id ASC
          LIMIT 1
        )
-       ${where}
+       ${where.sql}
        GROUP BY s.id
        ORDER BY totalTokens DESC, s.id ASC
        LIMIT 100`
     )
-    .all() as EvidenceSessionRow[];
+    .all(...modelWhere.params, ...pricingWhere.params, ...where.params) as EvidenceSessionRow[];
 
   const mapped: EvidenceTrailSession[] = sessions.map((session) => {
     const cost = session.cost == null ? null : number(session.cost);
@@ -304,6 +386,20 @@ export function buildEvidenceTrail(input: { metric: EvidenceMetric }): EvidenceT
       interactions: number(totals.interactions),
       unknownCostInteractions: number(totals.unknownCostInteractions)
     },
+    confidence: {
+      exact: number(confidence.exact),
+      estimated: number(confidence.estimated),
+      unknown: number(confidence.unknown)
+    },
+    sourceFiles: sourceFiles.map((source) => ({
+      sourceFile: source.sourceFile,
+      tokens: number(source.tokens),
+      sessions: number(source.sessions),
+      interactions: number(source.interactions),
+      unknownCostInteractions: number(source.unknownCostInteractions),
+      sourceHref: withQuery("/sessions", { source: source.sourceFile, evidence: metric }),
+      parserHref: withQuery("/parser-debug", { source: source.sourceFile })
+    })),
     sessions: mapped
   };
 }

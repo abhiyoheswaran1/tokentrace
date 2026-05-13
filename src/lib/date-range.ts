@@ -154,3 +154,25 @@ export function resolveDateRange(input?: SearchInput, now = new Date()): Resolve
     toInput: ""
   };
 }
+
+export function dateRangeQueryParams(range: ResolvedDateRange): Record<string, string | undefined> {
+  if (range.key === "all") return {};
+  if (range.key === "custom") {
+    return {
+      range: "custom",
+      from: range.fromInput || undefined,
+      to: range.toInput || undefined
+    };
+  }
+  return { range: range.key };
+}
+
+export function mergeHrefParams(href: string, params: Record<string, string | undefined>) {
+  const [pathname, search = ""] = href.split("?");
+  const query = new URLSearchParams(search);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) query.set(key, value);
+  });
+  const serialized = query.toString();
+  return serialized ? `${pathname}?${serialized}` : pathname;
+}

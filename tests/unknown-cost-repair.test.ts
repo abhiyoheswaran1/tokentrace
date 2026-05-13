@@ -347,6 +347,107 @@ describe("unknown cost repair state", () => {
     );
   });
 
+  it("filters repair groups to the selected interaction date window", async () => {
+    const { buildUnknownCostRepairWorkbench, sqlite } = await loadRepair();
+    const includedAt = new Date(2026, 4, 2).getTime();
+    const excludedAt = new Date(2026, 3, 2).getTime();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('openai', 'OpenAI', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('codex', 'openai', 'Codex CLI')").run();
+    sqlite
+      .prepare(
+        `INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES
+          ('included-model', 'openai', 'gpt-included', NULL, NULL, 'USD'),
+          ('excluded-model', 'openai', 'gpt-excluded', NULL, NULL, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO sessions (id, source_id, tool_id, started_at, title, source_file) VALUES
+          ('included-session', 'included-source', 'codex', ?, 'Included gap', '/tmp/included.jsonl'),
+          ('excluded-session', 'excluded-source', 'codex', ?, 'Excluded gap', '/tmp/excluded.jsonl')`
+      )
+      .run(includedAt, excludedAt);
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, timestamp, input_tokens, output_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('included-i', 'included-i-source', 'included-session', 'assistant', 'included-model', ?, 100, 20, 120, 'exact', NULL),
+          ('excluded-i', 'excluded-i-source', 'excluded-session', 'assistant', 'excluded-model', ?, 500, 100, 600, 'exact', NULL)`
+      )
+      .run(includedAt, excludedAt);
+
+    const workbench = buildUnknownCostRepairWorkbench({
+      from: new Date(2026, 4, 1).getTime(),
+      to: new Date(2026, 4, 3).getTime()
+    });
+
+    expect(workbench.summary.totalInteractions).toBe(1);
+    expect(workbench.groups).toHaveLength(1);
+    expect(workbench.groups[0]).toMatchObject({
+      model: "gpt-included",
+      sourceFile: "/tmp/included.jsonl"
+    });
+  });
+
+  it("marks missing-pricing repair items resolved when a price update recalculates their costs", async () => {
+    const { buildUnknownCostRepairWorkbench, getUnknownCostReview, sqlite } = await loadRepair();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('openai', 'OpenAI', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('codex', 'openai', 'Codex CLI')").run();
+    sqlite
+      .prepare(
+        "INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES ('gpt-new', 'openai', 'gpt-new', NULL, NULL, 'USD')"
+      )
+      .run();
+    sqlite
+      .prepare(
+        "INSERT INTO sessions (id, source_id, tool_id, started_at, title, source_file) VALUES ('session-1', 'source-1', 'codex', 10, 'Pricing gap', '/tmp/codex.jsonl')"
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, input_tokens, output_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('i1', 'i1-source', 'session-1', 'assistant', 'gpt-new', 1000, 500, 1500, 'exact', NULL)`
+      )
+      .run();
+
+    const before = buildUnknownCostRepairWorkbench().groups[0];
+    expect(before).toMatchObject({
+      cause: "missing pricing",
+      model: "gpt-new",
+      state: "unresolved"
+    });
+
+    const { upsertPricing } = await import("@/src/lib/pricing");
+    const result = upsertPricing({
+      providerId: "openai",
+      providerName: "OpenAI",
+      model: "gpt-new",
+      inputTokenPrice: 1,
+      outputTokenPrice: 10,
+      cachedInputTokenPrice: null,
+      cacheWriteTokenPrice: null,
+      currency: "USD"
+    });
+
+    expect(result).toMatchObject({
+      id: "gpt-new",
+      interactionsChecked: 1,
+      interactionsUpdated: 1,
+      unknownCostInteractions: 0,
+      resolvedRepairItems: 1
+    });
+    expect(buildUnknownCostRepairWorkbench().groups).toHaveLength(0);
+    expect(getUnknownCostReview(before.key)).toMatchObject({
+      status: "resolved",
+      notes: "Resolved after pricing update recalculated local interaction costs."
+    });
+  });
+
   it("persists source, model, cause, status, notes, and timestamps by stable repair key", async () => {
     const { dbPath, getUnknownCostReview, saveUnknownCostReview } = await loadRepair();
 

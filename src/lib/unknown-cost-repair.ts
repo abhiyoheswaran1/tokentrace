@@ -1,6 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { db, sqlite } from "@/src/db/client";
 import { unknownCostReviews } from "@/src/db/schema";
+import type { AnalyticsFilters } from "@/src/lib/analytics";
 import { modelNameCandidates } from "@/src/lib/model-aliases";
 
 export type UnknownCostRepairStatus = "unresolved" | "ignored" | "resolved" | "needs-parser-review";
@@ -120,6 +121,23 @@ function withQuery(path: string, params: Record<string, string | null | undefine
   });
   const serialized = query.toString();
   return serialized ? `${path}?${serialized}` : path;
+}
+
+function interactionDateFilter(filters: AnalyticsFilters = {}, alias = "i") {
+  const clauses: string[] = [];
+  const params: number[] = [];
+  if (typeof filters.from === "number" && Number.isFinite(filters.from)) {
+    clauses.push(`${alias}.timestamp >= ?`);
+    params.push(filters.from);
+  }
+  if (typeof filters.to === "number" && Number.isFinite(filters.to)) {
+    clauses.push(`${alias}.timestamp < ?`);
+    params.push(filters.to);
+  }
+  return {
+    sql: clauses.length ? ` AND ${clauses.join(" AND ")}` : "",
+    params
+  };
 }
 
 export function repairItemHref(key: string) {
@@ -393,8 +411,9 @@ export function markUnknownCostRepairIgnored(key: string, notes?: string) {
   });
 }
 
-export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
+export function buildUnknownCostRepairWorkbench(filters: AnalyticsFilters = {}): UnknownCostRepairWorkbench {
   const { pricedByProvider, displayByProviderModel } = buildPricedModelLookup();
+  const dateFilter = interactionDateFilter(filters);
   const queryRows = rows<{
     cause: UnknownCostRepairWorkbenchGroup["cause"];
     model: string;
@@ -447,6 +466,7 @@ export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
      LEFT JOIN models m ON m.id = i.model_id
      LEFT JOIN providers p ON p.id = m.provider_id
      WHERE i.cost IS NULL
+      ${dateFilter.sql}
      GROUP BY cause, providerId, t.id, m.id, s.source_file
      ORDER BY
       CASE cause
@@ -459,7 +479,8 @@ export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
       END,
       interactions DESC,
       totalTokens DESC,
-      sourceFile ASC`
+      sourceFile ASC`,
+    ...dateFilter.params
   );
 
   const groups = queryRows.map((row) => {

@@ -24,16 +24,28 @@ function numberInputValue(value: number | null) {
 export function PricingSettings({
   initialRows,
   initialModel,
+  returnTo,
   aliasSuggestions = []
 }: {
   initialRows: PricingRow[];
   initialModel?: string;
+  returnTo?: string;
   aliasSuggestions?: ModelAliasSuggestion[];
 }) {
   const [rows, setRows] = useState<EditablePricingRow[]>(initialRows);
   const [filter, setFilter] = useState(initialModel ?? "");
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
+  const [messageHref, setMessageHref] = useState<string | null>(null);
+
+  const focusedSuggestion = useMemo(() => {
+    if (!initialModel) return null;
+    const normalized = initialModel.toLowerCase();
+    return aliasSuggestions.find((suggestion) =>
+      suggestion.model.toLowerCase() === normalized ||
+      suggestion.suggestedModel?.toLowerCase() === normalized
+    ) ?? null;
+  }, [aliasSuggestions, initialModel]);
 
   const visibleRows = useMemo(() => {
     const normalized = filter.trim().toLowerCase();
@@ -74,6 +86,7 @@ export function PricingSettings({
   function saveRow(row: EditablePricingRow) {
     startTransition(async () => {
       setMessage("");
+      setMessageHref(null);
       const response = await fetch("/api/prices", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -92,9 +105,20 @@ export function PricingSettings({
         setMessage("Price save failed.");
         return;
       }
+      const result = (await response.json()) as {
+        id: string;
+        costsRecalculated: number;
+        interactionsChecked: number;
+        unknownCostInteractions: number;
+        modelAliasesUpdated: number;
+        resolvedRepairItems: number;
+      };
       const latest = (await fetch("/api/prices").then((res) => res.json())) as PricingRow[];
       setRows(latest);
-      setMessage("Price saved.");
+      setMessage(
+        `Price saved. ${result.costsRecalculated.toLocaleString()} interactions repriced, ${result.resolvedRepairItems.toLocaleString()} repair items resolved, ${result.unknownCostInteractions.toLocaleString()} unknown-cost interactions remain.`
+      );
+      setMessageHref(returnTo ?? null);
     });
   }
 
@@ -132,6 +156,45 @@ export function PricingSettings({
 
   return (
     <div className="space-y-4">
+      {focusedSuggestion || returnTo ? (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle>Repair Context</CardTitle>
+              <CardDescription>
+                Pricing was opened from an unknown-cost workflow. Save a complete price row to recalculate local interactions.
+              </CardDescription>
+            </div>
+            {returnTo ? (
+              <Button asChild variant="outline" size="sm">
+                <a href={returnTo}>Return to repair item</a>
+              </Button>
+            ) : null}
+          </CardHeader>
+          {focusedSuggestion ? (
+            <CardContent className="grid gap-3 border-t p-0 sm:grid-cols-3">
+              <div className="p-4">
+                <div className="text-xs font-medium text-muted-foreground">Observed model</div>
+                <div className="mt-1 font-medium">{focusedSuggestion.model}</div>
+              </div>
+              <div className="border-t p-4 sm:border-l sm:border-t-0">
+                <div className="text-xs font-medium text-muted-foreground">Suggested row</div>
+                <div className="mt-1 font-medium">{focusedSuggestion.suggestedModel ?? "Add or verify pricing"}</div>
+              </div>
+              <div className="border-t p-4 sm:border-l sm:border-t-0">
+                <div className="text-xs font-medium text-muted-foreground">Evidence</div>
+                <div className="mt-1 text-sm">
+                  {focusedSuggestion.interactions.toLocaleString()} interactions, {formatTokens(focusedSuggestion.totalTokens)}
+                </div>
+                <Badge className="mt-2" variant={focusedSuggestion.confidence === "high" ? "success" : focusedSuggestion.confidence === "medium" ? "warning" : "secondary"}>
+                  {focusedSuggestion.confidence} confidence
+                </Badge>
+              </div>
+            </CardContent>
+          ) : null}
+        </Card>
+      ) : null}
+
       {aliasSuggestions.length ? (
         <Card>
           <CardHeader>
@@ -312,7 +375,16 @@ export function PricingSettings({
               ) : null}
             </TableBody>
           </Table>
-          {message ? <div className="mt-3 text-sm text-muted-foreground">{message}</div> : null}
+          {message ? (
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <span>{message}</span>
+              {messageHref ? (
+                <a href={messageHref} className="font-medium text-primary underline-offset-4 hover:underline">
+                  Return to repair item
+                </a>
+              ) : null}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

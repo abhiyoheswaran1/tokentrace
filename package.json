@@ -60,6 +60,7 @@
     "smoke:packed": "node scripts/smoke-packed-install.mjs",
     "package:test": "npm run verify && npm pack --dry-run",
     "release:check": "npm run package:test && npm run smoke:cli && npm run smoke:packed && npm run security:package && npm run projscan:doctor",
+    "visual:smoke": "node scripts/visual-smoke.mjs",
     "projscan:doctor": "npx --yes projscan@latest doctor",
     "prepack": "npm run build:runtime"
   },

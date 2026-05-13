@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   if (!cachedInputTokenPrice.ok) return NextResponse.json({ error: cachedInputTokenPrice.error }, { status: 400 });
   if (!cacheWriteTokenPrice.ok) return NextResponse.json({ error: cacheWriteTokenPrice.error }, { status: 400 });
 
-  const id = upsertPricing({
+  const result = upsertPricing({
     providerId,
     providerName: requiredText(body.providerName) || undefined,
     model,
@@ -56,5 +56,12 @@ export async function POST(request: Request) {
     currency: requiredText(body.currency) || "USD"
   });
 
-  return NextResponse.json({ id, costsRecalculated: true });
+  return NextResponse.json({
+    id: result.id,
+    costsRecalculated: result.interactionsUpdated,
+    interactionsChecked: result.interactionsChecked,
+    unknownCostInteractions: result.unknownCostInteractions,
+    modelAliasesUpdated: result.modelsUpdated,
+    resolvedRepairItems: result.resolvedRepairItems
+  });
 }

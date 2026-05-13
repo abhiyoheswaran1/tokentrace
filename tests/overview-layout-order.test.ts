@@ -26,9 +26,11 @@ describe("Overview layout order", () => {
   it("keeps unknown-cost overview actions focused on repair and evidence", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
 
+    expect(source).toContain("dateRangeQueryParams(range)");
+    expect(source).toContain("mergeHrefParams");
     expect(source).toContain("repairFocusHref");
     expect(source).toContain("Open next repair item");
     expect(source).toContain("View unknown-cost evidence");
-    expect(source).toContain("data.evidenceLinks[\"unknown-cost\"]");
+    expect(source).toContain("evidenceLinks[\"unknown-cost\"]");
   });
 });

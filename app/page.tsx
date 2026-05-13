@@ -10,11 +10,11 @@ import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData, getScanTrustData } from "@/src/lib/analytics";
-import { buildDoctorReport } from "@/src/lib/doctor";
+import { buildDoctorReport, type DoctorReport } from "@/src/lib/doctor";
 import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
 import { buildFirstRunStatus, type FirstRunStatus } from "@/src/lib/first-run-status";
 import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
-import { resolveDateRange } from "@/src/lib/date-range";
+import { dateRangeQueryParams, mergeHrefParams, resolveDateRange } from "@/src/lib/date-range";
 import { formatCurrency, formatSignedTokens, formatTokens, percent } from "@/src/lib/format";
 import { cn } from "@/src/lib/utils";
 import type { UsageGuardrailMetric } from "@/src/lib/usage-guardrails";
@@ -96,7 +96,8 @@ function MetricCard({
 function OverviewTrustStrip({
   latestScan,
   confidence,
-  repairHref
+  repairHref,
+  processedTokensHref
 }: {
   latestScan: { id: string | null; filesScanned: number; recordsImported: number };
   confidence: {
@@ -107,6 +108,7 @@ function OverviewTrustStrip({
     unknownCostInteractions: number;
   };
   repairHref: string;
+  processedTokensHref: string;
 }) {
   const exactTokenShare = confidence.interactions > 0 ? percent(confidence.exactTokenInteractions / confidence.interactions) : "0%";
   const costCoverage =
@@ -125,7 +127,7 @@ function OverviewTrustStrip({
       label: "Exact tokens",
       value: exactTokenShare,
       detail: `${confidence.exactTokenInteractions.toLocaleString()} interactions with provider counts`,
-      href: "/evidence?metric=processed-tokens",
+      href: processedTokensHref,
       icon: Gauge
     },
     {
@@ -348,6 +350,97 @@ function FirstRunPanel({ status }: { status: FirstRunStatus }) {
   );
 }
 
+function readinessVariant(state: "ready" | "review" | "blocked") {
+  if (state === "ready") return "success";
+  if (state === "blocked") return "destructive";
+  return "warning";
+}
+
+function DataReadinessPanel({
+  report,
+  selectedInteractions,
+  selectedCachedTokens,
+  repairHref,
+  cachedEvidenceHref
+}: {
+  report: DoctorReport;
+  selectedInteractions: number;
+  selectedCachedTokens: number;
+  repairHref: string;
+  cachedEvidenceHref: string;
+}) {
+  const parserReviewFiles = report.parserCoverage.parserReviewFiles + report.parserCoverage.failureFiles;
+  const items = [
+    {
+      label: "Local scans",
+      value: report.latestScan.id ? `${report.latestScan.recordsImported.toLocaleString()} imports` : "No scan",
+      detail: report.latestScan.zeroImportExplanation ?? `${report.latestScan.filesScanned.toLocaleString()} files checked in the latest scan.`,
+      state: report.latestScan.id ? "ready" as const : "blocked" as const,
+      href: "/discovery"
+    },
+    {
+      label: "Parser coverage",
+      value: parserReviewFiles > 0 ? `${parserReviewFiles.toLocaleString()} files need review` : "No parser blockers",
+      detail: "Discovery and Parser Debug explain ignored, unsupported, failed, and imported files.",
+      state: report.parserCoverage.failureFiles > 0 ? "blocked" as const : parserReviewFiles > 0 ? "review" as const : "ready" as const,
+      href: parserReviewFiles > 0 ? "/parser-debug" : "/discovery"
+    },
+    {
+      label: "Pricing",
+      value: report.pricing.unknown > 0 ? `${report.pricing.unknown.toLocaleString()} unknown` : "Priced",
+      detail: `${report.pricing.priced.toLocaleString()} priced interactions across ${report.pricing.pricedModelCount.toLocaleString()} priced models.`,
+      state: report.pricing.unknown > 0 ? "blocked" as const : "ready" as const,
+      href: report.pricing.unknown > 0 ? repairHref : "/pricing"
+    },
+    {
+      label: "Cache accounting",
+      value: selectedCachedTokens > 0 ? formatTokens(selectedCachedTokens) : "No cache tokens",
+      detail: selectedCachedTokens > 0
+        ? "Cache read and write tokens are separated from fresh input/output."
+        : selectedInteractions > 0 ? "The selected period has no imported cache read/write counts." : "Scan usage before cache accounting appears.",
+      state: selectedCachedTokens > 0 ? "ready" as const : "review" as const,
+      href: cachedEvidenceHref
+    },
+    {
+      label: "Boundaries",
+      value: `${report.supportMatrix.summary.stable} stable, ${report.supportMatrix.summary.bestEffort} best effort`,
+      detail: "Unsupported desktop scraping, packet capture, proxying, and telemetry stay out of scope.",
+      state: "ready" as const,
+      href: "/doctor"
+    }
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Data Readiness</CardTitle>
+        <CardDescription>Current trust checks before acting on cost, token, parser, or cache numbers.</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="grid border-t md:grid-cols-2 xl:grid-cols-5">
+          {items.map((item, index) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={cn(
+                "block min-w-0 p-4 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                index > 0 ? "border-t border-border md:border-l md:border-t-0 xl:border-l" : ""
+              )}
+            >
+              <div className="flex min-w-0 items-start justify-between gap-2">
+                <FieldLabel className="truncate">{item.label}</FieldLabel>
+                <Badge variant={readinessVariant(item.state)}>{item.state}</Badge>
+              </div>
+              <div className="mt-2 text-sm font-semibold text-foreground">{item.value}</div>
+              <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</div>
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 type OverviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -356,16 +449,20 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   const params = (await searchParams) ?? {};
   const range = resolveDateRange(params);
   const data = getAnalyticsData(range.filters);
+  const rangeLinkParams = dateRangeQueryParams(range);
+  const evidenceLinks = Object.fromEntries(
+    Object.entries(data.evidenceLinks).map(([key, href]) => [key, mergeHrefParams(href, rangeLinkParams)])
+  ) as typeof data.evidenceLinks;
   const trust = getScanTrustData();
   const roots = await getDefaultSearchRoots();
   const doctorReport = buildDoctorReport({ ...trust, roots });
-  const repairWorkbench = buildUnknownCostRepairWorkbench();
+  const repairWorkbench = buildUnknownCostRepairWorkbench(range.filters);
   const nextRepairGroup =
     repairWorkbench.groups.find((group) => group.review.status !== "ignored" && group.review.status !== "resolved")
     ?? repairWorkbench.groups[0]
     ?? null;
-  const repairFocusHref = nextRepairGroup?.itemHref ?? "/repair";
-  const unknownCostEvidenceHref = data.evidenceLinks["unknown-cost"];
+  const repairFocusHref = mergeHrefParams(nextRepairGroup?.itemHref ?? "/repair", rangeLinkParams);
+  const unknownCostEvidenceHref = evidenceLinks["unknown-cost"];
   const firstRunStatus = buildFirstRunStatus({
     rootCount: roots.length,
     pricedModelCount: trust.pricedModelCount,
@@ -402,7 +499,22 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
       ) : null}
 
       {summary.interactions > 0 ? (
-        <OverviewTrustStrip latestScan={doctorReport.latestScan} confidence={trust.confidence} repairHref={repairFocusHref} />
+        <OverviewTrustStrip
+          latestScan={doctorReport.latestScan}
+          confidence={trust.confidence}
+          repairHref={repairFocusHref}
+          processedTokensHref={evidenceLinks["processed-tokens"]}
+        />
+      ) : null}
+
+      {summary.interactions > 0 ? (
+        <DataReadinessPanel
+          report={doctorReport}
+          selectedInteractions={summary.interactions}
+          selectedCachedTokens={summary.cachedTokens}
+          repairHref={repairFocusHref}
+          cachedEvidenceHref={evidenceLinks["cached-tokens"]}
+        />
       ) : null}
 
       <Card>
@@ -464,7 +576,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatTokens(summary.outputTokens)} output`,
             `${formatTokens(summary.cachedTokens)} cached`
           ]}
-          href={data.evidenceLinks["processed-tokens"]}
+          href={evidenceLinks["processed-tokens"]}
           actionLabel="View evidence"
           icon={Database}
         />
@@ -477,7 +589,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatTokens(summary.outputTokens)} output`,
             `${formatTokens(summary.reasoningTokens)} reasoning`
           ]}
-          href={data.evidenceLinks["non-cache-tokens"]}
+          href={evidenceLinks["non-cache-tokens"]}
           actionLabel="View evidence"
           icon={Database}
         />
@@ -489,20 +601,21 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatTokens(summary.cacheReadTokens)} read`,
             `${formatTokens(summary.cacheWriteTokens)} write`
           ]}
-          href={data.evidenceLinks["cached-tokens"]}
+          href={evidenceLinks["cached-tokens"]}
           actionLabel="View evidence"
           icon={Layers}
         />
         <MetricCard
           label="Estimated cost"
           value={formatCurrency(summary.totalCost)}
+          valueClassName="break-normal whitespace-nowrap text-2xl"
           description="Cost is calculated from editable model prices. Unknown means a model price or usable token count is missing."
           detailItems={[
             `${formatCurrency(summary.exactCost)} exact`,
             `${formatCurrency(summary.estimatedCost)} estimated`,
             `${summary.unknownCostInteractions.toLocaleString()} unknown`
           ]}
-          href={summary.unknownCostInteractions > 0 ? repairFocusHref : data.evidenceLinks["estimated-cost"]}
+          href={summary.unknownCostInteractions > 0 ? repairFocusHref : evidenceLinks["estimated-cost"]}
           actionLabel={summary.unknownCostInteractions > 0 ? "Open next repair item" : "View evidence"}
           secondaryHref={summary.unknownCostInteractions > 0 ? unknownCostEvidenceHref : undefined}
           secondaryActionLabel="View unknown-cost evidence"
@@ -513,7 +626,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           value={summary.sessions.toLocaleString()}
           description="Imported local CLI sessions and interactions in the selected period."
           detailItems={[`${summary.interactions.toLocaleString()} interactions`]}
-          href={data.evidenceLinks.sessions}
+          href={evidenceLinks.sessions}
           actionLabel="View evidence"
           icon={MessageSquare}
         />
@@ -679,23 +792,23 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
                     <TableCell>{row.interactions.toLocaleString()}</TableCell>
                     <TableCell>{formatTokens(row.totalTokens)}</TableCell>
                     <TableCell className="max-w-72 truncate">
-                      <Link href={row.sourceHref} title={row.sourceFile}>
+                      <Link href={mergeHrefParams(row.sourceHref, rangeLinkParams)} title={row.sourceFile}>
                         <MonoText className="text-muted-foreground underline-offset-4 hover:underline">{row.sourceFile}</MonoText>
                       </Link>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
-                        <Link href={row.repairHref} className="font-medium text-primary underline-offset-4 hover:underline">
+                        <Link href={mergeHrefParams(row.repairHref, rangeLinkParams)} className="font-medium text-primary underline-offset-4 hover:underline">
                           {row.pricingHref ? "Configure price" : "Review parser"}
                         </Link>
-                        <Link href={row.itemHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                        <Link href={mergeHrefParams(row.itemHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
                           Item
                         </Link>
-                        <Link href={row.sourceHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                        <Link href={mergeHrefParams(row.sourceHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
                           Evidence
                         </Link>
                         {row.pricingHref ? (
-                          <Link href={row.parserHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                          <Link href={mergeHrefParams(row.parserHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
                             Parser
                           </Link>
                         ) : null}

@@ -1,5 +1,6 @@
 import { sqlite } from "@/src/db/client";
 import { recalculateInteractionCosts } from "@/src/lib/cost-recalculation";
+import { buildUnknownCostRepairWorkbench, saveUnknownCostReview } from "@/src/lib/unknown-cost-repair";
 import { stableId } from "./ids";
 
 export type PricingRow = {
@@ -13,6 +14,15 @@ export type PricingRow = {
   cacheWriteTokenPrice: number | null;
   currency: string;
   effectiveFrom: number | null;
+};
+
+export type PricingUpsertResult = {
+  id: string;
+  modelsUpdated: number;
+  interactionsChecked: number;
+  interactionsUpdated: number;
+  unknownCostInteractions: number;
+  resolvedRepairItems: number;
 };
 
 export function getPricingRows() {
@@ -54,7 +64,8 @@ export function upsertPricing(input: {
   cachedInputTokenPrice: number | null;
   cacheWriteTokenPrice: number | null;
   currency: string;
-}) {
+}): PricingUpsertResult {
+  const beforeRepairGroups = buildUnknownCostRepairWorkbench().groups;
   const providerName = input.providerName?.trim() || input.providerId;
   sqlite
     .prepare("INSERT OR IGNORE INTO providers (id, name, type) VALUES (?, ?, 'llm-provider')")
@@ -96,8 +107,30 @@ export function upsertPricing(input: {
       })
     );
 
-  recalculateInteractionCosts();
-  return id;
+  const recalculation = recalculateInteractionCosts();
+  const afterRepairKeys = new Set(buildUnknownCostRepairWorkbench().groups.map((group) => group.key));
+  let resolvedRepairItems = 0;
+  for (const group of beforeRepairGroups) {
+    if (afterRepairKeys.has(group.key) || group.review.status === "resolved") continue;
+    const notes = group.review.notes
+      ? `${group.review.notes}\nResolved after pricing update recalculated local interaction costs.`
+      : "Resolved after pricing update recalculated local interaction costs.";
+    saveUnknownCostReview({
+      key: group.key,
+      status: "resolved",
+      notes
+    });
+    resolvedRepairItems += 1;
+  }
+
+  return {
+    id,
+    modelsUpdated: recalculation.modelsUpdated,
+    interactionsChecked: recalculation.interactionsChecked,
+    interactionsUpdated: recalculation.interactionsUpdated,
+    unknownCostInteractions: recalculation.unknownCostInteractions,
+    resolvedRepairItems
+  };
 }
 
 export function clearImportedData() {

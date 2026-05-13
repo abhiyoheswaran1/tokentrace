@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function PricingPage({
   searchParams
 }: {
-  searchParams?: Promise<{ model?: string }>;
+  searchParams?: Promise<{ model?: string; returnTo?: string }>;
 }) {
   const params = await searchParams;
   const data = getAnalyticsData();
@@ -21,6 +21,7 @@ export default async function PricingPage({
       <PricingSettings
         initialRows={getPricingRows()}
         initialModel={params?.model}
+        returnTo={params?.returnTo}
         aliasSuggestions={data.modelAliasSuggestions}
       />
     </div>

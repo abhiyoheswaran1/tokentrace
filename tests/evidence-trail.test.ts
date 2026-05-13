@@ -166,6 +166,65 @@ describe("evidence trail", () => {
     });
   });
 
+  it("applies date filters and summarizes confidence and source files", async () => {
+    const { buildEvidenceTrail, sqlite } = await loadEvidence();
+    const includedAt = new Date(2026, 4, 2).getTime();
+    const excludedAt = new Date(2026, 3, 2).getTime();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('openai', 'OpenAI', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('codex', 'openai', 'Codex CLI')").run();
+    sqlite
+      .prepare(
+        "INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES ('gpt', 'openai', 'gpt-test', 1, 10, 'USD')"
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO sessions (id, source_id, tool_id, started_at, title, source_file) VALUES
+          ('included-session', 'included-source', 'codex', ?, 'Included', '/tmp/included.jsonl'),
+          ('excluded-session', 'excluded-source', 'codex', ?, 'Excluded', '/tmp/excluded.jsonl')`
+      )
+      .run(includedAt, excludedAt);
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, timestamp, input_tokens, output_tokens, total_tokens, token_confidence, estimated_tokens, cost)
+         VALUES
+          ('included-exact', 'included-exact-source', 'included-session', 'assistant', 'gpt', ?, 100, 20, 120, 'exact', 0, 0.01),
+          ('included-estimated', 'included-estimated-source', 'included-session', 'assistant', 'gpt', ?, 30, 10, 40, 'high-confidence estimate', 1, 0.02),
+          ('excluded', 'excluded-source-i', 'excluded-session', 'assistant', 'gpt', ?, 500, 100, 600, 'exact', 0, 0.03)`
+      )
+      .run(includedAt, includedAt, excludedAt);
+
+    const trail = buildEvidenceTrail({
+      metric: "processed-tokens",
+      filters: {
+        from: new Date(2026, 4, 1).getTime(),
+        to: new Date(2026, 4, 3).getTime()
+      }
+    });
+
+    expect(trail.totals).toMatchObject({
+      tokens: 160,
+      cost: 0.03,
+      sessions: 1,
+      interactions: 2
+    });
+    expect(trail.confidence).toEqual({
+      exact: 1,
+      estimated: 1,
+      unknown: 0
+    });
+    expect(trail.sourceFiles).toEqual([
+      expect.objectContaining({
+        sourceFile: "/tmp/included.jsonl",
+        interactions: 2,
+        tokens: 160,
+        unknownCostInteractions: 0
+      })
+    ]);
+  });
+
   it("uses metric-specific token totals for cached and non-cache evidence", async () => {
     const { buildEvidenceTrail, sqlite } = await loadEvidence();
 

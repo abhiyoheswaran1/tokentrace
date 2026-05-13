@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveDateRange } from "@/src/lib/date-range";
+import { dateRangeQueryParams, mergeHrefParams, resolveDateRange } from "@/src/lib/date-range";
 
 describe("date range resolution", () => {
   const now = new Date(2026, 4, 9, 12);
@@ -36,5 +36,24 @@ describe("date range resolution", () => {
     expect(range.filters.to).toBe(new Date(2026, 2, 2).getTime());
     expect(range.fromInput).toBe("");
     expect(range.toInput).toBe("2026-03-01");
+  });
+
+  it("serializes selected ranges for evidence and repair links", () => {
+    const custom = resolveDateRange(
+      new URLSearchParams("range=custom&from=2026-04-01&to=2026-04-30"),
+      now
+    );
+
+    expect(dateRangeQueryParams(custom)).toEqual({
+      range: "custom",
+      from: "2026-04-01",
+      to: "2026-04-30"
+    });
+    expect(mergeHrefParams("/evidence?metric=unknown-cost", dateRangeQueryParams(custom))).toBe(
+      "/evidence?metric=unknown-cost&range=custom&from=2026-04-01&to=2026-04-30"
+    );
+    expect(mergeHrefParams("/repair?key=repair%3Av1%3Aabc", dateRangeQueryParams(resolveDateRange(new URLSearchParams("range=7d"), now)))).toBe(
+      "/repair?key=repair%3Av1%3Aabc&range=7d"
+    );
   });
 });

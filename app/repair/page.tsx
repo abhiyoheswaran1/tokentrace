@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, CircleDashed, Search, Settings2 } from "lucide-react";
+import { PeriodFilter } from "@/components/period-filter";
 import { RepairStateControl } from "@/components/repair-state-control";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
+import { dateRangeQueryParams, mergeHrefParams, resolveDateRange } from "@/src/lib/date-range";
 import { formatTokens } from "@/src/lib/format";
 import {
   buildUnknownCostRepairWorkbench,
@@ -58,10 +60,12 @@ function firstQueryValue(value: string | string[] | undefined) {
 
 function FocusedRepairPanel({
   group,
-  focusKey
+  focusKey,
+  rangeLinkParams
 }: {
   group: UnknownCostRepairWorkbenchGroup | null;
   focusKey: string;
+  rangeLinkParams: Record<string, string | undefined>;
 }) {
   if (!group) {
     return (
@@ -74,7 +78,7 @@ function FocusedRepairPanel({
             </CardDescription>
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link href="/repair">
+            <Link href={mergeHrefParams("/repair", rangeLinkParams)}>
               View all repair items <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -85,6 +89,11 @@ function FocusedRepairPanel({
       </Card>
     );
   }
+
+  const itemHref = mergeHrefParams(group.itemHref, rangeLinkParams);
+  const repairHref = group.pricingHref
+    ? mergeHrefParams(group.pricingHref, { returnTo: itemHref })
+    : mergeHrefParams(group.repairHref, rangeLinkParams);
 
   return (
     <Card>
@@ -120,15 +129,15 @@ function FocusedRepairPanel({
         </div>
         <div className="flex flex-wrap gap-2 border-t px-4 py-3">
           <Button asChild size="sm">
-            <Link href={group.repairHref}>
+            <Link href={repairHref}>
               {group.pricingHref ? "Configure price" : "Review parser"} <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={group.sourceHref}>Evidence</Link>
+            <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)}>Evidence</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={group.parserHref}>Parser</Link>
+            <Link href={mergeHrefParams(group.parserHref, rangeLinkParams)}>Parser</Link>
           </Button>
         </div>
       </CardContent>
@@ -142,8 +151,10 @@ type RepairPageProps = {
 
 export default async function RepairPage({ searchParams }: RepairPageProps) {
   const params = (await searchParams) ?? {};
+  const range = resolveDateRange(params);
+  const rangeLinkParams = dateRangeQueryParams(range);
   const focusKey = firstQueryValue(params.key);
-  const workbench = buildUnknownCostRepairWorkbench();
+  const workbench = buildUnknownCostRepairWorkbench(range.filters);
   const hasGroups = workbench.groups.length > 0;
   const focusedGroup = focusKey ? workbench.groups.find((group) => group.key === focusKey) ?? null : null;
 
@@ -155,13 +166,13 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
         actions={
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
-              <Link href="/pricing">
+              <Link href={mergeHrefParams("/pricing", focusKey ? { returnTo: mergeHrefParams(`/repair?key=${encodeURIComponent(focusKey)}`, rangeLinkParams) } : {})}>
                 <Settings2 className="h-4 w-4" />
                 Pricing
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/parser-debug">
+              <Link href={mergeHrefParams("/parser-debug", rangeLinkParams)}>
                 <Search className="h-4 w-4" />
                 Parser debug
               </Link>
@@ -170,8 +181,10 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
         }
       />
 
+      <PeriodFilter range={range} />
+
       {focusKey ? (
-        <FocusedRepairPanel group={focusedGroup} focusKey={focusKey} />
+        <FocusedRepairPanel group={focusedGroup} focusKey={focusKey} rangeLinkParams={rangeLinkParams} />
       ) : null}
 
       <Card>
@@ -250,7 +263,7 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
                       </div>
                     </TableCell>
                     <TableCell className="max-w-96 align-top">
-                      <Link href={group.sourceHref} title={group.sourceFile}>
+                      <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} title={group.sourceFile}>
                         <MonoText className="block truncate text-xs text-muted-foreground underline-offset-4 hover:underline">
                           {group.sourceFile}
                         </MonoText>
@@ -265,17 +278,24 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
                     </TableCell>
                     <TableCell className="align-top">
                       <div className="flex flex-wrap gap-2">
-                        <Link href={group.repairHref} className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
+                        <Link
+                          href={
+                            group.pricingHref
+                              ? mergeHrefParams(group.pricingHref, { returnTo: mergeHrefParams(group.itemHref, rangeLinkParams) })
+                              : mergeHrefParams(group.repairHref, rangeLinkParams)
+                          }
+                          className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+                        >
                           Repair <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
-                        <Link href={group.itemHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                        <Link href={mergeHrefParams(group.itemHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
                           Focus
                         </Link>
-                        <Link href={group.parserHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                        <Link href={mergeHrefParams(group.parserHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
                           Parser
                         </Link>
                         {group.pricingHref ? (
-                          <Link href={group.pricingHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                          <Link href={mergeHrefParams(group.pricingHref, { returnTo: mergeHrefParams(group.itemHref, rangeLinkParams) })} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
                             Pricing
                           </Link>
                         ) : null}
