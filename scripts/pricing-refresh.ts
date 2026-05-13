@@ -1,19 +1,35 @@
-import { refreshPricing } from "@/src/lib/pricing-refresh";
+import {
+  parsePricingRefreshArgs,
+  pricingRefreshUsage,
+  type PricingRefreshCliOptions
+} from "@/src/lib/pricing-refresh-cli";
 
 const args = process.argv.slice(2);
-const json = args.includes("--json");
-const bundled = args.includes("--bundled");
-const force = args.includes("--force");
-const quiet = args.includes("--quiet");
+let options: PricingRefreshCliOptions;
+
+try {
+  options = parsePricingRefreshArgs(args);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : "Invalid pricing refresh arguments.");
+  console.error(pricingRefreshUsage());
+  process.exit(1);
+}
+
+if (options.help) {
+  console.log(pricingRefreshUsage());
+  process.exit(0);
+}
+
+const { refreshPricing } = await import("@/src/lib/pricing-refresh");
 
 const result = await refreshPricing({
-  source: bundled ? "bundled" : "remote",
-  force
+  source: options.bundled ? "bundled" : "remote",
+  force: options.force
 });
 
-if (json) {
+if (options.json) {
   console.log(JSON.stringify(result, null, 2));
-} else if (!quiet) {
+} else if (!options.quiet) {
   console.log("TokenTrace pricing refresh complete");
   console.log(`Source: ${result.source}`);
   console.log(`Checked at: ${result.checkedAt}`);

@@ -31,6 +31,49 @@ describe("generic JSONL adapter", () => {
     expect(parsed.sessions[0].interactions[1].toolCalls?.[0].name).toBe("read_file");
     expect(parsed.sessions[0].interactions[0].rawText).toBeNull();
   });
+
+  it("does not double-count cached or reasoning details included in OpenAI-style totals", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-openai-details-"));
+    try {
+      const filePath = path.join(tempDir, "openai.jsonl");
+      await fs.writeFile(
+        filePath,
+        JSON.stringify({
+          session_id: "openai-session",
+          model: "gpt-5.5",
+          usage: {
+            input_tokens: 1000,
+            input_tokens_details: { cached_tokens: 700 },
+            output_tokens: 200,
+            output_tokens_details: { reasoning_tokens: 60 },
+            total_tokens: 1200
+          }
+        }) + "\n"
+      );
+      const stat = await fs.stat(filePath);
+
+      const parsed = await genericJsonlAdapter.parse(
+        {
+          path: filePath,
+          modifiedTime: stat.mtime,
+          sizeBytes: stat.size
+        },
+        { storeRawMessageContent: false }
+      );
+
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+        inputTokens: 300,
+        cacheReadTokens: 700,
+        outputTokens: 140,
+        reasoningTokens: 60,
+        totalTokens: 1200,
+        tokenConfidence: "exact"
+      });
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("generic text log adapter", () => {
@@ -57,6 +100,39 @@ describe("generic text log adapter", () => {
       expect(parsed.sessions[0].interactions[0].inputTokens).toBe(1234);
       expect(parsed.sessions[0].interactions[0].outputTokens).toBe(567);
       expect(parsed.sessions[0].interactions[0].estimatedTokens).toBe(false);
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("parses cache and reasoning aliases in text logs without double-counting", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-log-details-"));
+    try {
+      const filePath = path.join(tempDir, "usage.log");
+      await fs.writeFile(
+        filePath,
+        "2026-05-13T06:00:00Z model: gpt-5.5 input_tokens: 1,000 cached_input_tokens: 700 output_tokens: 200 reasoning_output_tokens: 60 total_tokens: 1,200\n"
+      );
+      const stat = await fs.stat(filePath);
+
+      const parsed = await genericLogAdapter.parse(
+        {
+          path: filePath,
+          modifiedTime: stat.mtime,
+          sizeBytes: stat.size
+        },
+        { storeRawMessageContent: false }
+      );
+
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+        inputTokens: 300,
+        cacheReadTokens: 700,
+        outputTokens: 140,
+        reasoningTokens: 60,
+        totalTokens: 1200,
+        estimatedTokens: false
+      });
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
@@ -257,6 +333,124 @@ describe("Codex CLI adapter", () => {
       expect(parsed.errors).toEqual([]);
       expect(parsed.sessions[0].interactions).toHaveLength(2);
       expect(parsed.sessions[0].interactions[0].modelName).toBe("openai/gpt-4.1-2025-04-14");
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("parses Codex token_count events as exact deltas without importing tool-output estimates", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-codex-token-count-"));
+    try {
+      const filePath = path.join(tempDir, ".codex", "sessions", "2026", "05", "13", "session.jsonl");
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(
+        filePath,
+        [
+          JSON.stringify({
+            type: "session_meta",
+            payload: {
+              id: "codex-session-1",
+              cwd: "/repo/tokentrace"
+            }
+          }),
+          JSON.stringify({
+            type: "turn_context",
+            payload: {
+              model: "gpt-5.5"
+            }
+          }),
+          JSON.stringify({
+            type: "response_item",
+            payload: {
+              type: "function_call_output",
+              output: "A large command output that should not be estimated when exact token counts exist."
+            }
+          }),
+          JSON.stringify({
+            timestamp: "2026-05-13T06:00:00.000Z",
+            type: "event_msg",
+            payload: {
+              type: "token_count",
+              info: {
+                total_token_usage: {
+                  input_tokens: 1000,
+                  cached_input_tokens: 700,
+                  output_tokens: 100,
+                  reasoning_output_tokens: 40,
+                  total_tokens: 1100
+                }
+              }
+            }
+          }),
+          JSON.stringify({
+            timestamp: "2026-05-13T06:00:01.000Z",
+            type: "event_msg",
+            payload: {
+              type: "token_count",
+              info: {
+                total_token_usage: {
+                  input_tokens: 1000,
+                  cached_input_tokens: 700,
+                  output_tokens: 100,
+                  reasoning_output_tokens: 40,
+                  total_tokens: 1100
+                }
+              }
+            }
+          }),
+          JSON.stringify({
+            timestamp: "2026-05-13T06:00:02.000Z",
+            type: "event_msg",
+            payload: {
+              type: "token_count",
+              info: {
+                total_token_usage: {
+                  input_tokens: 1500,
+                  cached_input_tokens: 900,
+                  output_tokens: 200,
+                  reasoning_output_tokens: 60,
+                  total_tokens: 1700
+                }
+              }
+            }
+          })
+        ].join("\n")
+      );
+      const stat = await fs.stat(filePath);
+
+      const parsed = await codexCliAdapter.parse(
+        {
+          path: filePath,
+          modifiedTime: stat.mtime,
+          sizeBytes: stat.size
+        },
+        { storeRawMessageContent: false }
+      );
+
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.sessions).toHaveLength(1);
+      expect(parsed.sessions[0]).toMatchObject({
+        externalId: "codex-session-1",
+        projectPath: "/repo/tokentrace"
+      });
+      expect(parsed.sessions[0].interactions).toHaveLength(2);
+      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+        modelName: "gpt-5.5",
+        inputTokens: 300,
+        cacheReadTokens: 700,
+        outputTokens: 60,
+        reasoningTokens: 40,
+        totalTokens: 1100,
+        tokenConfidence: "exact"
+      });
+      expect(parsed.sessions[0].interactions[1]).toMatchObject({
+        inputTokens: 300,
+        cacheReadTokens: 200,
+        outputTokens: 80,
+        reasoningTokens: 20,
+        totalTokens: 600,
+        tokenConfidence: "exact"
+      });
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }

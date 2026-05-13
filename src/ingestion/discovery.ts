@@ -3,7 +3,7 @@ import type { Dirent } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { FileCandidate, IgnoredFileCandidate } from "./types";
-import { nonUsageFileReason } from "./path-classifier";
+import { isClaudeCodeUsagePath, isCodexCliUsagePath, nonUsageFileReason } from "./path-classifier";
 
 const supportedExtensions = new Set([
   ".jsonl",
@@ -27,6 +27,9 @@ const skippedDirectories = new Set([
   "Library",
   "Applications"
 ]);
+
+const defaultMaxFileSize = 25 * 1024 * 1024;
+const largeSessionMaxFileSize = 512 * 1024 * 1024;
 
 export function expandHome(input: string) {
   if (input === "~") return os.homedir();
@@ -80,7 +83,13 @@ async function addSupportedFile(fullPath: string, buckets: DiscoveryBuckets) {
 
   try {
     const stat = await fs.stat(fullPath);
-    if (stat.size <= 0 || stat.size > 25 * 1024 * 1024) return;
+    const isCodexJsonlSession =
+      extension === ".jsonl" && isCodexCliUsagePath(fullPath);
+    const isClaudeJsonlSession =
+      extension === ".jsonl" && isClaudeCodeUsagePath(fullPath);
+    const maxFileSize =
+      isCodexJsonlSession || isClaudeJsonlSession ? largeSessionMaxFileSize : defaultMaxFileSize;
+    if (stat.size <= 0 || stat.size > maxFileSize) return;
 
     const ignoreReason = nonUsageFileReason(fullPath);
     if (ignoreReason) {

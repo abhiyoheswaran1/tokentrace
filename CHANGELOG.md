@@ -2,6 +2,20 @@
 
 All notable changes to TokenTrace are documented here.
 
+## [0.8.1] - 2026-05-13
+
+### Fixed
+
+- Codex CLI imports now read exact `token_count` totals, including cached input and reasoning output tokens, so cleared Codex sessions are no longer undercounted.
+- Claude Code and Codex session artifacts can exceed the generic file-size cap without being skipped during discovery.
+- OpenAI-style, Claude-style, and generic usage parsers now normalize cached, cache-write, and reasoning token fields without double-counting them.
+- Parser-version-aware rescans now reprocess stale imports, and source-file replacement is atomic so a failed replacement cannot delete prior trusted sessions.
+- Unknown-cost cause summaries now assign each interaction to one primary cause instead of overlapping buckets.
+- Pricing, scan, settings, repair, and pricing-refresh APIs now reject malformed JSON with clean 400 responses.
+- Manual pricing saves now reject blank model/provider names and invalid numeric prices instead of silently storing unknown prices.
+- CLI commands now reject unknown flags across scan, pricing refresh, status, doctor, digest, and insights commands.
+- Local release checks now run ProjScan through `projscan@latest`, matching the GitHub security workflow guardrail.
+
 ## [0.8.0] - 2026-05-12
 
 ### Added

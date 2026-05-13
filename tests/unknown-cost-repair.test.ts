@@ -141,6 +141,21 @@ describe("unknown cost repair state", () => {
     });
   });
 
+  it("returns a clean validation error for malformed repair update JSON", async () => {
+    await loadRepair();
+    const { PUT } = await import("@/app/api/repair-items/route");
+
+    const response = await PUT(new Request("http://localhost/api/repair-items", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: "{not-json"
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({ error: "request body must be valid JSON" });
+  });
+
   it("builds grouped workbench rows with review state, links, and model alias suggestions", async () => {
     const { buildUnknownCostRepairWorkbench, saveUnknownCostReview, sqlite } = await loadRepair();
 

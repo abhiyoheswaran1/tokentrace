@@ -5,6 +5,7 @@ import {
   saveUnknownCostReview,
   type UnknownCostRepairStatus
 } from "@/src/lib/unknown-cost-repair";
+import { readJsonObject } from "@/src/lib/api-json";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,11 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const body = await request.json();
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+  const body = parsed.body;
   const key = text(body.key, 1000);
   const status = reviewState(body.status ?? body.state);
 

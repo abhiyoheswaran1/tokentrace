@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDatabasePath } from "@/src/db/client";
 import { getAppSettings, normalizeUsageGuardrails, saveAppSettings } from "@/src/db/settings";
+import { readJsonObject } from "@/src/lib/api-json";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,11 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const body = await request.json();
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+  const body = parsed.body;
   const customFolders = Array.isArray(body.customFolders)
     ? body.customFolders.filter((folder: unknown): folder is string => typeof folder === "string")
     : [];

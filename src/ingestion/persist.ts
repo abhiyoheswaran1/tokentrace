@@ -14,6 +14,10 @@ export type ImportSessionResult = {
   warnings: string[];
 };
 
+export type ImportSessionOptions = {
+  replaceSourceFile?: string;
+};
+
 function json(value: unknown) {
   return JSON.stringify(value ?? null);
 }
@@ -122,13 +126,22 @@ function ensureProject(session: NormalizedSession) {
   const projectPath = session.projectPath || findProjectRoot(session.sourceFile);
   const resolved = path.resolve(projectPath);
   const name = session.projectName || path.basename(resolved) || "Unknown project";
+  const existing = sqlite.prepare("SELECT id FROM projects WHERE path = ?").get(resolved) as
+    | { id: string }
+    | undefined;
+  if (existing) return existing.id;
+
   const id = stableId("project", [resolved]);
   insertIgnore("INSERT OR IGNORE INTO projects (id, name, path) VALUES (?, ?, ?)", [
     id,
     name,
     resolved
   ]);
-  return id;
+  return (
+    (sqlite.prepare("SELECT id FROM projects WHERE path = ?").get(resolved) as
+      | { id: string }
+      | undefined)?.id ?? id
+  );
 }
 
 function normalizeTokens(interaction: NormalizedInteraction) {
@@ -172,13 +185,39 @@ function normalizeTokens(interaction: NormalizedInteraction) {
   };
 }
 
-export function importSessions(sessions: NormalizedSession[]): ImportSessionResult {
+function purgeSourceFileSessions(sourceFile: string) {
+  const sessions = sqlite
+    .prepare("SELECT id FROM sessions WHERE source_file = ?")
+    .all(sourceFile) as Array<{ id: string }>;
+  if (!sessions.length) return;
+
+  const deleteToolCalls = sqlite.prepare(
+    "DELETE FROM tool_calls WHERE interaction_id IN (SELECT id FROM interactions WHERE session_id = ?)"
+  );
+  const deleteInteractions = sqlite.prepare("DELETE FROM interactions WHERE session_id = ?");
+  const deleteSession = sqlite.prepare("DELETE FROM sessions WHERE id = ?");
+
+  for (const session of sessions) {
+    deleteToolCalls.run(session.id);
+    deleteInteractions.run(session.id);
+    deleteSession.run(session.id);
+  }
+}
+
+export function importSessions(
+  sessions: NormalizedSession[],
+  options: ImportSessionOptions = {}
+): ImportSessionResult {
   const warnings: string[] = [];
   let sessionsImported = 0;
   let interactionsImported = 0;
   let toolCallsImported = 0;
 
-  const transaction = sqlite.transaction((records: NormalizedSession[]) => {
+  const transaction = sqlite.transaction((records: NormalizedSession[], replaceSourceFile?: string) => {
+    if (replaceSourceFile) {
+      purgeSourceFileSessions(replaceSourceFile);
+    }
+
     for (const session of records) {
       upsertProvider(session);
       upsertTool(session);
@@ -288,7 +327,7 @@ export function importSessions(sessions: NormalizedSession[]): ImportSessionResu
     }
   });
 
-  transaction(sessions);
+  transaction(sessions, options.replaceSourceFile);
 
   return {
     sessionsImported,

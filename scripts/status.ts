@@ -1,29 +1,9 @@
+import { parseStatusArgs, statusUsage, type StatusCliOptions } from "@/src/lib/status-cli";
+
 const args = process.argv.slice(2);
+let options: StatusCliOptions;
 
 export {};
-
-function argValue(name: string) {
-  const index = args.indexOf(name);
-  if (index < 0) return null;
-  return args[index + 1] ?? null;
-}
-
-function sourceFileArg() {
-  return argValue("--source-file") ?? argValue("--transcript-path");
-}
-
-function modeArg() {
-  if (args.includes("--compact")) return "compact" as const;
-  if (args.includes("--wide")) return "wide" as const;
-  return "default" as const;
-}
-
-function intervalArg() {
-  const value = argValue("--interval");
-  if (!value) return 1000;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.max(250, Math.round(parsed)) : 1000;
-}
 
 async function readStdin() {
   let text = "";
@@ -33,33 +13,48 @@ async function readStdin() {
   return text;
 }
 
-async function renderClaudeStatusLine() {
+try {
+  options = parseStatusArgs(args);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : "Invalid status arguments.");
+  console.error(statusUsage());
+  process.exit(1);
+}
+
+if (options.help) {
+  console.log(statusUsage());
+  process.exit(0);
+}
+
+async function renderClaudeStatusLine(statusOptions: Extract<StatusCliOptions, { command: "statusline" }>) {
   const { buildClaudeStatusLine } = await import("@/src/lib/claude-statusline");
   const text = await readStdin();
   try {
     const input = JSON.parse(text);
-    console.log(await buildClaudeStatusLine(input, { mode: modeArg() }));
+    console.log(await buildClaudeStatusLine(input, { mode: statusOptions.mode }));
   } catch {
     console.log("TokenTrace | Claude | status input unavailable");
   }
 }
 
-async function renderStatus(json: boolean) {
+async function renderStatus(statusOptions: Extract<StatusCliOptions, { command: "status" }>) {
   const { getLiveStatusSnapshot, renderLiveStatusLine } = await import("@/src/lib/live-status");
-  const status = getLiveStatusSnapshot({ sourceFile: sourceFileArg() });
-  if (json) {
+  const status = getLiveStatusSnapshot({ sourceFile: statusOptions.sourceFile });
+  if (statusOptions.json) {
     console.log(JSON.stringify(status, null, 2));
   } else {
-    console.log(renderLiveStatusLine(status, { mode: modeArg() }));
+    console.log(renderLiveStatusLine(status, { mode: statusOptions.mode }));
   }
 }
 
-async function watchStatus() {
+async function watchStatus(statusOptions: Extract<StatusCliOptions, { command: "watch" }>) {
   const { getLiveStatusSnapshot, renderLiveStatusLine } = await import("@/src/lib/live-status");
-  const interval = intervalArg();
+  const interval = statusOptions.interval;
   let previousLength = 0;
   const write = () => {
-    const line = renderLiveStatusLine(getLiveStatusSnapshot({ sourceFile: sourceFileArg() }), { mode: modeArg() });
+    const line = renderLiveStatusLine(getLiveStatusSnapshot({ sourceFile: statusOptions.sourceFile }), {
+      mode: statusOptions.mode
+    });
     const padded = line.padEnd(previousLength, " ");
     previousLength = line.length;
     process.stdout.write(`\r${padded}`);
@@ -76,13 +71,13 @@ async function watchStatus() {
   process.on("SIGTERM", stop);
 }
 
-if (args[0] === "statusline" && args[1] === "claude") {
-  await renderClaudeStatusLine();
-} else if (args[0] === "setup" && args[1] === "claude") {
+if (options.command === "statusline") {
+  await renderClaudeStatusLine(options);
+} else if (options.command === "setup") {
   const { claudeStatusLineSetupText } = await import("@/src/lib/claude-statusline");
   console.log(claudeStatusLineSetupText());
-} else if (args[0] === "watch") {
-  await watchStatus();
+} else if (options.command === "watch") {
+  await watchStatus(options);
 } else {
-  await renderStatus(args.includes("--json"));
+  await renderStatus(options);
 }

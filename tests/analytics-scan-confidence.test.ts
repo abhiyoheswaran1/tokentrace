@@ -76,6 +76,45 @@ describe("scan confidence analytics", () => {
     });
   });
 
+  it("counts each unknown-cost interaction under exactly one primary cause", async () => {
+    const { getScanConfidenceSummary, sqlite } = await loadAnalytics();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('openai', 'OpenAI', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('codex-cli', 'openai', 'Codex CLI')").run();
+    sqlite.prepare("INSERT INTO projects (id, name, path) VALUES ('project-1', 'Project', '/tmp/project')").run();
+    sqlite
+      .prepare("INSERT INTO sessions (id, source_id, tool_id, project_id, source_file) VALUES ('session-1', 'source-1', 'codex-cli', 'project-1', '/tmp/source.jsonl')")
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO models
+          (id, provider_id, name, input_token_price, output_token_price, currency)
+         VALUES
+          ('model-unknown', 'openai', 'unknown', NULL, NULL, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, total_tokens, token_confidence, cost)
+         VALUES
+          ('i1', 'i1-source', 'session-1', 'assistant', 'model-unknown', 0, 'unknown', NULL)`
+      )
+      .run();
+
+    const summary = getScanConfidenceSummary();
+    const causeTotal = Object.values(summary.unknownCostCauses).reduce((total, value) => total + value, 0);
+
+    expect(summary.unknownCostInteractions).toBe(1);
+    expect(causeTotal).toBe(summary.unknownCostInteractions);
+    expect(summary.unknownCostCauses).toEqual({
+      missingModelName: 1,
+      missingPricing: 0,
+      missingTokenCount: 0,
+      other: 0
+    });
+  });
+
   it("builds an unknown-cost repair queue from local interaction facts", async () => {
     const { getAnalyticsData, sqlite } = await loadAnalytics();
 

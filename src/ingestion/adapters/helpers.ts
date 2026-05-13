@@ -134,50 +134,115 @@ export function extractUsage(record: Record<string, unknown>) {
     asObject(usage?.prompt_tokens_details) ??
     asObject(usage?.cache);
   const outputDetails = asObject(usage?.output_tokens_details) ?? asObject(usage?.completion_tokens_details);
+  const detailCacheReadTokens = firstNumber(
+    inputDetails?.cached_tokens,
+    inputDetails?.cachedTokens
+  );
+  const detailReasoningTokens = firstNumber(
+    outputDetails?.reasoning_tokens,
+    outputDetails?.reasoningTokens
+  );
+
+  let inputTokens = firstNumber(
+    usage?.input_tokens,
+    usage?.prompt_tokens,
+    usage?.inputTokens,
+    usage?.promptTokens,
+    record.input_tokens,
+    record.prompt_tokens,
+    record.inputTokens,
+    record.promptTokens
+  );
+  let outputTokens = firstNumber(
+    usage?.output_tokens,
+    usage?.completion_tokens,
+    usage?.outputTokens,
+    usage?.completionTokens,
+    record.output_tokens,
+    record.completion_tokens,
+    record.outputTokens,
+    record.completionTokens
+  );
+  const cacheReadTokens = firstNumber(
+    usage?.cache_read_input_tokens,
+    usage?.cached_input_tokens,
+    usage?.cacheReadInputTokens,
+    usage?.cacheReadTokens,
+    usage?.cachedInputTokens,
+    inputDetails?.cache_read_tokens,
+    inputDetails?.cacheReadTokens,
+    detailCacheReadTokens,
+    record.cache_read_tokens,
+    record.cached_input_tokens,
+    record.cacheReadTokens,
+    record.cachedInputTokens
+  );
+  const cacheWriteTokens = firstNumber(
+    usage?.cache_creation_input_tokens,
+    usage?.cache_write_input_tokens,
+    usage?.cacheCreationInputTokens,
+    usage?.cacheWriteInputTokens,
+    usage?.cacheWriteTokens,
+    inputDetails?.cache_creation_tokens,
+    inputDetails?.cache_creation_input_tokens,
+    inputDetails?.cache_write_tokens,
+    inputDetails?.cacheCreationTokens,
+    inputDetails?.cacheWriteTokens,
+    record.cache_write_tokens,
+    record.cache_creation_input_tokens,
+    record.cacheWriteTokens,
+    record.cacheCreationInputTokens
+  );
+  const reasoningTokens = firstNumber(
+    usage?.reasoning_tokens,
+    usage?.reasoningTokens,
+    usage?.reasoning_output_tokens,
+    usage?.reasoningOutputTokens,
+    detailReasoningTokens,
+    record.reasoning_tokens,
+    record.reasoningTokens,
+    record.reasoning_output_tokens,
+    record.reasoningOutputTokens
+  );
+  const totalTokens = firstNumber(
+    usage?.total_tokens,
+    usage?.totalTokens,
+    usage?.tokens,
+    record.total_tokens,
+    record.totalTokens
+  );
+
+  const sumParts = () =>
+    (inputTokens ?? 0) +
+    (outputTokens ?? 0) +
+    (cacheReadTokens ?? 0) +
+    (cacheWriteTokens ?? 0) +
+    (reasoningTokens ?? 0);
+  const cacheTokens = (cacheReadTokens ?? 0) + (cacheWriteTokens ?? 0);
+
+  if (
+    inputTokens != null &&
+    cacheTokens > 0 &&
+    (detailCacheReadTokens != null || (totalTokens != null && sumParts() > totalTokens))
+  ) {
+    inputTokens = Math.max(0, inputTokens - cacheTokens);
+  }
+
+  if (
+    outputTokens != null &&
+    (reasoningTokens ?? 0) > 0 &&
+    (detailReasoningTokens != null || (totalTokens != null && sumParts() > totalTokens))
+  ) {
+    outputTokens = Math.max(0, outputTokens - (reasoningTokens ?? 0));
+  }
 
   return {
-    inputTokens: firstNumber(
-      usage?.input_tokens,
-      usage?.prompt_tokens,
-      usage?.inputTokens,
-      usage?.promptTokens,
-      record.input_tokens,
-      record.prompt_tokens
-    ),
-    outputTokens: firstNumber(
-      usage?.output_tokens,
-      usage?.completion_tokens,
-      usage?.outputTokens,
-      usage?.completionTokens,
-      record.output_tokens,
-      record.completion_tokens
-    ),
-    cacheReadTokens: firstNumber(
-      usage?.cache_read_input_tokens,
-      usage?.cached_input_tokens,
-      inputDetails?.cached_tokens,
-      inputDetails?.cache_read_tokens,
-      record.cache_read_tokens
-    ),
-    cacheWriteTokens: firstNumber(
-      usage?.cache_creation_input_tokens,
-      usage?.cache_write_input_tokens,
-      inputDetails?.cache_creation_tokens,
-      inputDetails?.cache_write_tokens,
-      record.cache_write_tokens
-    ),
-    reasoningTokens: firstNumber(
-      usage?.reasoning_tokens,
-      outputDetails?.reasoning_tokens,
-      record.reasoning_tokens
-    ),
-    totalTokens: firstNumber(
-      usage?.total_tokens,
-      usage?.totalTokens,
-      usage?.tokens,
-      record.total_tokens,
-      record.totalTokens
-    )
+    inputTokens,
+    outputTokens,
+    cacheReadTokens,
+    cacheWriteTokens,
+    reasoningTokens,
+    totalTokens
   };
 }
 

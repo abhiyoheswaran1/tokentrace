@@ -1,14 +1,27 @@
-import { runScan } from "@/src/ingestion/scan";
+import { parseScanArgs, scanUsage, type ScanCliOptions } from "@/src/lib/scan-cli";
 
 const args = process.argv.slice(2);
-const json = args.includes("--json");
-const force = args.includes("--force");
-const folders = args.filter((arg) => arg !== "--force" && arg !== "--json");
+let options: ScanCliOptions;
+
+try {
+  options = parseScanArgs(args);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : "Invalid scan arguments.");
+  console.error(scanUsage());
+  process.exit(1);
+}
+
+if (options.help) {
+  console.log(scanUsage());
+  process.exit(0);
+}
+
+const { runScan } = await import("@/src/ingestion/scan");
 
 const result = await runScan({
-  force,
-  folders,
-  includeDefaults: folders.length === 0
+  force: options.force,
+  folders: options.folders,
+  includeDefaults: options.folders.length === 0
 });
 
 const summary = {
@@ -23,7 +36,7 @@ const summary = {
   errors: result.errors.length
 };
 
-if (json) {
+if (options.json) {
   console.log(JSON.stringify(summary, null, 2));
 } else {
   console.log("TokenTrace scan complete");

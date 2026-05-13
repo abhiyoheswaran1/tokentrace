@@ -1,8 +1,21 @@
-import { getScanTrustData } from "@/src/lib/analytics";
-import { buildDoctorReport, type DoctorReport } from "@/src/lib/doctor";
-import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
+import { jsonReportUsage, parseJsonReportArgs, type JsonReportCliOptions } from "@/src/lib/report-cli";
+import type { DoctorReport } from "@/src/lib/doctor";
 
 const args = process.argv.slice(2);
+let options: JsonReportCliOptions;
+
+try {
+  options = parseJsonReportArgs(args);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : "Invalid doctor arguments.");
+  console.error(jsonReportUsage("doctor"));
+  process.exit(1);
+}
+
+if (options.help) {
+  console.log(jsonReportUsage("doctor"));
+  process.exit(0);
+}
 
 function severityIcon(severity: string) {
   if (severity === "high") return "!";
@@ -37,6 +50,11 @@ function renderText(report: DoctorReport) {
   return lines.join("\n");
 }
 
+const [{ getScanTrustData }, { buildDoctorReport }, { getDefaultSearchRoots }] = await Promise.all([
+  import("@/src/lib/analytics"),
+  import("@/src/lib/doctor"),
+  import("@/src/ingestion/discovery")
+]);
 const trustData = getScanTrustData();
 const roots = await getDefaultSearchRoots();
 const report = buildDoctorReport({
@@ -44,7 +62,7 @@ const report = buildDoctorReport({
   roots
 });
 
-if (args.includes("--json")) {
+if (options.json) {
   console.log(JSON.stringify(report, null, 2));
 } else {
   console.log(renderText(report));

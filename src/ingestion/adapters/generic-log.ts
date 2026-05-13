@@ -64,10 +64,30 @@ export const genericLogAdapter: IngestionAdapter = {
       const outputTokens = numberAfter(line, [
         /(?:output_tokens|completion_tokens|output tokens|completion tokens)\s*[:=]\s*([0-9,]+)/i
       ]);
-      const totalTokens = numberAfter(line, [/(?:total_tokens|total tokens|tokens)\s*[:=]\s*([0-9,]+)/i]);
-      const reasoningTokens = numberAfter(line, [/(?:reasoning_tokens|reasoning tokens)\s*[:=]\s*([0-9,]+)/i]);
+      const cacheReadTokens = numberAfter(line, [
+        /(?:cache_read_input_tokens|cached_input_tokens|cache read tokens|cached tokens)\s*[:=]\s*([0-9,]+)/i
+      ]);
+      const cacheWriteTokens = numberAfter(line, [
+        /(?:cache_creation_input_tokens|cache_write_input_tokens|cache write tokens|cache creation tokens)\s*[:=]\s*([0-9,]+)/i
+      ]);
+      const reasoningTokens = numberAfter(line, [
+        /(?:reasoning_output_tokens|reasoning_tokens|reasoning output tokens|reasoning tokens)\s*[:=]\s*([0-9,]+)/i
+      ]);
+      const explicitTotalTokens = numberAfter(line, [
+        /(?:total_tokens|total tokens)\s*[:=]\s*([0-9,]+)/i
+      ]);
+      const fallbackTotalTokens =
+        inputTokens == null && outputTokens == null && cacheReadTokens == null && cacheWriteTokens == null && reasoningTokens == null
+          ? numberAfter(line, [/\btokens\s*[:=]\s*([0-9,]+)/i])
+          : null;
+      const totalTokens = explicitTotalTokens ?? fallbackTotalTokens;
       const hasStructuredTokens =
-        inputTokens != null || outputTokens != null || totalTokens != null || reasoningTokens != null;
+        inputTokens != null ||
+        outputTokens != null ||
+        cacheReadTokens != null ||
+        cacheWriteTokens != null ||
+        reasoningTokens != null ||
+        totalTokens != null;
 
       if (!model && !hasStructuredTokens) return;
 
@@ -77,18 +97,48 @@ export const genericLogAdapter: IngestionAdapter = {
 
       const estimated = !hasStructuredTokens;
       const estimate = estimated ? estimateTokensFromText(line) : { tokens: 0 };
+      let normalizedInputTokens = inputTokens ?? (estimated ? estimate.tokens : 0);
+      let normalizedOutputTokens = outputTokens ?? 0;
+      const normalizedCacheReadTokens = cacheReadTokens ?? 0;
+      const normalizedCacheWriteTokens = cacheWriteTokens ?? 0;
+      const normalizedReasoningTokens = reasoningTokens ?? 0;
+      const partSum = () =>
+        normalizedInputTokens +
+        normalizedOutputTokens +
+        normalizedCacheReadTokens +
+        normalizedCacheWriteTokens +
+        normalizedReasoningTokens;
+      if (
+        inputTokens != null &&
+        totalTokens != null &&
+        normalizedCacheReadTokens + normalizedCacheWriteTokens > 0 &&
+        partSum() > totalTokens
+      ) {
+        normalizedInputTokens = Math.max(
+          0,
+          normalizedInputTokens - normalizedCacheReadTokens - normalizedCacheWriteTokens
+        );
+      }
+      if (
+        outputTokens != null &&
+        totalTokens != null &&
+        normalizedReasoningTokens > 0 &&
+        partSum() > totalTokens
+      ) {
+        normalizedOutputTokens = Math.max(0, normalizedOutputTokens - normalizedReasoningTokens);
+      }
       const structuredTotal =
-        totalTokens ?? (inputTokens ?? 0) + (outputTokens ?? 0) + (reasoningTokens ?? 0);
+        totalTokens ?? partSum();
       interactions.push({
         externalId: `${currentSession}-${index}`,
         timestamp,
-        role: outputTokens || reasoningTokens ? "assistant" : "unknown",
+        role: normalizedOutputTokens || normalizedReasoningTokens ? "assistant" : "unknown",
         modelName: model,
-        inputTokens: inputTokens ?? (estimated ? estimate.tokens : 0),
-        outputTokens: outputTokens ?? 0,
-        reasoningTokens: reasoningTokens ?? 0,
-        cacheReadTokens: 0,
-        cacheWriteTokens: 0,
+        inputTokens: normalizedInputTokens,
+        outputTokens: normalizedOutputTokens,
+        reasoningTokens: normalizedReasoningTokens,
+        cacheReadTokens: normalizedCacheReadTokens,
+        cacheWriteTokens: normalizedCacheWriteTokens,
         totalTokens: structuredTotal || estimate.tokens,
         estimatedTokens: estimated,
         tokenConfidence: estimated ? "low-confidence estimate" : "high-confidence estimate",

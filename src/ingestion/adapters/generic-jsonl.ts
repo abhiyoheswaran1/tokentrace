@@ -7,7 +7,7 @@ import { asObject, fileLooksLikeJsonl, readFileText, readTextSample, safeJsonPar
 export const genericJsonlAdapter: IngestionAdapter = {
   id: "generic-jsonl",
   displayName: "Generic JSONL",
-  version: 1,
+  version: 2,
 
   async detect(file) {
     const extension = path.extname(file.path).toLowerCase();

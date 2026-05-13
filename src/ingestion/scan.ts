@@ -33,14 +33,39 @@ function json(value: unknown) {
   return JSON.stringify(value ?? null);
 }
 
-function hasImportedFile(file: FileCandidate) {
+function parseMetadata(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "string") return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function metadataParserVersion(value: unknown) {
+  const metadata = parseMetadata(value);
+  const parser = metadata.parser;
+  if (!parser || typeof parser !== "object") return 1;
+  const version = (parser as Record<string, unknown>).version;
+  if (typeof version === "number" && Number.isFinite(version)) return version;
+  if (typeof version === "string" && /^\d+$/.test(version)) return Number(version);
+  return 1;
+}
+
+function hasImportedFile(file: FileCandidate, adapter: IngestionAdapter) {
   if (!file.hash) return false;
-  const row = sqlite
+  const rows = sqlite
     .prepare(
-      "SELECT id FROM scan_files WHERE path = ? AND file_hash = ? AND status = 'imported' LIMIT 1"
+      `SELECT raw_metadata AS rawMetadata
+       FROM scan_files
+       WHERE path = ? AND file_hash = ? AND status = 'imported' AND parser = ?`
     )
-    .get(file.path, file.hash);
-  return Boolean(row);
+    .all(file.path, file.hash, adapter.id) as Array<{ rawMetadata: string | null }>;
+  const currentVersion = adapter.version ?? 1;
+  return rows.some((row) => metadataParserVersion(row.rawMetadata) >= currentVersion);
 }
 
 async function hashFile(file: FileCandidate): Promise<FileCandidate> {
@@ -211,21 +236,6 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
 
     try {
       file = await hashFile(candidate);
-      if (!options.force && hasImportedFile(file)) {
-        warnings.push("File hash already imported. Use force rescan to parse again.");
-        insertScanFile({
-          scanRunId,
-          file,
-          parser: null,
-          status: "skipped_duplicate",
-          recordsImported: 0,
-          warnings,
-          errors: []
-        });
-        appendFileMessages(candidate.path, warnings, errors, allWarnings, allErrors);
-        continue;
-      }
-
       const adapterChoice = await selectAdapter(file);
       warnings.push(...adapterChoice.warnings);
 
@@ -244,13 +254,30 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
         continue;
       }
 
+      if (!options.force && hasImportedFile(file, adapterChoice.selected.adapter)) {
+        warnings.push("File hash already imported. Use force rescan to parse again.");
+        insertScanFile({
+          scanRunId,
+          file,
+          parser: adapterChoice.selected.adapter.id,
+          status: "skipped_duplicate",
+          recordsImported: 0,
+          warnings,
+          errors: []
+        });
+        appendFileMessages(candidate.path, warnings, errors, allWarnings, allErrors);
+        continue;
+      }
+
       const parseResult = await adapterChoice.selected.adapter.parse(file, {
         storeRawMessageContent:
           options.storeRawMessageContent ?? settings.storeRawMessageContent
       });
       warnings.push(...parseResult.warnings);
       errors.push(...parseResult.errors);
-      const importResult = importSessions(parseResult.sessions);
+      const importResult = importSessions(parseResult.sessions, {
+        replaceSourceFile: parseResult.sessions.length > 0 ? file.path : undefined
+      });
       const tokenConfidence = parseResult.sessions
         .flatMap((session) => session.interactions)
         .reduce<Record<string, number>>((summary, interaction) => {

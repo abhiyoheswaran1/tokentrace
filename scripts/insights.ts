@@ -1,9 +1,25 @@
-import { getAnalyticsData } from "@/src/lib/analytics";
+import { jsonReportUsage, parseJsonReportArgs, type JsonReportCliOptions } from "@/src/lib/report-cli";
 
 const args = process.argv.slice(2);
+let options: JsonReportCliOptions;
+
+try {
+  options = parseJsonReportArgs(args);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : "Invalid insights arguments.");
+  console.error(jsonReportUsage("insights"));
+  process.exit(1);
+}
+
+if (options.help) {
+  console.log(jsonReportUsage("insights"));
+  process.exit(0);
+}
+
+const { getAnalyticsData } = await import("@/src/lib/analytics");
 const data = getAnalyticsData();
 
-if (args.includes("--json")) {
+if (options.json) {
   console.log(JSON.stringify({
     generatedAt: new Date().toISOString(),
     reviewQueue: data.reviewQueue,

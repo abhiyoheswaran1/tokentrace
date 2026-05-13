@@ -1196,26 +1196,27 @@ export function getScanConfidenceSummary(): ScanConfidenceSummary {
     .get() as ScanConfidenceSummary;
   const unknownCostCauses = sqlite
     .prepare(
-      `SELECT
-        COALESCE(SUM(CASE WHEN cost IS NULL AND lower(m.name) = 'unknown' THEN 1 ELSE 0 END), 0) AS missingModelName,
-        COALESCE(SUM(CASE WHEN cost IS NULL
-          AND COALESCE(i.total_tokens, 0) <= 0 THEN 1 ELSE 0 END), 0) AS missingTokenCount,
-        COALESCE(SUM(CASE WHEN cost IS NULL
-          AND lower(m.name) <> 'unknown'
-          AND COALESCE(i.total_tokens, 0) > 0
-          AND (m.input_token_price IS NULL OR m.output_token_price IS NULL)
-          THEN 1 ELSE 0 END), 0) AS missingPricing,
-        COALESCE(SUM(CASE WHEN cost IS NULL
-          AND NOT (
-            lower(m.name) = 'unknown'
-            OR COALESCE(i.total_tokens, 0) <= 0
-            OR (lower(m.name) <> 'unknown'
+      `WITH unknown_costs AS (
+        SELECT
+          CASE
+            WHEN lower(COALESCE(m.name, 'unknown')) = 'unknown' THEN 'missingModelName'
+            WHEN COALESCE(i.total_tokens, 0) <= 0 THEN 'missingTokenCount'
+            WHEN lower(COALESCE(m.name, 'unknown')) <> 'unknown'
               AND COALESCE(i.total_tokens, 0) > 0
-              AND (m.input_token_price IS NULL OR m.output_token_price IS NULL))
-          )
-          THEN 1 ELSE 0 END), 0) AS other
-       FROM interactions i
-       LEFT JOIN models m ON m.id = i.model_id`
+              AND (m.input_token_price IS NULL OR m.output_token_price IS NULL)
+              THEN 'missingPricing'
+            ELSE 'other'
+          END AS cause
+        FROM interactions i
+        LEFT JOIN models m ON m.id = i.model_id
+        WHERE i.cost IS NULL
+      )
+      SELECT
+        COALESCE(SUM(CASE WHEN cause = 'missingModelName' THEN 1 ELSE 0 END), 0) AS missingModelName,
+        COALESCE(SUM(CASE WHEN cause = 'missingTokenCount' THEN 1 ELSE 0 END), 0) AS missingTokenCount,
+        COALESCE(SUM(CASE WHEN cause = 'missingPricing' THEN 1 ELSE 0 END), 0) AS missingPricing,
+        COALESCE(SUM(CASE WHEN cause = 'other' THEN 1 ELSE 0 END), 0) AS other
+       FROM unknown_costs`
     )
     .get() as ScanConfidenceSummary["unknownCostCauses"];
 
