@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Coins, Database, Gauge, MessageSquare, Minus, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowRight, Coins, Database, Gauge, Layers, MessageSquare, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { PeriodFilter } from "@/components/period-filter";
@@ -45,32 +45,111 @@ function MetricCard({
   const tooltipId = `metric-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-help`;
 
   return (
-    <Card className={cn("h-full", className)}>
-      <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-3">
+    <Card className={cn("flex h-full flex-col overflow-hidden", className)}>
+      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-3">
         <div className="flex min-w-0 items-center gap-1.5">
           <CardTitle className="leading-tight">{label}</CardTitle>
           {description ? (
             <HelpTooltip id={tooltipId} label={label} description={description} />
           ) : null}
         </div>
-        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
       </CardHeader>
-      <CardContent>
-        <DataValue size="lg" className={valueClassName}>{value}</DataValue>
+      <CardContent className="flex flex-1 flex-col">
+        <DataValue size="lg" className={cn("break-words leading-none", valueClassName)}>{value}</DataValue>
         {detailItems?.length ? (
-          <div className="mt-3 flex flex-wrap gap-x-2 gap-y-1 text-xs leading-snug text-muted-foreground">
-            {detailItems.map((item) => (
-              <span key={item}>{item}</span>
+          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-snug text-muted-foreground">
+            {detailItems.map((item, index) => (
+              <span key={item} className="inline-flex min-w-0 items-center gap-2">
+                <span className="min-w-0">{item}</span>
+                {index < detailItems.length - 1 ? <span className="hidden text-border sm:inline">/</span> : null}
+              </span>
             ))}
           </div>
         ) : null}
         {href ? (
-          <Link href={href} className="mt-3 inline-flex text-xs font-medium text-primary underline-offset-4 hover:underline">
+          <Link href={href} className="mt-auto inline-flex w-fit items-center gap-1.5 pt-4 text-xs font-medium text-primary underline-offset-4 hover:underline">
             {actionLabel}
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         ) : null}
       </CardContent>
     </Card>
+  );
+}
+
+function OverviewTrustStrip({
+  latestScan,
+  confidence
+}: {
+  latestScan: { id: string | null; filesScanned: number; recordsImported: number };
+  confidence: {
+    interactions: number;
+    exactTokenInteractions: number;
+    exactCostInteractions: number;
+    estimatedCostInteractions: number;
+    unknownCostInteractions: number;
+  };
+}) {
+  const exactTokenShare = confidence.interactions > 0 ? percent(confidence.exactTokenInteractions / confidence.interactions) : "0%";
+  const costCoverage =
+    confidence.interactions > 0
+      ? percent((confidence.exactCostInteractions + confidence.estimatedCostInteractions) / confidence.interactions)
+      : "0%";
+  const trustItems = [
+    {
+      label: "Latest scan",
+      value: latestScan.id ? `${latestScan.recordsImported.toLocaleString()} imports` : "No scan",
+      detail: latestScan.id ? `${latestScan.filesScanned.toLocaleString()} files scanned` : "Waiting for imported usage",
+      href: "/discovery",
+      icon: Database
+    },
+    {
+      label: "Exact tokens",
+      value: exactTokenShare,
+      detail: `${confidence.exactTokenInteractions.toLocaleString()} interactions with provider counts`,
+      href: "/evidence?metric=processed-tokens",
+      icon: Gauge
+    },
+    {
+      label: "Cost coverage",
+      value: costCoverage,
+      detail:
+        confidence.unknownCostInteractions > 0
+          ? `${confidence.unknownCostInteractions.toLocaleString()} interactions need repair`
+          : "All imported interactions priced",
+      href: confidence.unknownCostInteractions > 0 ? "/repair" : "/pricing",
+      icon: Coins
+    }
+  ];
+
+  return (
+    <section className="grid overflow-hidden rounded-lg border border-border bg-card md:grid-cols-3" aria-label="Overview data confidence">
+      {trustItems.map((item, index) => {
+        const Icon = item.icon;
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            className={cn(
+              "group flex min-w-0 items-start gap-3 p-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              index > 0 ? "border-t border-border md:border-l md:border-t-0" : ""
+            )}
+          >
+            <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+              <Icon className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 space-y-1">
+              <FieldLabel>{item.label}</FieldLabel>
+              <span className="block truncate text-base font-semibold text-foreground">{item.value}</span>
+              <span className="block text-sm text-muted-foreground">{item.detail}</span>
+            </span>
+          </Link>
+        );
+      })}
+    </section>
   );
 }
 
@@ -113,15 +192,15 @@ function DeltaMetric({
         : "text-muted-foreground";
 
   return (
-    <div className="min-w-44 border-t p-3 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
-      <div className="flex items-center justify-between gap-3">
-        <FieldLabel>{label}</FieldLabel>
-        <span className={cn("inline-flex items-center gap-1 text-xs font-semibold", toneClass)}>
-          <ToneIcon className="h-3.5 w-3.5" />
+    <div className="min-w-0 border-t px-4 py-4 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <FieldLabel className="truncate">{label}</FieldLabel>
+        <span className={cn("inline-flex shrink-0 items-center gap-1 text-xs font-semibold tabular-nums", toneClass)}>
+          <ToneIcon className="h-3.5 w-3.5" aria-hidden="true" />
           {formatPercentValue(percentValue)}
         </span>
       </div>
-      <DataValue className="mt-1" size="md">{value}</DataValue>
+      <DataValue className="mt-1 truncate" size="md">{value}</DataValue>
       <div className="mt-1 text-xs text-muted-foreground">
         {delta} vs {previous}
       </div>
@@ -301,6 +380,10 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         <FirstRunPanel status={firstRunStatus} />
       ) : null}
 
+      {summary.interactions > 0 ? (
+        <OverviewTrustStrip latestScan={doctorReport.latestScan} confidence={trust.confidence} />
+      ) : null}
+
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -387,7 +470,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           ]}
           href={data.evidenceLinks["cached-tokens"]}
           actionLabel="View evidence"
-          icon={Sparkles}
+          icon={Layers}
         />
         <MetricCard
           label="Estimated cost"
@@ -443,19 +526,34 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             Local rules ranked from your scan, pricing, parser, project, and cache data.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid divide-y overflow-hidden p-0 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
-          {data.recommendations.slice(0, 3).map((item) => (
-            <Link key={item.id} href={item.href} className="px-4 py-3 transition-colors hover:bg-muted/30">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-sm font-semibold">{item.title}</div>
-                <Badge variant={item.severity === "high" ? "destructive" : item.severity === "medium" ? "warning" : "secondary"}>
-                  {item.severity}
-                </Badge>
-              </div>
-              <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.evidence}</div>
-              <div className="mt-2 text-xs font-medium text-emerald-800">{item.action}</div>
-            </Link>
-          ))}
+        <CardContent className="p-0">
+          <ol className="grid divide-y overflow-hidden lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+            {data.recommendations.slice(0, 3).map((item, index) => (
+              <li key={item.id} className="min-w-0">
+                <Link
+                  href={item.href}
+                  className="group flex h-full min-w-0 gap-3 px-4 py-4 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-xs font-semibold tabular-nums text-muted-foreground">
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground">{item.title}</span>
+                      <Badge variant={item.severity === "high" ? "destructive" : item.severity === "medium" ? "warning" : "secondary"}>
+                        {item.severity}
+                      </Badge>
+                    </span>
+                    <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{item.evidence}</span>
+                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary">
+                      {item.action}
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
         </CardContent>
       </Card>
 
