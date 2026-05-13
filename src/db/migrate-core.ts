@@ -139,6 +139,15 @@ CREATE TABLE IF NOT EXISTS unknown_cost_reviews (
   created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
+
+CREATE TABLE IF NOT EXISTS saved_views (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  filters TEXT NOT NULL DEFAULT '{}',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+);
+CREATE INDEX IF NOT EXISTS saved_views_updated_idx ON saved_views(updated_at);
 `;
 
 export function applyMigrations(sqlite: Database.Database) {

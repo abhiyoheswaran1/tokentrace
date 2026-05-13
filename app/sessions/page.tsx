@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData } from "@/src/lib/analytics";
 import { formatCurrency, formatTokens } from "@/src/lib/format";
+import { getSavedViews } from "@/src/lib/saved-views";
 
 export const dynamic = "force-dynamic";
 
@@ -16,13 +17,19 @@ export default async function SessionsPage({
     project?: string;
     tool?: string;
     model?: string;
+    query?: string;
     source?: string;
+    exact?: "all" | "exact" | "estimated";
     cost?: "all" | "priced" | "unknown";
+    from?: string;
+    to?: string;
+    highCost?: string;
     cache?: string;
   }>;
 }) {
   const params = await searchParams;
   const data = getAnalyticsData();
+  const savedViews = getSavedViews();
   return (
     <div className="space-y-6">
       <PageHeader
@@ -84,9 +91,15 @@ export default async function SessionsPage({
         initialProject={params?.project}
         initialTool={params?.tool}
         initialModel={params?.model}
+        initialQuery={params?.query}
         initialSource={params?.source}
+        initialExact={params?.exact}
         initialCost={params?.cost}
+        initialFrom={params?.from}
+        initialTo={params?.to}
+        initialHighCost={params?.highCost === "1"}
         initialCache={params?.cache === "1"}
+        savedViews={savedViews}
       />
     </div>
   );

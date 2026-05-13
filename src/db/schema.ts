@@ -215,6 +215,24 @@ export const unknownCostReviews = sqliteTable("unknown_cost_reviews", {
     .$defaultFn(() => new Date())
 });
 
+export const savedViews = sqliteTable(
+  "saved_views",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    filters: text("filters", { mode: "json" }).$type<Record<string, unknown>>().notNull().default(sql`'{}'`),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date())
+  },
+  (table) => ({
+    updatedIdx: index("saved_views_updated_idx").on(table.updatedAt)
+  })
+);
+
 export const providerRelations = relations(providers, ({ many }) => ({
   tools: many(tools),
   models: many(models)
@@ -274,3 +292,4 @@ export type ToolCall = typeof toolCalls.$inferSelect;
 export type ScanRun = typeof scanRuns.$inferSelect;
 export type ScanFile = typeof scanFiles.$inferSelect;
 export type UnknownCostReview = typeof unknownCostReviews.$inferSelect;
+export type SavedView = typeof savedViews.$inferSelect;

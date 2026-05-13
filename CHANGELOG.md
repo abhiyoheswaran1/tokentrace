@@ -2,6 +2,22 @@
 
 All notable changes to TokenTrace are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Session Timeline pages for inspecting one imported CLI session as ordered interactions, model changes, token spikes, cache activity, tool calls, parser confidence, and unknown-cost events without exposing raw message bodies.
+- Saved Local Views on Sessions, with built-in local filters for unknown cost, high-cost sessions, Claude/Codex this month, estimated tokens, guardrail review, and parser review, plus user-created SQLite-backed views.
+- `tokentrace digest --since <last-scan|yesterday|YYYY-MM-DD>` for scoped local usage digests.
+- `tokentrace report --markdown` and `tokentrace review --json` for deterministic local summaries covering digest data, post-session movement, accounting state, parser warnings, and expensive sessions.
+- Overview Post-Session Review panel showing latest scan movement, unknown costs, parser follow-up, guardrail state, and expensive sessions.
+- Accounting invariant checks that verify processed tokens balance against fresh input, output, reasoning, and cache buckets.
+
+### Changed
+
+- Claude status line output now includes context-window usage when Claude provides it and distinguishes priced sessions from pricing-repair states.
+- Overview Data Readiness now includes token-bucket balance and keeps readiness tiles readable at normal desktop widths.
+
 ## [0.8.4] - 2026-05-13
 
 ### Changed

@@ -6,47 +6,41 @@ let options: DigestCliOptions;
 try {
   options = parseDigestArgs(args);
 } catch (error) {
-  console.error(error instanceof Error ? error.message : "Invalid digest arguments.");
-  console.error(digestUsage());
+  console.error(error instanceof Error ? error.message : "Invalid review arguments.");
+  console.error(digestUsage().replace("tokentrace digest", "tokentrace review"));
   process.exit(1);
 }
 
 if (options.help) {
-  console.log(digestUsage());
+  console.log(digestUsage().replace("tokentrace digest", "tokentrace review"));
   process.exit(0);
 }
 
 const [
   { getAnalyticsData, getScanTrustData },
-  { buildDailyDigest, renderDailyDigestText },
+  { buildPostSessionReview, renderPostSessionReviewText },
+  { buildScanDiff },
   { resolveSinceFilter }
 ] = await Promise.all([
   import("@/src/lib/analytics"),
-  import("@/src/lib/daily-digest"),
+  import("@/src/lib/post-session-review"),
+  import("@/src/lib/scan-diff"),
   import("@/src/lib/since-filter")
 ]);
+
 const trust = getScanTrustData();
 const latestRun = trust.health.latestRun;
 const since = resolveSinceFilter(options.since, { latestScanStartedAt: latestRun?.startedAt ?? null });
 const data = getAnalyticsData(since.filters);
-const digest = buildDailyDigest({
-  scopeLabel: since.label,
-  summary: data.summary,
+const review = buildPostSessionReview({
+  scanDiff: buildScanDiff(),
   usageGuardrails: data.usageGuardrails,
-  reviewQueue: data.reviewQueue,
-  projects: data.projects,
-  latestScan: latestRun
-    ? {
-        headline: trust.health.headline,
-        completedAt: latestRun.completedAt,
-        recordsImported: latestRun.recordsImported,
-        filesScanned: latestRun.filesScanned
-      }
-    : null
+  summary: data.summary,
+  sessions: data.sessions
 });
 
 if (options.json) {
-  console.log(JSON.stringify(digest, null, 2));
+  console.log(JSON.stringify(review, null, 2));
 } else {
-  console.log(renderDailyDigestText(digest));
+  console.log(renderPostSessionReviewText(review));
 }

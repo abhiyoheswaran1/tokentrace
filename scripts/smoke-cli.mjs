@@ -217,6 +217,15 @@ try {
   const digest = jsonCommand(["digest", "--json"]);
   if (!digest.topReviewItem?.title) throw new Error("Digest JSON is missing topReviewItem.");
 
+  const digestSince = jsonCommand(["digest", "--json", "--since", "yesterday"]);
+  if (!digestSince.scopeLabel) throw new Error("Digest --since JSON is missing scopeLabel.");
+
+  const markdownReport = run(["report", "--markdown", "--since", "yesterday"]);
+  if (!markdownReport.includes("# TokenTrace Local Report")) throw new Error("Markdown report is missing title.");
+
+  const review = jsonCommand(["review", "--json"]);
+  if (!review.headline) throw new Error("Review JSON is missing headline.");
+
   const status = jsonCommand(["status", "--json"]);
   if (typeof status.totalTokens !== "number") throw new Error("Status JSON is missing totalTokens.");
 

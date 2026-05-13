@@ -10,6 +10,7 @@ import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData, getScanTrustData } from "@/src/lib/analytics";
+import { buildAccountingInvariants, type AccountingInvariantReport } from "@/src/lib/accounting-invariants";
 import { buildDoctorReport, type DoctorReport } from "@/src/lib/doctor";
 import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
 import { buildFirstRunStatus, type FirstRunStatus } from "@/src/lib/first-run-status";
@@ -18,6 +19,8 @@ import { dateRangeQueryParams, mergeHrefParams, resolveDateRange } from "@/src/l
 import { formatCurrency, formatSignedTokens, formatTokens, percent } from "@/src/lib/format";
 import { cn } from "@/src/lib/utils";
 import type { UsageGuardrailMetric } from "@/src/lib/usage-guardrails";
+import { buildScanDiff } from "@/src/lib/scan-diff";
+import { buildPostSessionReview, type PostSessionReview } from "@/src/lib/post-session-review";
 
 export const dynamic = "force-dynamic";
 
@@ -358,12 +361,14 @@ function readinessVariant(state: "ready" | "review" | "blocked") {
 
 function DataReadinessPanel({
   report,
+  accountingReport,
   selectedInteractions,
   selectedCachedTokens,
   repairHref,
   cachedEvidenceHref
 }: {
   report: DoctorReport;
+  accountingReport: AccountingInvariantReport;
   selectedInteractions: number;
   selectedCachedTokens: number;
   repairHref: string;
@@ -402,6 +407,17 @@ function DataReadinessPanel({
       href: cachedEvidenceHref
     },
     {
+      label: "Token buckets",
+      value: accountingReport.balanceDeltaTokens === 0
+        ? "Balanced"
+        : `${formatTokens(Math.abs(accountingReport.balanceDeltaTokens))} delta`,
+      detail: accountingReport.balanceDeltaTokens === 0
+        ? "Processed tokens equal fresh input, output, reasoning, and cache buckets."
+        : "Some processed tokens are outside the visible buckets and need parser review.",
+      state: accountingReport.status === "ready" ? "ready" as const : "review" as const,
+      href: "/evidence?metric=processed-tokens"
+    },
+    {
       label: "Boundaries",
       value: `${report.supportMatrix.summary.stable} stable, ${report.supportMatrix.summary.bestEffort} best effort`,
       detail: "Unsupported desktop scraping, packet capture, proxying, and telemetry stay out of scope.",
@@ -417,7 +433,7 @@ function DataReadinessPanel({
         <CardDescription>Current trust checks before acting on cost, token, parser, or cache numbers.</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="grid border-t md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid border-t md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           {items.map((item, index) => (
             <Link
               key={item.label}
@@ -441,6 +457,84 @@ function DataReadinessPanel({
   );
 }
 
+function PostSessionReviewPanel({ review }: { review: PostSessionReview }) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <CardTitle>Post-Session Review</CardTitle>
+          <CardDescription>Latest scan movement, guardrail state, pricing gaps, parser warnings, and expensive sessions.</CardDescription>
+        </div>
+        <Badge variant={review.newlyImportedRecords > 0 ? "success" : "secondary"}>{review.headline}</Badge>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid border-y md:grid-cols-4 md:divide-x">
+          <div className="p-3">
+            <FieldLabel>Imported records</FieldLabel>
+            <DataValue className="mt-1">{review.newlyImportedRecords.toLocaleString()}</DataValue>
+          </div>
+          <div className="p-3">
+            <FieldLabel>Unknown cost</FieldLabel>
+            <DataValue className="mt-1">{review.unknownCostInteractions.toLocaleString()}</DataValue>
+          </div>
+          <div className="p-3">
+            <FieldLabel>Parser warnings</FieldLabel>
+            <DataValue className="mt-1">{review.parserWarnings.toLocaleString()}</DataValue>
+          </div>
+          <div className="p-3">
+            <FieldLabel>Token guardrail</FieldLabel>
+            <DataValue className="mt-1">{percent(review.guardrails.tokens.percent)}</DataValue>
+          </div>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div>
+            <h3 className="text-sm font-semibold">Expensive Sessions</h3>
+            <div className="mt-2 divide-y rounded-md border">
+              {review.expensiveSessions.slice(0, 3).map((session) => (
+                <Link
+                  key={session.id}
+                  href={session.href}
+                  className="flex min-w-0 items-center justify-between gap-3 p-3 text-sm transition-colors hover:bg-muted/40"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{session.title}</span>
+                    <span className="text-xs text-muted-foreground">{session.tool} / {session.models}</span>
+                  </span>
+                  <span className="shrink-0 text-right tabular-nums">
+                    <span className="block">{formatCurrency(session.cost)}</span>
+                    <span className="text-xs text-muted-foreground">{formatTokens(session.totalTokens)}</span>
+                  </span>
+                </Link>
+              ))}
+              {!review.expensiveSessions.length ? (
+                <div className="p-3 text-sm text-muted-foreground">No priced or token-heavy sessions yet.</div>
+              ) : null}
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold">Parser Follow-Up</h3>
+            <div className="mt-2 divide-y rounded-md border">
+              {review.parserWarningSources.slice(0, 3).map((source) => (
+                <Link
+                  key={source.sourceFile}
+                  href={source.href}
+                  className="block min-w-0 p-3 text-sm transition-colors hover:bg-muted/40"
+                >
+                  <span className="font-medium">{source.parserStatus}</span>
+                  <MonoText className="mt-1 block truncate">{source.sourceFile}</MonoText>
+                </Link>
+              ))}
+              {!review.parserWarningSources.length ? (
+                <div className="p-3 text-sm text-muted-foreground">No parser follow-up from the current session set.</div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 type OverviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -449,6 +543,13 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   const params = (await searchParams) ?? {};
   const range = resolveDateRange(params);
   const data = getAnalyticsData(range.filters);
+  const accountingReport = buildAccountingInvariants(range.filters);
+  const postSessionReview = buildPostSessionReview({
+    scanDiff: buildScanDiff(),
+    usageGuardrails: data.usageGuardrails,
+    summary: data.summary,
+    sessions: data.sessions
+  });
   const rangeLinkParams = dateRangeQueryParams(range);
   const evidenceLinks = Object.fromEntries(
     Object.entries(data.evidenceLinks).map(([key, href]) => [key, mergeHrefParams(href, rangeLinkParams)])
@@ -646,12 +747,15 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
       {summary.interactions > 0 ? (
         <DataReadinessPanel
           report={doctorReport}
+          accountingReport={accountingReport}
           selectedInteractions={summary.interactions}
           selectedCachedTokens={summary.cachedTokens}
           repairHref={repairFocusHref}
           cachedEvidenceHref={evidenceLinks["cached-tokens"]}
         />
       ) : null}
+
+      {summary.interactions > 0 ? <PostSessionReviewPanel review={postSessionReview} /> : null}
 
       <UsageGuardrailsPanel progress={data.usageGuardrails} />
 

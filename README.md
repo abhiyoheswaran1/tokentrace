@@ -43,6 +43,12 @@ tokentrace repair --json
                         # Print unknown-cost repair groups as JSON
 tokentrace digest --json
                         # Print current-month local usage digest
+tokentrace digest --since yesterday
+                        # Print a scoped local usage digest
+tokentrace report --markdown
+                        # Print a deterministic Markdown report
+tokentrace review --json
+                        # Print post-session scan and review movement
 tokentrace insights --json
                         # Print local recommendations as JSON
 tokentrace status --json
@@ -139,6 +145,13 @@ Settings also supports optional local monthly usage guardrails. Set a cost
 limit, token limit, or both, and Overview will show month-to-date progress from
 imported local CLI usage.
 
+Sessions includes built-in and local saved views for recurring review paths:
+unknown cost, high-cost sessions, Claude/Codex this month, estimated tokens,
+guardrail review, and parser review. Open a session's **Timeline** link to see
+ordered interactions, model changes, token spikes, cache activity, tool calls,
+parser confidence, and unknown-cost events. Raw prompts and message bodies stay
+hidden by default.
+
 ## Ingestion Architecture
 
 TokenTrace's primary ingestion architecture is direct local filesystem ingestion:
@@ -188,6 +201,10 @@ tokentrace statusline claude
 
 Claude Code sends session JSON to the command on stdin. TokenTrace reads the transcript path, model, context usage, and session cost, then prints one compact local line:
 
+```text
+TokenTrace | Opus | session 3.3K tokens | cache 2.0K | cost $0.1235 | ctx 7% | priced
+```
+
 Do not set the Claude Code `statusLine.command` to plain `tokentrace`. Plain `tokentrace` starts the dashboard, while `tokentrace statusline claude` prints exactly one status-line response.
 
 ![TokenTrace Claude Code status line](docs/assets/claude-statusline.svg)
@@ -197,6 +214,15 @@ You can also inspect the same local status outside Claude Code:
 ```bash
 tokentrace status --json
 tokentrace watch --session
+```
+
+Daily reporting commands stay deterministic and local:
+
+```bash
+tokentrace digest --since last-scan
+tokentrace digest --since 2026-05-01 --json
+tokentrace report --markdown --since yesterday
+tokentrace review --json
 ```
 
 Codex CLI status-line integration is intentionally deferred until its status-line and hook contracts are stable enough to support without fragile terminal output parsing. Use `tokentrace watch --session --compact` in a terminal split or tmux pane as the current fallback. See [docs/CODEX_INTEGRATION_SPIKE.md](docs/CODEX_INTEGRATION_SPIKE.md) for the current decision.

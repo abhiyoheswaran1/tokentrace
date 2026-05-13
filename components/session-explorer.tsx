@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Download, Filter, RotateCcw } from "lucide-react";
+import { BookmarkPlus, Download, Filter, RotateCcw, Trash2 } from "lucide-react";
 import type { SessionRow } from "@/src/lib/analytics";
+import type { SavedView, SavedViews } from "@/src/lib/saved-views";
 import { formatCurrency, formatDate, formatDuration, formatTokens } from "@/src/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,28 +22,44 @@ export function SessionExplorer({
   initialProject,
   initialTool,
   initialModel,
+  initialQuery,
   initialSource,
+  initialExact,
   initialCost,
-  initialCache
+  initialFrom,
+  initialTo,
+  initialHighCost,
+  initialCache,
+  savedViews
 }: {
   sessions: SessionRow[];
   initialProject?: string;
   initialTool?: string;
   initialModel?: string;
+  initialQuery?: string;
   initialSource?: string;
+  initialExact?: ExactFilter;
   initialCost?: CostFilter;
+  initialFrom?: string;
+  initialTo?: string;
+  initialHighCost?: boolean;
   initialCache?: boolean;
+  savedViews: SavedViews;
 }) {
-  const [query, setQuery] = useState(initialSource ?? "");
+  const [query, setQuery] = useState(initialQuery ?? initialSource ?? "");
   const [tool, setTool] = useState(initialTool ?? "all");
   const [model, setModel] = useState(initialModel ?? "all");
   const [project, setProject] = useState(initialProject ?? "all");
-  const [exact, setExact] = useState<ExactFilter>("all");
+  const [exact, setExact] = useState<ExactFilter>(initialExact ?? "all");
   const [cost, setCost] = useState<CostFilter>(initialCost ?? "all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [highCost, setHighCost] = useState(false);
+  const [from, setFrom] = useState(initialFrom ?? "");
+  const [to, setTo] = useState(initialTo ?? "");
+  const [highCost, setHighCost] = useState(Boolean(initialHighCost));
   const [hasCache, setHasCache] = useState(Boolean(initialCache));
+  const [viewName, setViewName] = useState("");
+  const [customViews, setCustomViews] = useState<SavedView[]>(savedViews.custom);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const tools = useMemo(() => Array.from(new Set(sessions.map((session) => session.tool))).sort(), [sessions]);
   const models = useMemo(
@@ -130,6 +147,20 @@ export function SessionExplorer({
     highCost ||
     hasCache;
   const hasEvidenceContext = Boolean(initialProject || initialTool || initialModel || initialSource || initialCost || initialCache);
+  const currentFilters = useMemo(() => {
+    const filters: Record<string, string | boolean> = {};
+    if (query) filters.query = query;
+    if (tool !== "all") filters.tool = tool;
+    if (model !== "all") filters.model = model;
+    if (project !== "all") filters.project = project;
+    if (exact !== "all") filters.exact = exact;
+    if (cost !== "all") filters.cost = cost;
+    if (from) filters.from = from;
+    if (to) filters.to = to;
+    if (highCost) filters.highCost = true;
+    if (hasCache) filters.cache = true;
+    return filters;
+  }, [cost, exact, from, hasCache, highCost, model, project, query, to, tool]);
 
   function clearFilters() {
     setQuery("");
@@ -142,6 +173,59 @@ export function SessionExplorer({
     setTo("");
     setHighCost(false);
     setHasCache(false);
+  }
+
+  async function saveCurrentView() {
+    const name = viewName.trim();
+    if (!name) {
+      setSaveError("Name is required.");
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const response = await fetch("/api/saved-views", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name, filters: currentFilters })
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error ?? "Could not save view.");
+      setCustomViews((views) => [body.view, ...views.filter((view) => view.id !== body.view.id)]);
+      setViewName("");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Could not save view.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeView(view: SavedView) {
+    setCustomViews((views) => views.filter((item) => item.id !== view.id));
+    await fetch(`/api/saved-views/${encodeURIComponent(view.id)}`, { method: "DELETE" });
+  }
+
+  function ViewLink({ view }: { view: SavedView }) {
+    return (
+      <span className="inline-flex min-w-0 items-center rounded-md border bg-card">
+        <Link
+          href={view.href}
+          className="min-w-0 truncate px-3 py-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {view.name}
+        </Link>
+        {!view.builtIn ? (
+          <button
+            type="button"
+            onClick={() => void removeView(view)}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center border-l text-muted-foreground hover:text-foreground"
+            aria-label={`Delete ${view.name}`}
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        ) : null}
+      </span>
+    );
   }
 
   return (
@@ -168,6 +252,51 @@ export function SessionExplorer({
           </CardContent>
         </Card>
       ) : null}
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <BookmarkPlus className="h-4 w-4" />
+            Saved Views
+          </CardTitle>
+          <CardDescription>Fast local filters for review queues, monthly provider checks, and repeated evidence paths.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <FieldLabel>Built-in</FieldLabel>
+            <div className="flex flex-wrap gap-2">
+              {savedViews.builtIn.map((view) => (
+                <ViewLink key={view.id} view={view} />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <FieldLabel>Local</FieldLabel>
+            {customViews.length ? (
+              <div className="flex flex-wrap gap-2">
+                {customViews.map((view) => (
+                  <ViewLink key={view.id} view={view} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">No local saved views yet.</div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Input
+              value={viewName}
+              onChange={(event) => setViewName(event.target.value)}
+              placeholder="Save current filters as..."
+              className="sm:max-w-xs"
+            />
+            <Button type="button" size="sm" onClick={() => void saveCurrentView()} disabled={saving}>
+              <BookmarkPlus className="h-4 w-4" />
+              Save view
+            </Button>
+            {saveError ? <div className="text-sm text-destructive">{saveError}</div> : null}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -341,6 +470,9 @@ export function SessionExplorer({
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
+                        <Link href={`/sessions/${encodeURIComponent(session.id)}`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+                          Timeline
+                        </Link>
                         <Link href={session.parserHref} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
                           Parser
                         </Link>

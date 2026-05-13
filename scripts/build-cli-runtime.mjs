@@ -15,7 +15,9 @@ const entryPoints = {
   evidence: "scripts/evidence.ts",
   insights: "scripts/insights.ts",
   "pricing-refresh": "scripts/pricing-refresh.ts",
+  report: "scripts/report.ts",
   repair: "scripts/repair.ts",
+  review: "scripts/review.ts",
   reset: "scripts/reset.ts",
   scan: "scripts/scan.ts",
   status: "scripts/status.ts"

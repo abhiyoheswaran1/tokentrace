@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { parsePricingRefreshArgs, pricingRefreshUsage } from "@/src/lib/pricing-refresh-cli";
-import { jsonReportUsage, parseJsonReportArgs } from "@/src/lib/report-cli";
+import { jsonReportUsage, parseDigestArgs, parseJsonReportArgs, parseMarkdownReportArgs } from "@/src/lib/report-cli";
 import { parseScanArgs, scanUsage } from "@/src/lib/scan-cli";
 import { parseStatusArgs, statusUsage } from "@/src/lib/status-cli";
 import { afterEach, describe, expect, it } from "vitest";
@@ -81,6 +81,20 @@ describe("report commands", () => {
   it("parses report JSON and help flags explicitly", () => {
     expect(parseJsonReportArgs(["--json"])).toEqual({ help: false, json: true });
     expect(parseJsonReportArgs(["--help"])).toEqual({ help: true, json: false });
+  });
+
+  it("parses digest since and markdown report flags explicitly", () => {
+    expect(parseDigestArgs(["--json", "--since", "yesterday"])).toEqual({
+      help: false,
+      json: true,
+      since: "yesterday"
+    });
+    expect(parseMarkdownReportArgs(["--markdown", "--since", "last-scan"])).toEqual({
+      help: false,
+      json: false,
+      markdown: true,
+      since: "last-scan"
+    });
   });
 });
 

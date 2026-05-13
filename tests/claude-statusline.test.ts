@@ -112,7 +112,7 @@ describe("Claude status line integration", () => {
       }
     });
 
-    expect(line).toBe("TokenTrace | Opus | session 3.3K tokens | cache 2.0K | cost $0.1235 | pricing unscanned");
+    expect(line).toBe("TokenTrace | Opus | session 3.3K tokens | cache 2.0K | cost $0.1235 | ctx 7% | priced");
   });
 
   it("renders compact Claude Code status lines for cramped terminals", async () => {
@@ -135,7 +135,26 @@ describe("Claude status line integration", () => {
       { mode: "compact" }
     );
 
-    expect(line).toBe("TT | Opus | 3.3K tok | cache 2.0K | $0.1235");
+    expect(line).toBe("TT | Opus | 3.3K tok | cache 2.0K | $0.1235 | ctx 7%");
+  });
+
+  it("keeps pricing repair visible when Claude does not provide a cost", async () => {
+    const { buildClaudeStatusLine } = await loadStatusModule();
+
+    const line = await buildClaudeStatusLine({
+      model: { id: "claude-opus-4-7", display_name: "Opus" },
+      context_window: {
+        used_percentage: 12,
+        current_usage: {
+          input_tokens: 100,
+          output_tokens: 20,
+          cache_read_input_tokens: 0,
+          cache_creation_input_tokens: 0
+        }
+      }
+    });
+
+    expect(line).toBe("TokenTrace | Opus | ctx 120 tokens | cache 0 | cost Unknown | ctx 12% | pricing repair");
   });
 
   it("prints Claude setup instructions without mutating user settings", async () => {

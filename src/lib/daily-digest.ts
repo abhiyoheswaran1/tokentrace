@@ -6,6 +6,7 @@ import type { UsageGuardrailMetric, UsageGuardrailProgress } from "@/src/lib/usa
 export type DailyDigest = {
   generatedAt: string;
   monthLabel: string;
+  scopeLabel: string;
   totalTokens: number;
   totalCost: number;
   unknownCostInteractions: number;
@@ -25,6 +26,7 @@ export type DailyDigest = {
 
 type DailyDigestInput = {
   generatedAt?: Date;
+  scopeLabel?: string;
   summary: Pick<SummaryMetrics, "totalTokens" | "totalCost" | "unknownCostInteractions">;
   usageGuardrails: UsageGuardrailProgress;
   reviewQueue: ReviewQueueItem[];
@@ -51,6 +53,7 @@ export function buildDailyDigest(input: DailyDigestInput): DailyDigest {
   return {
     generatedAt: (input.generatedAt ?? new Date()).toISOString(),
     monthLabel: input.usageGuardrails.monthLabel,
+    scopeLabel: input.scopeLabel ?? "All time",
     totalTokens: input.summary.totalTokens,
     totalCost: input.summary.totalCost,
     unknownCostInteractions: input.summary.unknownCostInteractions,
@@ -83,6 +86,7 @@ export function renderDailyDigestText(digest: DailyDigest) {
   return [
     "TokenTrace Daily Digest",
     `Generated: ${formatDate(new Date(digest.generatedAt).getTime())}`,
+    `Scope: ${digest.scopeLabel}`,
     `Month: ${digest.monthLabel}`,
     `Usage: ${formatTokens(digest.totalTokens)} tokens, ${formatCurrency(digest.totalCost)}`,
     renderGuardrailLine("Cost", digest.guardrails.cost, formatCurrency),

@@ -131,19 +131,22 @@ export async function buildClaudeStatusLine(input: ClaudeStatusInput, options: {
   const summary = transcriptSummary ?? summarizeClaudeContext(input);
   const model = string(input.model?.display_name) ?? summary?.model ?? string(input.model?.id) ?? "Claude";
   const cost = optionalNumber(input.cost?.total_cost_usd);
-  const pricing = "pricing unscanned";
+  const contextUsed = optionalNumber(input.context_window?.used_percentage);
+  const context = contextUsed == null ? null : `ctx ${Math.round(contextUsed)}%`;
+  const pricing = cost == null ? "pricing repair" : "priced";
 
   if (!summary) {
     if (options.mode === "compact") {
-      return ["TT", model, "no tokens", formatCurrency(cost)].join(" | ");
+      return ["TT", model, "no tokens", formatCurrency(cost), context].filter(Boolean).join(" | ");
     }
     return [
       "TokenTrace",
       model,
       "session no tokens yet",
       `cost ${formatCurrency(cost)}`,
+      context,
       pricing
-    ].join(" | ");
+    ].filter(Boolean).join(" | ");
   }
 
   const scope = summary.source === "transcript" ? "session" : "ctx";
@@ -153,8 +156,9 @@ export async function buildClaudeStatusLine(input: ClaudeStatusInput, options: {
       model,
       `${formatTokens(summary.totalTokens)} tok`,
       `cache ${formatTokens(summary.cachedTokens)}`,
-      formatCurrency(cost)
-    ].join(" | ");
+      formatCurrency(cost),
+      context
+    ].filter(Boolean).join(" | ");
   }
 
   if (options.mode === "wide") {
@@ -168,8 +172,9 @@ export async function buildClaudeStatusLine(input: ClaudeStatusInput, options: {
       `cache write ${formatTokens(summary.cacheWriteTokens)}`,
       `reasoning ${formatTokens(summary.reasoningTokens)}`,
       `cost ${formatCurrency(cost)}`,
+      context,
       pricing
-    ].join(" | ");
+    ].filter(Boolean).join(" | ");
   }
 
   return [
@@ -178,8 +183,9 @@ export async function buildClaudeStatusLine(input: ClaudeStatusInput, options: {
     `${scope} ${formatTokens(summary.totalTokens)} tokens`,
     `cache ${formatTokens(summary.cachedTokens)}`,
     `cost ${formatCurrency(cost)}`,
+    context,
     pricing
-  ].join(" | ");
+  ].filter(Boolean).join(" | ");
 }
 
 export function claudeStatusLineSetupText(command = "tokentrace statusline claude") {

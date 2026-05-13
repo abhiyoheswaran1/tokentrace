@@ -32,6 +32,10 @@ Usage:
                           Print metric evidence trail as JSON
   tokentrace digest --json
                           Print current-month local usage digest
+  tokentrace report --markdown
+                          Print a deterministic local Markdown report
+  tokentrace review --json
+                          Print post-session review movement as JSON
   tokentrace insights --json
                           Print local recommendations as JSON
   tokentrace repair --json
@@ -381,6 +385,16 @@ async function digest(args) {
   await runNodeScript("digest", args);
 }
 
+async function report(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("report", args);
+}
+
+async function review(args) {
+  await initializeDatabase({ quiet: true, refreshPrices: false });
+  await runNodeScript("review", args);
+}
+
 async function insights(args) {
   await initializeDatabase({ quiet: true, refreshPrices: false });
   await runNodeScript("insights", args);
@@ -556,6 +570,14 @@ async function main() {
   }
   if (command === "digest") {
     await digest(args);
+    return;
+  }
+  if (command === "report") {
+    await report(args);
+    return;
+  }
+  if (command === "review") {
+    await review(args);
     return;
   }
   if (command === "insights") {
