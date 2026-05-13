@@ -50,6 +50,7 @@ export type UnknownCostRepairWorkbenchGroup = {
   reasoningTokens: number;
   review: Pick<UnknownCostReviewModel, "status" | "notes" | "createdAt" | "updatedAt">;
   suggestion: UnknownCostRepairSuggestion;
+  itemHref: string;
   repairHref: string;
   sourceHref: string;
   sessionHref: string;
@@ -119,6 +120,10 @@ function withQuery(path: string, params: Record<string, string | null | undefine
   });
   const serialized = query.toString();
   return serialized ? `${path}?${serialized}` : path;
+}
+
+export function repairItemHref(key: string) {
+  return withQuery("/repair", { key });
 }
 
 function causeKey(cause: string) {
@@ -503,6 +508,7 @@ export function buildUnknownCostRepairWorkbench(): UnknownCostRepairWorkbench {
         updatedAt: review.updatedAt
       },
       suggestion,
+      itemHref: repairItemHref(key),
       repairHref: pricingHref ?? parserHref,
       sourceHref,
       sessionHref: sourceHref,

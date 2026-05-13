@@ -52,9 +52,100 @@ function SummaryItem({
   );
 }
 
-export default function RepairPage() {
+function firstQueryValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function FocusedRepairPanel({
+  group,
+  focusKey
+}: {
+  group: UnknownCostRepairWorkbenchGroup | null;
+  focusKey: string;
+}) {
+  if (!group) {
+    return (
+      <Card className="border-amber-300 bg-amber-50/50">
+        <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <CardTitle>Repair item not found</CardTitle>
+            <CardDescription>
+              This focused repair link no longer matches an unresolved unknown-cost group.
+            </CardDescription>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/repair">
+              View all repair items <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <MonoText className="block truncate text-muted-foreground">{focusKey}</MonoText>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <CardTitle>Focused Repair Item</CardTitle>
+          <CardDescription>
+            {group.model} / {group.tool} / {group.provider}
+          </CardDescription>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant={causeVariant(group.cause)}>{group.cause}</Badge>
+          <Badge variant={group.state === "resolved" ? "success" : group.state === "needs-parser-review" ? "warning" : group.state === "ignored" ? "secondary" : "destructive"}>
+            {group.state}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="grid border-t sm:grid-cols-3">
+          <SummaryItem label="Interactions" value={group.interactions} />
+          <SummaryItem label="Sessions" value={group.sessions} />
+          <div className="min-w-0 border-t px-4 py-3 first:border-t-0 sm:border-l sm:border-t-0">
+            <FieldLabel>Tokens</FieldLabel>
+            <DataValue size="md">{formatTokens(group.totalTokens)}</DataValue>
+          </div>
+        </div>
+        <div className="border-t px-4 py-3">
+          <FieldLabel>Suggested next step</FieldLabel>
+          <div className="mt-1 text-sm font-medium">{suggestionLabel(group)}</div>
+          <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {group.suggestion.confidence} confidence. {group.suggestion.reason}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 border-t px-4 py-3">
+          <Button asChild size="sm">
+            <Link href={group.repairHref}>
+              {group.pricingHref ? "Configure price" : "Review parser"} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={group.sourceHref}>Evidence</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={group.parserHref}>Parser</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+type RepairPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function RepairPage({ searchParams }: RepairPageProps) {
+  const params = (await searchParams) ?? {};
+  const focusKey = firstQueryValue(params.key);
   const workbench = buildUnknownCostRepairWorkbench();
   const hasGroups = workbench.groups.length > 0;
+  const focusedGroup = focusKey ? workbench.groups.find((group) => group.key === focusKey) ?? null : null;
 
   return (
     <div className="space-y-6">
@@ -78,6 +169,10 @@ export default function RepairPage() {
           </div>
         }
       />
+
+      {focusKey ? (
+        <FocusedRepairPanel group={focusedGroup} focusKey={focusKey} />
+      ) : null}
 
       <Card>
         <CardContent className="p-0">
@@ -107,22 +202,22 @@ export default function RepairPage() {
         </CardHeader>
         <CardContent className="table-scroll">
           {hasGroups ? (
-            <Table>
+            <Table className="min-w-[84rem]">
               <TableHeader>
                 <TableRow>
                   <TableHead>State</TableHead>
                   <TableHead>Cause</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>Suggestion</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead className="min-w-56">Model</TableHead>
+                  <TableHead className="min-w-72">Suggestion</TableHead>
+                  <TableHead className="min-w-80">Source</TableHead>
                   <TableHead>Interactions</TableHead>
                   <TableHead>Tokens</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="min-w-28">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {workbench.groups.map((group) => (
-                  <TableRow key={group.key}>
+                  <TableRow key={group.key} className={focusKey === group.key ? "bg-muted/40" : undefined}>
                     <TableCell className="align-top">
                       <RepairStateControl
                         repairKey={group.key}
@@ -141,7 +236,7 @@ export default function RepairPage() {
                       <div className="font-medium">{group.model}</div>
                       <div className="mt-1 text-xs text-muted-foreground">{group.provider} / {group.tool}</div>
                     </TableCell>
-                    <TableCell className="max-w-72 align-top">
+                    <TableCell className="min-w-72 max-w-80 align-top">
                       <div className="flex items-center gap-2 text-sm font-medium">
                         {group.suggestion.suggestedModel ? (
                           <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -154,7 +249,7 @@ export default function RepairPage() {
                         {group.suggestion.confidence} confidence. {group.suggestion.reason}
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-80 align-top">
+                    <TableCell className="max-w-96 align-top">
                       <Link href={group.sourceHref} title={group.sourceFile}>
                         <MonoText className="block truncate text-xs text-muted-foreground underline-offset-4 hover:underline">
                           {group.sourceFile}
@@ -162,7 +257,7 @@ export default function RepairPage() {
                       </Link>
                     </TableCell>
                     <TableCell className="align-top">{group.interactions.toLocaleString()}</TableCell>
-                    <TableCell className="align-top">
+                    <TableCell className="min-w-28 align-top">
                       <div>{formatTokens(group.totalTokens)}</div>
                       <div className="mt-1 text-xs text-muted-foreground">
                         {formatTokens(group.inputTokens)} in, {formatTokens(group.outputTokens)} out
@@ -172,6 +267,9 @@ export default function RepairPage() {
                       <div className="flex flex-wrap gap-2">
                         <Link href={group.repairHref} className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
                           Repair <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                        <Link href={group.itemHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                          Focus
                         </Link>
                         <Link href={group.parserHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
                           Parser

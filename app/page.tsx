@@ -28,6 +28,8 @@ function MetricCard({
   description,
   href,
   actionLabel = "Inspect sessions",
+  secondaryHref,
+  secondaryActionLabel,
   icon: Icon,
   className,
   valueClassName
@@ -38,6 +40,8 @@ function MetricCard({
   description?: string;
   href?: string;
   actionLabel?: string;
+  secondaryHref?: string;
+  secondaryActionLabel?: string;
   icon: typeof Database;
   className?: string;
   valueClassName?: string;
@@ -69,11 +73,20 @@ function MetricCard({
             ))}
           </div>
         ) : null}
-        {href ? (
-          <Link href={href} className="mt-auto inline-flex w-fit items-center gap-1.5 pt-4 text-xs font-medium text-primary underline-offset-4 hover:underline">
-            {actionLabel}
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </Link>
+        {href || secondaryHref ? (
+          <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4">
+            {href ? (
+              <Link href={href} className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline">
+                {actionLabel}
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            ) : null}
+            {secondaryHref ? (
+              <Link href={secondaryHref} className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+                {secondaryActionLabel ?? "View details"}
+              </Link>
+            ) : null}
+          </div>
         ) : null}
       </CardContent>
     </Card>
@@ -82,7 +95,8 @@ function MetricCard({
 
 function OverviewTrustStrip({
   latestScan,
-  confidence
+  confidence,
+  repairHref
 }: {
   latestScan: { id: string | null; filesScanned: number; recordsImported: number };
   confidence: {
@@ -92,6 +106,7 @@ function OverviewTrustStrip({
     estimatedCostInteractions: number;
     unknownCostInteractions: number;
   };
+  repairHref: string;
 }) {
   const exactTokenShare = confidence.interactions > 0 ? percent(confidence.exactTokenInteractions / confidence.interactions) : "0%";
   const costCoverage =
@@ -120,7 +135,7 @@ function OverviewTrustStrip({
         confidence.unknownCostInteractions > 0
           ? `${confidence.unknownCostInteractions.toLocaleString()} interactions need repair`
           : "All imported interactions priced",
-      href: confidence.unknownCostInteractions > 0 ? "/repair" : "/pricing",
+      href: confidence.unknownCostInteractions > 0 ? repairHref : "/pricing",
       icon: Coins
     }
   ];
@@ -345,6 +360,12 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   const roots = await getDefaultSearchRoots();
   const doctorReport = buildDoctorReport({ ...trust, roots });
   const repairWorkbench = buildUnknownCostRepairWorkbench();
+  const nextRepairGroup =
+    repairWorkbench.groups.find((group) => group.review.status !== "ignored" && group.review.status !== "resolved")
+    ?? repairWorkbench.groups[0]
+    ?? null;
+  const repairFocusHref = nextRepairGroup?.itemHref ?? "/repair";
+  const unknownCostEvidenceHref = data.evidenceLinks["unknown-cost"];
   const firstRunStatus = buildFirstRunStatus({
     rootCount: roots.length,
     pricedModelCount: trust.pricedModelCount,
@@ -381,7 +402,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
       ) : null}
 
       {summary.interactions > 0 ? (
-        <OverviewTrustStrip latestScan={doctorReport.latestScan} confidence={trust.confidence} />
+        <OverviewTrustStrip latestScan={doctorReport.latestScan} confidence={trust.confidence} repairHref={repairFocusHref} />
       ) : null}
 
       <Card>
@@ -481,8 +502,10 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
             `${formatCurrency(summary.estimatedCost)} estimated`,
             `${summary.unknownCostInteractions.toLocaleString()} unknown`
           ]}
-          href={summary.unknownCostInteractions > 0 ? "/repair" : data.evidenceLinks["estimated-cost"]}
-          actionLabel={summary.unknownCostInteractions > 0 ? "Repair unknown costs" : "View evidence"}
+          href={summary.unknownCostInteractions > 0 ? repairFocusHref : data.evidenceLinks["estimated-cost"]}
+          actionLabel={summary.unknownCostInteractions > 0 ? "Open next repair item" : "View evidence"}
+          secondaryHref={summary.unknownCostInteractions > 0 ? unknownCostEvidenceHref : undefined}
+          secondaryActionLabel="View unknown-cost evidence"
           icon={Coins}
         />
         <MetricCard
@@ -619,8 +642,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
               </CardDescription>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link href="/repair">
-                Open Repair <ArrowRight className="h-4 w-4" />
+              <Link href={repairFocusHref}>
+                Open next repair <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </CardHeader>
@@ -664,6 +687,12 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
                       <div className="flex flex-wrap gap-2">
                         <Link href={row.repairHref} className="font-medium text-primary underline-offset-4 hover:underline">
                           {row.pricingHref ? "Configure price" : "Review parser"}
+                        </Link>
+                        <Link href={row.itemHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                          Item
+                        </Link>
+                        <Link href={row.sourceHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                          Evidence
                         </Link>
                         {row.pricingHref ? (
                           <Link href={row.parserHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">

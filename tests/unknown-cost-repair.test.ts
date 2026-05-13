@@ -239,6 +239,7 @@ describe("unknown cost repair state", () => {
         confidence: "high"
       },
       pricingHref: "/pricing?model=claude-sonnet-4-5-20250929",
+      itemHref: expect.stringMatching(/^\/repair\?key=repair%3Av1%3A/),
       sourceHref: "/sessions?source=%2Ftmp%2Fclaude%2Fa.jsonl&cost=unknown",
       parserHref: "/parser-debug?source=%2Ftmp%2Fclaude%2Fa.jsonl",
       sessionHref: "/sessions?source=%2Ftmp%2Fclaude%2Fa.jsonl&cost=unknown",
@@ -262,6 +263,7 @@ describe("unknown cost repair state", () => {
         suggestedModel: null,
         confidence: "low"
       },
+      itemHref: expect.stringMatching(/^\/repair\?key=repair%3Av1%3A/),
       repairHref: "/parser-debug?source=%2Ftmp%2Fclaude%2Fb.jsonl"
     });
   });
