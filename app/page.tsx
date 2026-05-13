@@ -453,7 +453,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   const evidenceLinks = Object.fromEntries(
     Object.entries(data.evidenceLinks).map(([key, href]) => [key, mergeHrefParams(href, rangeLinkParams)])
   ) as typeof data.evidenceLinks;
-  const trust = getScanTrustData();
+  const trust = getScanTrustData(range.filters);
   const roots = await getDefaultSearchRoots();
   const doctorReport = buildDoctorReport({ ...trust, roots });
   const repairWorkbench = buildUnknownCostRepairWorkbench(range.filters);

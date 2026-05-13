@@ -115,6 +115,61 @@ describe("scan confidence analytics", () => {
     });
   });
 
+  it("applies interaction date filters to scan confidence and trust coverage", async () => {
+    const { getScanConfidenceSummary, getScanTrustData, sqlite } = await loadAnalytics();
+    const includedAt = new Date(2026, 4, 2).getTime();
+    const excludedAt = new Date(2026, 3, 2).getTime();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('openai', 'OpenAI', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('codex-cli', 'openai', 'Codex CLI')").run();
+    sqlite
+      .prepare(
+        `INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES
+          ('priced', 'openai', 'gpt-priced', 1, 1, 'USD'),
+          ('unpriced', 'openai', 'gpt-unpriced', NULL, NULL, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO sessions (id, source_id, tool_id, started_at, source_file) VALUES
+          ('included-session', 'included-source', 'codex-cli', ?, '/tmp/included.jsonl'),
+          ('excluded-session', 'excluded-source', 'codex-cli', ?, '/tmp/excluded.jsonl')`
+      )
+      .run(includedAt, excludedAt);
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, timestamp, total_tokens, token_confidence, cost, cost_estimated)
+         VALUES
+          ('included-exact', 'included-exact-source', 'included-session', 'assistant', 'priced', ?, 10, 'exact', 0.01, 0),
+          ('included-unknown', 'included-unknown-source', 'included-session', 'assistant', 'unpriced', ?, 20, 'exact', NULL, 0),
+          ('excluded-unknown', 'excluded-unknown-source', 'excluded-session', 'assistant', 'unpriced', ?, 30, 'exact', NULL, 0)`
+      )
+      .run(includedAt, includedAt, excludedAt);
+
+    const filters = {
+      from: new Date(2026, 4, 1).getTime(),
+      to: new Date(2026, 4, 3).getTime()
+    };
+    const confidence = getScanConfidenceSummary(filters);
+    const trust = getScanTrustData(filters);
+
+    expect(confidence).toMatchObject({
+      interactions: 2,
+      exactTokenInteractions: 2,
+      exactCostInteractions: 1,
+      unknownCostInteractions: 1,
+      unknownCostCauses: {
+        missingModelName: 0,
+        missingPricing: 1,
+        missingTokenCount: 0,
+        other: 0
+      }
+    });
+    expect(trust.confidence.unknownCostInteractions).toBe(1);
+    expect(trust.health.costCoverage.unknown).toBe(1);
+  });
+
   it("builds an unknown-cost repair queue from local interaction facts", async () => {
     const { getAnalyticsData, sqlite } = await loadAnalytics();
 

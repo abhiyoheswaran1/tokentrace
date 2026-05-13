@@ -1178,7 +1178,9 @@ function getScanFileRows(limit: number | null) {
   }));
 }
 
-export function getScanConfidenceSummary(): ScanConfidenceSummary {
+export function getScanConfidenceSummary(filters: AnalyticsFilters = {}): ScanConfidenceSummary {
+  const filter = timestampWhere(filters, "i");
+  const unknownFilter = timestampJoinCondition(filters, "i");
   const row = sqlite
     .prepare(
       `SELECT
@@ -1191,9 +1193,10 @@ export function getScanConfidenceSummary(): ScanConfidenceSummary {
         COALESCE(SUM(CASE WHEN cost IS NOT NULL AND cost_estimated = 0 THEN 1 ELSE 0 END), 0) AS exactCostInteractions,
         COALESCE(SUM(CASE WHEN cost IS NOT NULL AND cost_estimated = 1 THEN 1 ELSE 0 END), 0) AS estimatedCostInteractions,
         COALESCE(SUM(CASE WHEN cost IS NULL THEN 1 ELSE 0 END), 0) AS unknownCostInteractions
-       FROM interactions`
+       FROM interactions i
+       ${filter.sql}`
     )
-    .get() as ScanConfidenceSummary;
+    .get(...filter.params) as ScanConfidenceSummary;
   const unknownCostCauses = sqlite
     .prepare(
       `WITH unknown_costs AS (
@@ -1210,6 +1213,7 @@ export function getScanConfidenceSummary(): ScanConfidenceSummary {
         FROM interactions i
         LEFT JOIN models m ON m.id = i.model_id
         WHERE i.cost IS NULL
+        ${unknownFilter.sql}
       )
       SELECT
         COALESCE(SUM(CASE WHEN cause = 'missingModelName' THEN 1 ELSE 0 END), 0) AS missingModelName,
@@ -1218,7 +1222,7 @@ export function getScanConfidenceSummary(): ScanConfidenceSummary {
         COALESCE(SUM(CASE WHEN cause = 'other' THEN 1 ELSE 0 END), 0) AS other
        FROM unknown_costs`
     )
-    .get() as ScanConfidenceSummary["unknownCostCauses"];
+    .get(...unknownFilter.params) as ScanConfidenceSummary["unknownCostCauses"];
 
   return {
     interactions: number(row.interactions),
@@ -1252,10 +1256,10 @@ export function getPricedModelCount() {
   return number(row.count);
 }
 
-export function getScanTrustData(): ScanTrustData {
+export function getScanTrustData(filters: AnalyticsFilters = {}): ScanTrustData {
   const scanRuns = getScanRunRows(50);
   const scanFiles = getScanFileRows(null);
-  const confidence = getScanConfidenceSummary();
+  const confidence = getScanConfidenceSummary(filters);
   return {
     scanRuns,
     scanFiles,
