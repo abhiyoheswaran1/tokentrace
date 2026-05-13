@@ -26,9 +26,9 @@ function PeriodDateField({
           type="date"
           name={name}
           defaultValue={defaultValue}
-          className="period-date-input h-8 w-32 pr-8"
+          className="period-date-input h-8 w-32 appearance-none pr-9"
         />
-        <CalendarDays className="period-date-icon pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <CalendarDays className="period-date-icon pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
       </span>
     </label>
   );

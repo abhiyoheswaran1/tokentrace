@@ -1,11 +1,6 @@
-import {
-  buildClaudeStatusLine,
-  claudeStatusLineSetupText,
-  getLiveStatusSnapshot,
-  renderLiveStatusLine
-} from "@/src/lib/live-status";
-
 const args = process.argv.slice(2);
+
+export {};
 
 function argValue(name: string) {
   const index = args.indexOf(name);
@@ -39,6 +34,7 @@ async function readStdin() {
 }
 
 async function renderClaudeStatusLine() {
+  const { buildClaudeStatusLine } = await import("@/src/lib/claude-statusline");
   const text = await readStdin();
   try {
     const input = JSON.parse(text);
@@ -48,7 +44,8 @@ async function renderClaudeStatusLine() {
   }
 }
 
-function renderStatus(json: boolean) {
+async function renderStatus(json: boolean) {
+  const { getLiveStatusSnapshot, renderLiveStatusLine } = await import("@/src/lib/live-status");
   const status = getLiveStatusSnapshot({ sourceFile: sourceFileArg() });
   if (json) {
     console.log(JSON.stringify(status, null, 2));
@@ -58,6 +55,7 @@ function renderStatus(json: boolean) {
 }
 
 async function watchStatus() {
+  const { getLiveStatusSnapshot, renderLiveStatusLine } = await import("@/src/lib/live-status");
   const interval = intervalArg();
   let previousLength = 0;
   const write = () => {
@@ -81,9 +79,10 @@ async function watchStatus() {
 if (args[0] === "statusline" && args[1] === "claude") {
   await renderClaudeStatusLine();
 } else if (args[0] === "setup" && args[1] === "claude") {
+  const { claudeStatusLineSetupText } = await import("@/src/lib/claude-statusline");
   console.log(claudeStatusLineSetupText());
 } else if (args[0] === "watch") {
   await watchStatus();
 } else {
-  renderStatus(args.includes("--json"));
+  await renderStatus(args.includes("--json"));
 }

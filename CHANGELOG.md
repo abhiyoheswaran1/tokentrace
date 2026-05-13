@@ -13,6 +13,7 @@ All notable changes to TokenTrace are documented here.
 ### Changed
 
 - Overview metric cards now link major totals to evidence trails and route unknown cost work to Unknown Cost Repair.
+- Overview now places Token Trend and Cost Trend directly after Usage Pulse and the metric cards, with Monthly Guardrails and Recommended Next Actions below the charts.
 - Dense evidence, repair, parser trust, and scan diff tables preserve horizontal scrolling and stable source-path truncation.
 - Evidence and repair copy now states local-first behavior, support-file ignores, and parser-review requirements for unsupported files.
 - README screenshots now use public-safe synthetic Evidence + Repair views, and obsolete screenshot assets were removed from the package payload.
@@ -21,6 +22,7 @@ All notable changes to TokenTrace are documented here.
 
 - Overview custom period date fields now use an intentionally inset calendar icon while preserving native `type="date"` submission fields and the single-line desktop toolbar.
 - The app shell now constrains page width on small screens so wide toolbars scroll internally instead of widening the whole page.
+- `tokentrace statusline setup claude` and piped Claude status-line input no longer touch the TokenTrace app database or start the dashboard.
 
 ## [0.7.0] - 2026-05-12
 

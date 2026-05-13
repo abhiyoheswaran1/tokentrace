@@ -210,7 +210,7 @@ function runNodeScript(scriptName, args = [], options = {}) {
     const [command, commandArgs] = scriptCommand(scriptName, args);
     const child = spawn(command, commandArgs, {
       cwd: packageRoot,
-      env: runtimeEnv(),
+      env: options.env ?? runtimeEnv(),
       stdio: options.stdio ?? "inherit"
     });
     child.on("error", reject);
@@ -403,11 +403,11 @@ async function status(args) {
 
 async function statusLine(args) {
   if (args[0] === "claude") {
-    await runNodeScript("status", ["statusline", "claude", ...args.slice(1)]);
+    await runNodeScript("status", ["statusline", "claude", ...args.slice(1)], { env: process.env });
     return;
   }
   if (args[0] === "setup" && args[1] === "claude") {
-    await runNodeScript("status", ["setup", "claude"]);
+    await runNodeScript("status", ["setup", "claude"], { env: process.env });
     return;
   }
 
@@ -526,7 +526,9 @@ async function runWrapped(args) {
 }
 
 async function main() {
-  const [command = "serve", ...args] = process.argv.slice(2);
+  const rawArgs = process.argv.slice(2);
+  const effectiveArgs = rawArgs.length === 0 && !process.stdin.isTTY ? ["statusline", "claude"] : rawArgs;
+  const [command = "serve", ...args] = effectiveArgs;
 
   if (command === "--help" || command === "-h" || command === "help") {
     console.log(help());

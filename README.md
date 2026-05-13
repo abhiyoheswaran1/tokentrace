@@ -188,6 +188,8 @@ tokentrace statusline claude
 
 Claude Code sends session JSON to the command on stdin. TokenTrace reads the transcript path, model, context usage, and session cost, then prints one compact local line:
 
+Do not set the Claude Code `statusLine.command` to plain `tokentrace`. Plain `tokentrace` starts the dashboard, while `tokentrace statusline claude` prints exactly one status-line response.
+
 ![TokenTrace Claude Code status line](docs/assets/claude-statusline.svg)
 
 You can also inspect the same local status outside Claude Code:

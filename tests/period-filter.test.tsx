@@ -24,8 +24,9 @@ describe("PeriodFilter", () => {
     expect(html).toContain("shrink-0");
     expect(html).toContain("period-date-field");
     expect(html).toContain("period-date-input");
+    expect(html).toContain("appearance-none");
     expect(html).toContain("period-date-icon");
-    expect(html).toContain("pointer-events-none absolute right-2");
+    expect(html).toContain("pointer-events-none absolute right-3");
     expect(html).not.toContain("flex-wrap");
   });
 });

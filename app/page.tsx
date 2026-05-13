@@ -348,31 +348,6 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         </CardContent>
       </Card>
 
-      <UsageGuardrailsPanel progress={data.usageGuardrails} />
-
-      <Card>
-        <CardHeader>
-          <h2 className="text-sm font-semibold leading-tight">Recommended Next Actions</h2>
-          <CardDescription>
-            Local rules ranked from your scan, pricing, parser, project, and cache data.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid divide-y overflow-hidden p-0 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
-          {data.recommendations.slice(0, 3).map((item) => (
-            <Link key={item.id} href={item.href} className="px-4 py-3 transition-colors hover:bg-muted/30">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-sm font-semibold">{item.title}</div>
-                <Badge variant={item.severity === "high" ? "destructive" : item.severity === "medium" ? "warning" : "secondary"}>
-                  {item.severity}
-                </Badge>
-              </div>
-              <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.evidence}</div>
-              <div className="mt-2 text-xs font-medium text-emerald-800">{item.action}</div>
-            </Link>
-          ))}
-        </CardContent>
-      </Card>
-
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <MetricCard
           className="md:col-span-2"
@@ -458,6 +433,31 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           </CardContent>
         </Card>
       </div>
+
+      <UsageGuardrailsPanel progress={data.usageGuardrails} />
+
+      <Card>
+        <CardHeader>
+          <h2 className="text-sm font-semibold leading-tight">Recommended Next Actions</h2>
+          <CardDescription>
+            Local rules ranked from your scan, pricing, parser, project, and cache data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid divide-y overflow-hidden p-0 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+          {data.recommendations.slice(0, 3).map((item) => (
+            <Link key={item.id} href={item.href} className="px-4 py-3 transition-colors hover:bg-muted/30">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm font-semibold">{item.title}</div>
+                <Badge variant={item.severity === "high" ? "destructive" : item.severity === "medium" ? "warning" : "secondary"}>
+                  {item.severity}
+                </Badge>
+              </div>
+              <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.evidence}</div>
+              <div className="mt-2 text-xs font-medium text-emerald-800">{item.action}</div>
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(20rem,0.9fr)_minmax(0,1.1fr)]">
         <Card>

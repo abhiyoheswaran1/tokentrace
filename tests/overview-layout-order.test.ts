@@ -1,0 +1,25 @@
+import fs from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+
+describe("Overview layout order", () => {
+  it("keeps trends ahead of guardrails and recommendations on the main page", () => {
+    const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
+
+    const usagePulse = source.indexOf("<CardTitle>Usage Pulse</CardTitle>");
+    const metricCards = source.indexOf("label=\"Processed tokens\"");
+    const tokenTrend = source.indexOf("<CardTitle>Token Trend</CardTitle>");
+    const costTrend = source.indexOf("<CardTitle>Cost Trend</CardTitle>");
+    const guardrails = source.indexOf("<UsageGuardrailsPanel progress={data.usageGuardrails} />");
+    const nextActions = source.indexOf("Recommended Next Actions");
+    const usageByTool = source.indexOf("<CardTitle>Usage By Tool</CardTitle>");
+
+    expect(usagePulse).toBeGreaterThan(-1);
+    expect(metricCards).toBeGreaterThan(usagePulse);
+    expect(tokenTrend).toBeGreaterThan(metricCards);
+    expect(costTrend).toBeGreaterThan(tokenTrend);
+    expect(guardrails).toBeGreaterThan(costTrend);
+    expect(nextActions).toBeGreaterThan(guardrails);
+    expect(usageByTool).toBeGreaterThan(nextActions);
+  });
+});
