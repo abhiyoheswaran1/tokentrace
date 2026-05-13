@@ -2,6 +2,12 @@
 
 All notable changes to TokenTrace are documented here.
 
+## [0.8.4] - 2026-05-13
+
+### Changed
+
+- Overview now shows Usage Pulse, top-level metric cards, and token/cost trend graphs before trust and Data Readiness diagnostics, so the first viewport focuses on primary usage status before repair-readiness details.
+
 ## [0.8.3] - 2026-05-13
 
 ### Fixed

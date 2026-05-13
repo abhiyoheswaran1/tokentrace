@@ -498,25 +498,6 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         <FirstRunPanel status={firstRunStatus} />
       ) : null}
 
-      {summary.interactions > 0 ? (
-        <OverviewTrustStrip
-          latestScan={doctorReport.latestScan}
-          confidence={trust.confidence}
-          repairHref={repairFocusHref}
-          processedTokensHref={evidenceLinks["processed-tokens"]}
-        />
-      ) : null}
-
-      {summary.interactions > 0 ? (
-        <DataReadinessPanel
-          report={doctorReport}
-          selectedInteractions={summary.interactions}
-          selectedCachedTokens={summary.cachedTokens}
-          repairHref={repairFocusHref}
-          cachedEvidenceHref={evidenceLinks["cached-tokens"]}
-        />
-      ) : null}
-
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -652,6 +633,25 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           </CardContent>
         </Card>
       </div>
+
+      {summary.interactions > 0 ? (
+        <OverviewTrustStrip
+          latestScan={doctorReport.latestScan}
+          confidence={trust.confidence}
+          repairHref={repairFocusHref}
+          processedTokensHref={evidenceLinks["processed-tokens"]}
+        />
+      ) : null}
+
+      {summary.interactions > 0 ? (
+        <DataReadinessPanel
+          report={doctorReport}
+          selectedInteractions={summary.interactions}
+          selectedCachedTokens={summary.cachedTokens}
+          repairHref={repairFocusHref}
+          cachedEvidenceHref={evidenceLinks["cached-tokens"]}
+        />
+      ) : null}
 
       <UsageGuardrailsPanel progress={data.usageGuardrails} />
 

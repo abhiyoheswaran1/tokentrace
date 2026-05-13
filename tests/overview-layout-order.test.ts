@@ -10,15 +10,21 @@ describe("Overview layout order", () => {
     const metricCards = source.indexOf("label=\"Processed tokens\"");
     const tokenTrend = source.indexOf("<CardTitle>Token Trend</CardTitle>");
     const costTrend = source.indexOf("<CardTitle>Cost Trend</CardTitle>");
+    const trustStrip = source.indexOf("<OverviewTrustStrip");
+    const dataReadiness = source.indexOf("<DataReadinessPanel");
     const guardrails = source.indexOf("<UsageGuardrailsPanel progress={data.usageGuardrails} />");
     const nextActions = source.indexOf("Recommended Next Actions");
     const usageByTool = source.indexOf("<CardTitle>Usage By Tool</CardTitle>");
 
     expect(usagePulse).toBeGreaterThan(-1);
+    expect(trustStrip).toBeGreaterThan(-1);
+    expect(dataReadiness).toBeGreaterThan(-1);
     expect(metricCards).toBeGreaterThan(usagePulse);
     expect(tokenTrend).toBeGreaterThan(metricCards);
     expect(costTrend).toBeGreaterThan(tokenTrend);
-    expect(guardrails).toBeGreaterThan(costTrend);
+    expect(trustStrip).toBeGreaterThan(costTrend);
+    expect(dataReadiness).toBeGreaterThan(trustStrip);
+    expect(guardrails).toBeGreaterThan(dataReadiness);
     expect(nextActions).toBeGreaterThan(guardrails);
     expect(usageByTool).toBeGreaterThan(nextActions);
   });
