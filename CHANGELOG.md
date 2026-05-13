@@ -2,7 +2,7 @@
 
 All notable changes to TokenTrace are documented here.
 
-## [Unreleased]
+## [0.9.0] - 2026-05-13
 
 ### Added
 

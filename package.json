@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.8.4",
+  "version": "0.9.0",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {
     "name": "Abhi Yoheswaran",
