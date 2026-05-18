@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
+import { EmptyState } from "@/components/empty-state";
+import { ScanNowButton } from "@/components/scan-now-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,6 +23,18 @@ export default function ProjectAnalyticsPage() {
         description="Group usage by local repository or inferred project path."
       />
 
+      {!data.projects.length ? (
+        <EmptyState
+          title="No project usage imported yet"
+          description="Run a scan, then open Discovery if files are found but project rows stay empty."
+          actions={[
+            { label: "Open Discovery", href: "/discovery", variant: "outline" }
+          ]}
+        >
+          <ScanNowButton size="sm" />
+        </EmptyState>
+      ) : (
+        <>
       {data.projectSignals.length ? (
         <Card>
           <CardHeader>
@@ -158,6 +172,8 @@ export default function ProjectAnalyticsPage() {
           </Table>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }

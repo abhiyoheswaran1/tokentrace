@@ -73,4 +73,12 @@ describe("roadmap status", () => {
     expect(status.release.releaseAllowed).toBe(true);
     expect(status.release.blockers).toEqual([]);
   });
+
+  it("keeps the released roadmap ready for patch releases after 0.10.0", () => {
+    const status = buildRoadmapStatus({ packageVersion: "0.10.1" });
+
+    expect(status.release.versionBumped).toBe(true);
+    expect(status.release.releaseAllowed).toBe(true);
+    expect(status.release.blockers).toEqual([]);
+  });
 });

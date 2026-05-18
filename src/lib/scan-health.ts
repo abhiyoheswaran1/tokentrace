@@ -287,7 +287,7 @@ export function buildScanHealth({
     description =
       duplicates > 0
         ? "The latest scan completed and previously imported duplicate files were safely skipped."
-        : "The latest scan completed without parser errors, unsupported files, or unknown pricing.";
+        : "The latest scan completed without parser errors, unsupported files, or unknown model rates.";
     tone = "success";
   }
 
@@ -298,7 +298,7 @@ export function buildScanHealth({
     actions.push(action("Inspect unsupported files", "/discovery", "Unsupported files show where adapters need improvement.", "warning"));
   }
   if (confidence.unknownCostInteractions > 0) {
-    actions.push(action("Configure missing prices", "/pricing", "Unknown prices make cost totals incomplete.", "warning"));
+    actions.push(action("Set missing model rates", "/pricing", "Unknown costs make cost totals incomplete.", "warning"));
   }
   if (confidence.unknownTokenInteractions > 0 || confidence.estimatedTokenInteractions > 0) {
     actions.push(action("Review token confidence", "/parser-debug", "Estimated or unknown token counts should stay visible.", "warning"));

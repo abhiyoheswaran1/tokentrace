@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/empty-state";
+import { ScanNowButton } from "@/components/scan-now-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MonoText, PageHeader } from "@/components/ui/typography";
@@ -21,9 +23,26 @@ export default function DebugPage() {
     <div className="space-y-6">
       <PageHeader
         title="Raw Data"
-        description="Inspect recent scan runs, parser selection, imported records, warnings, and failures."
+        description="Local raw data for scan runs, parser selection, imported records, warnings, and failures."
       />
 
+      <div className="rounded-md border bg-card p-3 text-sm leading-6 text-muted-foreground">
+        <span className="font-medium text-foreground">Local raw data:</span>{" "}
+        Treat file paths and parser metadata as local sensitive data. This page is for debugging imports, not sharing screenshots.
+      </div>
+
+      {!data.scanRuns.length && !data.scanFiles.length ? (
+        <EmptyState
+          title="No raw scan data yet"
+          description="Run a scan to populate local raw data. If nothing appears after a scan, open Scan Health to review roots and parser status."
+          actions={[
+            { label: "Open Scan Health", href: "/diagnostics", variant: "outline" }
+          ]}
+        >
+          <ScanNowButton size="sm" />
+        </EmptyState>
+      ) : (
+        <>
       <Card>
         <CardHeader>
           <CardTitle>Recent Scan Runs</CardTitle>
@@ -97,6 +116,8 @@ export default function DebugPage() {
           </Table>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }

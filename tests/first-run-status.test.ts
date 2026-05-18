@@ -65,10 +65,14 @@ describe("first-run status", () => {
     expect(status.title).toBe("Usage imported with cost repairs");
     expect(status.setupSteps.find((step) => step.id === "health")).toMatchObject({
       state: "warn",
-      action: "Open Doctor"
+      action: "Open Scan Health"
     });
     expect(status.setupSteps.find((step) => step.id === "daily-review")).toMatchObject({
       state: "warn",
+      href: "/repair"
+    });
+    expect(status.primaryAction).toEqual({
+      label: "Open repair",
       href: "/repair"
     });
   });

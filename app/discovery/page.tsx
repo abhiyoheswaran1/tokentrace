@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { EmptyState } from "@/components/empty-state";
+import { ScanNowButton } from "@/components/scan-now-button";
 import { getScanTrustData } from "@/src/lib/analytics";
 import { formatDate } from "@/src/lib/format";
 
@@ -27,7 +28,7 @@ export default function DiscoveryPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="File Discovery Explorer"
+        title="Discovery"
         description="Every file shown here was discovered by passive local filesystem scanning."
       />
       <div className="grid overflow-hidden rounded-md border bg-card sm:grid-cols-2 lg:grid-cols-5">
@@ -55,8 +56,13 @@ export default function DiscoveryPage() {
       {!scanFiles.length ? (
         <EmptyState
           title="No files discovered yet"
-          description="Run a scan from Settings to populate the file discovery explorer."
-        />
+          description="Run a scan from Settings to populate Discovery. If expected folders are missing, add them in Settings."
+          actions={[
+            { label: "Add folder", href: "/settings", variant: "outline" }
+          ]}
+        >
+          <ScanNowButton size="sm" />
+        </EmptyState>
       ) : (
         <Card>
           <CardHeader>

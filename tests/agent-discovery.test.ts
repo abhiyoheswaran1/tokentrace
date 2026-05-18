@@ -16,7 +16,9 @@ describe("agent discovery manifest", () => {
     expect(manifest.product).toMatchObject({
       name: "TokenTrace",
       packageName: "tokentrace",
-      version: "0.9.0"
+      version: "0.9.0",
+      homepage: "https://www.abhiyoheswaran.com/apps/tokentrace",
+      repository: "https://github.com/abhiyoheswaran1/tokentrace"
     });
     expect(manifest.discoveryCommands).toEqual([
       ["tokentrace", "agent", "--json"],

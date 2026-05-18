@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MonoText, PageHeader } from "@/components/ui/typography";
 import { EmptyState } from "@/components/empty-state";
+import { ScanNowButton } from "@/components/scan-now-button";
 import { getScanTrustData } from "@/src/lib/analytics";
 
 export const dynamic = "force-dynamic";
@@ -25,8 +26,8 @@ export default async function ParserDebugPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Parser Debug"
-        description="Inspect adapter selection, parser confidence, extraction confidence, warnings, and failures."
+        title="Parsers"
+        description="Inspect adapter selection, parser confidence, extracted tokens, warnings, and failures."
       />
 
       <div className="rounded-md border bg-card p-3">
@@ -48,11 +49,16 @@ export default async function ParserDebugPage({
         <EmptyState
           title="No parser results yet"
           description="Run a scan from Settings to see adapter choices, warnings, and parser confidence."
-        />
+          actions={[
+            { label: "Open Scan Health", href: "/diagnostics", variant: "outline" }
+          ]}
+        >
+          <ScanNowButton size="sm" />
+        </EmptyState>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Parser Results</CardTitle>
+            <CardTitle>Parser review</CardTitle>
             <CardDescription>
               {selectedSource
                 ? "Parser evidence for the selected source file."

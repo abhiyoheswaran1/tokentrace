@@ -2,18 +2,11 @@
 
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import type { TrendPoint } from "@/src/lib/analytics";
 import { formatCurrency, formatShortDate, formatTokens } from "@/src/lib/format";
 import { Button } from "@/components/ui/button";
+import { useChartSize } from "@/components/charts/use-chart-size";
 
 export type TrendBucket = "daily" | "weekly" | "monthly";
 export type TrendWindow = "30d" | "60d" | "90d" | "all";
@@ -82,7 +75,7 @@ export function TrendControls({
       </div>
       <div className="hidden h-6 w-px bg-border sm:block" />
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Trend window</span>
+        <span className="text-xs font-medium text-muted-foreground">Display window</span>
         {trendWindowOptions.map((item) => (
           <Button
             key={item.key}
@@ -129,6 +122,7 @@ export function TrendChart({
 }) {
   const [internalPeriod, setInternalPeriod] = useState<TrendBucket>("daily");
   const [internalTrendWindow, setInternalTrendWindow] = useState<TrendWindow>(defaultWindow);
+  const { ref: chartRef, size } = useChartSize<HTMLDivElement>();
 
   useEffect(() => {
     if (!controlledTrendWindow) setInternalTrendWindow(defaultWindow);
@@ -174,9 +168,14 @@ export function TrendChart({
           onTrendWindowChange={setInternalTrendWindow}
         />
       ) : null}
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+      <div ref={chartRef} className="h-72 min-w-0">
+        {size.width > 0 && size.height > 0 ? (
+          <AreaChart
+            width={size.width}
+            height={size.height}
+            data={chartData}
+            margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
+          >
             <defs>
               <linearGradient id={`trend-${metric}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={color} stopOpacity={0.35} />
@@ -213,7 +212,7 @@ export function TrendChart({
               strokeWidth={2}
             />
           </AreaChart>
-        </ResponsiveContainer>
+        ) : null}
       </div>
     </div>
   );

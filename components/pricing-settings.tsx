@@ -162,12 +162,12 @@ export function PricingSettings({
             <div>
               <CardTitle>Repair Context</CardTitle>
               <CardDescription>
-                Pricing was opened from an unknown-cost workflow. Save a complete price row to recalculate local interactions.
+                Model Rates was opened from an unknown-cost workflow. Save a complete rate row to recalculate local interactions.
               </CardDescription>
             </div>
             {returnTo ? (
               <Button asChild variant="outline" size="sm">
-                <a href={returnTo}>Return to repair item</a>
+                <a href={returnTo}>Open repair</a>
               </Button>
             ) : null}
           </CardHeader>
@@ -179,7 +179,7 @@ export function PricingSettings({
               </div>
               <div className="border-t p-4 sm:border-l sm:border-t-0">
                 <div className="text-xs font-medium text-muted-foreground">Suggested row</div>
-                <div className="mt-1 font-medium">{focusedSuggestion.suggestedModel ?? "Add or verify pricing"}</div>
+                <div className="mt-1 font-medium">{focusedSuggestion.suggestedModel ?? "Add or verify model rate"}</div>
               </div>
               <div className="border-t p-4 sm:border-l sm:border-t-0">
                 <div className="text-xs font-medium text-muted-foreground">Evidence</div>
@@ -230,11 +230,11 @@ export function PricingSettings({
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
                         <a href={suggestion.repairHref} className="font-medium text-primary underline-offset-4 hover:underline">
-                          {suggestion.repairHref.startsWith("/pricing") ? "Open pricing" : "Open parser"}
+                          {suggestion.repairHref.startsWith("/pricing") ? "Set model rate" : "Review parser"}
                         </a>
                         {suggestion.repairHref !== suggestion.parserHref ? (
                           <a href={suggestion.parserHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                            Parser
+                            Review parser
                           </a>
                         ) : null}
                       </div>
@@ -250,7 +250,7 @@ export function PricingSettings({
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>Model Pricing</CardTitle>
+            <CardTitle>Model Rates</CardTitle>
             <CardDescription>
               Prices are per 1M tokens. Seed values use public provider list prices and remain editable.
             </CardDescription>
@@ -369,7 +369,7 @@ export function PricingSettings({
               {visibleRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">
-                    No pricing rows match this filter.
+                    No model-rate rows match this filter.
                   </TableCell>
                 </TableRow>
               ) : null}
@@ -380,7 +380,7 @@ export function PricingSettings({
               <span>{message}</span>
               {messageHref ? (
                 <a href={messageHref} className="font-medium text-primary underline-offset-4 hover:underline">
-                  Return to repair item
+                  Open repair
                 </a>
               ) : null}
             </div>

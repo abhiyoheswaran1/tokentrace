@@ -39,7 +39,7 @@ function plural(count: number, singular: string, pluralValue = `${singular}s`) {
 function unknownCostCauseItems(health: ScanHealth) {
   const causes = health.costCoverage.unknownCauses;
   return [
-    causes.missingPricing > 0 ? `${plural(causes.missingPricing, "missing pricing", "missing pricing")}` : null,
+    causes.missingPricing > 0 ? `${plural(causes.missingPricing, "missing model rate", "missing model rates")}` : null,
     causes.missingModelName > 0 ? `${plural(causes.missingModelName, "missing model")}` : null,
     causes.missingTokenCount > 0 ? `${plural(causes.missingTokenCount, "missing token count")}` : null,
     causes.other > 0 ? `${plural(causes.other, "other")}` : null
@@ -146,7 +146,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
 
           <div className="border-y py-3">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold leading-tight">Pricing transparency</div>
+              <div className="text-sm font-semibold leading-tight">Model-rate transparency</div>
               <Badge variant={health.costCoverage.unknown > 0 ? "warning" : "success"}>
                 {percent(pricedPercent)} priced
               </Badge>
@@ -159,7 +159,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
             <div className="mt-1 text-xs text-muted-foreground">
               {costCauseItems.length
                 ? `Unknown cost causes: ${costCauseItems.join(", ")}.`
-                : "Unknown cost usually means missing model pricing or missing token counts."}
+                : "Unknown cost usually means missing model rates or missing token counts."}
             </div>
           </div>
         </div>

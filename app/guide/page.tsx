@@ -1,9 +1,23 @@
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Bot, CheckCircle2, CircleAlert, Terminal } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Bot,
+  CheckCircle2,
+  CircleAlert,
+  ClipboardList,
+  Database,
+  ExternalLink,
+  FileJson,
+  Gauge,
+  LockKeyhole,
+  Search,
+  Wrench
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScanNowButton } from "@/components/scan-now-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FieldLabel, MonoText, PageHeader } from "@/components/ui/typography";
 import { getScanTrustData } from "@/src/lib/analytics";
@@ -13,45 +27,95 @@ import packageJson from "@/package.json";
 
 export const dynamic = "force-dynamic";
 
-const quickStart = [
+const PRODUCT_WEBSITE_URL = "https://www.abhiyoheswaran.com/apps/tokentrace";
+
+const guideNav = [
+  ["#start", "Start here", "First scan to first evidence"],
+  ["#daily-loop", "Daily loop", "Where to look during normal use"],
+  ["#status-line", "Claude Code status line", "ctx, cost, processed, cache"],
+  ["#agent-handoff", "Agent handoff", "Machine-readable entry points"],
+  ["#troubleshooting", "Troubleshooting", "Blank states and repair paths"]
+];
+
+const firstRunSteps = [
   {
-    title: "Run your first scan",
-    detail: "Open Settings, confirm the default Claude Code and Codex folders, then run Scan now.",
+    number: "1",
+    title: "Confirm scan roots",
+    page: "Settings",
+    detail: "Check Claude Code, Codex, OpenAI, project, and custom folders that are readable on this machine.",
     href: "/settings",
-    action: "Open Settings"
+    action: "Open settings"
   },
   {
-    title: "Check data health",
-    detail: "Use Doctor to verify imported records, ignored support files, parser warnings, and pricing coverage.",
+    number: "2",
+    title: "Run your first scan",
+    page: "Settings",
+    detail: "Import normalized local usage records into the local SQLite database.",
+    href: "/settings",
+    action: "Scan now",
+    actionKind: "scan"
+  },
+  {
+    number: "3",
+    title: "Review Scan Health",
+    page: "Scan Health",
+    detail: "Review files scanned, records imported, ignored support files, parser warnings, and model-rate coverage.",
     href: "/diagnostics",
-    action: "Open Doctor"
+    action: "Open Scan Health"
   },
   {
-    title: "Review costs",
-    detail: "Pricing controls model rates. Unknown cost means TokenTrace needs a model name, token count, or price.",
-    href: "/pricing",
-    action: "Open Pricing"
+    number: "4",
+    title: "Install Claude Code status line",
+    page: "Guide",
+    detail: "Use the setup command when you want live ctx, cost, processed, and cache labels while coding.",
+    href: "#status-line",
+    action: "View setup"
   },
   {
+    number: "5",
     title: "Inspect evidence",
-    detail: "Sessions, Evidence, Parsers, and Discovery show where every important number came from.",
+    page: "Sessions",
+    detail: "Use Sessions, Evidence, Repair, and Projects after the first useful import.",
     href: "/sessions",
     action: "Open Sessions"
   }
 ];
 
-const firstRunSteps = [
-  ["1", "Confirm scan roots", "Settings", "TokenTrace checks Claude Code, Codex, OpenAI, project, and custom folders that are readable on this machine."],
-  ["2", "Run Scan now", "Settings", "The scan imports normalized local usage records into the local SQLite database."],
-  ["3", "Open Doctor", "Doctor", "Review files scanned, records imported, ignored support files, parser warnings, and pricing coverage."],
-  ["4", "Install Claude Code status line", "Guide", "Use the setup command when you want live ctx, cost, processed, and cache labels while coding."],
-  ["5", "Start daily review", "Overview", "Use Overview, Sessions, Evidence, Repair, and Projects after the first useful import."]
+const dailyLoop = [
+  {
+    title: "Read the pulse",
+    page: "Overview",
+    detail: "Check current period usage, cost, sessions, unknown cost, and the latest trend window before chasing details.",
+    href: "/",
+    icon: Gauge
+  },
+  {
+    title: "Open the evidence",
+    page: "Evidence",
+    detail: "Trace a total back to sessions, source files, parser confidence, and model-rate state.",
+    href: "/evidence",
+    icon: Search
+  },
+  {
+    title: "Repair what blocks trust",
+    page: "Repair",
+    detail: "Unknown cost usually needs a known model name, nonzero tokens, or an editable provider model rate.",
+    href: "/repair",
+    icon: Wrench
+  },
+  {
+    title: "Review Scan Health",
+    page: "Scan Health",
+    detail: "Use scan health when data looks stale, parser warnings appear, or a folder imported fewer records than expected.",
+    href: "/diagnostics",
+    icon: ClipboardList
+  }
 ];
 
 const statusLineTerms = [
   {
     label: "ctx",
-    meaning: "Current Claude context-window usage. This is the number to watch when you are close to the context limit."
+    meaning: "Current Claude context-window usage. Watch this when you are close to the context limit."
   },
   {
     label: "cost",
@@ -67,20 +131,33 @@ const statusLineTerms = [
   },
   {
     label: "priced",
-    meaning: "Claude provided a usable status-line cost. If this says pricing repair, inspect Pricing and Repair."
+    meaning: "Claude provided a usable status-line cost. If this says pricing repair, inspect Model Rates and Repair."
   }
+];
+
+const agentSteps = [
+  ["Discover", "tokentrace agent --json", "No", "Read capabilities, workflows, privacy rules, and guardrails."],
+  ["Inspect aliases", "tokentrace capabilities --json", "No", "Return the same manifest for agents that look for capabilities first."],
+  ["Import", "tokentrace scan --json", "Yes", "Refresh local usage data before making claims."],
+  ["Verify", "tokentrace doctor --json", "No", "Check parser trust, model-rate coverage, scan freshness, and support status."],
+  ["Explain", "tokentrace evidence --json", "No", "Trace aggregate numbers back to sessions, files, and model-rate rows."]
+];
+
+const roadmapSteps = [
+  ["Roadmap status", "tokentrace roadmap --json", "Read implemented cards, evidence paths, required checks, and release status."],
+  ["Dashboard API", "/api/roadmap", "Fetch the same roadmap status from a running local dashboard."]
 ];
 
 const workflows = [
   {
     problem: "No records imported",
-    path: "Settings -> Scan now, then Doctor",
+    path: "Settings -> Scan now, then Scan Health",
     action: "Confirm readable folders and check whether files were ignored as known support files."
   },
   {
     problem: "Unknown cost",
-    path: "Repair, Pricing, Evidence",
-    action: "Find whether the missing piece is model name, token count, or editable model price."
+    path: "Repair, Model Rates, Evidence",
+    action: "Find whether the missing piece is model name, token count, or editable provider rate."
   },
   {
     problem: "High token usage",
@@ -89,43 +166,58 @@ const workflows = [
   },
   {
     problem: "Parser warnings",
-    path: "Parsers, Discovery, Doctor",
+    path: "Parsers, Discovery, Scan Health",
     action: "Check parser confidence, unsupported files, and imported-with-errors rows before trusting an adapter."
   }
-];
-
-const agentSteps = [
-  ["Discover", "tokentrace agent --json", "No", "Read capabilities, workflows, privacy rules, and guardrails."],
-  ["Inspect aliases", "tokentrace capabilities --json", "No", "Return the same manifest for agents that look for capabilities first."],
-  ["Import", "tokentrace scan --json", "Yes", "Refresh local usage data before making claims."],
-  ["Verify", "tokentrace doctor --json", "No", "Check parser trust, pricing coverage, scan freshness, and support status."],
-  ["Explain", "tokentrace evidence --json", "No", "Trace aggregate numbers back to sessions, files, and pricing rows."]
-];
-
-const roadmapSteps = [
-  ["Roadmap status", "tokentrace roadmap --json", "Read implemented cards, evidence paths, required checks, and release status."],
-  ["Dashboard API", "/api/roadmap", "Fetch the same roadmap status from a running local dashboard."]
 ];
 
 const pageMap = [
   ["Overview", "Top-level totals, trends, repair queue, guardrails, and recommended next actions."],
   ["Sessions", "Per-session evidence with models, costs, cache activity, parser provenance, and tool calls."],
-  ["Pricing", "Editable model prices used for dashboard cost estimates and unknown-cost repair."],
-  ["Doctor", "First-run checklist, scan health, support matrix, and diagnostics for missing data."],
+  ["Model Rates", "Editable provider model rates used for dashboard cost estimates and unknown-cost repair."],
+  ["Scan Health", "First-run checklist, scan health, supported file types, and diagnostics for missing data."],
   ["Discovery", "Recently scanned files grouped by parser, source family, status, and import yield."],
   ["Parsers", "Adapter choices, warnings, confidence, and parser repair clues for local files."]
 ];
 
 const emptyStatePlaybook = [
-  ["No data", "Run Scan now from Settings, then use Doctor if records stay at zero."],
+  ["No data", "Run Scan now from Settings, then use Scan Health if records stay at zero."],
   ["No logs found", "Add a custom folder or use Claude Code, Codex, or another supported CLI before scanning again."],
-  ["Unknown pricing", "Open Repair or Pricing to decide whether the missing piece is model name, token count, or price."],
-  ["Parser warnings", "Open Discovery and Parser Debug to separate unsupported files from imported-with-errors rows."],
+  ["Unknown cost", "Open repair or Model Rates to decide whether the missing piece is model name, token count, or provider rate."],
+  ["Parser warnings", "Open Discovery and Parsers to separate unsupported files from imported-with-errors rows."],
   ["Sandbox smoke skipped", "Local sandbox runs can skip server binding checks. Run the packed smoke or release check outside that constraint before release."]
 ];
 
 function statusTone(ok: boolean) {
   return ok ? "text-primary" : "text-amber-700";
+}
+
+function SectionTitle({
+  id,
+  kicker,
+  title,
+  children
+}: {
+  id: string;
+  kicker: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div id={id} className="scroll-mt-6 border-b p-4">
+      <FieldLabel>{kicker}</FieldLabel>
+      <h2 className="mt-2 text-lg font-semibold leading-tight">{title}</h2>
+      <p className="mt-1 max-w-[72ch] text-sm leading-6 text-muted-foreground">{children}</p>
+    </div>
+  );
+}
+
+function CommandBlock({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="overflow-x-auto rounded-md border bg-muted/40 p-3">
+      <MonoText>{children}</MonoText>
+    </div>
+  );
 }
 
 export default function GuidePage() {
@@ -150,13 +242,13 @@ export default function GuidePage() {
     {
       label: "Unknown cost",
       value: `${unknownCosts.toLocaleString()} unknown costs`,
-      detail: unknownCosts > 0 ? "Open Repair or Pricing." : "Cost coverage is clear.",
+      detail: unknownCosts > 0 ? "Open repair or Model Rates." : "Cost coverage is clear.",
       ok: unknownCosts === 0
     },
     {
-      label: "Pricing",
-      value: `${scanTrust.pricedModelCount.toLocaleString()} priced models`,
-      detail: scanTrust.pricedModelCount > 0 ? "Editable prices are loaded." : "Seed or add model prices.",
+      label: "Model rates",
+      value: `${scanTrust.pricedModelCount.toLocaleString()} rated models`,
+      detail: scanTrust.pricedModelCount > 0 ? "Editable provider rates are loaded." : "Seed or add model rates.",
       ok: scanTrust.pricedModelCount > 0
     }
   ];
@@ -165,432 +257,368 @@ export default function GuidePage() {
     <div className="space-y-6">
       <PageHeader
         title="TokenTrace Guide"
-        description="Set up local scans, read Claude Code status lines, and trace token or cost numbers back to evidence."
-        actions={
-          <Button asChild>
-            <Link href="/settings">
-              <Terminal className="mr-2 h-4 w-4" />
-              Scan now
-            </Link>
-          </Button>
-        }
+        description="A practical manual for scanning local AI CLI usage, reading status-line numbers, and drilling from summaries to evidence."
+        actions={<ScanNowButton />}
       />
 
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Your setup status</CardTitle>
-            <CardDescription>
-              This guide reads local scan health so the next step is grounded in your current TokenTrace data.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid border-y md:grid-cols-2 xl:grid-cols-4">
-              {setupStatus.map((item) => (
-                <div key={item.label} className="min-w-0 p-3">
-                  <FieldLabel>{item.label}</FieldLabel>
-                  <div className={`mt-2 text-sm font-semibold leading-tight tabular-nums ${statusTone(item.ok)}`}>
-                    {item.value}
-                  </div>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.detail}</p>
-                </div>
-              ))}
+      <section className="rounded-lg border bg-card">
+        <div className="flex flex-col gap-3 border-b p-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold leading-tight">Setup status</h2>
+            <p className="mt-1 max-w-[72ch] text-sm leading-6 text-muted-foreground">
+              Live local health for the next action: latest scan, imported records, unknown cost, and model-rate coverage.
+            </p>
+          </div>
+          <Badge variant="secondary" className="w-fit">
+            No telemetry
+          </Badge>
+        </div>
+        <div className="grid divide-y md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          {setupStatus.map((item) => (
+            <div key={item.label} className="min-w-0 p-4">
+              <FieldLabel>{item.label}</FieldLabel>
+              <div className={`mt-2 text-sm font-semibold leading-tight tabular-nums ${statusTone(item.ok)}`}>
+                {item.value}
+              </div>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.detail}</p>
             </div>
-            {warningCount > 0 ? (
-              <p className="mt-3 text-sm leading-6 text-amber-800">
-                Doctor has {warningCount.toLocaleString()} warning or error notes to review before trusting the latest scan.
-              </p>
-            ) : null}
-          </CardContent>
-        </Card>
+          ))}
+        </div>
+        {warningCount > 0 ? (
+          <div className="border-t px-4 py-3 text-sm leading-6 text-amber-800">
+            Scan Health has {warningCount.toLocaleString()} warning or error notes to review before trusting the latest scan.
+          </div>
+        ) : null}
       </section>
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {quickStart.map((item) => (
-          <Card key={item.title}>
-            <CardHeader>
-              <CardTitle>{item.title}</CardTitle>
-              <CardDescription>{item.detail}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild size="sm" variant="outline">
-                <Link href={item.href}>
-                  {item.action}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
+      <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
+        <aside className="h-fit rounded-lg border bg-card p-3 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:self-start">
+          <div className="flex items-center gap-2 px-2 py-1 text-sm font-semibold">
+            <BookOpen className="h-4 w-4 text-primary" />
+            Guide sections
+          </div>
+          <nav aria-label="Guide sections" className="mt-2 space-y-1">
+            {guideNav.map(([href, label, detail]) => (
+              <a
+                key={href}
+                href={href}
+                className="block rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <span className="block font-medium text-foreground">{label}</span>
+                <span className="mt-1 block text-xs leading-5">{detail}</span>
+              </a>
+            ))}
+          </nav>
+          <div className="mt-3 border-t px-2 pt-3 text-xs leading-5 text-muted-foreground">
+            <p>
+              TokenTrace is local-first. Rate refreshes fetch public model-rate data; usage logs and prompts are not sent with that request.
+            </p>
+            <a
+              href={PRODUCT_WEBSITE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex items-center gap-1 font-medium text-primary underline-offset-2 hover:underline"
+            >
+              Product website
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        </aside>
 
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>First-run guided setup</CardTitle>
-            <CardDescription>
-              Get to the first useful evidence without a separate tutorial mode or cloud account.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ol className="grid overflow-hidden rounded-md border md:grid-cols-5">
-              {firstRunSteps.map(([number, title, page, detail], index) => (
-                <li
-                  key={title}
-                  className={`min-w-0 p-3 ${index > 0 ? "border-t border-border md:border-l md:border-t-0" : ""}`}
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold tabular-nums text-muted-foreground">
-                      {number}
-                    </span>
-                    <Badge variant="secondary">{page}</Badge>
+        <div className="min-w-0 space-y-6">
+          <section className="rounded-lg border bg-card">
+            <SectionTitle id="start" kicker="Start here" title="Get from install to evidence">
+              Run a scan, confirm imported records, then open the page that explains the number you care about.
+            </SectionTitle>
+            <ol className="divide-y">
+              {firstRunSteps.map((step) => (
+                <li key={step.title} className="grid gap-3 p-4 md:grid-cols-[2.5rem_minmax(0,1fr)_auto] md:items-start">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-muted/40 text-sm font-semibold tabular-nums text-muted-foreground">
+                    {step.number}
                   </div>
-                  <div className="mt-2 text-sm font-semibold leading-tight">{title}</div>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{detail}</p>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm font-semibold leading-tight">{step.title}</h3>
+                      <Badge variant="secondary">{step.page}</Badge>
+                    </div>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">{step.detail}</p>
+                  </div>
+                  {step.actionKind === "scan" ? (
+                    <ScanNowButton variant="outline" size="sm" className="w-fit" />
+                  ) : (
+                    <Button asChild variant="outline" size="sm" className="w-fit">
+                      <Link href={step.href}>
+                        {step.action}
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  )}
                 </li>
               ))}
             </ol>
-          </CardContent>
-        </Card>
-      </section>
+          </section>
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1fr)]">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Bot className="h-4 w-4 text-primary" />
-              <CardTitle>Agent discovery</CardTitle>
+          <section className="rounded-lg border bg-card">
+            <SectionTitle id="daily-loop" kicker="Daily loop" title="Use one route per question">
+              Start broad, then move to evidence only when a number needs explanation or repair.
+            </SectionTitle>
+            <div className="divide-y">
+              {dailyLoop.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.title} className="grid gap-3 p-4 md:grid-cols-[2rem_minmax(0,1fr)_auto] md:items-start">
+                    <Icon className="mt-0.5 h-5 w-5 text-primary" />
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-semibold leading-tight">{item.title}</h3>
+                        <Badge variant="secondary">{item.page}</Badge>
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.detail}</p>
+                    </div>
+                    <Link href={item.href} className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline">
+                      Open
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
-            <CardDescription>
-              Coding agents can inspect TokenTrace before scanning, opening the dashboard, or changing local data.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-muted-foreground">
-            <div className="rounded-md border bg-muted/40 p-3">
-              <FieldLabel>Read-only manifest</FieldLabel>
-              <div className="mt-2 overflow-x-auto rounded-md bg-card p-3">
-                <MonoText>tokentrace agent --json</MonoText>
-              </div>
-              <p className="mt-2">
-                The alias <MonoText>tokentrace capabilities --json</MonoText> returns the same versioned contract.
-              </p>
-            </div>
-            <p>
-              The manifest lists safe JSON commands, local-first privacy rules, Claude Code setup, Codex sidecar fallback, and guardrails
-              for evidence-backed reporting.
-            </p>
-            <p>
-              Package readers can also inspect <MonoText>TOKENTRACE_AGENT.md</MonoText>, <MonoText>llms.txt</MonoText>, and{" "}
-              <MonoText>docs/agent-discovery.schema.json</MonoText>.
-            </p>
-            <p>
-              When the dashboard is already running, fetch the same manifest from <MonoText>/api/agent</MonoText> or{" "}
-              <MonoText>/api/capabilities</MonoText>.
-            </p>
-            <p>
-              Use <MonoText>tokentrace roadmap --json</MonoText> or <MonoText>/api/roadmap</MonoText> to inspect the detailed 0.10.0
-              implementation and release status.
-            </p>
-          </CardContent>
-        </Card>
+          </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Agent quickstart</CardTitle>
-            <CardDescription>Use discovery first, then verify local data before summarizing usage.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="table-scroll">
-              <Table className="min-w-[46rem]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Step</TableHead>
-                    <TableHead>Command</TableHead>
-                    <TableHead>Mutates local state</TableHead>
-                    <TableHead>Purpose</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {agentSteps.map(([step, command, mutates, purpose]) => (
-                    <TableRow key={step}>
-                      <TableCell className="font-medium">{step}</TableCell>
-                      <TableCell>
-                        <MonoText>{command}</MonoText>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={mutates === "Yes" ? "warning" : "secondary"}>{mutates}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm leading-6 text-muted-foreground">{purpose}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Release readiness</CardTitle>
-            <CardDescription>0.10.0 release status is backed by package, smoke, and ProjScan gates.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid overflow-hidden rounded-md border md:grid-cols-3">
-              <div className="p-3">
-                <FieldLabel>Implemented cards</FieldLabel>
-                <div className="mt-1 text-sm font-semibold">{roadmapStatus.cards.length.toLocaleString()} cards</div>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  {roadmapStatus.cards.every((card) => card.status === "implemented") ? "All roadmap cards report implemented." : "Some cards still need work."}
-                </p>
-              </div>
-              <div className="border-t p-3 md:border-l md:border-t-0">
-                <FieldLabel>Required gates</FieldLabel>
-                <div className="mt-1 text-sm font-semibold">{roadmapStatus.verification.requiredCommands.length.toLocaleString()} checks</div>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Includes verify, build, CLI smoke, packed smoke, package inspection, and ProjScan.
-                </p>
-              </div>
-              <div className="border-t p-3 md:border-l md:border-t-0">
-                <FieldLabel>Release status</FieldLabel>
-                <div className="mt-1 text-sm font-semibold">releaseAllowed: {String(roadmapStatus.release.releaseAllowed)}</div>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Current package version is {roadmapStatus.packageVersion}; release status depends on explicit maintainer approval and{" "}
-                  <MonoText>npm run release:check</MonoText>.
-                </p>
-              </div>
-            </div>
-            <div className="table-scroll">
-              <Table className="min-w-[44rem]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Surface</TableHead>
-                    <TableHead>Command or path</TableHead>
-                    <TableHead>What it returns</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {roadmapSteps.map(([surface, command, purpose]) => (
-                    <TableRow key={surface}>
-                      <TableCell className="font-medium">{surface}</TableCell>
-                      <TableCell>
-                        <MonoText>{command}</MonoText>
-                      </TableCell>
-                      <TableCell className="text-sm leading-6 text-muted-foreground">{purpose}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.75fr)]">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-primary" />
-              <CardTitle>Claude Code status line</CardTitle>
-            </div>
-            <CardDescription>
-              Add TokenTrace to Claude Code when you want context, cost, processed usage, and cache activity visible while you work.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-md border bg-muted/40 p-3">
-              <FieldLabel>Setup command</FieldLabel>
-              <div className="mt-2 overflow-x-auto rounded-md bg-card p-3">
-                <MonoText>tokentrace statusline setup claude</MonoText>
-              </div>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Paste the printed statusLine block into <MonoText>~/.claude/settings.json</MonoText>. The command Claude runs is{" "}
-                <MonoText>tokentrace statusline claude</MonoText>.
-              </p>
-            </div>
-
-            <div className="rounded-md border bg-card p-3">
-              <FieldLabel>Example output</FieldLabel>
-              <div className="mt-2 overflow-x-auto whitespace-nowrap rounded-md bg-muted/40 p-3">
-                <MonoText>TokenTrace | Opus | ctx 12% | cost $8.77 | processed 11.69M tokens | cache 11.64M | priced</MonoText>
-              </div>
-            </div>
-
-            <div className="table-scroll">
-              <Table className="min-w-[42rem]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Label</TableHead>
-                    <TableHead>Meaning</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {statusLineTerms.map((item) => (
-                    <TableRow key={item.label}>
-                      <TableCell>
-                        <Badge variant="secondary">{item.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm leading-6 text-muted-foreground">{item.meaning}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>How to read high numbers</CardTitle>
-            <CardDescription>
-              A high processed total does not mean the current prompt contains that many tokens.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-            <div className="flex gap-3">
-              <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-primary" />
-              <p>
-                Use <span className="font-medium text-foreground">ctx</span> for current context-window pressure.
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-primary" />
-              <p>
-                Use <span className="font-medium text-foreground">processed</span> and <span className="font-medium text-foreground">cache</span>{" "}
-                to explain cost and transcript activity.
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <CircleAlert className="mt-1 h-4 w-4 shrink-0 text-amber-700" />
-              <p>
-                If cost looks surprising, compare status-line cost with imported dashboard sessions after your next scan.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Common workflows</CardTitle>
-            <CardDescription>Start with the symptom, then open the page that exposes the evidence.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="table-scroll">
-              <Table className="min-w-[46rem]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Symptom</TableHead>
-                    <TableHead>Where to go</TableHead>
-                    <TableHead>What to check</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {workflows.map((item) => (
-                    <TableRow key={item.problem}>
-                      <TableCell className="font-medium">{item.problem}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{item.path}</TableCell>
-                      <TableCell className="text-sm leading-6 text-muted-foreground">{item.action}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Page map</CardTitle>
-            <CardDescription>Use these pages as a local evidence trail rather than a generic dashboard.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y border-y">
-              {pageMap.map(([name, detail]) => (
-                <div key={name} className="grid gap-2 py-3 sm:grid-cols-[120px_minmax(0,1fr)]">
-                  <div className="text-sm font-medium text-foreground">{name}</div>
-                  <div className="text-sm leading-6 text-muted-foreground">{detail}</div>
+          <section className="rounded-lg border bg-card">
+            <SectionTitle id="status-line" kicker="Claude Code status line" title="Read live numbers without mixing up context and processed usage">
+              The status line is for live coding. The dashboard is for scanned historical evidence.
+            </SectionTitle>
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_18rem]">
+              <div className="space-y-4 p-4">
+                <div>
+                  <FieldLabel>Setup command</FieldLabel>
+                  <div className="mt-2">
+                    <CommandBlock>tokentrace statusline setup claude</CommandBlock>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    Paste the printed statusLine block into <MonoText>~/.claude/settings.json</MonoText>. Claude then runs{" "}
+                    <MonoText>tokentrace statusline claude</MonoText>.
+                  </p>
                 </div>
-              ))}
+                <div>
+                  <FieldLabel>Example output</FieldLabel>
+                  <div className="mt-2 overflow-x-auto whitespace-nowrap rounded-md border bg-muted/40 p-3">
+                    <MonoText>TokenTrace | Opus | ctx 12% | cost $8.77 | processed 11.69M tokens | cache 11.64M | priced</MonoText>
+                  </div>
+                </div>
+                <div className="table-scroll">
+                  <Table className="min-w-[42rem]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Label</TableHead>
+                        <TableHead>Meaning</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {statusLineTerms.map((item) => (
+                        <TableRow key={item.label}>
+                          <TableCell>
+                            <Badge variant="secondary">{item.label}</Badge>
+                          </TableCell>
+                          <TableCell className="text-sm leading-6 text-muted-foreground">{item.meaning}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+              <div className="border-t p-4 lg:border-l lg:border-t-0">
+                <h3 className="text-sm font-semibold leading-tight">How to read high numbers</h3>
+                <div className="mt-4 space-y-4 text-sm leading-6 text-muted-foreground">
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-primary" />
+                    <p>
+                      Use <span className="font-medium text-foreground">ctx</span> for current context-window pressure.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-primary" />
+                    <p>
+                      Use <span className="font-medium text-foreground">processed</span> and{" "}
+                      <span className="font-medium text-foreground">cache</span> to explain cost and transcript activity.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <CircleAlert className="mt-1 h-4 w-4 shrink-0 text-amber-700" />
+                    <p>If cost looks surprising, compare status-line cost with imported dashboard sessions after your next scan.</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </section>
+          </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Privacy and storage</CardTitle>
-            <CardDescription>No telemetry is required to use TokenTrace.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-            <p>
-              TokenTrace scans local CLI artifacts and stores normalized analytics in the local database shown in Settings.
-            </p>
-            <p>
-              Raw prompts and message bodies stay out of normal views. If raw-content storage is enabled, treat that local database as sensitive.
-            </p>
-            <p>
-              Price refreshes only fetch public model pricing data. Usage logs, prompts, file paths, and analytics are not sent with that request.
-            </p>
-          </CardContent>
-        </Card>
+          <section className="rounded-lg border bg-card">
+            <SectionTitle id="agent-handoff" kicker="Agent handoff" title="Give coding agents a stable entry point">
+              Agents should discover capabilities first, scan only when needed, then cite evidence before summarizing usage.
+            </SectionTitle>
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,0.82fr)_minmax(18rem,0.55fr)]">
+              <div className="p-4">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold leading-tight">Agent discovery</h3>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  <MonoText>tokentrace agent --json</MonoText> returns workflows, privacy rules, guardrails, and safe JSON commands.
+                  The alias <MonoText>tokentrace capabilities --json</MonoText> returns the same versioned contract.
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <CommandBlock>tokentrace agent --json</CommandBlock>
+                  <CommandBlock>tokentrace capabilities --json</CommandBlock>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Package readers can inspect <MonoText>TOKENTRACE_AGENT.md</MonoText>, <MonoText>llms.txt</MonoText>, and{" "}
+                  <MonoText>docs/agent-discovery.schema.json</MonoText>. A running dashboard exposes <MonoText>/api/agent</MonoText>{" "}
+                  and <MonoText>/api/capabilities</MonoText>.
+                </p>
+              </div>
+              <div className="border-t p-4 lg:border-l lg:border-t-0">
+                <div className="flex items-center gap-2">
+                  <FileJson className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold leading-tight">Release readiness</h3>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Current package version is {roadmapStatus.packageVersion}. The 0.10.0 roadmap is released, and 0.10.1 carries
+                  the current guide, scan, evidence, and overview polish.
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <FieldLabel>Implemented cards</FieldLabel>
+                    <div className="mt-1 font-semibold">{roadmapStatus.cards.length.toLocaleString()} cards</div>
+                  </div>
+                  <div>
+                    <FieldLabel>Release status</FieldLabel>
+                    <div className="mt-1 font-semibold">releaseAllowed: {String(roadmapStatus.release.releaseAllowed)}</div>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Run <MonoText>npm run release:check</MonoText> only when the maintainer asks for release preparation.
+                </p>
+              </div>
+            </div>
+            <div className="border-t p-4">
+              <h3 className="text-sm font-semibold leading-tight">Agent quickstart</h3>
+              <div className="table-scroll mt-3">
+                <Table className="min-w-[46rem]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Step</TableHead>
+                      <TableHead>Command</TableHead>
+                      <TableHead>Mutates local state</TableHead>
+                      <TableHead>Purpose</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {agentSteps.map(([step, command, mutates, purpose]) => (
+                      <TableRow key={step}>
+                        <TableCell className="font-medium">{step}</TableCell>
+                        <TableCell>
+                          <MonoText>{command}</MonoText>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={mutates === "Yes" ? "warning" : "secondary"}>{mutates}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm leading-6 text-muted-foreground">{purpose}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+            <div className="border-t p-4">
+              <h3 className="text-sm font-semibold leading-tight">Roadmap surfaces</h3>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                Use <MonoText>tokentrace roadmap --json</MonoText> or <MonoText>/api/roadmap</MonoText> for implementation status and release gates.
+              </p>
+              <div className="table-scroll mt-3">
+                <Table className="min-w-[44rem]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Surface</TableHead>
+                      <TableHead>Command or path</TableHead>
+                      <TableHead>What it returns</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {roadmapSteps.map(([surface, command, purpose]) => (
+                      <TableRow key={surface}>
+                        <TableCell className="font-medium">{surface}</TableCell>
+                        <TableCell>
+                          <MonoText>{command}</MonoText>
+                        </TableCell>
+                        <TableCell className="text-sm leading-6 text-muted-foreground">{purpose}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Troubleshooting checklist</CardTitle>
-            <CardDescription>Use this sequence when the dashboard does not match what you expected.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ol className="space-y-3 text-sm leading-6 text-muted-foreground">
-              <li>
-                <span className="font-medium text-foreground">1. Scan again.</span> Recent Claude Code or Codex sessions appear after a scan.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">2. Open Doctor.</span> Confirm files scanned, records imported, pricing coverage, and parser warnings.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">3. Check Discovery.</span> Confirm whether files were imported, ignored, unsupported, or failed.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">4. Repair pricing.</span> Unknown cost usually needs a known model, nonzero tokens, or a model price.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">5. Inspect Sessions.</span> Verify cache-heavy usage before treating processed totals as fresh prompt growth.
-              </li>
-            </ol>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Empty and error states</CardTitle>
-            <CardDescription>When a surface is blank or blocked, start with the next repairable action.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>State</TableHead>
-                  <TableHead>Next action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {emptyStatePlaybook.map(([state, action]) => (
-                  <TableRow key={state}>
-                    <TableCell className="font-medium">{state}</TableCell>
-                    <TableCell className="text-sm leading-6 text-muted-foreground">{action}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </section>
+          <section className="rounded-lg border bg-card">
+            <SectionTitle id="troubleshooting" kicker="Troubleshooting" title="Repair the smallest thing that blocks trust">
+              Use the symptom to choose a page, then follow the evidence path instead of guessing from a summary total.
+            </SectionTitle>
+            <div className="grid gap-0 lg:grid-cols-2">
+              <div className="p-4">
+                <h3 className="text-sm font-semibold leading-tight">Common workflows</h3>
+                <div className="mt-3 divide-y border-y">
+                  {workflows.map((item) => (
+                    <div key={item.problem} className="grid gap-2 py-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                      <div className="text-sm font-medium text-foreground">{item.problem}</div>
+                      <div className="text-sm leading-6 text-muted-foreground">
+                        <span className="font-medium text-foreground">{item.path}:</span> {item.action}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t p-4 lg:border-l lg:border-t-0">
+                <h3 className="text-sm font-semibold leading-tight">Empty and error states</h3>
+                <div className="mt-3 divide-y border-y">
+                  {emptyStatePlaybook.map(([state, action]) => (
+                    <div key={state} className="grid gap-2 py-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                      <div className="text-sm font-medium text-foreground">{state}</div>
+                      <div className="text-sm leading-6 text-muted-foreground">{action}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="grid border-t lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]">
+              <div className="p-4">
+                <div className="flex items-center gap-2">
+                  <LockKeyhole className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold leading-tight">Privacy and storage</h3>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  TokenTrace scans local CLI artifacts and stores normalized analytics in the local database shown in Settings.
+                  Raw prompts and message bodies stay out of normal views.
+                </p>
+              </div>
+              <div className="border-t p-4 lg:border-l lg:border-t-0">
+                <div className="flex items-center gap-2">
+                  <Database className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold leading-tight">Page map</h3>
+                </div>
+                <div className="mt-3 grid gap-x-4 gap-y-2 sm:grid-cols-2">
+                  {pageMap.map(([name, detail]) => (
+                    <div key={name} className="text-sm leading-6">
+                      <span className="font-medium text-foreground">{name}:</span>{" "}
+                      <span className="text-muted-foreground">{detail}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }

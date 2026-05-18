@@ -61,11 +61,11 @@ async function fetchRemoteManifest(url: string) {
     signal: controller.signal,
     headers: {
       accept: "application/json",
-      "user-agent": "TokenTrace pricing refresh"
+      "user-agent": "TokenTrace model-rate refresh"
     }
   }).finally(() => clearTimeout(timeout));
   if (!response.ok) {
-    throw new Error(`Pricing manifest request failed with HTTP ${response.status}.`);
+    throw new Error(`Model-rate manifest request failed with HTTP ${response.status}.`);
   }
   return normalizePricingManifest(await response.json());
 }
@@ -209,7 +209,7 @@ export async function refreshPricing(options: RefreshOptions = {}): Promise<Pric
       costsRecalculated: recalculation.interactionsUpdated,
       modelAliasesUpdated: recalculation.modelsUpdated,
       unknownCostInteractions: recalculation.unknownCostInteractions,
-      error: error instanceof Error ? error.message : "Pricing refresh failed."
+      error: error instanceof Error ? error.message : "Model-rate refresh failed."
     };
   }
 }

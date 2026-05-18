@@ -36,6 +36,19 @@ describe("package trust policy", () => {
     expect(packageJson.dependencies.next).toBe("^15.5.18");
   });
 
+  it("points package metadata and README links to the product page and creator site", () => {
+    const readme = readFileSync(join(process.cwd(), "README.md"), "utf8");
+
+    expect(packageJson.homepage).toBe("https://www.abhiyoheswaran.com/apps/tokentrace");
+    expect(packageJson.author).toMatchObject({
+      name: "Abhi Yoheswaran",
+      url: "https://www.abhiyoheswaran.com"
+    });
+    expect(readme).toContain("[Website](https://www.abhiyoheswaran.com/apps/tokentrace)");
+    expect(readme).toContain("[Source](https://github.com/abhiyoheswaran1/tokentrace)");
+    expect(readme).toContain("Open source by [Abhi Yoheswaran](https://www.abhiyoheswaran.com).");
+  });
+
   it("declares patched dependency floors for production audit findings", () => {
     expect(packageJson.dependencies["drizzle-orm"]).toBe("^0.45.2");
     expect(packageJson.overrides?.postcss).toBe("^8.5.14");

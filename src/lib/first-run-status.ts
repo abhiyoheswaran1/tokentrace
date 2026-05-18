@@ -67,10 +67,10 @@ export function buildFirstRunStatus({
       detail: interactions > 0
         ? unknownCostInteractions > 0
           ? `${unknownCostInteractions.toLocaleString()} imported interactions still need cost repair.`
-          : "Imported usage has usable pricing coverage."
-        : "Doctor explains ignored files, parser warnings, and pricing coverage.",
+          : "Imported usage has usable model-rate coverage."
+        : "Scan Health explains ignored files, parser warnings, and model-rate coverage.",
       href: "/diagnostics",
-      action: "Open Doctor"
+      action: "Open Scan Health"
     },
     {
       id: "status-line",
@@ -90,18 +90,18 @@ export function buildFirstRunStatus({
           : "Overview, Sessions, Evidence, and Projects are ready for review."
         : "Daily review starts after the first imported usage interactions.",
       href: unknownCostInteractions > 0 ? "/repair" : "/",
-      action: unknownCostInteractions > 0 ? "Open Repair" : "Open Overview"
+      action: unknownCostInteractions > 0 ? "Open repair" : "Open Overview"
     }
   ];
 
   const checks: FirstRunCheck[] = [
     {
       id: "pricing",
-      label: "Pricing loaded",
+      label: "Model rates loaded",
       state: pricedModelCount > 0 ? "pass" : "warn",
       detail: pricedModelCount > 0
-        ? `${pricedModelCount.toLocaleString()} priced models are available.`
-        : "Seed or refresh pricing before trusting cost totals."
+        ? `${pricedModelCount.toLocaleString()} rated models are available.`
+        : "Seed or refresh model rates before trusting cost totals."
     },
     {
       id: "roots",
@@ -153,7 +153,7 @@ export function buildFirstRunStatus({
   if (!latestScan) {
     return {
       title: "Run the first local scan",
-      description: "TokenTrace has pricing and roots ready, but no scan history yet.",
+      description: "TokenTrace has model rates and roots ready, but no scan history yet.",
       tone: "default",
       primaryAction: { label: "Open scan settings", href: "/settings" },
       checks,
@@ -175,9 +175,9 @@ export function buildFirstRunStatus({
   if (unknownCostInteractions > 0) {
     return {
       title: "Usage imported with cost repairs",
-      description: "TokenTrace found local CLI usage. Some interactions still need model, token, or pricing repair.",
+      description: "TokenTrace found local CLI usage. Some interactions still need model, token, or model-rate repair.",
       tone: "warning",
-      primaryAction: { label: "Review unknown costs", href: "/pricing" },
+      primaryAction: { label: "Open repair", href: "/repair" },
       checks,
       setupSteps
     };
@@ -185,7 +185,7 @@ export function buildFirstRunStatus({
 
   return {
     title: "Usage imported and ready",
-    description: "TokenTrace has local CLI usage, pricing, and scan history ready for daily review.",
+    description: "TokenTrace has local CLI usage, model rates, and scan history ready for daily review.",
     tone: "success",
     primaryAction: { label: "Inspect sessions", href: "/sessions" },
     checks,

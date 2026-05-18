@@ -1,13 +1,13 @@
 {
   "name": "tokentrace",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {
     "name": "Abhi Yoheswaran",
-    "url": "https://github.com/abhiyoheswaran1"
+    "url": "https://www.abhiyoheswaran.com"
   },
   "type": "module",
-  "homepage": "https://github.com/abhiyoheswaran1/tokentrace#readme",
+  "homepage": "https://www.abhiyoheswaran.com/apps/tokentrace",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/abhiyoheswaran1/tokentrace.git"
@@ -51,6 +51,7 @@
     "scan": "tsx scripts/scan.ts",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:seed": "tsx scripts/db-seed.ts",
+    "screenshots:seed": "tsx scripts/seed-screenshot-data.ts",
     "pricing:refresh": "tsx scripts/pricing-refresh.ts",
     "reset": "tsx scripts/reset.ts",
     "test": "vitest run",

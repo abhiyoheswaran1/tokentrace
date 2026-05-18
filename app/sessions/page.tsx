@@ -44,8 +44,8 @@ export default async function SessionsPage({
               Sessions that are unusual compared with the same project, tool, and primary model.
             </CardDescription>
           </CardHeader>
-          <CardContent className="table-scroll">
-            <Table>
+          <CardContent className="table-scroll overflow-x-auto">
+            <Table className="min-w-[54rem]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Priority</TableHead>

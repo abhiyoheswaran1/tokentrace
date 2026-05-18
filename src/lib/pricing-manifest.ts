@@ -61,12 +61,12 @@ function validModel(value: unknown): PricingManifestModel | null {
 
 export function normalizePricingManifest(value: unknown): PricingManifest {
   if (!value || typeof value !== "object") {
-    throw new Error("Pricing manifest must be a JSON object.");
+    throw new Error("Model-rate manifest must be a JSON object.");
   }
 
   const candidate = value as Partial<PricingManifest>;
   if (candidate.schemaVersion !== 1) {
-    throw new Error("Unsupported pricing manifest schema version.");
+    throw new Error("Unsupported model-rate manifest schema version.");
   }
 
   const models = Array.isArray(candidate.models)
@@ -74,12 +74,12 @@ export function normalizePricingManifest(value: unknown): PricingManifest {
     : [];
 
   if (!models.length) {
-    throw new Error("Pricing manifest does not contain any valid model rows.");
+    throw new Error("Model-rate manifest does not contain any valid model rows.");
   }
 
   return {
     schemaVersion: 1,
-    name: String(candidate.name || "TokenTrace pricing manifest"),
+    name: String(candidate.name || "TokenTrace model-rate manifest"),
     effectiveFrom: String(candidate.effectiveFrom || new Date().toISOString()),
     checkedAt: String(candidate.checkedAt || new Date().toISOString().slice(0, 10)),
     currency: String(candidate.currency || "USD"),

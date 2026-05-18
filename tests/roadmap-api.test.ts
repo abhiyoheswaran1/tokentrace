@@ -10,7 +10,7 @@ describe("roadmap API", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(body.version).toBe("0.10.0");
-    expect(body.packageVersion).toBe("0.10.0");
+    expect(body.packageVersion).toBe("0.10.1");
     expect(body.cards).toHaveLength(6);
     expect(body.cards.every((card: { status: string }) => card.status === "implemented")).toBe(true);
     expect(body.release.releaseAllowed).toBe(true);

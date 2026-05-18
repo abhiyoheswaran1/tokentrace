@@ -4,11 +4,13 @@
 
 # TokenTrace CLI
 
-Local-first analytics for AI CLI usage. TokenTrace scans local CLI logs, normalizes token usage, estimates missing counts, and shows cost, model, project, and session analytics in a browser dashboard.
+Local-first AI CLI usage analytics. TokenTrace scans local CLI logs, normalizes token usage, estimates missing counts, and shows cost, model, project, and session analytics in a browser dashboard.
 
 TokenTrace is designed for local development machines first, with macOS-oriented defaults. It does not require a cloud account and does not send telemetry or logs anywhere.
 
-![TokenTrace overview dashboard](docs/assets/overview-0.8.0.png)
+[Website](https://www.abhiyoheswaran.com/apps/tokentrace) · [Source](https://github.com/abhiyoheswaran1/tokentrace)
+
+![TokenTrace overview dashboard](docs/assets/overview-0.10.0.png)
 
 ## Start In Seconds
 
@@ -38,7 +40,7 @@ tokentrace agent --json # Print machine-readable agent discovery manifest
 tokentrace capabilities --json
                         # Alias for agent discovery manifest
 tokentrace roadmap --json
-                        # Print 0.10.0 release implementation status
+                        # Print Guided Operator release implementation status
 tokentrace scan         # Scan local AI CLI usage logs
 tokentrace doctor --json
                         # Inspect scan health and repair recommendations
@@ -112,7 +114,7 @@ curl http://127.0.0.1:3030/api/agent
 curl http://127.0.0.1:3030/api/capabilities
 ```
 
-The 0.10.0 release status is also machine-readable:
+The Guided Operator release status is also machine-readable:
 
 ```bash
 tokentrace roadmap --json
@@ -139,6 +141,8 @@ npm run start        # Serve the production build
 npm run scan         # Scan default and configured folders
 npm run db:migrate   # Create/update local SQLite tables
 npm run db:seed      # Seed editable provider/model prices
+npm run screenshots:seed
+                    # Seed a guarded public-safe screenshot database
 npm run reset        # Clear imported data and scan history
 npm test             # Run parser and cost tests
 npm run verify       # Run Vitest, TypeScript, and ESLint checks
@@ -148,7 +152,7 @@ npm run package:inspect
 npm run smoke:packed
                     # Inspect packed tarball and smoke test packed CLI
 tokentrace roadmap --json
-                    # Inspect 0.10.0 evidence gates and release status
+                    # Inspect evidence gates and release status
 ```
 
 Release work uses internal milestone commits until the next public minor
@@ -190,7 +194,7 @@ Default discovery checks these locations when present:
 - TokenTrace wrapper logs in the local app-data directory
 - Any custom folders configured in Settings
 
-Use **Settings** in the dashboard to add custom folders, toggle raw message storage, and trigger scans. Use **Doctor**, **Discovery**, **Parser Debug**, and **Raw Data** to inspect discovered files, parser decisions, warnings, failures, extracted metadata, and confidence levels.
+Use **Settings** in the dashboard to add custom folders, toggle raw message storage, and trigger scans. Use **Scan Health**, **Discovery**, **Parsers**, and **Raw Data** to inspect discovered files, parser decisions, warnings, failures, extracted metadata, and confidence levels.
 
 Settings also supports optional local monthly usage guardrails. Set a cost
 limit, token limit, or both, and Overview will show month-to-date progress from
@@ -280,15 +284,15 @@ Codex CLI status-line integration is intentionally deferred until its status-lin
 
 ## Screenshots
 
-Evidence + Repair views:
+Dashboard views:
 
-![TokenTrace overview dashboard](docs/assets/overview-0.8.0.png)
+![TokenTrace overview dashboard](docs/assets/overview-0.10.0.png)
 
-![TokenTrace processed tokens evidence trail](docs/assets/evidence-0.8.0.png)
+![TokenTrace processed tokens evidence trail](docs/assets/evidence-0.10.0.png)
 
-![TokenTrace unknown cost repair queue](docs/assets/repair-0.8.0.png)
+![TokenTrace unknown cost repair queue](docs/assets/repair-0.10.0.png)
 
-![TokenTrace Scan Doctor parser trust report](docs/assets/doctor-parser-trust-0.8.0.png)
+![TokenTrace Scan Health parser review](docs/assets/scan-health-0.10.0.png)
 
 CLI startup and help:
 
@@ -326,9 +330,9 @@ Stop the server with `Ctrl+C` in the terminal where `tokentrace` is running.
 
 See [SECURITY.md](SECURITY.md) for the full security and privacy model.
 
-## Pricing
+## Model Rates
 
-Model prices change. TokenTrace ships with bundled public list prices and can refresh them from a public TokenTrace pricing manifest. Manual edits made in **Pricing** are preserved by future refreshes.
+Model prices change. TokenTrace ships with bundled public list prices and can refresh them from a public TokenTrace model-rate manifest. Manual edits made in **Model Rates** are preserved by future refreshes.
 
 The bundled catalog includes common OpenAI, Anthropic, Google Gemini, xAI, DeepSeek, Mistral, and Cohere models, checked on May 8, 2026.
 
@@ -342,7 +346,7 @@ Seed sources:
 - [Mistral model docs](https://docs.mistral.ai/models)
 - [Cohere pricing](https://cohere.com/pricing)
 
-Review and update prices in **Pricing** before treating cost estimates as financial truth, especially if you use batch processing, priority/flex modes, data residency, long-context surcharges, subscriptions, or provider-specific discounts.
+Review and update rates in **Model Rates** before treating cost estimates as financial truth, especially if you use batch processing, priority/flex modes, data residency, long-context surcharges, subscriptions, or provider-specific discounts.
 
 Refresh from the dashboard or from the CLI:
 
@@ -411,7 +415,7 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setu
 
 ## License
 
-Open source by [Abhi Yoheswaran](https://github.com/abhiyoheswaran1). Released under the MIT License. See `LICENSE`.
+Open source by [Abhi Yoheswaran](https://www.abhiyoheswaran.com). Released under the MIT License. See `LICENSE`.
 
 ## Next Improvements
 

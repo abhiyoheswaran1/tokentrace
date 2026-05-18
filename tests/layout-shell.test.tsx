@@ -7,7 +7,7 @@ describe("RootLayout", () => {
   it("constrains mobile page width so wide child controls scroll internally", () => {
     const html = renderToStaticMarkup(<RootLayout><div /></RootLayout>);
 
-    expect(html).toContain("overflow-x-hidden");
+    expect(html).toContain("overflow-x-clip");
     expect(html).toContain("max-w-[100vw]");
   });
 });

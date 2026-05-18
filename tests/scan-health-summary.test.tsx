@@ -86,7 +86,7 @@ describe("ScanHealthSummary", () => {
     expect(html).toContain("1 ignored as non-usage");
     expect(html).toContain("No parser detected a compatible format.");
     expect(html).toContain("2 files");
-    expect(html).toContain("2 missing pricing");
+    expect(html).toContain("2 missing model rates");
     expect(html).toContain("1 missing model");
     expect(html).toContain("1 missing token count");
   });

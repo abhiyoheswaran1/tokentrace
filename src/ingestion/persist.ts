@@ -88,7 +88,7 @@ function ensureModel(providerId: string, modelName: string | null | undefined) {
       providerId,
       name,
       json({
-        note: "Observed during import. Add prices on the Pricing page to enable cost calculation."
+        note: "Observed during import. Add rates on the Model Rates page to enable cost calculation."
       })
     ]
   );

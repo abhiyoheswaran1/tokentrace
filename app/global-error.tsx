@@ -18,7 +18,7 @@ export default function GlobalError({
             <div className="text-sm font-medium text-muted-foreground">TokenTrace error</div>
             <h1 className="text-2xl font-semibold leading-tight tracking-normal">Something went wrong</h1>
             <p className="text-sm leading-6 text-muted-foreground">
-              The local dashboard could not render this view. Try again, then check Doctor if the issue repeats.
+              The local dashboard could not render this view. Try again, then open Scan Health if the issue repeats.
             </p>
             {error.digest ? (
               <p className="font-mono text-xs text-muted-foreground">Digest: {error.digest}</p>
@@ -28,7 +28,7 @@ export default function GlobalError({
                 Try again
               </Button>
               <Button asChild variant="outline">
-                <Link href="/diagnostics">Open Doctor</Link>
+                <Link href="/diagnostics">Open Scan Health</Link>
               </Button>
             </div>
           </div>

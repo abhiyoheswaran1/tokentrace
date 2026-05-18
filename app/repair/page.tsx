@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, CircleDashed, Search, Settings2 } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { PeriodFilter } from "@/components/period-filter";
 import { RepairStateControl } from "@/components/repair-state-control";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +25,13 @@ function causeVariant(cause: UnknownCostRepairWorkbenchGroup["cause"]) {
 
 function suggestionLabel(group: UnknownCostRepairWorkbenchGroup) {
   if (group.suggestion.suggestedModel) return group.suggestion.suggestedModel;
-  if (group.cause === "missing pricing") return "Add price row";
+  if (group.cause === "missing pricing") return "Add model rate";
   return "Review parser";
+}
+
+function causeLabel(cause: UnknownCostRepairWorkbenchGroup["cause"]) {
+  if (cause === "missing pricing") return "missing model rate";
+  return cause;
 }
 
 function SummaryItem({
@@ -58,6 +64,40 @@ function firstQueryValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function RepairFlowSteps() {
+  const steps = [
+    ["Problem", "Find the unknown-cost group and its cause."],
+    ["Evidence", "Open source sessions, parser state, and model-rate context."],
+    ["Fix", "Set model rate or review parser metadata."],
+    ["Recalculate", "Run scan or refresh model rates after the fix."],
+    ["Verified", "Confirm the item leaves unresolved repair."]
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Guided repair flow</CardTitle>
+        <CardDescription>Move left to right so every unknown-cost item ends with a checked local result.</CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-x-auto p-0">
+        <div className="grid min-w-[46rem] grid-cols-5 divide-x border-t">
+          {steps.map(([label, detail], index) => (
+            <div key={label} className="p-3">
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-md border bg-muted/40 text-xs font-semibold tabular-nums text-muted-foreground">
+                  {index + 1}
+                </span>
+                <span className="text-sm font-semibold">{label}</span>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">{detail}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function FocusedRepairPanel({
   group,
   focusKey,
@@ -79,7 +119,7 @@ function FocusedRepairPanel({
           </div>
           <Button asChild variant="outline" size="sm">
             <Link href={mergeHrefParams("/repair", rangeLinkParams)}>
-              View all repair items <ArrowRight className="h-4 w-4" />
+              Open repair <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </CardHeader>
@@ -105,7 +145,7 @@ function FocusedRepairPanel({
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge variant={causeVariant(group.cause)}>{group.cause}</Badge>
+          <Badge variant={causeVariant(group.cause)}>{causeLabel(group.cause)}</Badge>
           <Badge variant={group.state === "resolved" ? "success" : group.state === "needs-parser-review" ? "warning" : group.state === "ignored" ? "secondary" : "destructive"}>
             {group.state}
           </Badge>
@@ -130,14 +170,14 @@ function FocusedRepairPanel({
         <div className="flex flex-wrap gap-2 border-t px-4 py-3">
           <Button asChild size="sm">
             <Link href={repairHref}>
-              {group.pricingHref ? "Configure price" : "Review parser"} <ArrowRight className="h-4 w-4" />
+            {group.pricingHref ? "Set model rate" : "Review parser"} <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)}>Evidence</Link>
+            <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)}>View evidence</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={mergeHrefParams(group.parserHref, rangeLinkParams)}>Parser</Link>
+            <Link href={mergeHrefParams(group.parserHref, rangeLinkParams)}>Review parser</Link>
           </Button>
         </div>
       </CardContent>
@@ -168,13 +208,13 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
             <Button asChild variant="outline">
               <Link href={mergeHrefParams("/pricing", focusKey ? { returnTo: mergeHrefParams(`/repair?key=${encodeURIComponent(focusKey)}`, rangeLinkParams) } : {})}>
                 <Settings2 className="h-4 w-4" />
-                Pricing
+                Model Rates
               </Link>
             </Button>
             <Button asChild variant="outline">
               <Link href={mergeHrefParams("/parser-debug", rangeLinkParams)}>
                 <Search className="h-4 w-4" />
-                Parser debug
+                Parsers
               </Link>
             </Button>
           </div>
@@ -182,6 +222,8 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
       />
 
       <PeriodFilter range={range} />
+
+      <RepairFlowSteps />
 
       {focusKey ? (
         <FocusedRepairPanel group={focusedGroup} focusKey={focusKey} rangeLinkParams={rangeLinkParams} />
@@ -213,7 +255,7 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
             <Badge variant="success">priced</Badge>
           )}
         </CardHeader>
-        <CardContent className="table-scroll">
+        <CardContent className="table-scroll overflow-x-auto">
           {hasGroups ? (
             <Table className="min-w-[84rem]">
               <TableHeader>
@@ -243,7 +285,7 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
                       />
                     </TableCell>
                     <TableCell className="align-top">
-                      <Badge variant={causeVariant(group.cause)}>{group.cause}</Badge>
+                      <Badge variant={causeVariant(group.cause)}>{causeLabel(group.cause)}</Badge>
                     </TableCell>
                     <TableCell className="align-top">
                       <div className="font-medium">{group.model}</div>
@@ -286,19 +328,22 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
                           }
                           className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
                         >
-                          Repair <ArrowRight className="h-3.5 w-3.5" />
+                          {group.pricingHref ? "Set model rate" : "Review parser"} <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                         <Link href={mergeHrefParams(group.itemHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                          Focus
+                          Open repair
                         </Link>
                         <Link href={mergeHrefParams(group.parserHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                          Parser
+                          Review parser
                         </Link>
                         {group.pricingHref ? (
                           <Link href={mergeHrefParams(group.pricingHref, { returnTo: mergeHrefParams(group.itemHref, rangeLinkParams) })} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                            Pricing
+                            Set model rate
                           </Link>
                         ) : null}
+                        <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                          View evidence
+                        </Link>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -306,9 +351,14 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
               </TableBody>
             </Table>
           ) : (
-            <div className="border-y px-4 py-8 text-sm text-muted-foreground">
-              No unknown-cost interactions are currently in the local database.
-            </div>
+            <EmptyState
+              title="No unknown-cost repair items"
+              description="Cost coverage is clear for the selected period. If cost is still missing, refresh model rates or inspect Scan Health."
+              actions={[
+                { label: "Set model rates", href: "/pricing" },
+                { label: "Open Scan Health", href: "/diagnostics", variant: "outline" }
+              ]}
+            />
           )}
         </CardContent>
       </Card>

@@ -137,7 +137,7 @@ function modelItem(model: ModelAnalyticsRow): ReviewQueueItem | null {
     severity: "medium",
     category: "model",
     title: "Check expensive-model usage",
-    evidence: `${model.model} has ${formatTokens(model.totalTokens)} tokens and ${model.suggestedAlternative} is cheaper in Pricing.`,
+    evidence: `${model.model} has ${formatTokens(model.totalTokens)} tokens and ${model.suggestedAlternative} is cheaper in Model Rates.`,
     action: "Review sessions for mechanical work that could use a cheaper configured model.",
     href: withQuery("/sessions", { model: model.model }),
     impactLabel: "model cost",

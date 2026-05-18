@@ -7,7 +7,7 @@ function usage() {
   tokentrace roadmap --json
 
 Options:
-  --json       Print the machine-readable 0.10.0 release implementation status
+  --json       Print the machine-readable Guided Operator release implementation status
   -h, --help   Print roadmap help`;
 }
 

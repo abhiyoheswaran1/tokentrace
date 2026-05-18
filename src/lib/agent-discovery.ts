@@ -76,7 +76,7 @@ const product = {
   name: "TokenTrace" as const,
   packageName: "tokentrace" as const,
   description: "Local-first dashboard and CLI for AI coding-agent token, cost, session, and parser analytics.",
-  homepage: "https://github.com/abhiyoheswaran1/tokentrace#readme",
+  homepage: "https://www.abhiyoheswaran.com/apps/tokentrace",
   repository: "https://github.com/abhiyoheswaran1/tokentrace"
 };
 
@@ -140,7 +140,7 @@ const commands: AgentDiscoveryCommand[] = [
     startsLongRunningProcess: false,
     requiresNetwork: false,
     safeForAutomation: true,
-    useWhen: "The agent sees unknown cost or pricing gaps and needs the next repair action.",
+    useWhen: "The agent sees unknown cost or model-rate gaps and needs the next repair action.",
     followUps: [
       ["tokentrace", "evidence", "--json", "--metric=unknown-cost"],
       ["tokentrace", "pricing", "refresh", "--json"]
@@ -180,7 +180,7 @@ const commands: AgentDiscoveryCommand[] = [
   },
   {
     id: "roadmap",
-    title: "Print 0.10.0 release implementation status",
+    title: "Print Guided Operator release implementation status",
     command: ["tokentrace", "roadmap", "--json"],
     description: "Return implemented roadmap cards, evidence paths, verification gates, and release status.",
     output: "json",
@@ -188,7 +188,7 @@ const commands: AgentDiscoveryCommand[] = [
     startsLongRunningProcess: false,
     requiresNetwork: false,
     safeForAutomation: true,
-    useWhen: "The agent needs to explain the 0.10.0 release implementation and verification status.",
+    useWhen: "The agent needs to explain Guided Operator implementation and verification status.",
     followUps: [
       ["tokentrace", "agent", "--json"]
     ]
@@ -263,13 +263,13 @@ const commands: AgentDiscoveryCommand[] = [
     id: "pricing-refresh",
     title: "Refresh public model prices",
     command: ["tokentrace", "pricing", "refresh", "--json"],
-    description: "Fetch public model pricing and update editable local pricing rows.",
+    description: "Fetch public provider model rates and update editable local model-rate rows.",
     output: "json",
     mutatesLocalState: true,
     startsLongRunningProcess: false,
     requiresNetwork: true,
     safeForAutomation: false,
-    useWhen: "The human asks to refresh prices or unknown costs appear caused by stale bundled pricing.",
+    useWhen: "The human asks to refresh provider rates or unknown costs appear caused by stale bundled model rates.",
     followUps: [
       ["tokentrace", "repair", "--json"],
       ["tokentrace", "doctor", "--json"]
@@ -353,7 +353,7 @@ export function buildAgentDiscoveryManifest(options: AgentDiscoveryOptions = {})
       {
         id: "cost-repair",
         title: "Unknown cost repair",
-        goal: "Find missing pricing, model, or token data before making cost claims.",
+        goal: "Find missing model-rate, model, or token data before making cost claims.",
         steps: [
           ["tokentrace", "doctor", "--json"],
           ["tokentrace", "repair", "--json"],

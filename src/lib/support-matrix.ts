@@ -52,10 +52,10 @@ export function getSupportMatrix(): SupportMatrixItem[] {
     },
     {
       id: "editable-pricing",
-      label: "Editable model pricing",
+      label: "Editable model rates",
       category: "pricing",
       level: "stable",
-      description: "Costs are calculated from local editable pricing rows and keep unknown causes repairable.",
+      description: "Costs are calculated from local editable model-rate rows and keep unknown causes repairable.",
       href: "/pricing"
     },
     {

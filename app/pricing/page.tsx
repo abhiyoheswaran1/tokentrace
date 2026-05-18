@@ -15,8 +15,8 @@ export default async function PricingPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Pricing Configuration"
-        description="Configure editable provider and model prices for transparent local cost estimates."
+        title="Model Rates"
+        description="Editable provider model rates used to estimate local AI CLI cost. TokenTrace does not bill or meter usage."
       />
       <PricingSettings
         initialRows={getPricingRows()}

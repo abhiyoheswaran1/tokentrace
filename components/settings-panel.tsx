@@ -191,7 +191,7 @@ export function SettingsPanel({
             {
               label: "Network behavior",
               value: "Local first",
-              detail: "No telemetry. Optional pricing refresh downloads only public model prices."
+              detail: "No telemetry. Optional model-rate refresh downloads only public provider rates."
             },
             {
               label: "Release proof",
@@ -396,7 +396,7 @@ export function SettingsPanel({
               <div className="p-3 sm:col-span-2">
                 <FieldLabel>Next step</FieldLabel>
                 <a className="font-medium text-primary underline-offset-4 hover:underline" href="/diagnostics">
-                  Review scan doctor
+                  Review Scan Health
                 </a>
               </div>
             </div>

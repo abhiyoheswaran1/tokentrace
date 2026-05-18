@@ -64,7 +64,7 @@ function unknownCostSignal(project: ProjectAnalyticsRow, sessions: SessionRow[])
     path: project.path,
     signal: "unknown cost",
     evidence: `${count.toLocaleString()} sessions in ${project.project} still have unknown cost.`,
-    action: "Repair pricing or parser evidence for this project's sessions.",
+    action: "Repair model-rate or parser evidence for this project's sessions.",
     href: `/sessions?project=${encodeURIComponent(project.project)}&cost=unknown`,
     metricLabel: "unknown sessions",
     metricValue: count.toLocaleString()

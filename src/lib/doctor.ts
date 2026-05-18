@@ -194,7 +194,7 @@ function buildRecommendations(args: {
       "high",
       "Review parser failures",
       `${(failed + importedWithErrors).toLocaleString()} files failed or imported with parser errors.`,
-      "Open Parser Debug and export diagnostics if the format looks like real CLI usage.",
+      "Open Parsers and export diagnostics if the format looks like real CLI usage.",
       "/parser-debug"
     ));
   }
@@ -225,9 +225,9 @@ function buildRecommendations(args: {
     recommendations.push(recommendation(
       "seed-pricing",
       "high",
-      "Seed or refresh model pricing",
+      "Seed or refresh model rates",
       "No priced models are available, so cost totals cannot be trusted.",
-      "Run `tokentrace pricing refresh` or open Pricing.",
+      "Run `tokentrace pricing refresh` or open Model Rates.",
       "/pricing"
     ));
   }
@@ -236,9 +236,9 @@ function buildRecommendations(args: {
     recommendations.push(recommendation(
       "missing-pricing",
       "high",
-      "Add missing model prices",
+      "Add missing model rates",
       `${unknownCauses.missingPricing.toLocaleString()} interactions have token counts and model names but no usable price row.`,
-      "Open Pricing and configure the missing model rows.",
+      "Open Model Rates and configure the missing model rows.",
       "/pricing"
     ));
   }
@@ -249,7 +249,7 @@ function buildRecommendations(args: {
       "medium",
       "Review missing model names",
       `${unknownCauses.missingModelName.toLocaleString()} interactions could not be priced because the model is unknown.`,
-      "Open Parser Debug and inspect source metadata for model aliases.",
+      "Open Parsers and inspect source metadata for model aliases.",
       "/parser-debug"
     ));
   }
@@ -260,7 +260,7 @@ function buildRecommendations(args: {
       "medium",
       "Review missing token counts",
       `${unknownCauses.missingTokenCount.toLocaleString()} interactions could not be priced because token counts are missing.`,
-      "Open Parser Debug and check token confidence for low-confidence adapters.",
+      "Open Parsers and check token confidence for low-confidence adapters.",
       "/parser-debug"
     ));
   }
@@ -269,8 +269,8 @@ function buildRecommendations(args: {
     recommendations.push(recommendation(
       "healthy",
       "low",
-      "Scan doctor looks healthy",
-      "Recent scans, parser coverage, and pricing coverage do not show a blocking issue.",
+      "Scan Health looks healthy",
+      "Recent scans, parser coverage, and model-rate coverage do not show a blocking issue.",
       "Keep scanning after new CLI sessions.",
       "/"
     ));

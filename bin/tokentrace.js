@@ -30,7 +30,7 @@ Usage:
   tokentrace capabilities --json
                           Alias for agent discovery manifest
   tokentrace roadmap --json
-                          Print 0.10.0 release implementation status
+                          Print Guided Operator release implementation status
   tokentrace scan         Scan local AI CLI usage logs
   tokentrace doctor --json
                           Inspect scan health and repair recommendations

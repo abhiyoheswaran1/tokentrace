@@ -42,33 +42,31 @@ export function PeriodFilter({ range }: { range: ResolvedDateRange }) {
     <div className="min-w-0 max-w-full rounded-lg bg-card p-3 outline outline-1 outline-border sm:p-4">
       <form className="max-w-full" action="/">
         <input type="hidden" name="range" value="custom" />
-        <div className="flex min-w-0 flex-col gap-3 2xl:flex-row 2xl:items-center">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex shrink-0 items-center gap-2 pr-1 text-sm font-semibold">
-              <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span>Period</span>
-              <span className="hidden whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground 2xl:inline-flex">
-                {statusLabel}
-              </span>
-            </div>
-            <div className="h-6 w-px shrink-0 bg-border" />
-            <div className="min-w-0 flex-1 overflow-x-auto">
-              <div className="flex w-max items-center gap-1.5 pr-1">
-                {dateRangeOptions.map((option) => (
-                  <Button
-                    key={option.key}
-                    asChild
-                    size="sm"
-                    variant={range.key === option.key ? "default" : "outline"}
-                  >
-                    <Link href={rangeHref(option.key)}>{option.label}</Link>
-                  </Button>
-                ))}
-              </div>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-3">
+          <div className="flex min-w-0 items-center gap-2 text-sm font-semibold">
+            <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span>Period</span>
+            <span className="shrink-0 whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              {statusLabel}
+            </span>
+          </div>
+
+          <div className="period-preset-scroll -mx-3 min-w-0 overflow-x-auto px-3 sm:mx-0 sm:px-0 md:overflow-visible">
+            <div className="flex w-max items-center gap-1.5 pr-1 md:w-auto md:flex-wrap">
+              {dateRangeOptions.map((option) => (
+                <Button
+                  key={option.key}
+                  asChild
+                  size="sm"
+                  variant={range.key === option.key ? "default" : "outline"}
+                >
+                  <Link href={rangeHref(option.key)}>{option.label}</Link>
+                </Button>
+              ))}
             </div>
           </div>
-          <div className="hidden h-6 w-px shrink-0 bg-border 2xl:block" />
-          <div className="flex min-w-0 flex-wrap items-center gap-2 border-t border-border pt-3 2xl:shrink-0 2xl:border-t-0 2xl:pt-0">
+
+          <div className="period-custom-row ml-auto flex min-w-0 flex-wrap items-center gap-2">
             <PeriodDateField label="From" name="from" defaultValue={range.fromInput} />
             <PeriodDateField label="To" name="to" defaultValue={range.toInput} />
             <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>

@@ -89,9 +89,9 @@ export function buildLocalRecommendations(input: RecommendationInput): LocalReco
     recommendations.push(recommendation(
       "unknown-pricing",
       "high",
-      "Add missing model pricing",
+      "Add missing model rates",
       `${missingPricing.toLocaleString()} interactions have tokens and model names but no usable price row${top ? `; top model: ${top.model}` : ""}.`,
-      "Configure the missing model prices so cost totals become complete.",
+      "Set the missing provider model rates so cost totals become complete.",
       top?.repairHref ?? "/pricing"
     ));
   } else if (input.summary.unknownCostInteractions > 0) {
@@ -100,7 +100,7 @@ export function buildLocalRecommendations(input: RecommendationInput): LocalReco
       "medium",
       "Repair unknown cost rows",
       `${input.summary.unknownCostInteractions.toLocaleString()} interactions still have unknown cost.`,
-      "Use the repair queue to decide whether pricing, model names, or token counts are missing.",
+      "Use the repair queue to decide whether model rates, model names, or token counts are missing.",
       "/diagnostics"
     ));
   }
@@ -188,7 +188,7 @@ export function buildLocalRecommendations(input: RecommendationInput): LocalReco
       "baseline",
       "low",
       "No urgent local recommendation",
-      "Current scans, pricing, and parser confidence do not show a high-priority repair.",
+      "Current scans, model rates, and parser confidence do not show a high-priority repair.",
       "Keep scanning after new CLI sessions.",
       "/settings"
     ));

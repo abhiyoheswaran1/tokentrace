@@ -86,7 +86,7 @@ const metricTitles: Record<EvidenceMetric, { title: string; description: string 
   },
   "estimated-cost": {
     title: "Estimated cost",
-    description: "Cost calculated from editable model pricing, including exact, estimated, and unknown rows."
+    description: "Cost calculated from editable provider model rates, including exact, estimated, and unknown rows."
   },
   sessions: {
     title: "Sessions",

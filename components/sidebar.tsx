@@ -1,5 +1,8 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Bot,
@@ -12,28 +15,83 @@ import {
   Settings,
   SlidersHorizontal,
   Sparkles,
-  Terminal
+  Terminal,
+  Wrench
 } from "lucide-react";
 import { TokenTraceLogo } from "@/components/token-trace-logo";
 import { formatAppVersion, getAppVersion } from "@/src/lib/app-version";
+import { cn } from "@/src/lib/utils";
 
-const navItems = [
+const primaryNavItems = [
   { href: "/", label: "Overview", icon: Gauge },
   { href: "/tools", label: "Tools", icon: Terminal },
   { href: "/models", label: "Models", icon: Bot },
   { href: "/projects", label: "Projects", icon: FolderGit2 },
   { href: "/sessions", label: "Sessions", icon: Search },
   { href: "/optimisation", label: "Insights", icon: Sparkles },
-  { href: "/pricing", label: "Pricing", icon: SlidersHorizontal },
-  { href: "/guide", label: "Guide", icon: BookOpen },
-  { href: "/diagnostics", label: "Doctor", icon: ClipboardList },
+  { href: "/repair", label: "Repair", icon: Wrench },
+  { href: "/pricing", label: "Model Rates", icon: SlidersHorizontal },
+  { href: "/diagnostics", label: "Scan Health", icon: ClipboardList },
   { href: "/discovery", label: "Discovery", icon: BarChart3 },
   { href: "/parser-debug", label: "Parsers", icon: Bug },
   { href: "/debug", label: "Raw Data", icon: Bug },
   { href: "/settings", label: "Settings", icon: Settings }
 ];
 
+const supportNavItems = [
+  { href: "/guide", label: "Guide", icon: BookOpen }
+];
+
+function NavLink({
+  item,
+  variant = "default",
+  isActive = false,
+  mobile = false
+}: {
+  item: (typeof primaryNavItems)[number] | (typeof supportNavItems)[number];
+  variant?: "default" | "support";
+  isActive?: boolean;
+  mobile?: boolean;
+}) {
+  const Icon = item.icon;
+  const className = mobile
+    ? cn(
+        "flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors",
+        isActive
+          ? "border-primary/30 bg-primary/10 font-medium text-primary shadow-sm"
+          : variant === "support"
+            ? "bg-muted/50 font-medium text-foreground"
+            : "text-muted-foreground"
+      )
+    : cn(
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+        isActive
+          ? "bg-primary/10 font-medium text-primary"
+          : variant === "support"
+            ? "border bg-muted/40 font-medium text-foreground hover:bg-muted"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      );
+
+  return (
+    <Link
+      href={item.href}
+      aria-current={isActive ? "page" : undefined}
+      className={className}
+    >
+      <Icon className="h-4 w-4" />
+      {item.label}
+    </Link>
+  );
+}
+
+function isActiveRoute(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string }) {
+  const pathname = usePathname() ?? "/";
+
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r bg-card md:block">
       <div className="flex h-full flex-col">
@@ -46,20 +104,15 @@ export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string 
             </div>
           </div>
         </div>
-        <nav className="flex-1 space-y-1 p-3">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav aria-label="Primary navigation" className="flex-1 space-y-1 overflow-y-auto p-3">
+          {primaryNavItems.map((item) => (
+            <NavLink key={item.href} item={item} isActive={isActiveRoute(pathname, item.href)} />
+          ))}
+        </nav>
+        <nav aria-label="Help navigation" className="p-3">
+          {supportNavItems.map((item) => (
+            <NavLink key={item.href} item={item} variant="support" isActive={isActiveRoute(pathname, item.href)} />
+          ))}
         </nav>
         <div className="border-t p-4 text-xs text-muted-foreground">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-relaxed">
@@ -68,7 +121,7 @@ export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string 
             <span>
               Open source by{" "}
               <a
-                href="https://github.com/abhiyoheswaran1"
+                href="https://www.abhiyoheswaran.com"
                 target="_blank"
                 rel="noreferrer"
                 className="font-medium underline-offset-2 hover:text-foreground hover:underline"
@@ -85,19 +138,21 @@ export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string 
 }
 
 export function MobileNav() {
+  const mobileNavItems = [...primaryNavItems, ...supportNavItems];
+  const pathname = usePathname() ?? "/";
+
   return (
-    <nav className="flex gap-2 overflow-x-auto border-b bg-card px-4 py-2 md:hidden">
-      {navItems.map((item) => {
-        const Icon = item.icon;
+    <nav aria-label="Mobile navigation" className="flex gap-2 overflow-x-auto border-b bg-card px-4 py-2 md:hidden">
+      {mobileNavItems.map((item) => {
+        const isSupport = item.href === "/guide";
         return (
-          <Link
+          <NavLink
             key={item.href}
-            href={item.href}
-            className="flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-xs text-muted-foreground"
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {item.label}
-          </Link>
+            item={item}
+            variant={isSupport ? "support" : "default"}
+            isActive={isActiveRoute(pathname, item.href)}
+            mobile
+          />
         );
       })}
     </nav>

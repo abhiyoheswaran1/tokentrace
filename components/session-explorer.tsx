@@ -9,6 +9,8 @@ import { formatCurrency, formatDate, formatDuration, formatTokens } from "@/src/
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/empty-state";
+import { ScanNowButton } from "@/components/scan-now-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -228,6 +230,20 @@ export function SessionExplorer({
     );
   }
 
+  if (!sessions.length) {
+    return (
+      <EmptyState
+        title="No sessions imported yet"
+        description="Run a scan after local AI CLI activity. If files were scanned but no sessions appeared, open Scan Health for parser and folder details."
+        actions={[
+          { label: "Open Scan Health", href: "/diagnostics", variant: "outline" }
+        ]}
+      >
+        <ScanNowButton size="sm" />
+      </EmptyState>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {hasEvidenceContext ? (
@@ -425,7 +441,7 @@ export function SessionExplorer({
               <DataValue className="mt-1">{filteredSummary.unknown.toLocaleString()}</DataValue>
             </div>
           </div>
-          <div className="table-scroll">
+          <div className="table-scroll overflow-x-auto">
           <Table className="min-w-[78rem]">
             <TableHeader>
               <TableRow>
@@ -478,7 +494,7 @@ export function SessionExplorer({
                         </Link>
                         {session.pricingHref ? (
                           <Link href={session.pricingHref} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
-                            Pricing
+                            Model rates
                           </Link>
                         ) : null}
                       </div>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Info, Lightbulb } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
+import { ScanNowButton } from "@/components/scan-now-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,59 +29,71 @@ export default function OptimisationPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Usage Intelligence"
+        title="Insights"
         description="Deterministic local review queue based on guardrails, repair work, and usage impact."
       />
 
-      <Card>
-        <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <CardTitle>Review Queue</CardTitle>
-            <CardDescription>
-              Evidence-backed next actions ordered by guardrails, repair work, and usage impact.
-            </CardDescription>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/sessions">Open sessions</Link>
-          </Button>
-        </CardHeader>
-        <CardContent className="table-scroll">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Priority</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Review item</TableHead>
-                <TableHead>Impact</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.reviewQueue.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <Badge variant={severityVariant[item.severity]}>{item.severity}</Badge>
-                  </TableCell>
-                  <TableCell className="capitalize">{item.category.replace("-", " ")}</TableCell>
-                  <TableCell className="max-w-xl">
-                    <div className="font-medium">{item.title}</div>
-                    <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.evidence}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm font-medium">{item.impactValue}</div>
-                    <div className="text-xs text-muted-foreground">{item.impactLabel}</div>
-                  </TableCell>
-                  <TableCell>
-                    <Link href={item.href} className="font-medium text-primary underline-offset-4 hover:underline">
-                      {item.action}
-                    </Link>
-                  </TableCell>
+      {data.reviewQueue.length ? (
+        <Card>
+          <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle>Review Queue</CardTitle>
+              <CardDescription>
+                Evidence-backed next actions ordered by guardrails, repair work, and usage impact.
+              </CardDescription>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/sessions">Open sessions</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="table-scroll">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Review item</TableHead>
+                  <TableHead>Impact</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {data.reviewQueue.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <Badge variant={severityVariant[item.severity]}>{item.severity}</Badge>
+                    </TableCell>
+                    <TableCell className="capitalize">{item.category.replace("-", " ")}</TableCell>
+                    <TableCell className="max-w-xl">
+                      <div className="font-medium">{item.title}</div>
+                      <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.evidence}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm font-medium">{item.impactValue}</div>
+                      <div className="text-xs text-muted-foreground">{item.impactLabel}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Link href={item.href} className="font-medium text-primary underline-offset-4 hover:underline">
+                        {item.action}
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <EmptyState
+          title="No insights yet"
+          description="Insights appear after local sessions are imported and enough cost, model, or project evidence exists."
+          actions={[
+            { label: "Open sessions", href: "/sessions", variant: "outline" }
+          ]}
+        >
+          <ScanNowButton size="sm" />
+        </EmptyState>
+      )}
 
       <div className="grid gap-4">
         {data.insights.map((insight) => {

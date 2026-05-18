@@ -43,7 +43,7 @@ function TrustChecklist({
   const hasInteractions = data.confidence.interactions > 0;
   const unknownCauses = data.health.costCoverage.unknownCauses;
   const unknownCauseText = [
-    unknownCauses.missingPricing > 0 ? `${unknownCauses.missingPricing.toLocaleString()} missing pricing` : null,
+    unknownCauses.missingPricing > 0 ? `${unknownCauses.missingPricing.toLocaleString()} missing model rate` : null,
     unknownCauses.missingModelName > 0 ? `${unknownCauses.missingModelName.toLocaleString()} missing model` : null,
     unknownCauses.missingTokenCount > 0 ? `${unknownCauses.missingTokenCount.toLocaleString()} missing token count` : null,
     unknownCauses.other > 0 ? `${unknownCauses.other.toLocaleString()} other` : null
@@ -51,11 +51,11 @@ function TrustChecklist({
 
   const items: Array<{ label: string; detail: string; status: ChecklistStatus }> = [
     {
-      label: "Pricing loaded",
+      label: "Model rates loaded",
       status: data.pricedModelCount > 0 ? "pass" : "warn",
       detail: data.pricedModelCount > 0
-        ? `${data.pricedModelCount.toLocaleString()} priced models are available.`
-        : "Seed pricing before trusting cost totals."
+        ? `${data.pricedModelCount.toLocaleString()} rated models are available.`
+        : "Seed model rates before trusting cost totals."
     },
     {
       label: "CLI roots found",
@@ -77,10 +77,10 @@ function TrustChecklist({
       detail: latest ? `${latest.recordsImported.toLocaleString()} interactions imported in the latest scan.` : "No scan has imported records yet."
     },
     {
-      label: "Unknown prices",
+      label: "Unknown cost",
       status: !hasInteractions ? "pending" : data.health.costCoverage.unknown > 0 ? "warn" : "pass",
       detail: !hasInteractions
-        ? "Pricing coverage appears after records are imported."
+        ? "Model-rate coverage appears after records are imported."
         : data.health.costCoverage.unknown > 0
           ? `${data.health.costCoverage.unknown.toLocaleString()} interactions need repair: ${unknownCauseText || "cause unavailable"}.`
           : "Imported interactions have usable cost coverage."
@@ -153,9 +153,9 @@ function DoctorReportPanel({ report }: { report: DoctorReport }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Doctor report</CardTitle>
+        <CardTitle>Scan Health report</CardTitle>
         <CardDescription>
-          A shared report used by this page and `tokentrace doctor --json`.
+          The same local Scan Health data returned by `tokentrace doctor --json`.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -217,7 +217,7 @@ function DoctorReportPanel({ report }: { report: DoctorReport }) {
         </div>
 
         <div className="space-y-2">
-          <div className="text-sm font-semibold">Repair recommendations</div>
+          <div className="text-sm font-semibold">Recommended fixes</div>
           <div className="grid gap-2 lg:grid-cols-2">
             {report.recommendations.slice(0, 6).map((item) => (
               <Link key={item.id} href={item.href ?? "/diagnostics"} className="border-t p-3 transition-colors hover:bg-muted/40">
@@ -236,7 +236,7 @@ function DoctorReportPanel({ report }: { report: DoctorReport }) {
 
         <div className="space-y-3">
           <div>
-            <div className="text-sm font-semibold">Support matrix</div>
+            <div className="text-sm font-semibold">Supported file types</div>
             <div className="mt-1 text-xs text-muted-foreground">
               {report.supportMatrix.summary.stable.toLocaleString()} stable,{" "}
               {report.supportMatrix.summary.bestEffort.toLocaleString()} best-effort,{" "}
@@ -267,7 +267,7 @@ function ParserTrustPanel({ report }: { report: DoctorReport["parserTrust"] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Parser Trust Report</CardTitle>
+        <CardTitle>File parser review</CardTitle>
         <CardDescription>
           Latest scan files grouped by parser, source family, version, status, and import yield. Ignored files are known support files, not usage transcripts. Unsupported files need parser review before they become usage.
         </CardDescription>
@@ -342,7 +342,7 @@ function ScanDiffPanel({ report }: { report: DoctorReport["scanDiff"] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Scan History Diff</CardTitle>
+        <CardTitle>Scan history comparison</CardTitle>
         <CardDescription>
           Latest scan compared with the previous scan using deterministic scan ordering. Ignored files are known support files, not usage transcripts.
         </CardDescription>
@@ -472,8 +472,8 @@ export default async function DiagnosticsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Scan Doctor"
-        description="Local CLI ingestion status, parser coverage, pricing readiness, and confidence transparency."
+        title="Scan Health"
+        description="Shows whether local usage was imported, which files need review, and whether model-rate coverage is usable."
       />
 
       <TrustChecklist data={data} rootCount={roots.length} />
@@ -481,7 +481,7 @@ export default async function DiagnosticsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Local recommendations</CardTitle>
-          <CardDescription>Deterministic next actions from local scan, pricing, parser, project, and cache data.</CardDescription>
+          <CardDescription>Deterministic next actions from local scan, model rates, parser, project, and cache data.</CardDescription>
         </CardHeader>
         <CardContent className="grid divide-y overflow-hidden p-0 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
           {analytics.recommendations.slice(0, 3).map((item) => (
@@ -513,12 +513,12 @@ export default async function DiagnosticsPage() {
         {[
           {
             href: "/discovery",
-            title: "File Discovery Explorer",
+            title: "Discovered files",
             description: "Inspect which local files were discovered, skipped, imported, or unsupported."
           },
           {
             href: "/parser-debug",
-            title: "Parser Debug",
+            title: "Parser review",
             description: "Review adapter selection, parser confidence, warnings, errors, and extracted metadata."
           },
           {
@@ -543,7 +543,7 @@ export default async function DiagnosticsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Architecture Guardrails</CardTitle>
+          <CardTitle>Local privacy rules</CardTitle>
           <CardDescription>TokenTrace uses direct local filesystem ingestion as the primary architecture.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">

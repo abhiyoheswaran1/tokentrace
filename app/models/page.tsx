@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/empty-state";
+import { ScanNowButton } from "@/components/scan-now-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
@@ -18,6 +20,18 @@ export default function ModelAnalyticsPage() {
         description="Usage, cost, output length, efficiency, and configured cheaper alternatives."
       />
 
+      {!data.models.length ? (
+        <EmptyState
+          title="No model usage imported yet"
+          description="Scan local CLI usage first, then confirm model rates so cost and alternative suggestions are meaningful."
+          actions={[
+            { label: "Set model rates", href: "/pricing", variant: "outline" }
+          ]}
+        >
+          <ScanNowButton size="sm" />
+        </EmptyState>
+      ) : (
+        <>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -91,6 +105,8 @@ export default function ModelAnalyticsPage() {
           </Table>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }

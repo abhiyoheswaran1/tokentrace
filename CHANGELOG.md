@@ -4,6 +4,31 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+No unreleased changes yet.
+
+## [0.10.1] - 2026-05-18
+
+### Changed
+
+- Guide now uses a manual-style layout with section navigation, compact setup status, workflow rows, command tables, and tighter troubleshooting copy.
+- Sidebar Guide access now lives in a Help area above the version footer so it reads as documentation instead of a product feature.
+- Guide section navigation now sticks while scrolling on desktop widths, and the standalone sidebar Guide link no longer shows redundant Help chrome.
+- Guide Scan now controls now run the local scan directly with inline feedback instead of linking to Settings.
+- Overview now groups processed, fresh, and cached token metrics into one Token Accounting card with direct evidence pivots.
+- Evidence pages now include metric tabs and drill-down actions for source files, sessions, parser confidence, and model-rate or repair follow-up.
+- User-facing model price configuration is now labeled Model Rates so it is not mistaken for TokenTrace product pricing.
+- Overview Usage Pulse now labels current, previous, and change values explicitly inside each metric block.
+- Overview now groups cost and sessions into one split card with a shared help tooltip, compact pane labels, and aligned trust notes/actions.
+- Overview trend charts now default all-time views to the latest 30 days, while keeping 60-day, 90-day, and All history options available.
+- Overview now compacts below-chart diagnostics into Review Status and Top repair items strips, with the full unknown-cost table moved to the Repair page.
+- Evidence, repair, parser, and model-rate links now use consistent action labels: View evidence, Open repair, Set model rate, and Review parser.
+- Sidebar navigation now shows the active page, first-run empty states point to the next useful action, direct scans return richer result feedback, and repair/evidence pages guide users through the next drill-down.
+- Page names now stay aligned around Parsers, Discovery, Insights, Scan Health, Model Rates, and privacy-oriented Raw Data copy.
+- User-facing diagnostic copy now uses Scan Health consistently instead of older mixed diagnostic wording.
+- Product metadata, README, Guide, and agent discovery now point to the TokenTrace product website while creator attribution points to Abhi Yoheswaran's homepage.
+- Period filters use a mobile-friendly preset scroller with custom dates on a compact second row, and trend controls now say Display window with a showing-latest badge.
+- README screenshots were refreshed from a guarded public-safe screenshot database seeded by `npm run screenshots:seed`.
+
 ## [0.10.0] - 2026-05-18
 
 ### Added

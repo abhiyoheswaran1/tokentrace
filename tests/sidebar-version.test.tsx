@@ -12,7 +12,10 @@ describe("Sidebar version display", () => {
     expect(text).toContain("No telemetry");
     expect(text).toContain("v0.4.0");
     expect(text).toContain("Open source by Abhi Yoheswaran.");
-    expect(html).toContain('href="https://github.com/abhiyoheswaran1"');
+    expect(html).toContain('aria-label="Primary navigation"');
+    expect(html).toContain('aria-label="Help navigation"');
+    expect(html).toContain('href="https://www.abhiyoheswaran.com"');
+    expect(html).not.toContain('href="https://github.com/abhiyoheswaran1"');
     expect(html).toContain('aria-label="TokenTrace logo"');
   });
 });

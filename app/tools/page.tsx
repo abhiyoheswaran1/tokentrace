@@ -1,4 +1,6 @@
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
+import { EmptyState } from "@/components/empty-state";
+import { ScanNowButton } from "@/components/scan-now-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/ui/typography";
@@ -17,6 +19,18 @@ export default function ToolComparisonPage() {
         description="Compare Claude Code, Codex CLI, and generic imported tools."
       />
 
+      {!data.tools.length ? (
+        <EmptyState
+          title="No tool usage imported yet"
+          description="Run a local scan after using Claude Code, Codex, or another supported CLI. Tool comparison appears once sessions are imported."
+          actions={[
+            { label: "Open Scan Health", href: "/diagnostics", variant: "outline" }
+          ]}
+        >
+          <ScanNowButton size="sm" />
+        </EmptyState>
+      ) : (
+        <>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -86,6 +100,8 @@ export default function ToolComparisonPage() {
           </Table>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }

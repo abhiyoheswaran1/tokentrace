@@ -38,7 +38,7 @@ export function calculateInteractionCost(
       currency: price?.currency ?? "USD",
       estimated: usage.estimatedTokens,
       status: "unknown",
-      explanation: "No complete model pricing is configured."
+      explanation: "No complete provider model rate is configured."
     };
   }
 

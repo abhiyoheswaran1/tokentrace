@@ -30,6 +30,23 @@ type RoadmapStatusOptions = {
   packageVersion?: string;
 };
 
+function isAtLeastVersion(version: string | undefined, target: string) {
+  if (!version) return false;
+
+  const currentParts = version.split(".").map((part) => Number.parseInt(part, 10));
+  const targetParts = target.split(".").map((part) => Number.parseInt(part, 10));
+  if (currentParts.some(Number.isNaN) || targetParts.some(Number.isNaN)) return false;
+
+  for (let index = 0; index < targetParts.length; index += 1) {
+    const current = currentParts[index] ?? 0;
+    const required = targetParts[index] ?? 0;
+    if (current > required) return true;
+    if (current < required) return false;
+  }
+
+  return true;
+}
+
 const cards: RoadmapCard[] = [
   {
     id: "TT-100-01",
@@ -129,7 +146,7 @@ const cards: RoadmapCard[] = [
       "Release-safe gates include verify, build, CLI smoke, packed-install smoke, package inspection, and ProjScan.",
       "Package inspection and packed smoke enforce the agent discovery docs, schema, CLI bin, and release status contract.",
       "Overview metric cards expose trust annotations so exact, estimated, unknown, cached, and imported values are explained near the number.",
-      "Guide includes an empty-state playbook for no data, missing logs, unknown pricing, parser warnings, and sandbox smoke skips.",
+      "Guide includes an empty-state playbook for no data, missing logs, unknown model rates, parser warnings, and sandbox smoke skips.",
       "Release status opens only after maintainer approval, a version bump, and the full release check."
     ],
     evidence: [
@@ -147,7 +164,7 @@ const cards: RoadmapCard[] = [
 ];
 
 export function buildRoadmapStatus(options: RoadmapStatusOptions = {}): RoadmapStatus {
-  const versionBumped = options.packageVersion === "0.10.0";
+  const versionBumped = isAtLeastVersion(options.packageVersion, "0.10.0");
 
   return {
     version: "0.10.0",

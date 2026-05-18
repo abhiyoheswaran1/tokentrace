@@ -4,7 +4,15 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import type { TrendPoint } from "@/src/lib/analytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { TrendChart, TrendControls, type TrendBucket, type TrendWindow } from "@/components/charts/trend-chart";
+
+function trendWindowLabel(window: TrendWindow) {
+  if (window === "30d") return "Showing latest 30 days";
+  if (window === "60d") return "Showing latest 60 days";
+  if (window === "90d") return "Showing latest 90 days";
+  return "Showing all history";
+}
 
 export function TrendSection({
   data,
@@ -22,11 +30,14 @@ export function TrendSection({
 
   return (
     <section className="space-y-3">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-3 border-b border-border pb-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold leading-tight">Trends</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-sm font-semibold leading-tight">Trends</h2>
+            <Badge variant="secondary">{trendWindowLabel(trendWindow)}</Badge>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Token and cost history share display settings.
+            Token and cost history share chart display settings.
           </p>
         </div>
         <div className="flex min-w-0 justify-start lg:justify-end">
@@ -58,7 +69,7 @@ export function TrendSection({
         <Card className="h-full">
           <CardHeader>
             <CardTitle>Cost Trend</CardTitle>
-            <CardDescription>Costs use editable model prices from Pricing.</CardDescription>
+            <CardDescription>Costs use editable provider model rates.</CardDescription>
           </CardHeader>
           <CardContent>
             <TrendChart
