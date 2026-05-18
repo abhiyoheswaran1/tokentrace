@@ -5,11 +5,13 @@ import { describe, expect, it } from "vitest";
 describe("Overview layout order", () => {
   it("keeps trends ahead of guardrails and recommendations on the main page", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
+    const trendSource = fs.readFileSync(path.join(process.cwd(), "components/charts/trend-section.tsx"), "utf8");
 
     const usagePulse = source.indexOf("<CardTitle>Usage Pulse</CardTitle>");
     const metricCards = source.indexOf("label=\"Processed tokens\"");
-    const tokenTrend = source.indexOf("<CardTitle>Token Trend</CardTitle>");
-    const costTrend = source.indexOf("<CardTitle>Cost Trend</CardTitle>");
+    const trendSection = source.indexOf("<TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />");
+    const tokenTrend = trendSource.indexOf("<CardTitle>Token Trend</CardTitle>");
+    const costTrend = trendSource.indexOf("<CardTitle>Cost Trend</CardTitle>");
     const trustStrip = source.indexOf("<OverviewTrustStrip");
     const dataReadiness = source.indexOf("<DataReadinessPanel");
     const guardrails = source.indexOf("<UsageGuardrailsPanel progress={data.usageGuardrails} />");
@@ -20,9 +22,10 @@ describe("Overview layout order", () => {
     expect(trustStrip).toBeGreaterThan(-1);
     expect(dataReadiness).toBeGreaterThan(-1);
     expect(metricCards).toBeGreaterThan(usagePulse);
-    expect(tokenTrend).toBeGreaterThan(metricCards);
+    expect(trendSection).toBeGreaterThan(metricCards);
+    expect(tokenTrend).toBeGreaterThan(-1);
     expect(costTrend).toBeGreaterThan(tokenTrend);
-    expect(trustStrip).toBeGreaterThan(costTrend);
+    expect(trustStrip).toBeGreaterThan(trendSection);
     expect(dataReadiness).toBeGreaterThan(trustStrip);
     expect(guardrails).toBeGreaterThan(dataReadiness);
     expect(nextActions).toBeGreaterThan(guardrails);
@@ -38,5 +41,15 @@ describe("Overview layout order", () => {
     expect(source).toContain("Open next repair item");
     expect(source).toContain("View unknown-cost evidence");
     expect(source).toContain("evidenceLinks[\"unknown-cost\"]");
+  });
+
+  it("shows trust annotations directly on the Overview metric cards", () => {
+    const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
+
+    expect(source).toContain("trustNote");
+    expect(source).toContain("Why this number");
+    expect(source).toContain("Includes cache read/write and reasoning tokens.");
+    expect(source).toContain("Exact, estimated, and unknown costs stay split.");
+    expect(source).toContain("Scan freshness is shown in Data Readiness.");
   });
 });

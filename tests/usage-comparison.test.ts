@@ -118,4 +118,25 @@ describe("usage comparison analytics", () => {
       delta: expect.objectContaining({ totalTokens: 150 })
     });
   });
+
+  it("suppresses extreme percentage deltas when the previous baseline is too small", async () => {
+    const { getAnalyticsData, sqlite } = await loadAnalytics();
+    seedBase(sqlite);
+
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, timestamp, role, model_id, total_tokens, input_tokens, output_tokens, token_confidence, cost)
+         VALUES
+          ('previous-i1', 'previous-i1', 'session-previous', 2_000, 'assistant', 'sonnet', 10, 4, 6, 'exact', 0.01),
+          ('current-i1', 'current-i1', 'session-current', 12_000, 'assistant', 'sonnet', 1000000, 400000, 600000, 'exact', 10.00)`
+      )
+      .run();
+
+    const data = getAnalyticsData({ from: 10_000, to: 20_000 });
+
+    expect(data.comparison.delta.totalTokens).toBe(999990);
+    expect(data.comparison.delta.totalTokensPercent).toBeNull();
+    expect(data.comparison.headline).toBe("Higher tokens activity");
+  });
 });

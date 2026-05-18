@@ -22,12 +22,30 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Agentic Coding Workflow
+
+TokenTrace coding work uses the Superpowers methodology from
+<https://github.com/obra/superpowers>: clarify intent, plan, use TDD for
+behavior changes, review, and verify before completion claims.
+
+ProjScan is a required code-intelligence and quality tool. Use the npm package
+from <https://www.npmjs.com/package/projscan> through the local script:
+
+```bash
+npm run projscan:doctor
+```
+
+Run ProjScan after substantial changes and before release readiness claims. It
+does not replace tests, typecheck, lint, build, package inspection, or smoke
+checks.
+
 Useful checks:
 
 ```bash
 npm run verify
 npm run build
 npm run scan
+npm run projscan:doctor
 ```
 
 ## Parser Contributions

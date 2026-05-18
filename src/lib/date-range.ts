@@ -1,6 +1,6 @@
 import type { AnalyticsFilters } from "@/src/lib/analytics";
 
-export type DateRangeKey = "all" | "today" | "7d" | "30d" | "90d" | "month" | "custom";
+export type DateRangeKey = "all" | "today" | "7d" | "30d" | "60d" | "90d" | "month" | "custom";
 
 export type DateRangeOption = {
   key: DateRangeKey;
@@ -20,6 +20,7 @@ export const dateRangeOptions: DateRangeOption[] = [
   { key: "today", label: "Today" },
   { key: "7d", label: "7 days" },
   { key: "30d", label: "30 days" },
+  { key: "60d", label: "60 days" },
   { key: "90d", label: "90 days" },
   { key: "month", label: "This month" }
 ];
@@ -102,8 +103,8 @@ export function resolveDateRange(input?: SearchInput, now = new Date()): Resolve
     };
   }
 
-  if (key === "7d" || key === "30d" || key === "90d") {
-    const days = key === "7d" ? 7 : key === "30d" ? 30 : 90;
+  if (key === "7d" || key === "30d" || key === "60d" || key === "90d") {
+    const days = key === "7d" ? 7 : key === "30d" ? 30 : key === "60d" ? 60 : 90;
     const from = addDays(today, -(days - 1));
     return {
       key,
@@ -156,7 +157,7 @@ export function resolveDateRange(input?: SearchInput, now = new Date()): Resolve
 }
 
 export function dateRangeQueryParams(range: ResolvedDateRange): Record<string, string | undefined> {
-  if (range.key === "all") return {};
+  if (range.key === "all") return { range: undefined };
   if (range.key === "custom") {
     return {
       range: "custom",

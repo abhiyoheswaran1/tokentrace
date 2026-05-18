@@ -17,6 +17,52 @@ afterEach(async () => {
 });
 
 describe("statusline CLI safety", () => {
+  it("prints agent discovery JSON without touching the TokenTrace app data directory", async () => {
+    const blockedHome = await tempPath("not-a-directory");
+    await fs.writeFile(blockedHome, "blocked");
+
+    const result = spawnSync(process.execPath, ["bin/tokentrace.js", "agent", "--json"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        TOKENTRACE_HOME: blockedHome,
+        TOKENTRACE_DB: path.join(blockedHome, "tokentrace.db"),
+        DATABASE_URL: `file:${path.join(blockedHome, "tokentrace.db")}`
+      }
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const manifest = JSON.parse(result.stdout);
+    expect(manifest.schemaVersion).toBe(1);
+    expect(manifest.discoveryCommands).toContainEqual(["tokentrace", "agent", "--json"]);
+    expect(manifest.privacy.localFirst).toBe(true);
+  });
+
+  it("prints roadmap status JSON without touching the TokenTrace app data directory", async () => {
+    const blockedHome = await tempPath("not-a-directory");
+    await fs.writeFile(blockedHome, "blocked");
+
+    const result = spawnSync(process.execPath, ["bin/tokentrace.js", "roadmap", "--json"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        TOKENTRACE_HOME: blockedHome,
+        TOKENTRACE_DB: path.join(blockedHome, "tokentrace.db"),
+        DATABASE_URL: `file:${path.join(blockedHome, "tokentrace.db")}`
+      }
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const roadmap = JSON.parse(result.stdout);
+    expect(roadmap.version).toBe("0.10.0");
+    expect(roadmap.release.releaseAllowed).toBe(true);
+    expect(roadmap.cards).toHaveLength(6);
+  });
+
   it("prints Claude setup JSON without touching the TokenTrace app data directory", async () => {
     const blockedHome = await tempPath("not-a-directory");
     await fs.writeFile(blockedHome, "blocked");

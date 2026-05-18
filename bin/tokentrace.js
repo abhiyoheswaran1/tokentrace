@@ -25,6 +25,12 @@ function help() {
 Usage:
   tokentrace              Start local dashboard
   tokentrace serve        Start local dashboard
+  tokentrace agent --json
+                          Print machine-readable agent discovery manifest
+  tokentrace capabilities --json
+                          Alias for agent discovery manifest
+  tokentrace roadmap --json
+                          Print 0.10.0 release implementation status
   tokentrace scan         Scan local AI CLI usage logs
   tokentrace doctor --json
                           Inspect scan health and repair recommendations
@@ -370,6 +376,14 @@ async function scan(args) {
   await runNodeScript("scan", args);
 }
 
+async function agent(args) {
+  await runNodeScript("agent", args, { env: process.env });
+}
+
+async function roadmap(args) {
+  await runNodeScript("roadmap", args, { env: process.env });
+}
+
 async function doctor(args) {
   await initializeDatabase({ quiet: true, refreshPrices: false });
   await runNodeScript("doctor", args);
@@ -554,6 +568,14 @@ async function main() {
   }
   if (command === "serve") {
     await serve(args);
+    return;
+  }
+  if (command === "agent" || command === "capabilities") {
+    await agent(args);
+    return;
+  }
+  if (command === "roadmap") {
+    await roadmap(args);
     return;
   }
   if (command === "scan") {

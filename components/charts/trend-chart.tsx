@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -14,9 +15,91 @@ import type { TrendPoint } from "@/src/lib/analytics";
 import { formatCurrency, formatShortDate, formatTokens } from "@/src/lib/format";
 import { Button } from "@/components/ui/button";
 
-type Period = "daily" | "weekly" | "monthly";
+export type TrendBucket = "daily" | "weekly" | "monthly";
+export type TrendWindow = "30d" | "60d" | "90d" | "all";
 
-function bucketFor(date: string, period: Period) {
+const trendWindowOptions: Array<{ key: TrendWindow; label: string }> = [
+  { key: "30d", label: "30 days" },
+  { key: "60d", label: "60 days" },
+  { key: "90d", label: "90 days" },
+  { key: "all", label: "All" }
+];
+
+function parseTrendDate(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function daysForWindow(window: TrendWindow) {
+  if (window === "30d") return 30;
+  if (window === "60d") return 60;
+  if (window === "90d") return 90;
+  return null;
+}
+
+export function filterTrendWindow(data: TrendPoint[], window: TrendWindow) {
+  const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
+  const days = daysForWindow(window);
+  if (!days || sorted.length === 0) return sorted;
+
+  const latest = parseTrendDate(sorted[sorted.length - 1].date);
+  const cutoff = addDays(latest, -(days - 1)).getTime();
+  return sorted.filter((point) => parseTrendDate(point.date).getTime() >= cutoff);
+}
+
+export function TrendControls({
+  period,
+  trendWindow,
+  onPeriodChange,
+  onTrendWindowChange
+}: {
+  period: TrendBucket;
+  trendWindow: TrendWindow;
+  onPeriodChange: (period: TrendBucket) => void;
+  onTrendWindowChange: (window: TrendWindow) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">Bucket</span>
+        {(["daily", "weekly", "monthly"] as const).map((item) => (
+          <Button
+            key={item}
+            size="sm"
+            type="button"
+            variant={period === item ? "default" : "outline"}
+            onClick={() => onPeriodChange(item)}
+          >
+            {item[0].toUpperCase() + item.slice(1)}
+          </Button>
+        ))}
+      </div>
+      <div className="hidden h-6 w-px bg-border sm:block" />
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">Trend window</span>
+        {trendWindowOptions.map((item) => (
+          <Button
+            key={item.key}
+            size="sm"
+            type="button"
+            variant={trendWindow === item.key ? "default" : "outline"}
+            onClick={() => onTrendWindowChange(item.key)}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function bucketFor(date: string, period: TrendBucket) {
   const parsed = new Date(`${date}T00:00:00`);
   if (period === "monthly") return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-01`;
   if (period === "weekly") {
@@ -30,16 +113,34 @@ function bucketFor(date: string, period: Period) {
 export function TrendChart({
   data,
   metric,
-  color = "#0f766e"
+  color = "#0f766e",
+  defaultWindow = "60d",
+  period: controlledPeriod,
+  trendWindow: controlledTrendWindow,
+  showControls = true
 }: {
   data: TrendPoint[];
   metric: "totalTokens" | "cost";
   color?: string;
+  defaultWindow?: TrendWindow;
+  period?: TrendBucket;
+  trendWindow?: TrendWindow;
+  showControls?: boolean;
 }) {
-  const [period, setPeriod] = useState<Period>("daily");
+  const [internalPeriod, setInternalPeriod] = useState<TrendBucket>("daily");
+  const [internalTrendWindow, setInternalTrendWindow] = useState<TrendWindow>(defaultWindow);
+
+  useEffect(() => {
+    if (!controlledTrendWindow) setInternalTrendWindow(defaultWindow);
+  }, [controlledTrendWindow, defaultWindow]);
+
+  const period = controlledPeriod ?? internalPeriod;
+  const trendWindow = controlledTrendWindow ?? internalTrendWindow;
+
   const chartData = useMemo(() => {
     const buckets = new Map<string, TrendPoint>();
-    data.forEach((point) => {
+    const visibleData = filterTrendWindow(data, trendWindow);
+    visibleData.forEach((point) => {
       const key = bucketFor(point.date, period);
       const existing =
         buckets.get(key) ??
@@ -61,22 +162,18 @@ export function TrendChart({
       buckets.set(key, existing);
     });
     return Array.from(buckets.values()).sort((a, b) => a.date.localeCompare(b.date));
-  }, [data, period]);
+  }, [data, period, trendWindow]);
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {(["daily", "weekly", "monthly"] as const).map((item) => (
-          <Button
-            key={item}
-            size="sm"
-            variant={period === item ? "default" : "outline"}
-            onClick={() => setPeriod(item)}
-          >
-            {item[0].toUpperCase() + item.slice(1)}
-          </Button>
-        ))}
-      </div>
+      {showControls ? (
+        <TrendControls
+          period={period}
+          trendWindow={trendWindow}
+          onPeriodChange={setInternalPeriod}
+          onTrendWindowChange={setInternalTrendWindow}
+        />
+      ) : null}
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>

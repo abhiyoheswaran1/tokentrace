@@ -2,6 +2,36 @@
 
 All notable changes to TokenTrace are documented here.
 
+## Unreleased
+
+## [0.10.0] - 2026-05-18
+
+### Added
+
+- In-app Guide page covering first scan setup, Claude Code status-line installation, status-line label meanings, page workflows, privacy, and troubleshooting.
+- `tokentrace agent --json` and `tokentrace capabilities --json` for a read-only machine-readable discovery manifest that coding agents can use before scanning or opening the dashboard.
+- Local dashboard discovery endpoints at `/api/agent` and `/api/capabilities` returning the same manifest.
+- `tokentrace roadmap --json` and `/api/roadmap` for machine-readable 0.10.0 implementation status, evidence paths, verification gates, and release status.
+- Package-level agent discovery references: `TOKENTRACE_AGENT.md`, `llms.txt`, and `docs/agent-discovery.schema.json`.
+- Repo-level agent instructions for Codex and Claude Code requiring Superpowers, ProjScan, changelog discipline, and explicit maintainer approval before releases.
+- 0.10.0 Guided Operator roadmap for in-app guidance, status-line clarity, trend continuity, release-safe agent workflow, and verification gates.
+- First-run guided setup in Overview and Guide so new users can move from scan roots to first useful evidence without a separate tutorial mode.
+- Guide release-readiness and empty-state sections covering roadmap gates, release status, no data, missing logs, unknown pricing, parser warnings, and sandbox smoke skips.
+
+### Changed
+
+- Guide now shows live local setup status for latest scan, imported records, unknown costs, and priced model coverage.
+- Agent discovery follow-up commands are now structured as command arrays instead of shell strings.
+- Claude Code status-line output now leads with live context and cost, then labels transcript totals as processed and cache usage to avoid confusing cumulative processed tokens with current context size.
+- Package inspection and packed-install smoke now enforce the agent discovery docs, schema, executable CLI bin, and 0.10.0 release-status contract.
+- Overview metric cards now show inline trust annotations explaining processed, non-cache, cached, cost, and session counts near the numbers.
+- Overview Period defaults to All time again, while token and cost trend charts share one control bar that defaults chart history to the latest 60 days with 30-day, 90-day, and All options.
+- Usage Pulse now suppresses extreme percentage labels when the previous comparison baseline is too small to be useful.
+
+### Fixed
+
+- Token and cost trend charts now include explicit zero-value calendar days between imported usage days instead of visually skipping idle periods.
+
 ## [0.9.0] - 2026-05-13
 
 ### Added

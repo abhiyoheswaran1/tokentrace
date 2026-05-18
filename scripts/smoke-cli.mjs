@@ -199,6 +199,21 @@ try {
   const version = run(["--version"]).trim();
   if (!/^\d+\.\d+\.\d+/.test(version)) throw new Error(`Unexpected version output: ${version}`);
 
+  const agent = jsonCommand(["agent", "--json"]);
+  if (agent.schemaVersion !== 1 || !agent.commands?.length) {
+    throw new Error("Agent discovery JSON is missing schema or commands.");
+  }
+
+  const capabilities = jsonCommand(["capabilities", "--json"]);
+  if (!capabilities.discoveryCommands?.some((command) => command.join(" ") === "tokentrace agent --json")) {
+    throw new Error("Capabilities alias is missing agent discovery command.");
+  }
+
+  const roadmap = jsonCommand(["roadmap", "--json"]);
+  if (roadmap.version !== "0.10.0" || roadmap.release?.releaseAllowed !== true) {
+    throw new Error("Roadmap JSON is missing 0.10.0 release-ready status.");
+  }
+
   const scan = jsonCommand(["scan", "fixtures/generic-jsonl", "--json"]);
   if (scan.recordsImported < 1) throw new Error("Expected fixture scan to import records.");
 

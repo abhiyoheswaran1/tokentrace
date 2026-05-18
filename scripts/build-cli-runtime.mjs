@@ -8,6 +8,7 @@ await fs.rm(outdir, { recursive: true, force: true });
 await fs.mkdir(outdir, { recursive: true });
 
 const entryPoints = {
+  agent: "scripts/agent.ts",
   "db-migrate": "scripts/db-migrate.ts",
   "db-seed": "scripts/db-seed.ts",
   digest: "scripts/digest.ts",
@@ -18,6 +19,7 @@ const entryPoints = {
   report: "scripts/report.ts",
   repair: "scripts/repair.ts",
   review: "scripts/review.ts",
+  roadmap: "scripts/roadmap.ts",
   reset: "scripts/reset.ts",
   scan: "scripts/scan.ts",
   status: "scripts/status.ts"

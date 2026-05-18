@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   BarChart3,
   Bot,
+  BookOpen,
   Bug,
   ClipboardList,
   FolderGit2,
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/sessions", label: "Sessions", icon: Search },
   { href: "/optimisation", label: "Insights", icon: Sparkles },
   { href: "/pricing", label: "Pricing", icon: SlidersHorizontal },
+  { href: "/guide", label: "Guide", icon: BookOpen },
   { href: "/diagnostics", label: "Doctor", icon: ClipboardList },
   { href: "/discovery", label: "Discovery", icon: BarChart3 },
   { href: "/parser-debug", label: "Parsers", icon: Bug },

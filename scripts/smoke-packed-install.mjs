@@ -46,6 +46,71 @@ function parsePackOutput(stdout) {
   return first;
 }
 
+const requiredPackageFiles = [
+  "TOKENTRACE_AGENT.md",
+  "llms.txt",
+  "docs/agent-discovery.schema.json",
+  "bin/tokentrace.js"
+];
+
+function assertPackedPayload(packed) {
+  const files = packed.files?.map((file) => file.path) ?? [];
+  for (const requiredFile of requiredPackageFiles) {
+    if (!files.includes(requiredFile)) {
+      throw new Error(`Packed tarball is missing required file: ${requiredFile}`);
+    }
+  }
+
+  const generatedNextFiles = files.filter(
+    (file) => file.startsWith(".next/") || file.includes("/.next/")
+  );
+  if (generatedNextFiles.length > 0) {
+    throw new Error(
+      `Packed tarball includes generated Next.js output: ${generatedNextFiles
+        .slice(0, 8)
+        .join(", ")}`
+    );
+  }
+}
+
+function runJson(bin, args, options = {}) {
+  const stdout = run(bin, args, options);
+  try {
+    return JSON.parse(stdout);
+  } catch (error) {
+    throw new Error(
+      `${bin} ${args.join(" ")} did not emit valid JSON: ${
+        error instanceof Error ? error.message : String(error)
+      }\nstdout:\n${stdout}`
+    );
+  }
+}
+
+function hasCommand(commands, id) {
+  return Array.isArray(commands) && commands.some((command) => command?.id === id);
+}
+
+function assertDiscoverySmoke(bin, cwd, env) {
+  const agent = runJson(bin, ["agent", "--json"], { cwd, env });
+  if (agent.schemaVersion !== 1 || !hasCommand(agent.commands, "roadmap")) {
+    throw new Error("Packed tokentrace agent --json is missing schemaVersion or roadmap command.");
+  }
+
+  const capabilities = runJson(bin, ["capabilities", "--json"], { cwd, env });
+  const discoveryCommands = capabilities.discoveryCommands ?? [];
+  const hasAgentDiscoveryCommand = discoveryCommands.some(
+    (command) => Array.isArray(command) && command.join(" ") === "tokentrace agent --json"
+  );
+  if (capabilities.schemaVersion !== 1 || !hasAgentDiscoveryCommand) {
+    throw new Error("Packed tokentrace capabilities --json is missing stable discovery commands.");
+  }
+
+  const roadmap = runJson(bin, ["roadmap", "--json"], { cwd, env });
+  if (roadmap.version !== "0.10.0" || roadmap.release?.releaseAllowed !== true) {
+    throw new Error("Packed tokentrace roadmap --json is missing the 0.10.0 release-ready status.");
+  }
+}
+
 function findFreePort(hostname) {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -127,11 +192,13 @@ async function runServeSmoke(bin, cwd, env) {
 try {
   const packageJson = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
   const packed = parsePackOutput(run("npm", ["pack", "--json"]));
+  assertPackedPayload(packed);
   tarballPath = path.join(root, packed.filename);
 
   const skipInstall = process.env.CODEX_SANDBOX_NETWORK_DISABLED === "1" && process.env.TOKENTRACE_FORCE_PACKED_INSTALL_SMOKE !== "1";
   if (skipInstall) {
     console.log("skip packed install smoke: sandbox network binding is disabled");
+    console.log("packed tarball payload inspection passed");
   } else {
     run("npm", [
       "install",
@@ -160,12 +227,17 @@ try {
       throw new Error("Packed tokentrace --help is missing expected commands.");
     }
 
+    const cliEnv = {
+      TOKENTRACE_HOME: path.join(tempRoot, "home"),
+      TOKENTRACE_NO_OPEN: "1"
+    };
+    assertDiscoverySmoke(bin, tempRoot, cliEnv);
+
     await runServeSmoke(bin, tempRoot, {
       ...process.env,
       CI: "true",
       NEXT_TELEMETRY_DISABLED: "1",
-      TOKENTRACE_HOME: path.join(tempRoot, "home"),
-      TOKENTRACE_NO_OPEN: "1"
+      ...cliEnv
     });
 
     console.log(`TokenTrace packed install smoke passed for ${packed.filename}`);

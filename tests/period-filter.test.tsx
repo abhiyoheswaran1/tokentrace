@@ -5,6 +5,17 @@ import { PeriodFilter } from "@/components/period-filter";
 import { resolveDateRange } from "@/src/lib/date-range";
 
 describe("PeriodFilter", () => {
+  it("defaults the page period to all time while keeping 60 days available as a preset", () => {
+    const range = resolveDateRange(undefined, new Date(2026, 4, 9, 12));
+
+    const html = renderToStaticMarkup(<PeriodFilter range={range} />);
+
+    expect(html).toContain("60 days");
+    expect(html).toContain("All time");
+    expect(html).not.toContain("Last 60 days");
+    expect(html).toContain('href="/"');
+  });
+
   it("keeps preset chips scrollable while date controls wrap on narrow screens", () => {
     const range = resolveDateRange(
       new URLSearchParams("range=custom&from=2026-04-01&to=2026-04-30"),
@@ -18,10 +29,11 @@ describe("PeriodFilter", () => {
     expect(html).toContain('value="2026-04-30"');
     expect(html).toContain("overflow-x-auto");
     expect(html).toContain("min-w-0 max-w-full");
-    expect(html).toContain("flex min-w-0 flex-col gap-3 xl:flex-row");
+    expect(html).toContain("flex min-w-0 flex-col gap-3 2xl:flex-row");
     expect(html).toContain("flex-1 overflow-x-auto");
     expect(html).toContain("flex min-w-0 flex-wrap items-center gap-2");
     expect(html).toContain("border-t border-border pt-3");
+    expect(html).toContain("2xl:shrink-0 2xl:border-t-0 2xl:pt-0");
     expect(html).toContain("shrink-0");
     expect(html).toContain("period-date-field");
     expect(html).toContain("period-date-input");

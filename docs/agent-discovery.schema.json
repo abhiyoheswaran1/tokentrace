@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/abhiyoheswaran1/tokentrace/blob/main/docs/agent-discovery.schema.json",
+  "title": "TokenTrace Agent Discovery Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schemaVersion",
+    "product",
+    "discoveryCommands",
+    "apiEndpoints",
+    "install",
+    "privacy",
+    "commands",
+    "workflows",
+    "integrations",
+    "guardrails"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "https://github.com/abhiyoheswaran1/tokentrace/blob/main/docs/agent-discovery.schema.json"
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "packageName", "version", "description", "homepage", "repository"],
+      "properties": {
+        "name": { "type": "string", "const": "TokenTrace" },
+        "packageName": { "type": "string", "const": "tokentrace" },
+        "version": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "homepage": { "type": "string", "minLength": 1 },
+        "repository": { "type": "string", "minLength": 1 }
+      }
+    },
+    "discoveryCommands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/commandArray" }
+    },
+    "apiEndpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["method", "path", "description"],
+        "properties": {
+          "method": { "type": "string", "const": "GET" },
+          "path": { "type": "string", "pattern": "^/api/[a-z0-9-]+$" },
+          "description": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "install": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runWithoutInstalling", "installGlobal", "startDashboard"],
+      "properties": {
+        "runWithoutInstalling": { "$ref": "#/$defs/commandArray" },
+        "installGlobal": { "$ref": "#/$defs/commandArray" },
+        "startDashboard": { "$ref": "#/$defs/commandArray" }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "localFirst",
+        "telemetry",
+        "cloudAccountRequired",
+        "usageLogsLeaveMachine",
+        "writesLocalDatabase",
+        "networkUse"
+      ],
+      "properties": {
+        "localFirst": { "type": "boolean", "const": true },
+        "telemetry": { "type": "boolean", "const": false },
+        "cloudAccountRequired": { "type": "boolean", "const": false },
+        "usageLogsLeaveMachine": { "type": "boolean", "const": false },
+        "writesLocalDatabase": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "networkUse": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["command", "reason"],
+            "properties": {
+              "command": { "$ref": "#/$defs/commandArray" },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/command" }
+    },
+    "workflows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "goal", "steps"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "title": { "type": "string", "minLength": 1 },
+          "goal": { "type": "string", "minLength": 1 },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/commandArray" }
+          }
+        }
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claudeCode", "codex"],
+      "properties": {
+        "claudeCode": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["statusLineSetupCommand", "statusLineCommand", "notes"],
+          "properties": {
+            "statusLineSetupCommand": { "$ref": "#/$defs/commandArray" },
+            "statusLineCommand": { "$ref": "#/$defs/commandArray" },
+            "notes": { "$ref": "#/$defs/nonEmptyStringArray" }
+          }
+        },
+        "codex": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["recommendedFallbackCommand", "nativeStatusLineStatus", "notes"],
+          "properties": {
+            "recommendedFallbackCommand": { "$ref": "#/$defs/commandArray" },
+            "nativeStatusLineStatus": { "type": "string", "minLength": 1 },
+            "notes": { "$ref": "#/$defs/nonEmptyStringArray" }
+          }
+        }
+      }
+    },
+    "guardrails": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "rule"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "rule": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "commandArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "nonEmptyStringArray": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "command",
+        "description",
+        "output",
+        "mutatesLocalState",
+        "startsLongRunningProcess",
+        "requiresNetwork",
+        "safeForAutomation",
+        "useWhen",
+        "followUps"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1 },
+        "command": { "$ref": "#/$defs/commandArray" },
+        "description": { "type": "string", "minLength": 1 },
+        "output": {
+          "type": "string",
+          "enum": ["json", "markdown", "text", "terminal"]
+        },
+        "mutatesLocalState": { "type": "boolean" },
+        "startsLongRunningProcess": { "type": "boolean" },
+        "requiresNetwork": { "type": "boolean" },
+        "safeForAutomation": { "type": "boolean" },
+        "useWhen": { "type": "string", "minLength": 1 },
+        "followUps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/commandArray" }
+        },
+        "notes": { "$ref": "#/$defs/nonEmptyStringArray" }
+      }
+    }
+  }
+}

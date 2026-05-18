@@ -9,10 +9,18 @@ asks for that public release.
 
 - Keep `package.json` and `package-lock.json` at the current development version.
 - Add user-facing changes to `CHANGELOG.md` under `Unreleased`.
+- Use the Superpowers workflow for non-trivial coding work.
 - Run targeted tests for the slice.
 - Run `npm run verify` before considering the slice stable.
+- Run `npm run projscan:doctor` after substantial changes.
 - Run `npm run package:inspect` when package contents or dependencies change.
-  It verifies the publish tarball does not contain generated Next.js output.
+  It verifies the publish tarball does not contain generated Next.js output and
+  includes the agent discovery docs, schema, and executable CLI bin.
+- Run `npm run smoke:packed` when CLI or package-discovery surfaces change.
+  In sandboxed runs it may skip packed installation, but the tarball payload
+  inspection still runs.
+- Use `tokentrace roadmap --json` or `/api/roadmap` to confirm release blockers
+  still show `releaseAllowed: false` during internal 0.10.0 development.
 - Keep the release-note extractor green when release documentation changes:
   `npm run release:notes -- v0.4.0`.
 - Commit the slice with a plain milestone message.
@@ -30,6 +38,9 @@ Use this only when the maintainer explicitly asks to release.
    npm version 0.5.0 --no-git-tag-version
    npm run release:check
    ```
+
+   `release:check` includes package verification, CLI smoke, packed-install
+   smoke, package security inspection, and ProjScan doctor.
 
 4. Smoke test a clean package install from the packed tarball or a temporary
    global install.

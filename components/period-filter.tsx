@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { dateRangeOptions, type ResolvedDateRange } from "@/src/lib/date-range";
 
 function rangeHref(range: string) {
-  return range === "all" ? "/" : `/?range=${range}`;
+  if (range === "all") return "/";
+  return `/?range=${range}`;
 }
 
 function PeriodDateField({
@@ -41,7 +42,7 @@ export function PeriodFilter({ range }: { range: ResolvedDateRange }) {
     <div className="min-w-0 max-w-full rounded-lg bg-card p-3 outline outline-1 outline-border sm:p-4">
       <form className="max-w-full" action="/">
         <input type="hidden" name="range" value="custom" />
-        <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
+        <div className="flex min-w-0 flex-col gap-3 2xl:flex-row 2xl:items-center">
           <div className="flex min-w-0 items-center gap-2">
             <div className="flex shrink-0 items-center gap-2 pr-1 text-sm font-semibold">
               <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -66,8 +67,8 @@ export function PeriodFilter({ range }: { range: ResolvedDateRange }) {
               </div>
             </div>
           </div>
-          <div className="hidden h-6 w-px shrink-0 bg-border xl:block" />
-          <div className="flex min-w-0 flex-wrap items-center gap-2 border-t border-border pt-3 xl:shrink-0 xl:border-t-0 xl:pt-0">
+          <div className="hidden h-6 w-px shrink-0 bg-border 2xl:block" />
+          <div className="flex min-w-0 flex-wrap items-center gap-2 border-t border-border pt-3 2xl:shrink-0 2xl:border-t-0 2xl:pt-0">
             <PeriodDateField label="From" name="from" defaultValue={range.fromInput} />
             <PeriodDateField label="To" name="to" defaultValue={range.toInput} />
             <Button size="sm" type="submit" variant={range.key === "custom" ? "default" : "outline"}>

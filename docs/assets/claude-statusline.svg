@@ -1,6 +1,6 @@
 <svg width="1440" height="520" viewBox="0 0 1440 520" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">TokenTrace Claude Code status line preview</title>
-  <desc id="desc">A terminal-style Claude Code screen with a TokenTrace status line at the bottom showing session tokens, cache, cost, and pricing state.</desc>
+  <desc id="desc">A terminal-style Claude Code screen with a TokenTrace status line at the bottom showing context usage, cost, processed tokens, cache, and pricing state.</desc>
   <rect width="1440" height="520" rx="28" fill="#14181f"/>
   <rect x="32" y="28" width="1376" height="464" rx="18" fill="#1c222b"/>
   <rect x="32" y="28" width="1376" height="48" rx="18" fill="#252c36"/>
@@ -14,5 +14,5 @@
   <text x="72" y="254" fill="#7dd3c7" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="18">* Running tests</text>
   <text x="72" y="290" fill="#7dd3c7" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="18">* Updating diagnostics</text>
   <rect x="56" y="392" width="1328" height="64" rx="12" fill="#0f151c" stroke="#3d4653"/>
-  <text x="84" y="431" fill="#f4f1ec" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="20">TokenTrace | Sonnet | session 3.3K tokens | cache 2.0K | cost $0.1235 | pricing unscanned</text>
+  <text x="84" y="431" fill="#f4f1ec" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="20">TokenTrace | Sonnet | ctx 7% | cost $0.1235 | processed 3.3K tokens | cache 2.0K | priced</text>
 </svg>

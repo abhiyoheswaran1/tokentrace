@@ -1,0 +1,42 @@
+# TokenTrace
+
+> Local-first analytics for AI CLI usage, focused on coding-agent tokens, costs, sessions, parser confidence, and evidence trails.
+
+## Agent Entry Point
+
+Start with:
+
+```bash
+tokentrace agent --json
+```
+
+Equivalent alias:
+
+```bash
+tokentrace capabilities --json
+```
+
+The manifest is read-only and follows `docs/agent-discovery.schema.json`.
+
+When the local dashboard is running, the same manifest is available at
+`/api/agent` and `/api/capabilities`.
+
+Roadmap status is available through `tokentrace roadmap --json` and
+`/api/roadmap`.
+
+## Useful Commands
+
+- `tokentrace scan --json`: import local usage records.
+- `tokentrace doctor --json`: inspect scan health, parser trust, support status, and repair recommendations.
+- `tokentrace evidence --json`: trace aggregate numbers back to local sources.
+- `tokentrace repair --json`: inspect unknown-cost repair work.
+- `tokentrace digest --json`: summarize local usage.
+- `tokentrace roadmap --json`: inspect 0.10.0 implementation status and release blockers.
+- `tokentrace statusline setup claude`: print Claude Code status-line setup.
+- `tokentrace watch --session --compact`: terminal sidecar fallback for Codex.
+
+## Guardrails
+
+- Do not run `tokentrace reset` without explicit human approval.
+- Do not describe processed tokens as current context size.
+- Keep TokenTrace local-first: no telemetry, cloud sync, proxying, packet capture, or browser-extension path.

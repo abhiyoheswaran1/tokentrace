@@ -49,4 +49,36 @@ describe("package trust policy", () => {
     expect(packageJson.scripts["release:check"]).toContain("npm run smoke:packed");
     expect(packageJson.scripts["release:check"]).toContain("npm run security:package");
   });
+
+  it("publishes agent discovery docs, schema, and CLI bin entry", () => {
+    expect(packageJson.bin).toEqual({ tokentrace: "bin/tokentrace.js" });
+    expect(packageJson.files).toEqual(
+      expect.arrayContaining([
+        "bin",
+        "TOKENTRACE_AGENT.md",
+        "llms.txt",
+        "docs/agent-discovery.schema.json"
+      ])
+    );
+  });
+
+  it("package inspection enforces the release-hardening payload contract", () => {
+    const inspectScript = readFileSync(join(process.cwd(), "scripts/package-inspect.mjs"), "utf8");
+
+    expect(inspectScript).toContain("requiredPackageFiles");
+    expect(inspectScript).toContain("TOKENTRACE_AGENT.md");
+    expect(inspectScript).toContain("docs/agent-discovery.schema.json");
+    expect(inspectScript).toContain("bin/tokentrace.js");
+    expect(inspectScript).toContain("executable");
+  });
+
+  it("packed install smoke covers agent discovery and roadmap commands", () => {
+    const smokeScript = readFileSync(join(process.cwd(), "scripts/smoke-packed-install.mjs"), "utf8");
+
+    expect(smokeScript).toContain("agent");
+    expect(smokeScript).toContain("capabilities");
+    expect(smokeScript).toContain("roadmap");
+    expect(smokeScript).toContain("schemaVersion");
+    expect(smokeScript).toContain("releaseAllowed");
+  });
 });

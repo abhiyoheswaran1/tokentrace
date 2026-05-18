@@ -1,0 +1,132 @@
+import { describe, expect, it } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+import { buildAgentDiscoveryManifest } from "@/src/lib/agent-discovery";
+
+function readJson(filePath: string) {
+  return JSON.parse(fs.readFileSync(path.join(process.cwd(), filePath), "utf8"));
+}
+
+describe("agent discovery manifest", () => {
+  it("publishes a stable local-first command contract for coding agents", () => {
+    const manifest = buildAgentDiscoveryManifest({ version: "0.9.0" });
+    const commandIds = manifest.commands.map((command) => command.id);
+
+    expect(manifest.schemaVersion).toBe(1);
+    expect(manifest.product).toMatchObject({
+      name: "TokenTrace",
+      packageName: "tokentrace",
+      version: "0.9.0"
+    });
+    expect(manifest.discoveryCommands).toEqual([
+      ["tokentrace", "agent", "--json"],
+      ["tokentrace", "capabilities", "--json"]
+    ]);
+    expect(manifest.apiEndpoints).toEqual([
+      {
+        method: "GET",
+        path: "/api/agent",
+        description: "Return the same agent discovery manifest from the local dashboard."
+      },
+      {
+        method: "GET",
+        path: "/api/capabilities",
+        description: "Alias for /api/agent."
+      }
+    ]);
+    expect(manifest.privacy).toMatchObject({
+      localFirst: true,
+      telemetry: false,
+      cloudAccountRequired: false
+    });
+    expect(commandIds).toEqual(
+      expect.arrayContaining([
+        "scan",
+        "doctor",
+        "evidence",
+        "repair",
+        "digest",
+        "roadmap",
+        "status",
+        "claude-statusline",
+        "watch"
+      ])
+    );
+    expect(manifest.commands.find((command) => command.id === "scan")).toMatchObject({
+      command: ["tokentrace", "scan", "--json"],
+      mutatesLocalState: true,
+      output: "json"
+    });
+    expect(manifest.commands.find((command) => command.id === "doctor")).toMatchObject({
+      command: ["tokentrace", "doctor", "--json"],
+      mutatesLocalState: false,
+      output: "json"
+    });
+    expect(manifest.commands.find((command) => command.id === "roadmap")).toMatchObject({
+      command: ["tokentrace", "roadmap", "--json"],
+      mutatesLocalState: false,
+      output: "json"
+    });
+    expect(manifest.integrations.claudeCode.statusLineSetupCommand).toEqual([
+      "tokentrace",
+      "statusline",
+      "setup",
+      "claude"
+    ]);
+    expect(manifest.integrations.codex.recommendedFallbackCommand).toEqual([
+      "tokentrace",
+      "watch",
+      "--session",
+      "--compact"
+    ]);
+    expect(manifest.workflows.map((workflow) => workflow.id)).toContain("first-use");
+    expect(manifest.commands.flatMap((command) => command.followUps)).toEqual(
+      expect.arrayContaining([
+        ["tokentrace", "doctor", "--json"],
+        ["tokentrace", "evidence", "--json", "--metric=unknown-cost"]
+      ])
+    );
+    expect(manifest.guardrails).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "no-reset-without-human" }),
+        expect.objectContaining({ id: "processed-is-not-context" })
+      ])
+    );
+    expect(() => JSON.stringify(manifest)).not.toThrow();
+  });
+
+  it("keeps the published schema and package-level agent docs aligned", () => {
+    const manifest = buildAgentDiscoveryManifest({ version: "0.9.0" });
+    const schema = readJson("docs/agent-discovery.schema.json");
+    const packageJson = readJson("package.json");
+    const agentGuide = fs.readFileSync(path.join(process.cwd(), "TOKENTRACE_AGENT.md"), "utf8");
+    const llmsText = fs.readFileSync(path.join(process.cwd(), "llms.txt"), "utf8");
+
+    expect(manifest.schema).toBe(schema.$id);
+    expect(schema.required).toEqual(
+      expect.arrayContaining([
+        "schemaVersion",
+        "product",
+        "discoveryCommands",
+        "apiEndpoints",
+        "privacy",
+        "commands",
+        "workflows",
+        "integrations",
+        "guardrails"
+      ])
+    );
+    expect(packageJson.files).toEqual(
+      expect.arrayContaining([
+        "TOKENTRACE_AGENT.md",
+        "llms.txt",
+        "docs/agent-discovery.schema.json"
+      ])
+    );
+    expect(agentGuide).toContain("tokentrace agent --json");
+    expect(agentGuide).toContain("tokentrace capabilities --json");
+    expect(agentGuide).toContain("tokentrace reset");
+    expect(llmsText).toContain("tokentrace agent --json");
+    expect(llmsText).toContain("Local-first");
+  });
+});

@@ -133,31 +133,33 @@ export async function buildClaudeStatusLine(input: ClaudeStatusInput, options: {
   const cost = optionalNumber(input.cost?.total_cost_usd);
   const contextUsed = optionalNumber(input.context_window?.used_percentage);
   const context = contextUsed == null ? null : `ctx ${Math.round(contextUsed)}%`;
+  const costLabel = `cost ${formatCurrency(cost)}`;
   const pricing = cost == null ? "pricing repair" : "priced";
 
   if (!summary) {
     if (options.mode === "compact") {
-      return ["TT", model, "no tokens", formatCurrency(cost), context].filter(Boolean).join(" | ");
+      return ["TT", model, context, formatCurrency(cost), "no tok"].filter(Boolean).join(" | ");
     }
     return [
       "TokenTrace",
       model,
-      "session no tokens yet",
-      `cost ${formatCurrency(cost)}`,
       context,
+      costLabel,
+      "no token usage yet",
       pricing
     ].filter(Boolean).join(" | ");
   }
 
-  const scope = summary.source === "transcript" ? "session" : "ctx";
+  const usageLabel = summary.source === "transcript" ? "processed" : "current";
+  const compactUsageLabel = summary.source === "transcript" ? "proc" : "current";
   if (options.mode === "compact") {
     return [
       "TT",
       model,
-      `${formatTokens(summary.totalTokens)} tok`,
-      `cache ${formatTokens(summary.cachedTokens)}`,
+      context,
       formatCurrency(cost),
-      context
+      `${compactUsageLabel} ${formatTokens(summary.totalTokens)} tok`,
+      `cache ${formatTokens(summary.cachedTokens)}`
     ].filter(Boolean).join(" | ");
   }
 
@@ -165,25 +167,25 @@ export async function buildClaudeStatusLine(input: ClaudeStatusInput, options: {
     return [
       "TokenTrace",
       model,
-      `${scope} ${formatTokens(summary.totalTokens)} tokens`,
+      context,
+      costLabel,
+      pricing,
+      `${usageLabel} ${formatTokens(summary.totalTokens)} tokens`,
       `input ${formatTokens(summary.inputTokens)}`,
       `output ${formatTokens(summary.outputTokens)}`,
       `cache read ${formatTokens(summary.cacheReadTokens)}`,
       `cache write ${formatTokens(summary.cacheWriteTokens)}`,
-      `reasoning ${formatTokens(summary.reasoningTokens)}`,
-      `cost ${formatCurrency(cost)}`,
-      context,
-      pricing
+      `reasoning ${formatTokens(summary.reasoningTokens)}`
     ].filter(Boolean).join(" | ");
   }
 
   return [
     "TokenTrace",
     model,
-    `${scope} ${formatTokens(summary.totalTokens)} tokens`,
-    `cache ${formatTokens(summary.cachedTokens)}`,
-    `cost ${formatCurrency(cost)}`,
     context,
+    costLabel,
+    `${usageLabel} ${formatTokens(summary.totalTokens)} tokens`,
+    `cache ${formatTokens(summary.cachedTokens)}`,
     pricing
   ].filter(Boolean).join(" | ");
 }

@@ -235,6 +235,65 @@ function number(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+function dateStringFromTimestamp(timestamp: number) {
+  const date = new Date(timestamp);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function addCalendarDays(value: string, days: number) {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + days);
+  return dateStringFromTimestamp(date.getTime());
+}
+
+function emptyTrendPoint(date: string): TrendPoint {
+  return {
+    date,
+    totalTokens: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    cachedTokens: 0,
+    reasoningTokens: 0,
+    cost: 0
+  };
+}
+
+function trendBounds(points: TrendPoint[], filters: AnalyticsFilters) {
+  const firstDataDate = points[0]?.date;
+  const lastDataDate = points.at(-1)?.date;
+  const fromDate = filters.from != null ? dateStringFromTimestamp(filters.from) : firstDataDate;
+  const toExclusiveDate =
+    filters.to != null
+      ? addCalendarDays(dateStringFromTimestamp(filters.to - 1), 1)
+      : lastDataDate
+        ? addCalendarDays(lastDataDate, 1)
+        : null;
+
+  if (!fromDate || !toExclusiveDate || fromDate >= toExclusiveDate) return null;
+  return { fromDate, toExclusiveDate };
+}
+
+function fillMissingTrendDays(points: TrendPoint[], filters: AnalyticsFilters) {
+  const bounds = trendBounds(points, filters);
+  if (!bounds) return [];
+
+  const byDate = new Map(points.map((point) => [point.date, point]));
+  const filled: TrendPoint[] = [];
+  for (
+    let date = bounds.fromDate;
+    date < bounds.toExclusiveDate;
+    date = addCalendarDays(date, 1)
+  ) {
+    filled.push(byDate.get(date) ?? emptyTrendPoint(date));
+  }
+  return filled;
+}
+
 function parseJson<T>(value: unknown, fallback: T): T {
   if (Array.isArray(value) || (value && typeof value === "object")) return value as T;
   if (typeof value !== "string") return fallback;
@@ -376,6 +435,7 @@ function getSummary(filters: AnalyticsFilters = {}): SummaryMetrics {
 }
 
 const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+const maxUsefulPercentDelta = 999;
 
 function comparisonSnapshot(summary: SummaryMetrics): UsageComparisonSnapshot {
   return {
@@ -389,12 +449,15 @@ function comparisonSnapshot(summary: SummaryMetrics): UsageComparisonSnapshot {
 
 function percentDelta(current: number, previous: number) {
   if (previous === 0) return current === 0 ? 0 : null;
-  return Math.round(((current - previous) / previous) * 100);
+  const rounded = Math.round(((current - previous) / previous) * 100);
+  return Math.abs(rounded) > maxUsefulPercentDelta ? null : rounded;
 }
 
-function deltaLabel(percentValue: number | null, absolute: number, noun: string) {
+function deltaLabel(percentValue: number | null, absolute: number, previous: number, noun: string) {
   if (percentValue == null) {
-    return absolute > 0 ? `New ${noun} activity` : `No ${noun} activity yet`;
+    if (previous === 0) return absolute > 0 ? `New ${noun} activity` : `No ${noun} activity yet`;
+    if (absolute === 0) return `${noun} unchanged`;
+    return `${absolute > 0 ? "Higher" : "Lower"} ${noun} activity`;
   }
   if (percentValue === 0) return `${noun} unchanged`;
   return `${Math.abs(percentValue)}% ${percentValue > 0 ? "more" : "less"} ${noun}`;
@@ -457,7 +520,7 @@ function getUsageComparison(filters: AnalyticsFilters = {}): UsageComparison {
   const headline =
     window.mode === "empty"
       ? "No previous usage to compare yet"
-      : deltaLabel(delta.totalTokensPercent, delta.totalTokens, "tokens");
+      : deltaLabel(delta.totalTokensPercent, delta.totalTokens, previous.totalTokens, "tokens");
   const detail =
     window.mode === "selected-period"
       ? "Compared with the immediately previous matching period."
@@ -478,9 +541,9 @@ function getUsageComparison(filters: AnalyticsFilters = {}): UsageComparison {
 
 function getTrends(filters: AnalyticsFilters = {}): TrendPoint[] {
   const filter = timestampWhere(filters, "i", "AND");
-  return rows<TrendPoint>(
+  const points = rows<TrendPoint>(
     `SELECT
-      date(COALESCE(i.timestamp, 0) / 1000, 'unixepoch') AS date,
+      date(COALESCE(i.timestamp, 0) / 1000, 'unixepoch', 'localtime') AS date,
       COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
       COALESCE(SUM(i.input_tokens), 0) AS inputTokens,
       COALESCE(SUM(i.output_tokens), 0) AS outputTokens,
@@ -502,6 +565,7 @@ function getTrends(filters: AnalyticsFilters = {}): TrendPoint[] {
     reasoningTokens: number(row.reasoningTokens),
     cost: number(row.cost)
   }));
+  return fillMissingTrendDays(points, filters);
 }
 
 function getToolComparison(filters: AnalyticsFilters = {}): ToolComparisonRow[] {

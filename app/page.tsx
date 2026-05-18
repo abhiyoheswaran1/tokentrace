@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Coins, Database, Gauge, Layers, MessageSquare, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { RankBarChart } from "@/components/charts/rank-bar-chart";
-import { TrendChart } from "@/components/charts/trend-chart";
+import { TrendSection } from "@/components/charts/trend-section";
+import type { TrendWindow } from "@/components/charts/trend-chart";
 import { PeriodFilter } from "@/components/period-filter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,8 @@ function MetricCard({
   secondaryActionLabel,
   icon: Icon,
   className,
-  valueClassName
+  valueClassName,
+  trustNote
 }: {
   label: string;
   value: string;
@@ -48,6 +50,10 @@ function MetricCard({
   icon: typeof Database;
   className?: string;
   valueClassName?: string;
+  trustNote?: {
+    label: string;
+    detail: string;
+  };
 }) {
   const tooltipId = `metric-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-help`;
 
@@ -75,6 +81,12 @@ function MetricCard({
               </span>
             ))}
           </div>
+        ) : null}
+        {trustNote ? (
+          <p className="mt-3 border-t pt-2 text-xs leading-5 text-muted-foreground">
+            <span className="font-medium text-foreground">Why this number:</span>{" "}
+            <span>{trustNote.detail}</span>
+          </p>
         ) : null}
         {href || secondaryHref ? (
           <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4">
@@ -348,6 +360,38 @@ function FirstRunPanel({ status }: { status: FirstRunStatus }) {
             </div>
           ))}
         </div>
+        <div className="mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold leading-tight">Guided setup</h2>
+            <span className="text-xs text-muted-foreground">Five local steps to first useful evidence.</span>
+          </div>
+          <ol className="mt-3 grid overflow-hidden rounded-md border bg-card md:grid-cols-5">
+            {status.setupSteps.map((step, index) => (
+              <li
+                key={step.id}
+                className={cn(
+                  "min-w-0 p-3",
+                  index > 0 ? "border-t border-border md:border-l md:border-t-0" : ""
+                )}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold tabular-nums text-muted-foreground">
+                    {index + 1}
+                  </span>
+                  <Badge variant={step.state === "pass" ? "success" : step.state === "warn" ? "warning" : "secondary"}>
+                    {step.state}
+                  </Badge>
+                </div>
+                <div className="mt-2 text-sm font-semibold leading-tight">{step.label}</div>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{step.detail}</p>
+                <Link href={step.href} className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline">
+                  {step.action}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </div>
       </CardContent>
     </Card>
   );
@@ -542,6 +586,7 @@ type OverviewPageProps = {
 export default async function OverviewPage({ searchParams }: OverviewPageProps) {
   const params = (await searchParams) ?? {};
   const range = resolveDateRange(params);
+  const trendDefaultWindow: TrendWindow = range.key === "all" ? "60d" : "all";
   const data = getAnalyticsData(range.filters);
   const accountingReport = buildAccountingInvariants(range.filters);
   const postSessionReview = buildPostSessionReview({
@@ -660,6 +705,10 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           ]}
           href={evidenceLinks["processed-tokens"]}
           actionLabel="View evidence"
+          trustNote={{
+            label: "Processed",
+            detail: "Includes cache read/write and reasoning tokens."
+          }}
           icon={Database}
         />
         <MetricCard
@@ -673,6 +722,10 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           ]}
           href={evidenceLinks["non-cache-tokens"]}
           actionLabel="View evidence"
+          trustNote={{
+            label: "Fresh work",
+            detail: "Excludes cache read/write tokens."
+          }}
           icon={Database}
         />
         <MetricCard
@@ -685,6 +738,10 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           ]}
           href={evidenceLinks["cached-tokens"]}
           actionLabel="View evidence"
+          trustNote={{
+            label: "Cache",
+            detail: "Separates cache reads and writes from fresh input and output."
+          }}
           icon={Layers}
         />
         <MetricCard
@@ -701,6 +758,10 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           actionLabel={summary.unknownCostInteractions > 0 ? "Open next repair item" : "View evidence"}
           secondaryHref={summary.unknownCostInteractions > 0 ? unknownCostEvidenceHref : undefined}
           secondaryActionLabel="View unknown-cost evidence"
+          trustNote={{
+            label: "Cost trust",
+            detail: "Exact, estimated, and unknown costs stay split."
+          }}
           icon={Coins}
         />
         <MetricCard
@@ -710,30 +771,15 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           detailItems={[`${summary.interactions.toLocaleString()} interactions`]}
           href={evidenceLinks.sessions}
           actionLabel="View evidence"
+          trustNote={{
+            label: "Imported",
+            detail: "Scan freshness is shown in Data Readiness."
+          }}
           icon={MessageSquare}
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Token Trend</CardTitle>
-            <CardDescription>Daily, weekly, and monthly token usage.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TrendChart data={data.trends} metric="totalTokens" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Cost Trend</CardTitle>
-            <CardDescription>Costs use editable model prices from Pricing.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TrendChart data={data.trends} metric="cost" color="#ea580c" />
-          </CardContent>
-        </Card>
-      </div>
+      <TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />
 
       {summary.interactions > 0 ? (
         <OverviewTrustStrip

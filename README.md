@@ -34,6 +34,11 @@ tokentrace              # Start local dashboard
 tokentrace serve        # Start local dashboard
 tokentrace serve --port 3210 --no-open
                         # Start on a fixed port without opening a browser
+tokentrace agent --json # Print machine-readable agent discovery manifest
+tokentrace capabilities --json
+                        # Alias for agent discovery manifest
+tokentrace roadmap --json
+                        # Print 0.10.0 release implementation status
 tokentrace scan         # Scan local AI CLI usage logs
 tokentrace doctor --json
                         # Inspect scan health and repair recommendations
@@ -72,6 +77,48 @@ tokentrace --help       # Print help
 tokentrace --version    # Print version
 ```
 
+## For Coding Agents
+
+Agents should start with the read-only discovery manifest:
+
+```bash
+tokentrace agent --json
+```
+
+The alias below returns the same manifest:
+
+```bash
+tokentrace capabilities --json
+```
+
+The manifest describes TokenTrace's local-first privacy model, safe JSON commands,
+common workflows, Claude Code status-line setup, Codex sidecar fallback, and
+guardrails such as never running `tokentrace reset` without explicit human
+approval. The discovery command does not scan files, initialize the database, or
+start the dashboard.
+
+Package-level agent references are included for agents that inspect repository
+or npm package contents before invoking commands:
+
+- [TOKENTRACE_AGENT.md](TOKENTRACE_AGENT.md)
+- [llms.txt](llms.txt)
+- [docs/agent-discovery.schema.json](docs/agent-discovery.schema.json)
+
+When the local dashboard is already running, agents can fetch the same manifest
+over localhost:
+
+```bash
+curl http://127.0.0.1:3030/api/agent
+curl http://127.0.0.1:3030/api/capabilities
+```
+
+The 0.10.0 release status is also machine-readable:
+
+```bash
+tokentrace roadmap --json
+curl http://127.0.0.1:3030/api/roadmap
+```
+
 ## Run From Source
 
 ```bash
@@ -98,6 +145,10 @@ npm run verify       # Run Vitest, TypeScript, and ESLint checks
 npm run package:test # Verify, build, and dry-run the npm package
 npm run package:inspect
                     # Check package transparency guardrails
+npm run smoke:packed
+                    # Inspect packed tarball and smoke test packed CLI
+tokentrace roadmap --json
+                    # Inspect 0.10.0 evidence gates and release status
 ```
 
 Release work uses internal milestone commits until the next public minor
@@ -202,7 +253,7 @@ tokentrace statusline claude
 Claude Code sends session JSON to the command on stdin. TokenTrace reads the transcript path, model, context usage, and session cost, then prints one compact local line:
 
 ```text
-TokenTrace | Opus | session 3.3K tokens | cache 2.0K | cost $0.1235 | ctx 7% | priced
+TokenTrace | Opus | ctx 7% | cost $0.1235 | processed 3.3K tokens | cache 2.0K | priced
 ```
 
 Do not set the Claude Code `statusLine.command` to plain `tokentrace`. Plain `tokentrace` starts the dashboard, while `tokentrace statusline claude` prints exactly one status-line response.

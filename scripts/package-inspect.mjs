@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import process from "node:process";
@@ -20,6 +20,24 @@ for (const scriptName of lifecycleScripts) {
   if (Object.hasOwn(packageJson.scripts ?? {}, scriptName)) {
     fail(`Remove npm lifecycle script "${scriptName}" before publishing.`);
   }
+}
+
+const expectedBin = "bin/tokentrace.js";
+if (packageJson.bin?.tokentrace !== expectedBin) {
+  fail(`Publish the tokentrace CLI bin as "${expectedBin}".`);
+}
+
+try {
+  const binMode = statSync(path.join(root, expectedBin)).mode;
+  if ((binMode & 0o111) === 0) {
+    fail(`Published CLI bin "${expectedBin}" must be executable.`);
+  }
+} catch (error) {
+  fail(
+    `Could not inspect published CLI bin "${expectedBin}": ${
+      error instanceof Error ? error.message : String(error)
+    }`
+  );
 }
 
 if (packageJson.dependencies?.next !== "^15.5.18") {
@@ -45,6 +63,13 @@ for (const entry of blockedPackageEntries) {
     fail(`Do not publish generated Next.js output: remove "${entry}" from package.json files.`);
   }
 }
+
+const requiredPackageFiles = [
+  "TOKENTRACE_AGENT.md",
+  "llms.txt",
+  "docs/agent-discovery.schema.json",
+  expectedBin
+];
 
 const pack = spawnSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
   cwd: root,
@@ -82,6 +107,12 @@ if (pack.status !== 0) {
       );
     }
 
+    for (const requiredFile of requiredPackageFiles) {
+      if (!files.includes(requiredFile)) {
+        fail(`npm package is missing required release-hardening file: ${requiredFile}`);
+      }
+    }
+
     notes.push(`inspected ${files.length} files from npm pack dry-run`);
   } catch (error) {
     fail(
@@ -105,6 +136,7 @@ console.log("- no npm install lifecycle scripts");
 console.log("- Next.js dependency floor is pinned to the patched range");
 console.log("- Drizzle ORM and PostCSS floors are pinned to patched ranges");
 console.log("- generated Next.js build output is excluded from the package");
+console.log("- agent discovery docs, schema, and executable CLI bin are included");
 for (const note of notes) {
   console.log(`- ${note}`);
 }

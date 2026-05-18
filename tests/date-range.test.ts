@@ -4,6 +4,16 @@ import { dateRangeQueryParams, mergeHrefParams, resolveDateRange } from "@/src/l
 describe("date range resolution", () => {
   const now = new Date(2026, 4, 9, 12);
 
+  it("defaults the dashboard period to all time", () => {
+    const range = resolveDateRange(undefined, now);
+
+    expect(range.key).toBe("all");
+    expect(range.label).toBe("All time");
+    expect(range.fromInput).toBe("");
+    expect(range.toInput).toBe("");
+    expect(range.filters).toEqual({});
+  });
+
   it("builds an inclusive last-7-days range with an exclusive end", () => {
     const range = resolveDateRange(new URLSearchParams("range=7d"), now);
 
@@ -48,6 +58,9 @@ describe("date range resolution", () => {
       range: "custom",
       from: "2026-04-01",
       to: "2026-04-30"
+    });
+    expect(dateRangeQueryParams(resolveDateRange(new URLSearchParams("range=all"), now))).toEqual({
+      range: undefined
     });
     expect(mergeHrefParams("/evidence?metric=unknown-cost", dateRangeQueryParams(custom))).toBe(
       "/evidence?metric=unknown-cost&range=custom&from=2026-04-01&to=2026-04-30"
