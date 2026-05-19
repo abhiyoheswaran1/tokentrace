@@ -4,6 +4,12 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Changed
+
+- Overview trend aggregation now avoids SQLite localtime bucketing so large local databases load the first dashboard view much faster.
+- Overview now uses a page-specific analytics profile to avoid computing secondary page insights during first load.
+- Route loading copy now reinforces that TokenTrace is reading local database records without sending telemetry.
+
 ## [0.12.1] - 2026-05-19
 
 ### Fixed
