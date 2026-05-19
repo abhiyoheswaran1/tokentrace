@@ -28,7 +28,7 @@ curl http://127.0.0.1:3030/api/capabilities
 
 ## Roadmap Status
 
-Inspect the current 0.10.0 implementation pipeline and release blockers:
+Inspect the current 0.12.0 Local Sources & Trust handoff, action recipes, and release blockers:
 
 ```bash
 tokentrace roadmap --json

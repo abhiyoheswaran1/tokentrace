@@ -210,8 +210,8 @@ try {
   }
 
   const roadmap = jsonCommand(["roadmap", "--json"]);
-  if (roadmap.version !== "0.11.0" || roadmap.release?.releaseAllowed !== true) {
-    throw new Error("Roadmap JSON is missing 0.11.0 release-ready status.");
+  if (roadmap.version !== "0.12.0" || roadmap.release?.releaseAllowed !== true || roadmap.handoff?.schemaVersion !== "tokentrace.roadmap.v2") {
+    throw new Error("Roadmap JSON is missing 0.12.0 release-ready handoff status.");
   }
 
   const scan = jsonCommand(["scan", "fixtures/generic-jsonl", "--json"]);

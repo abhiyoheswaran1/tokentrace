@@ -12,7 +12,7 @@ describe("first-run status", () => {
     });
 
     expect(status.title).toBe("Add a readable CLI folder");
-    expect(status.primaryAction.href).toBe("/settings");
+    expect(status.primaryAction.href).toBe("/settings#custom-folders");
     expect(status.checks.find((check) => check.id === "roots")).toMatchObject({ state: "warn" });
     expect(status.setupSteps.map((step) => step.id)).toEqual([
       "roots",

@@ -23,5 +23,16 @@ export async function POST(request: Request) {
     folders: stringList(body.folders),
     force: jsonBooleanFlag(body.force)
   });
+  if (jsonBooleanFlag(body.compact)) {
+    const warnings = Array.isArray(result.warnings) ? result.warnings : [];
+    const errors = Array.isArray(result.errors) ? result.errors : [];
+    return NextResponse.json({
+      ...result,
+      warningCount: warnings.length,
+      errorCount: errors.length,
+      warnings: warnings.slice(0, 25),
+      errors: errors.slice(0, 25)
+    });
+  }
   return NextResponse.json(result);
 }

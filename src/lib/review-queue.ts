@@ -199,7 +199,7 @@ export function buildReviewQueue(input: ReviewQueueInput): ReviewQueueItem[] {
         title: "No urgent review item",
         evidence: "Current local usage does not show a high-priority repair or optimization queue.",
         action: "Keep scanning after meaningful CLI sessions.",
-        href: "/settings",
+        href: "/settings#scan-controls",
         impactLabel: "review status",
         impactValue: "clear"
       }

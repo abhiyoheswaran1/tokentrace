@@ -35,7 +35,7 @@ describe("User-facing health copy", () => {
     expect(guide).not.toContain("Open Doctor");
     expect(firstRun).toContain("Open Scan Health");
     expect(firstRun).not.toContain("Open Doctor");
-    expect(settings).toContain("Review Scan Health");
+    expect(settings).toContain("Open Scan Health");
     expect(globalError).toContain("Open Scan Health");
     expect(scanNowButton).toContain("Check Scan Health");
     expect(readme).toContain("**Scan Health**");

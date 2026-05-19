@@ -17,11 +17,12 @@ import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
 import { buildFirstRunStatus, type FirstRunStatus } from "@/src/lib/first-run-status";
 import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
 import { dateRangeQueryParams, mergeHrefParams, resolveDateRange } from "@/src/lib/date-range";
-import { formatCurrency, formatSignedTokens, formatTokens, percent } from "@/src/lib/format";
+import { formatCurrency, formatDate, formatSignedTokens, formatTokens, percent } from "@/src/lib/format";
 import { cn } from "@/src/lib/utils";
 import type { UsageGuardrailMetric } from "@/src/lib/usage-guardrails";
 import { buildScanDiff } from "@/src/lib/scan-diff";
 import { buildPostSessionReview, type PostSessionReview } from "@/src/lib/post-session-review";
+import { runDueScheduledScan } from "@/src/lib/scheduled-scan";
 
 export const dynamic = "force-dynamic";
 
@@ -674,6 +675,93 @@ function DataConfidenceStrip({ confidence }: { confidence: DataConfidence }) {
   );
 }
 
+function supplyChainBadgeVariant(status: ReturnType<typeof getScanTrustData>["health"]["supplyChain"]["status"]) {
+  if (status === "passed") return "success";
+  if (status === "failed") return "destructive";
+  return "secondary";
+}
+
+function OverviewTrustFooter({
+  health,
+  pricedModelCount
+}: {
+  health: ReturnType<typeof getScanTrustData>["health"];
+  pricedModelCount: number;
+}) {
+  const latestScanTime = health.latestRun?.completedAt ?? health.latestRun?.startedAt ?? null;
+  const costCoverage = health.costCoverage.total > 0
+    ? percent(health.costCoverage.priced / health.costCoverage.total)
+    : "No usage yet";
+  const evidencePackHref = "/api/evidence-pack?metric=processed-tokens&format=markdown";
+  const items = [
+    {
+      label: "Latest scan",
+      value: latestScanTime ? formatDate(latestScanTime) : "No scan yet",
+      detail: health.latestRun
+        ? `${health.latestRun.filesScanned.toLocaleString()} files checked, ${health.latestRun.recordsImported.toLocaleString()} records imported.`
+        : "Run Scan now to verify local usage.",
+      href: "/settings#scan-controls",
+      actionLabel: "Scan now"
+    },
+    {
+      label: "Package IOC",
+      value: health.supplyChain.status === "passed" ? "Passed" : health.supplyChain.status === "failed" ? "Needs review" : "Not run",
+      detail: health.supplyChain.summary,
+      href: "/diagnostics#supply-chain",
+      actionLabel: "Open Scan Health",
+      badge: health.supplyChain.status
+    },
+    {
+      label: "Model rates",
+      value: `${pricedModelCount.toLocaleString()} configured`,
+      detail: `${costCoverage} of selected interactions have priced or estimated cost.`,
+      href: "/pricing",
+      actionLabel: "Set model rate"
+    },
+    {
+      label: "Evidence packs",
+      value: "Available",
+      detail: "Export privacy-safe totals, confidence drivers, parser notes, and model-rate state.",
+      href: evidencePackHref,
+      actionLabel: "Export pack"
+    }
+  ];
+
+  return (
+    <Card className="bg-muted/10">
+      <CardContent className="p-0">
+        <div className="flex flex-col gap-2 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold">Last verified</div>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Trust checks for the totals above, kept close to the numbers they explain.
+            </p>
+          </div>
+          <Badge variant={health.tone === "success" ? "success" : health.tone === "destructive" ? "destructive" : health.tone === "warning" ? "warning" : "secondary"}>
+            {health.headline}
+          </Badge>
+        </div>
+        <div className="grid md:grid-cols-2 xl:grid-cols-4">
+          {items.map((item, index) => (
+            <div key={item.label} className={cn("min-w-0 p-3", index > 0 ? "border-t md:border-l md:border-t-0" : "")}>
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <FieldLabel>{item.label}</FieldLabel>
+                {item.badge ? <Badge variant={supplyChainBadgeVariant(item.badge)}>{item.badge}</Badge> : null}
+              </div>
+              <DataValue className="mt-1" size="sm">{item.value}</DataValue>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{item.detail}</p>
+              <Link href={item.href} className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline">
+                {item.actionLabel}
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function guardrailBadgeVariant(status: UsageGuardrailMetric["status"]) {
   if (status === "exceeded") return "destructive";
   if (status === "warning") return "warning";
@@ -756,7 +844,7 @@ function UsageGuardrailsPanel({
           </CardDescription>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href="/settings">
+          <Link href="/settings#usage-guardrails">
             Configure <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
@@ -908,10 +996,12 @@ type OverviewPageProps = {
 };
 
 export default async function OverviewPage({ searchParams }: OverviewPageProps) {
+  void runDueScheduledScan().catch(() => undefined);
   const params = (await searchParams) ?? {};
   const range = resolveDateRange(params);
   const trendDefaultWindow: TrendWindow = range.key === "all" ? "30d" : "all";
-  const data = getAnalyticsData(range.filters);
+  const data = getAnalyticsData(range.filters, { scanFileScope: "recent", sessionDetail: "summary" });
+  const trust = data.scanTrust;
   const accountingReport = buildAccountingInvariants(range.filters);
   const postSessionReview = buildPostSessionReview({
     scanDiff: buildScanDiff(),
@@ -921,12 +1011,11 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   });
   const rangeLinkParams = dateRangeQueryParams(range);
   const evidenceLinks = Object.fromEntries(
-    Object.entries(data.evidenceLinks).map(([key, href]) => [key, mergeHrefParams(href, rangeLinkParams)])
+    Object.entries(data.evidenceLinks).map(([key, href]) => [key, mergeHrefParams(href, { ...rangeLinkParams, openedFrom: "overview" })])
   ) as typeof data.evidenceLinks;
-  const trust = getScanTrustData(range.filters);
   const roots = await getDefaultSearchRoots();
   const doctorReport = buildDoctorReport({ ...trust, roots });
-  const repairWorkbench = buildUnknownCostRepairWorkbench(range.filters);
+  const repairWorkbench = buildUnknownCostRepairWorkbench(range.filters, { limit: 12 });
   const nextRepairGroup =
     repairWorkbench.groups.find((group) => group.review.status !== "ignored" && group.review.status !== "resolved")
     ?? repairWorkbench.groups[0]
@@ -955,7 +1044,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
         description="Local token, cost, model, and session analytics across AI CLI tools."
         actions={
           <Button asChild>
-            <Link href="/settings">
+            <Link href="/settings#scan-controls">
               Configure scan <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -987,6 +1076,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
           sessionsHref={evidenceLinks.sessions}
         />
       </div>
+
+      <OverviewTrustFooter health={trust.health} pricedModelCount={trust.pricedModelCount} />
 
       <TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />
 

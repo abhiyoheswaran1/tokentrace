@@ -190,7 +190,7 @@ export function buildLocalRecommendations(input: RecommendationInput): LocalReco
       "No urgent local recommendation",
       "Current scans, model rates, and parser confidence do not show a high-priority repair.",
       "Keep scanning after new CLI sessions.",
-      "/settings"
+      "/settings#scan-controls"
     ));
   }
 

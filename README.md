@@ -10,7 +10,7 @@ TokenTrace is designed for local development machines first, with macOS-oriented
 
 [Website](https://www.abhiyoheswaran.com/apps/tokentrace) · [Source](https://github.com/abhiyoheswaran1/tokentrace)
 
-![TokenTrace overview dashboard](docs/assets/overview-0.10.0.png)
+![TokenTrace overview dashboard](docs/assets/overview-0.12.0.png)
 
 ## Start In Seconds
 
@@ -40,7 +40,7 @@ tokentrace agent --json # Print machine-readable agent discovery manifest
 tokentrace capabilities --json
                         # Alias for agent discovery manifest
 tokentrace roadmap --json
-                        # Print Accuracy & Evidence release implementation status
+                        # Print Local Sources & Trust release handoff
 tokentrace scan         # Scan local AI CLI usage logs
 tokentrace doctor --json
                         # Inspect scan health and repair recommendations
@@ -114,7 +114,7 @@ curl http://127.0.0.1:3030/api/agent
 curl http://127.0.0.1:3030/api/capabilities
 ```
 
-The Accuracy & Evidence release status is also machine-readable:
+The Local Sources & Trust release handoff is also machine-readable:
 
 ```bash
 tokentrace roadmap --json
@@ -154,8 +154,33 @@ npm run security:ioc
 npm run smoke:packed
                     # Inspect packed tarball and smoke test packed CLI
 tokentrace roadmap --json
-                    # Inspect evidence gates and release status
+                    # Inspect roadmap handoff, action recipes, and release status
 ```
+
+## Local Sources And Trust
+
+TokenTrace 0.12.0 rolls the next several roadmap themes into one larger
+release: local source expansion, evidence portability, local operations,
+scoped guardrails, parser profile preview, saved reports, and agent-readable
+roadmap handoff.
+
+New trust surfaces include:
+
+- native structured usage log and Cursor-style chat export ingestion
+- Source Coverage in Scan Health for native, profile-assisted, fallback, and
+  unsupported files
+- privacy-safe Evidence Packs as JSON or Markdown
+- local scan scheduling: manual, on-open, hourly, or daily
+- project/model/tool scoped guardrails with warning thresholds
+- Import Profile preview before saving matchers
+- saved report exports for weekly usage, source coverage, guardrails, unknown
+  cost, high-cost sessions, and confidence trends
+- operating metadata export without raw usage records
+
+The 0.12.0 dashboard also tightens the daily operator path: setup buttons now
+open the exact Settings section, scan results show what changed and where to go
+next, and Evidence explains when it is being opened as a contextual drill-down
+rather than a sidebar destination.
 
 ## Accuracy And Evidence
 
@@ -302,13 +327,13 @@ Codex CLI status-line integration is intentionally deferred until its status-lin
 
 Dashboard views:
 
-![TokenTrace overview dashboard](docs/assets/overview-0.10.0.png)
+![TokenTrace overview dashboard](docs/assets/overview-0.12.0.png)
 
-![TokenTrace processed tokens evidence trail](docs/assets/evidence-0.10.0.png)
+![TokenTrace processed tokens evidence trail](docs/assets/evidence-0.12.0.png)
 
-![TokenTrace unknown cost repair queue](docs/assets/repair-0.10.0.png)
+![TokenTrace unknown cost repair queue](docs/assets/repair-0.12.0.png)
 
-![TokenTrace Scan Health parser review](docs/assets/scan-health-0.10.0.png)
+![TokenTrace Scan Health parser review](docs/assets/scan-health-0.12.0.png)
 
 CLI startup and help:
 
@@ -388,6 +413,9 @@ Adapters live under `src/ingestion/adapters/`:
 
 - `claude-code.ts`
 - `codex-cli.ts`
+- `structured-usage-log.ts`
+- `cursor-chat.ts`
+- `sqlite-history.ts`
 - `generic-jsonl.ts`
 - `generic-json.ts`
 - `generic-log.ts`
@@ -402,6 +430,9 @@ TokenTrace keeps a visible support contract so daily scans are easier to trust:
 | --- | --- | --- |
 | Claude Code project transcripts | Stable | Primary local CLI ingestion source. |
 | Codex CLI session artifacts | Best-effort | Parsed defensively while CLI formats evolve. |
+| Structured usage JSONL/NDJSON | Stable | Local wrapper and team logs with session, model, token, and source-cost fields. |
+| Cursor-style chat exports | Best-effort | Imports local editor chat/composer exports without storing raw prompt text by default. |
+| Usage-shaped SQLite histories | Best-effort | Reads local databases that expose session, model, token, or cost-like columns. |
 | Generic JSONL, JSON, and text logs | Best-effort | Conservative usage-shaped records only. |
 | Claude/Codex cache, plugin, todo, config, and support files | Ignored | Tracked as non-usage files, not parser failures. |
 | Editable model pricing | Stable | Local pricing rows drive costs and unknown-cost repair queues. |
@@ -426,8 +457,8 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setu
 ## Known Limitations
 
 - Claude Code and Codex CLI log formats are inferred defensively and may need refinement with real sample logs.
-- Token estimation uses a simple conservative `characters / 4` approximation.
-- SQLite log ingestion is not implemented yet, though the adapter boundary is ready for it.
+- Tokenizer-backed estimates are available for recognized OpenAI/Codex and Claude-family model names. Unrecognized text-only records still fall back to a conservative simple estimate.
+- SQLite-history ingestion expects usage-shaped local tables and skips arbitrary databases that do not expose session, model, token, or cost-like fields.
 - Seed prices are editable and should be verified manually for your account, region, and provider plan.
 
 ## License
@@ -436,7 +467,7 @@ Open source by [Abhi Yoheswaran](https://www.abhiyoheswaran.com). Released under
 
 ## Next Improvements
 
-- Add tokenizer-backed estimates per provider/model.
-- Add native SQLite-history adapters for tools that store usage in local databases.
-- Add richer drilldowns for individual sessions and tool calls.
-- Add import profiles for teams that use shared local log conventions.
+- Expand first-class native adapters for more local AI tools and editor histories.
+- Add provider-specific tokenizer refinements where public tokenizer behavior is stable enough to label clearly.
+- Make Import Profile preview more interactive for teams with custom wrapper logs.
+- Stream scan progress into the UI for very large local folders.

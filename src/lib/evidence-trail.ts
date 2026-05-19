@@ -25,6 +25,7 @@ export type EvidenceTrailSession = {
   tokenConfidence: string;
   totalTokens: number;
   cost: number | null;
+  unknownCostInteractions: number;
   interactions: number;
   sessionHref: string;
   sourceHref: string;
@@ -238,9 +239,9 @@ export function buildEvidenceTrail(input: {
         COALESCE(SUM(${tokenExpression}), 0) AS tokens,
         COALESCE(SUM(i.cost), 0) AS cost,
         COUNT(DISTINCT i.session_id) AS sessions,
-        COUNT(i.id) AS interactions,
+        COUNT(*) AS interactions,
         SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END) AS unknownCostInteractions
-       FROM interactions i
+       FROM interactions i INDEXED BY interactions_analytics_cover_idx
        ${where.sql}`
     )
     .get(...where.params) as EvidenceTotalsRow;
@@ -250,7 +251,7 @@ export function buildEvidenceTrail(input: {
         COALESCE(SUM(CASE WHEN i.token_confidence = 'exact' AND i.estimated_tokens = 0 THEN 1 ELSE 0 END), 0) AS exact,
         COALESCE(SUM(CASE WHEN i.estimated_tokens = 1 OR i.token_confidence LIKE '%estimate%' THEN 1 ELSE 0 END), 0) AS estimated,
         COALESCE(SUM(CASE WHEN i.token_confidence = 'unknown' THEN 1 ELSE 0 END), 0) AS unknown
-       FROM interactions i
+       FROM interactions i INDEXED BY interactions_analytics_cover_idx
        ${where.sql}`
     )
     .get(...where.params) as EvidenceConfidenceRow;
@@ -260,9 +261,9 @@ export function buildEvidenceTrail(input: {
         s.source_file AS sourceFile,
         COALESCE(SUM(${tokenExpression}), 0) AS tokens,
         COUNT(DISTINCT s.id) AS sessions,
-        COUNT(i.id) AS interactions,
+        COUNT(*) AS interactions,
         SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END) AS unknownCostInteractions
-       FROM interactions i
+       FROM interactions i INDEXED BY interactions_analytics_cover_idx
        JOIN sessions s ON s.id = i.session_id
        ${where.sql}
        GROUP BY s.source_file
@@ -272,7 +273,27 @@ export function buildEvidenceTrail(input: {
     .all(...where.params) as EvidenceSourceFileRow[];
   const sessions = sqlite
     .prepare(
-      `SELECT
+      `WITH session_totals AS (
+        SELECT
+          i.session_id AS sessionId,
+          CASE
+            WHEN SUM(CASE WHEN i.token_confidence = 'unknown' THEN 1 ELSE 0 END) > 0 THEN 'unknown'
+            WHEN SUM(CASE WHEN i.token_confidence = 'low-confidence estimate' THEN 1 ELSE 0 END) > 0 THEN 'low-confidence estimate'
+            WHEN SUM(CASE WHEN i.token_confidence = 'high-confidence estimate' THEN 1 ELSE 0 END) > 0 THEN 'high-confidence estimate'
+            WHEN SUM(CASE WHEN i.estimated_tokens = 1 THEN 1 ELSE 0 END) > 0 THEN 'estimated'
+            ELSE 'exact'
+          END AS tokenConfidence,
+          COALESCE(SUM(${tokenExpression}), 0) AS totalTokens,
+          SUM(i.cost) AS cost,
+          SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END) AS unknownCostInteractions,
+          COUNT(*) AS interactions
+        FROM interactions i INDEXED BY interactions_analytics_cover_idx
+        ${where.sql}
+        GROUP BY i.session_id
+        ORDER BY totalTokens DESC, sessionId ASC
+        LIMIT 100
+      )
+      SELECT
         s.id,
         COALESCE(s.title, t.name || ' session') AS title,
         t.name AS tool,
@@ -282,7 +303,7 @@ export function buildEvidenceTrail(input: {
           SELECT group_concat(model_name)
           FROM (
             SELECT DISTINCT COALESCE(m3.name, 'unknown') AS model_name
-            FROM interactions i3
+            FROM interactions i3 INDEXED BY interactions_session_analytics_idx
             LEFT JOIN models m3 ON m3.id = i3.model_id
             WHERE i3.session_id = s.id
             ${modelWhere.sql}
@@ -291,7 +312,7 @@ export function buildEvidenceTrail(input: {
         ), 'unknown') AS model,
         (
           SELECT m2.name
-          FROM interactions i2
+          FROM interactions i2 INDEXED BY interactions_session_analytics_idx
           LEFT JOIN models m2 ON m2.id = i2.model_id
           WHERE i2.session_id = s.id
             ${pricingWhere.sql}
@@ -304,19 +325,13 @@ export function buildEvidenceTrail(input: {
         sf.parser AS parser,
         sf.status AS parserStatus,
         json_extract(sf.raw_metadata, '$.confidence') AS parserConfidence,
-        CASE
-          WHEN SUM(CASE WHEN i.token_confidence = 'unknown' THEN 1 ELSE 0 END) > 0 THEN 'unknown'
-          WHEN SUM(CASE WHEN i.token_confidence = 'low-confidence estimate' THEN 1 ELSE 0 END) > 0 THEN 'low-confidence estimate'
-          WHEN SUM(CASE WHEN i.token_confidence = 'high-confidence estimate' THEN 1 ELSE 0 END) > 0 THEN 'high-confidence estimate'
-          WHEN SUM(CASE WHEN i.estimated_tokens = 1 THEN 1 ELSE 0 END) > 0 THEN 'estimated'
-          ELSE 'exact'
-        END AS tokenConfidence,
-        COALESCE(SUM(${tokenExpression}), 0) AS totalTokens,
-        SUM(i.cost) AS cost,
-        SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END) AS unknownCostInteractions,
-        COUNT(i.id) AS interactions
-       FROM interactions i
-       JOIN sessions s ON s.id = i.session_id
+        st.tokenConfidence,
+        st.totalTokens,
+        st.cost,
+        st.unknownCostInteractions,
+        st.interactions
+       FROM session_totals st
+       JOIN sessions s ON s.id = st.sessionId
        JOIN tools t ON t.id = s.tool_id
        JOIN providers p ON p.id = t.provider_id
        LEFT JOIN projects pr ON pr.id = s.project_id
@@ -341,12 +356,9 @@ export function buildEvidenceTrail(input: {
            sf2.id ASC
          LIMIT 1
        )
-       ${where.sql}
-       GROUP BY s.id
-       ORDER BY totalTokens DESC, s.id ASC
-       LIMIT 100`
+       ORDER BY st.totalTokens DESC, s.id ASC`
     )
-    .all(...modelWhere.params, ...pricingWhere.params, ...where.params) as EvidenceSessionRow[];
+    .all(...where.params, ...modelWhere.params, ...pricingWhere.params) as EvidenceSessionRow[];
 
   const mapped: EvidenceTrailSession[] = sessions.map((session) => {
     const cost = session.cost == null ? null : number(session.cost);
@@ -367,6 +379,7 @@ export function buildEvidenceTrail(input: {
       tokenConfidence: session.tokenConfidence,
       totalTokens: number(session.totalTokens),
       cost: metric === "unknown-cost" && number(session.unknownCostInteractions) > 0 ? null : cost,
+      unknownCostInteractions: number(session.unknownCostInteractions),
       interactions: number(session.interactions),
       sessionHref: withQuery("/sessions", { source: session.sourceFile, evidence: metric }),
       sourceHref: withQuery("/sessions", { source: session.sourceFile, evidence: metric }),

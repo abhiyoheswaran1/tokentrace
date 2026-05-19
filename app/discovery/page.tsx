@@ -58,7 +58,7 @@ export default function DiscoveryPage() {
           title="No files discovered yet"
           description="Run a scan from Settings to populate Discovery. If expected folders are missing, add them in Settings."
           actions={[
-            { label: "Add folder", href: "/settings", variant: "outline" }
+            { label: "Add folder", href: "/settings#custom-folders", variant: "outline" }
           ]}
         >
           <ScanNowButton size="sm" />

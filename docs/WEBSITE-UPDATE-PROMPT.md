@@ -14,23 +14,29 @@ Supporting copy:
 
 > TokenTrace scans local AI CLI artifacts, normalizes token usage, estimates missing counts when necessary, and shows cost, model, project, session, parser, and repair evidence in a local dashboard. No cloud account, no telemetry, no proxying.
 
+0.12.0 release message:
+
+> Local Sources & Trust: native structured-log, Cursor export, and SQLite-history ingestion; privacy-safe Evidence Packs; scan scheduling; scoped guardrails; Import Profile preview; saved reports; and clearer scan-to-evidence workflows.
+
 ## Screenshots
 
 Use the refreshed screenshots from this repo:
 
-- `docs/assets/overview-0.10.0.png`
-- `docs/assets/evidence-0.10.0.png`
-- `docs/assets/repair-0.10.0.png`
-- `docs/assets/scan-health-0.10.0.png`
+- `docs/assets/overview-0.12.0.png`
+- `docs/assets/evidence-0.12.0.png`
+- `docs/assets/repair-0.12.0.png`
+- `docs/assets/scan-health-0.12.0.png`
 
 ## Sections
 
 1. Hero: TokenTrace, local-first AI CLI usage analytics, `npx tokentrace`.
 2. Evidence-first overview: pulse, token accounting, model rates, and trend charts.
-3. Scan Health: explain files checked, parser warnings, ignored support files, and cost coverage.
-4. Repair workflow: Problem, Evidence, Fix, Recalculate, Verified.
-5. Agent-ready entry points: `tokentrace agent --json`, `tokentrace capabilities --json`, `/api/agent`.
-6. Privacy: local files stay local; model-rate refresh fetches public rate data only.
+3. Local Sources & Trust: structured usage logs, Cursor-style chat exports, SQLite histories, source coverage, and Data Confidence.
+4. Evidence Packs: JSON and Markdown exports with totals, confidence drivers, parser notes, model-rate state, and no raw prompts by default.
+5. Scan Health: explain files checked, parser warnings, ignored support files, cost coverage, scheduling, and package IOC checks.
+6. Repair workflow: Problem, Evidence, Fix, Recalculate, Verified.
+7. Agent-ready entry points: `tokentrace agent --json`, `tokentrace capabilities --json`, `/api/agent`, and `tokentrace roadmap --json`.
+8. Privacy: local files stay local; model-rate refresh fetches public rate data only.
 
 ## Copy Rules
 

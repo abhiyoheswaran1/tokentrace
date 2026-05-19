@@ -296,7 +296,7 @@ export function buildScanHealth({
   }
 
   if (!latestRun) {
-    actions.push(action("Run first scan", "/settings", "Discover local AI CLI usage files."));
+    actions.push(action("Run first scan", "/settings#scan-controls", "Discover local AI CLI usage files."));
   } else if (failed > 0 || importedWithErrors > 0 || hardErrorCount > 0) {
     headline = "Scan needs attention";
     description = `${joinHealthParts([
@@ -324,19 +324,19 @@ export function buildScanHealth({
     actions.push(action("Inspect unsupported files", "/discovery", "Unsupported files show where adapters need improvement.", "warning"));
   }
   if (confidence.unknownCostInteractions > 0) {
-    actions.push(action("Set missing model rates", "/pricing", "Unknown costs make cost totals incomplete.", "warning"));
+    actions.push(action("Set model rate", "/pricing", "Unknown costs make cost totals incomplete.", "warning"));
   }
   if (confidence.unknownTokenInteractions > 0 || confidence.estimatedTokenInteractions > 0) {
     actions.push(action("Review token confidence", "/parser-debug", "Estimated or unknown token counts should stay visible.", "warning"));
   }
   if (freshness.state === "stale") {
-    actions.push(action("Run a fresh scan", "/settings", freshness.description, "warning"));
+    actions.push(action("Run a fresh scan", "/settings#scan-controls", freshness.description, "warning"));
   }
   if (latestRun && imported === 0 && duplicates === 0 && unsupported === 0 && failed === 0) {
-    actions.push(action("Add custom folders", "/settings", "No files were imported by the latest scan.", "warning"));
+    actions.push(action("Add custom folders", "/settings#custom-folders", "No files were imported by the latest scan.", "warning"));
   }
   if (latestRun) {
-    actions.push(action("Export diagnostics", "/api/export?type=scan-files", "Share parser metadata without raw prompts."));
+    actions.push(action("Export pack", "/api/export?type=scan-files", "Share parser metadata without raw prompts."));
   }
 
   return {

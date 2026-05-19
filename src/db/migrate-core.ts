@@ -83,6 +83,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS interactions_source_id_idx ON interactions(sou
 CREATE INDEX IF NOT EXISTS interactions_session_idx ON interactions(session_id);
 CREATE INDEX IF NOT EXISTS interactions_model_idx ON interactions(model_id);
 CREATE INDEX IF NOT EXISTS interactions_timestamp_idx ON interactions(timestamp);
+CREATE INDEX IF NOT EXISTS interactions_analytics_cover_idx
+  ON interactions(timestamp, session_id, model_id, total_tokens, input_tokens, output_tokens,
+    cache_read_tokens, cache_write_tokens, reasoning_tokens, cost, cost_estimated,
+    estimated_tokens, token_confidence);
+CREATE INDEX IF NOT EXISTS interactions_session_analytics_idx
+  ON interactions(session_id, timestamp, model_id, total_tokens, input_tokens, output_tokens,
+    cache_read_tokens, cache_write_tokens, reasoning_tokens, cost, cost_estimated,
+    estimated_tokens, token_confidence);
+CREATE INDEX IF NOT EXISTS interactions_cost_repair_idx
+  ON interactions(cost, timestamp, session_id, model_id, total_tokens, input_tokens, output_tokens,
+    cache_read_tokens, cache_write_tokens, reasoning_tokens, token_confidence);
 
 PRAGMA user_version;
 
@@ -122,6 +133,7 @@ CREATE TABLE IF NOT EXISTS scan_files (
 );
 CREATE INDEX IF NOT EXISTS scan_files_path_hash_idx ON scan_files(path, file_hash);
 CREATE INDEX IF NOT EXISTS scan_files_run_idx ON scan_files(scan_run_id);
+CREATE INDEX IF NOT EXISTS scan_files_path_latest_idx ON scan_files(path, scan_run_id, status, parser);
 
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,

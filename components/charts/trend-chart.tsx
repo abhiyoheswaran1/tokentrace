@@ -36,6 +36,21 @@ function daysForWindow(window: TrendWindow) {
   return null;
 }
 
+function ChartSkeleton() {
+  return (
+    <div className="grid h-full grid-cols-[2.5rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_1.5rem]" aria-label="Chart loading">
+      <div className="row-span-1 border-r border-border/70" />
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e7ded3_1px,transparent_1px),linear-gradient(to_bottom,#e7ded3_1px,transparent_1px)] bg-[size:25%_33%] opacity-80" />
+        <div className="absolute bottom-[18%] left-[8%] h-[38%] w-[84%] rounded-t-full border-t-4 border-primary/25" />
+        <div className="absolute bottom-[12%] left-[8%] h-2 w-[84%] rounded-full bg-muted" />
+      </div>
+      <div />
+      <div className="border-t border-border/70" />
+    </div>
+  );
+}
+
 export function filterTrendWindow(data: TrendPoint[], window: TrendWindow) {
   const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
   const days = daysForWindow(window);
@@ -212,7 +227,9 @@ export function TrendChart({
               strokeWidth={2}
             />
           </AreaChart>
-        ) : null}
+        ) : (
+          <ChartSkeleton />
+        )}
       </div>
     </div>
   );

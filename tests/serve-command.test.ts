@@ -91,9 +91,19 @@ describe("report commands", () => {
     });
     expect(parseMarkdownReportArgs(["--markdown", "--since", "last-scan"])).toEqual({
       help: false,
+      csv: false,
       json: false,
       markdown: true,
-      since: "last-scan"
+      since: "last-scan",
+      type: null
+    });
+    expect(parseMarkdownReportArgs(["--type", "source-coverage", "--csv"])).toEqual({
+      help: false,
+      csv: true,
+      json: false,
+      markdown: false,
+      since: null,
+      type: "source-coverage"
     });
   });
 });

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Download } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { ScanNowButton } from "@/components/scan-now-button";
 import { PeriodFilter } from "@/components/period-filter";
@@ -39,6 +39,63 @@ const evidenceMetricTabs: Array<{ metric: EvidenceMetric; label: string }> = [
   { metric: "estimated-cost", label: "Cost" },
   { metric: "sessions", label: "Sessions" }
 ];
+
+function firstSearchValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function openedFromLabel(value: string | undefined) {
+  if (value === "overview") return "Overview";
+  if (value === "sessions") return "Sessions";
+  if (value === "repair") return "Repair";
+  if (value === "export") return "Evidence pack";
+  if (value === "settings") return "Settings";
+  return "Direct link";
+}
+
+function safeReturnTo(value: string | string[] | undefined, fallback: string) {
+  const candidate = firstSearchValue(value);
+  if (!candidate || !candidate.startsWith("/") || candidate.startsWith("//")) return fallback;
+  if (candidate.includes("\n") || candidate.includes("\r")) return fallback;
+  return candidate;
+}
+
+function EvidenceBreadcrumbs({
+  openedFrom,
+  metricTitle,
+  periodLabel,
+  returnHref
+}: {
+  openedFrom: string;
+  metricTitle: string;
+  periodLabel: string;
+  returnHref: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border bg-muted/10 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Link href={returnHref} className="font-medium text-primary underline-offset-4 hover:underline">
+            {openedFrom}
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="font-medium text-foreground">Evidence</span>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground">{metricTitle}</span>
+        </div>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Opened from {openedFrom}. Metric: {metricTitle}. Period: {periodLabel}.
+        </p>
+      </div>
+      <Button asChild variant="outline" size="sm">
+        <Link href={returnHref}>
+          <ArrowLeft className="h-4 w-4" />
+          Return to where you came from
+        </Link>
+      </Button>
+    </div>
+  );
+}
 
 function EvidenceMetricTabs({
   current,
@@ -99,6 +156,69 @@ function EvidenceDrilldownStrip({
   );
 }
 
+function EvidenceContextPanel({
+  returnHref,
+  sessionsHref,
+  repairHref,
+  modelRatesHref
+}: {
+  returnHref: string;
+  sessionsHref: string;
+  repairHref: string;
+  modelRatesHref: string;
+}) {
+  const actions = [
+    {
+      label: "Return to where you came from",
+      detail: "Go back to the page, period, or workflow that opened this evidence path.",
+      href: returnHref
+    },
+    {
+      label: "Open Sessions",
+      detail: "Continue from this metric into conversations, tools, models, and projects.",
+      href: sessionsHref
+    },
+    {
+      label: "Open repair",
+      detail: "Review unknown cost, missing model names, parser gaps, and verification state.",
+      href: repairHref
+    },
+    {
+      label: "Set model rate",
+      detail: "Edit provider model rates when cost evidence is blocked or estimated.",
+      href: modelRatesHref
+    }
+  ];
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="max-w-[72ch]">
+          <FieldLabel>Evidence path</FieldLabel>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            Evidence is a contextual drill-down from Overview, Sessions, Repair, and exported packs. If you opened this page directly, start with processed tokens, then pivot by metric or follow the next action that matches what looks incomplete.
+          </p>
+        </div>
+        <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {actions.map((action) => (
+            <Link
+              key={action.label}
+              href={action.href}
+              className="group rounded-md border bg-card p-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                {action.label}
+                <ArrowRight className="h-3.5 w-3.5 text-primary transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-muted-foreground">{action.detail}</span>
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function WhyThisNumberPanel({ title }: { title: string }) {
   const items = [
     ["Metric definition", `${title} uses the selected period, metric type, and imported local interactions.`],
@@ -133,8 +253,29 @@ export default async function EvidencePage({ searchParams }: EvidencePageProps) 
   const trail = buildEvidenceTrail({ metric, filters: range.filters });
   const rangeLinkParams = dateRangeQueryParams(range);
   const overviewHref = mergeHrefParams("/", rangeLinkParams);
-  const currentEvidenceHref = mergeHrefParams(`/evidence?metric=${trail.metric}`, rangeLinkParams);
+  const openedFrom = openedFromLabel(firstSearchValue(params.openedFrom));
+  const fallbackReturnHref =
+    openedFrom === "Sessions"
+      ? mergeHrefParams("/sessions", rangeLinkParams)
+      : openedFrom === "Repair"
+        ? mergeHrefParams("/repair", rangeLinkParams)
+        : overviewHref;
+  const returnHref = safeReturnTo(params.returnTo, fallbackReturnHref);
+  const evidenceContextParams = {
+    ...rangeLinkParams,
+    openedFrom: firstSearchValue(params.openedFrom) ?? "direct",
+    returnTo: returnHref
+  };
+  const currentEvidenceHref = mergeHrefParams(`/evidence?metric=${trail.metric}`, evidenceContextParams);
   const pricingReturnParams = { returnTo: currentEvidenceHref };
+  const periodPreserveParams = {
+    metric: trail.metric,
+    openedFrom: firstSearchValue(params.openedFrom),
+    returnTo: firstSearchValue(params.returnTo)
+  };
+  const sessionsHref = mergeHrefParams("/sessions", rangeLinkParams);
+  const repairHref = mergeHrefParams("/repair", rangeLinkParams);
+  const modelRatesHref = mergeHrefParams("/pricing", pricingReturnParams);
   const confidenceTotal = Math.max(1, trail.confidence.exact + trail.confidence.estimated + trail.confidence.unknown);
   const leadingSource = trail.sourceFiles[0];
   const leadingSession = trail.sessions[0];
@@ -155,7 +296,7 @@ export default async function EvidencePage({ searchParams }: EvidencePageProps) 
       href: leadingSource ? mergeHrefParams(leadingSource.parserHref, rangeLinkParams) : "/parser-debug"
     },
     {
-      label: "Model rates / repair",
+      label: "Set model rate",
       detail: "Follow provider model rates or unknown-cost repair when cost needs review.",
       href: leadingSession?.pricingHref
         ? mergeHrefParams(leadingSession.pricingHref, pricingReturnParams)
@@ -169,26 +310,54 @@ export default async function EvidencePage({ searchParams }: EvidencePageProps) 
         title={`${trail.title} Evidence`}
         description={trail.description}
         actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href={overviewHref}>
-              <ArrowLeft className="h-4 w-4" />
-              Overview
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/api/evidence-pack?metric=${trail.metric}&format=json`}>
+                <Download className="h-4 w-4" />
+                Export JSON pack
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/api/evidence-pack?metric=${trail.metric}&format=markdown`}>
+                <Download className="h-4 w-4" />
+                Export Markdown pack
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={returnHref}>
+                <ArrowLeft className="h-4 w-4" />
+                Return
+              </Link>
+            </Button>
+          </div>
         }
       />
 
-      <PeriodFilter range={range} />
+      <PeriodFilter range={range} basePath="/evidence" preserveParams={periodPreserveParams} />
+
+      <EvidenceBreadcrumbs
+        openedFrom={openedFrom}
+        metricTitle={trail.title}
+        periodLabel={range.label}
+        returnHref={returnHref}
+      />
+
+      <EvidenceContextPanel
+        returnHref={returnHref}
+        sessionsHref={sessionsHref}
+        repairHref={repairHref}
+        modelRatesHref={modelRatesHref}
+      />
 
       <Card>
         <CardHeader className="space-y-4">
           <div className="space-y-1">
-            <CardTitle>Token Evidence</CardTitle>
+            <CardTitle>Evidence Workbench</CardTitle>
             <CardDescription>
               You are viewing {trail.title}. Pivot across related metrics, then continue into source files, sessions, parser status, or model-rate repair.
             </CardDescription>
           </div>
-          <EvidenceMetricTabs current={trail.metric} rangeLinkParams={rangeLinkParams} />
+          <EvidenceMetricTabs current={trail.metric} rangeLinkParams={evidenceContextParams} />
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm leading-6 text-muted-foreground">
@@ -209,7 +378,9 @@ export default async function EvidencePage({ searchParams }: EvidencePageProps) 
           title="No evidence for this metric yet"
           description="Run a scan or open sessions to confirm whether local usage exists for the selected period and metric."
           actions={[
-            { label: "Open sessions", href: "/sessions", variant: "outline" },
+            { label: "Return to where you came from", href: returnHref, variant: "outline" },
+            { label: "Configure scan", href: "/settings#scan-controls", variant: "outline" },
+            { label: "Open Sessions", href: sessionsHref, variant: "outline" },
             { label: "Open Scan Health", href: "/diagnostics", variant: "outline" }
           ]}
         >
@@ -306,10 +477,10 @@ export default async function EvidencePage({ searchParams }: EvidencePageProps) 
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
                           <Link href={mergeHrefParams(source.sourceHref, rangeLinkParams)} className="font-medium text-primary underline-offset-4 hover:underline">
-                            Sessions
+                            Open Sessions
                           </Link>
                           <Link href={mergeHrefParams(source.parserHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                            Parser
+                            Review parser
                           </Link>
                         </div>
                       </TableCell>

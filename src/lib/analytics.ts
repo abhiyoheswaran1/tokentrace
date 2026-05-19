@@ -212,8 +212,14 @@ export type ScanTrustData = {
   health: ScanHealth;
 };
 
+export type ScanTrustOptions = {
+  scanFileScope?: "all" | "recent" | "latest" | "none";
+  sessionDetail?: "full" | "summary";
+};
+
 export type AnalyticsData = {
   summary: SummaryMetrics;
+  scanTrust: ScanTrustData;
   dataConfidence: DataConfidenceScore;
   evidenceLinks: EvidenceLinkMap;
   comparison: UsageComparison;
@@ -388,7 +394,7 @@ function getSummary(filters: AnalyticsFilters = {}): SummaryMetrics {
         COALESCE(SUM(CASE WHEN cost IS NULL THEN 1 ELSE 0 END), 0) AS unknownCostInteractions,
         COUNT(*) AS interactions,
         COUNT(DISTINCT session_id) AS sessions
-       FROM interactions
+       FROM interactions INDEXED BY interactions_analytics_cover_idx
        ${interactionFilter.sql}`
     )
     .get(...interactionFilter.params) as Omit<SummaryMetrics, "mostUsedTool" | "mostUsedModel">;
@@ -397,7 +403,7 @@ function getSummary(filters: AnalyticsFilters = {}): SummaryMetrics {
   const tool = sqlite
     .prepare(
       `SELECT t.name
-       FROM interactions i
+       FROM interactions i INDEXED BY interactions_analytics_cover_idx
        JOIN sessions s ON s.id = i.session_id
        JOIN tools t ON t.id = s.tool_id
        ${toolFilter.sql}
@@ -411,7 +417,7 @@ function getSummary(filters: AnalyticsFilters = {}): SummaryMetrics {
   const model = sqlite
     .prepare(
       `SELECT m.name
-       FROM interactions i
+       FROM interactions i INDEXED BY interactions_analytics_cover_idx
        LEFT JOIN models m ON m.id = i.model_id
        ${modelFilter.sql}
        GROUP BY m.id
@@ -556,7 +562,7 @@ function getTrends(filters: AnalyticsFilters = {}): TrendPoint[] {
       COALESCE(SUM(i.cache_read_tokens + i.cache_write_tokens), 0) AS cachedTokens,
       COALESCE(SUM(i.reasoning_tokens), 0) AS reasoningTokens,
       COALESCE(SUM(i.cost), 0) AS cost
-     FROM interactions i
+     FROM interactions i INDEXED BY interactions_analytics_cover_idx
      WHERE i.timestamp IS NOT NULL
      ${filter.sql}
      GROUP BY date
@@ -593,10 +599,10 @@ function getToolComparison(filters: AnalyticsFilters = {}): ToolComparisonRow[] 
       COALESCE(SUM(i.cache_read_tokens + i.cache_write_tokens), 0) AS cachedTokens,
       COALESCE(SUM(i.cost), 0) AS cost,
       COUNT(DISTINCT s.id) AS sessions,
-      COUNT(i.id) AS interactions,
+      COUNT(*) AS interactions,
       COALESCE((
         SELECT m2.name
-        FROM interactions i2
+        FROM interactions i2 INDEXED BY interactions_session_analytics_idx
         JOIN sessions s2 ON s2.id = i2.session_id
         LEFT JOIN models m2 ON m2.id = i2.model_id
         WHERE s2.tool_id = t.id
@@ -605,7 +611,7 @@ function getToolComparison(filters: AnalyticsFilters = {}): ToolComparisonRow[] 
         ORDER BY SUM(COALESCE(i2.cost, 0)) DESC
         LIMIT 1
       ), 'Unknown') AS mostExpensiveModel
-     FROM interactions i
+     FROM interactions i INDEXED BY interactions_session_analytics_idx
      JOIN sessions s ON s.id = i.session_id
      JOIN tools t ON t.id = s.tool_id
      JOIN providers p ON p.id = t.provider_id
@@ -651,9 +657,9 @@ function getModelRows(filters: AnalyticsFilters = {}): ModelAnalyticsRow[] {
       COALESCE(SUM(i.input_tokens), 0) AS inputTokens,
       COALESCE(SUM(i.output_tokens), 0) AS outputTokens,
       COALESCE(SUM(i.cost), 0) AS cost,
-      COUNT(i.id) AS interactions,
+      COUNT(*) AS interactions,
       COALESCE(AVG(i.output_tokens), 0) AS averageOutputTokens
-     FROM interactions i
+     FROM interactions i INDEXED BY interactions_analytics_cover_idx
      LEFT JOIN models m ON m.id = i.model_id
      LEFT JOIN providers p ON p.id = m.provider_id
      ${filter.sql}
@@ -726,7 +732,7 @@ function getProjectRows(filters: AnalyticsFilters = {}): ProjectAnalyticsRow[] {
       COALESCE(SUM(i.output_tokens), 0) AS outputTokens,
       COALESCE(SUM(i.cost), 0) AS cost,
       COUNT(DISTINCT s.id) AS sessions,
-      COUNT(i.id) AS interactions,
+      COUNT(*) AS interactions,
       COALESCE(SUM(CASE WHEN i.token_confidence = 'exact' THEN 1 ELSE 0 END), 0) AS exactTokenInteractions,
       COALESCE(SUM(CASE WHEN i.token_confidence = 'tokenizer estimate' THEN 1 ELSE 0 END), 0) AS tokenizerEstimateInteractions,
       COALESCE(SUM(CASE WHEN i.token_confidence IN ('simple estimate', 'high-confidence estimate', 'low-confidence estimate') THEN 1 ELSE 0 END), 0) AS simpleEstimateInteractions,
@@ -736,7 +742,7 @@ function getProjectRows(filters: AnalyticsFilters = {}): ProjectAnalyticsRow[] {
       MAX(i.timestamp) AS lastUsedAt
      FROM projects pr
      JOIN sessions s ON s.project_id = pr.id
-     JOIN interactions i ON i.session_id = s.id ${filter.sql}
+     JOIN interactions i INDEXED BY interactions_session_analytics_idx ON i.session_id = s.id ${filter.sql}
      GROUP BY pr.id
      ORDER BY totalTokens DESC`,
     ...filter.params
@@ -769,8 +775,42 @@ function getProjectRows(filters: AnalyticsFilters = {}): ProjectAnalyticsRow[] {
   });
 }
 
-function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
+function getSessions(
+  filters: AnalyticsFilters = {},
+  detail: NonNullable<ScanTrustOptions["sessionDetail"]> = "full"
+): SessionRow[] {
   const filter = timestampJoinCondition(filters, "i");
+  const pricingModelSql =
+    detail === "full"
+      ? `(
+        SELECT m2.name
+        FROM interactions i2 INDEXED BY interactions_session_analytics_idx
+        LEFT JOIN models m2 ON m2.id = i2.model_id
+        WHERE i2.session_id = s.id
+        GROUP BY m2.id
+        ORDER BY SUM(i2.total_tokens) DESC
+        LIMIT 1
+      )`
+      : "NULL";
+  const parserColumns =
+    detail === "full"
+      ? `sf.parser AS parser,
+      sf.status AS parserStatus,
+      sf.raw_metadata AS parserRawMetadata,`
+      : `NULL AS parser,
+      NULL AS parserStatus,
+      NULL AS parserRawMetadata,`;
+  const parserJoin =
+    detail === "full"
+      ? `LEFT JOIN scan_files sf ON sf.id = (
+       SELECT sf2.id
+       FROM scan_files sf2
+       JOIN scan_runs sr2 ON sr2.id = sf2.scan_run_id
+       WHERE sf2.path = s.source_file
+       ORDER BY sr2.started_at DESC
+       LIMIT 1
+     )`
+      : "";
   return rows<
     Omit<SessionRow, "costEstimated" | "estimatedTokens" | "confidenceGrade" | "confidenceScore"> & {
       costEstimated: 0 | 1;
@@ -796,15 +836,7 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
       pr.name AS project,
       pr.path AS projectPath,
       COALESCE(group_concat(DISTINCT m.name), 'unknown') AS models,
-      (
-        SELECT m2.name
-        FROM interactions i2
-        LEFT JOIN models m2 ON m2.id = i2.model_id
-        WHERE i2.session_id = s.id
-        GROUP BY m2.id
-        ORDER BY SUM(i2.total_tokens) DESC
-        LIMIT 1
-      ) AS pricingModel,
+      ${pricingModelSql} AS pricingModel,
       COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
       COALESCE(SUM(i.input_tokens), 0) AS inputTokens,
       COALESCE(SUM(i.output_tokens), 0) AS outputTokens,
@@ -827,25 +859,16 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
       COALESCE(SUM(CASE WHEN i.token_confidence = 'unknown' THEN 1 ELSE 0 END), 0) AS unknownTokenInteractions,
       COALESCE(SUM(CASE WHEN i.cost IS NOT NULL THEN 1 ELSE 0 END), 0) AS pricedCostInteractions,
       COALESCE(SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END), 0) AS unknownCostInteractions,
-      sf.parser AS parser,
-      sf.status AS parserStatus,
-      sf.raw_metadata AS parserRawMetadata,
-      COUNT(i.id) AS interactionCount,
+      ${parserColumns}
+      COUNT(*) AS interactionCount,
       CASE WHEN s.started_at IS NOT NULL AND s.ended_at IS NOT NULL THEN s.ended_at - s.started_at ELSE NULL END AS durationMs
      FROM sessions s
      JOIN tools t ON t.id = s.tool_id
      JOIN providers provider ON provider.id = t.provider_id
      LEFT JOIN projects pr ON pr.id = s.project_id
-     JOIN interactions i ON i.session_id = s.id ${filter.sql}
+     JOIN interactions i INDEXED BY interactions_session_analytics_idx ON i.session_id = s.id ${filter.sql}
      LEFT JOIN models m ON m.id = i.model_id
-     LEFT JOIN scan_files sf ON sf.id = (
-       SELECT sf2.id
-       FROM scan_files sf2
-       JOIN scan_runs sr2 ON sr2.id = sf2.scan_run_id
-       WHERE sf2.path = s.source_file
-       ORDER BY sr2.started_at DESC
-       LIMIT 1
-     )
+     ${parserJoin}
      GROUP BY s.id
      ORDER BY COALESCE(s.started_at, 0) DESC
      LIMIT 1000`,
@@ -904,14 +927,14 @@ function getUnknownCostQueue(filters: AnalyticsFilters = {}): UnknownCostQueueRo
       COALESCE(p.name, 'Unknown') AS provider,
       t.name AS tool,
       s.source_file AS sourceFile,
-      COUNT(i.id) AS interactions,
+      COUNT(*) AS interactions,
       COUNT(DISTINCT s.id) AS sessions,
       COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
       '' AS repairHref,
       '' AS sourceHref,
       '' AS parserHref,
       '' AS pricingHref
-     FROM interactions i
+     FROM interactions i INDEXED BY interactions_session_analytics_idx
      JOIN sessions s ON s.id = i.session_id ${filter.sql}
      JOIN tools t ON t.id = s.tool_id
      LEFT JOIN models m ON m.id = i.model_id
@@ -978,9 +1001,9 @@ function getModelAliasSuggestions(filters: AnalyticsFilters = {}): ModelAliasSug
       COALESCE(p.name, tool_provider.name) AS provider,
       t.name AS tool,
       MIN(s.source_file) AS sourceFile,
-      COUNT(i.id) AS interactions,
+      COUNT(*) AS interactions,
       COALESCE(SUM(i.total_tokens), 0) AS totalTokens
-     FROM interactions i
+     FROM interactions i INDEXED BY interactions_session_analytics_idx
      JOIN sessions s ON s.id = i.session_id ${filter.sql}
      JOIN tools t ON t.id = s.tool_id
      JOIN providers tool_provider ON tool_provider.id = t.provider_id
@@ -1200,9 +1223,12 @@ function buildInsights(data: {
   return insights;
 }
 
-export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData {
+export function getAnalyticsData(
+  filters: AnalyticsFilters = {},
+  options: ScanTrustOptions = {}
+): AnalyticsData {
   const summary = getSummary(filters);
-  const scanTrust = getScanTrustData(filters);
+  const scanTrust = getScanTrustData(filters, options);
   const dataConfidence = buildDataConfidenceScore({
     totalInteractions: scanTrust.confidence.interactions,
     exactTokenInteractions: scanTrust.confidence.exactTokenInteractions,
@@ -1233,7 +1259,7 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
   const tools = getToolComparison(filters);
   const models = getModelRows(filters);
   const projects = getProjectRows(filters);
-  const sessions = getSessions(filters);
+  const sessions = getSessions(filters, options.sessionDetail ?? "full");
   const unknownCosts = getUnknownCostQueue(filters);
   const modelAliasSuggestions = getModelAliasSuggestions(filters);
   const sessionComparisons = buildSessionComparisons(sessions);
@@ -1263,6 +1289,7 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
 
   return {
     summary,
+    scanTrust,
     dataConfidence,
     evidenceLinks,
     comparison,
@@ -1325,6 +1352,27 @@ function getScanFileRows(limit: number | null) {
   }));
 }
 
+function getScanFileRowsForRunIds(scanRunIds: string[]) {
+  if (!scanRunIds.length) return [];
+  const placeholders = scanRunIds.map(() => "?").join(", ");
+  return rows<DebugScanFile>(
+    `SELECT sf.id, sf.scan_run_id AS scanRunId, sf.path, sf.modified_time AS modifiedTime,
+      sf.size_bytes AS sizeBytes, sf.file_hash AS fileHash, sf.parser, sf.status,
+      sf.records_imported AS recordsImported, sf.warnings, sf.errors, sf.raw_metadata AS rawMetadata,
+      sr.started_at AS scanStartedAt
+     FROM scan_files sf
+     JOIN scan_runs sr ON sr.id = sf.scan_run_id
+     WHERE sf.scan_run_id IN (${placeholders})
+     ORDER BY sr.started_at DESC, sr.completed_at DESC, sr.id DESC, sf.path ASC`,
+    ...scanRunIds
+  ).map((row) => ({
+    ...row,
+    warnings: parseJson<string[]>(row.warnings, []),
+    errors: parseJson<string[]>(row.errors, []),
+    rawMetadata: parseJson<Record<string, unknown>>(row.rawMetadata, {})
+  }));
+}
+
 export function getScanConfidenceSummary(filters: AnalyticsFilters = {}): ScanConfidenceSummary {
   const filter = timestampWhere(filters, "i");
   const unknownFilter = timestampJoinCondition(filters, "i");
@@ -1342,7 +1390,7 @@ export function getScanConfidenceSummary(filters: AnalyticsFilters = {}): ScanCo
         COALESCE(SUM(CASE WHEN cost IS NOT NULL AND cost_estimated = 0 THEN 1 ELSE 0 END), 0) AS exactCostInteractions,
         COALESCE(SUM(CASE WHEN cost IS NOT NULL AND cost_estimated = 1 THEN 1 ELSE 0 END), 0) AS estimatedCostInteractions,
         COALESCE(SUM(CASE WHEN cost IS NULL THEN 1 ELSE 0 END), 0) AS unknownCostInteractions
-       FROM interactions i
+       FROM interactions i INDEXED BY interactions_analytics_cover_idx
        ${filter.sql}`
     )
     .get(...filter.params) as ScanConfidenceSummary;
@@ -1359,7 +1407,7 @@ export function getScanConfidenceSummary(filters: AnalyticsFilters = {}): ScanCo
               THEN 'missingPricing'
             ELSE 'other'
           END AS cause
-        FROM interactions i
+        FROM interactions i INDEXED BY interactions_analytics_cover_idx
         LEFT JOIN models m ON m.id = i.model_id
         WHERE i.cost IS NULL
         ${unknownFilter.sql}
@@ -1407,9 +1455,22 @@ export function getPricedModelCount() {
   return number(row.count);
 }
 
-export function getScanTrustData(filters: AnalyticsFilters = {}): ScanTrustData {
+function getScanFileRowsForScope(
+  scanRuns: DebugScanRun[],
+  scope: NonNullable<ScanTrustOptions["scanFileScope"]>
+) {
+  if (scope === "all") return getScanFileRows(null);
+  if (scope === "none") return [];
+  const runIds = scanRuns.slice(0, scope === "latest" ? 1 : 2).map((scanRun) => scanRun.id);
+  return getScanFileRowsForRunIds(runIds);
+}
+
+export function getScanTrustData(
+  filters: AnalyticsFilters = {},
+  options: ScanTrustOptions = {}
+): ScanTrustData {
   const scanRuns = getScanRunRows(50);
-  const scanFiles = getScanFileRows(null);
+  const scanFiles = getScanFileRowsForScope(scanRuns, options.scanFileScope ?? "all");
   const confidence = getScanConfidenceSummary(filters);
   return {
     scanRuns,

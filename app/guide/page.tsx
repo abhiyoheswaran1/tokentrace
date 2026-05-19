@@ -43,7 +43,7 @@ const firstRunSteps = [
     title: "Confirm scan roots",
     page: "Settings",
     detail: "Check Claude Code, Codex, OpenAI, project, and custom folders that are readable on this machine.",
-    href: "/settings",
+    href: "/settings#custom-folders",
     action: "Open settings"
   },
   {
@@ -51,7 +51,7 @@ const firstRunSteps = [
     title: "Run your first scan",
     page: "Settings",
     detail: "Import normalized local usage records into the local SQLite database.",
-    href: "/settings",
+    href: "/settings#scan-controls",
     action: "Scan now",
     actionKind: "scan"
   },

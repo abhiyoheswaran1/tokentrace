@@ -50,7 +50,7 @@ export function getLiveStatusSnapshot(options: { sourceFile?: string | null } = 
     .prepare(
       `SELECT
         COUNT(DISTINCT s.id) AS sessions,
-        COUNT(i.id) AS interactions,
+        COUNT(*) AS interactions,
         COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
         COALESCE(SUM(i.input_tokens), 0) AS inputTokens,
         COALESCE(SUM(i.output_tokens), 0) AS outputTokens,

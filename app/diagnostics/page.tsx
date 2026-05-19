@@ -11,6 +11,7 @@ import { buildScanHealth } from "@/src/lib/scan-health";
 import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
 import { formatDate } from "@/src/lib/format";
 import { getSupplyChainHealth } from "@/src/lib/supply-chain-health";
+import { buildSourceCatalog, summarizeSourceCoverage } from "@/src/lib/source-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -462,8 +463,63 @@ function ScanHistoryPanel({ scanRuns }: { scanRuns: DebugScanRun[] }) {
   );
 }
 
+function SourceCoveragePanel({ scanFiles }: { scanFiles: ReturnType<typeof getScanTrustData>["scanFiles"] }) {
+  const catalog = buildSourceCatalog();
+  const coverage = summarizeSourceCoverage(scanFiles);
+  const summary = [
+    ["Native", coverage.nativeFiles],
+    ["Profile-assisted", coverage.profileAssistedFiles],
+    ["Fallback", coverage.fallbackFiles],
+    ["Unsupported", coverage.unsupportedFiles]
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <CardTitle>Source Coverage</CardTitle>
+          <CardDescription>
+            Import support is grouped by native adapters, profile-assisted parsers, fallback parsers, and unsupported files.
+          </CardDescription>
+        </div>
+        <Link href="/api/reports?type=source-coverage&format=markdown" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+          Export source report
+        </Link>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid border-y sm:grid-cols-2 lg:grid-cols-4">
+          {summary.map(([label, value]) => (
+            <div key={label} className="p-3">
+              <FieldLabel>{label}</FieldLabel>
+              <DataValue className="mt-1" size="md">{Number(value).toLocaleString()}</DataValue>
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-2 lg:grid-cols-2">
+          {catalog.entries.map((entry) => (
+            <div key={entry.id} className="rounded-md border p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm font-semibold">{entry.label}</div>
+                <Badge variant={entry.tier === "native" ? "success" : entry.tier === "profile-assisted" ? "warning" : "secondary"}>
+                  {entry.tier}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{entry.description}</p>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {entry.matchers.map((matcher) => (
+                  <code key={matcher} className="rounded bg-muted px-1.5 py-0.5 text-xs">{matcher}</code>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function DiagnosticsPage() {
-  const baseData = getScanTrustData();
+  const baseData = getScanTrustData({}, { scanFileScope: "recent" });
   const supplyChain = getSupplyChainHealth();
   const data = {
     ...baseData,
@@ -474,7 +530,7 @@ export default async function DiagnosticsPage() {
       supplyChain
     })
   };
-  const analytics = getAnalyticsData();
+  const analytics = getAnalyticsData({}, { scanFileScope: "none", sessionDetail: "summary" });
   const roots = await getDefaultSearchRoots();
   const doctorReport = buildDoctorReport({
     ...data,
@@ -518,6 +574,8 @@ export default async function DiagnosticsPage() {
       <ScanDiffPanel report={doctorReport.scanDiff} />
 
       <ScanHistoryPanel scanRuns={data.scanRuns} />
+
+      <SourceCoveragePanel scanFiles={data.scanFiles} />
 
       <ScanHealthSummary health={data.health} />
 

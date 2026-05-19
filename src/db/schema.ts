@@ -137,7 +137,50 @@ export const interactions = sqliteTable(
     sourceIdx: uniqueIndex("interactions_source_id_idx").on(table.sourceId),
     sessionIdx: index("interactions_session_idx").on(table.sessionId),
     modelIdx: index("interactions_model_idx").on(table.modelId),
-    timestampIdx: index("interactions_timestamp_idx").on(table.timestamp)
+    timestampIdx: index("interactions_timestamp_idx").on(table.timestamp),
+    analyticsCoverIdx: index("interactions_analytics_cover_idx").on(
+      table.timestamp,
+      table.sessionId,
+      table.modelId,
+      table.totalTokens,
+      table.inputTokens,
+      table.outputTokens,
+      table.cacheReadTokens,
+      table.cacheWriteTokens,
+      table.reasoningTokens,
+      table.cost,
+      table.costEstimated,
+      table.estimatedTokens,
+      table.tokenConfidence
+    ),
+    sessionAnalyticsIdx: index("interactions_session_analytics_idx").on(
+      table.sessionId,
+      table.timestamp,
+      table.modelId,
+      table.totalTokens,
+      table.inputTokens,
+      table.outputTokens,
+      table.cacheReadTokens,
+      table.cacheWriteTokens,
+      table.reasoningTokens,
+      table.cost,
+      table.costEstimated,
+      table.estimatedTokens,
+      table.tokenConfidence
+    ),
+    costRepairIdx: index("interactions_cost_repair_idx").on(
+      table.cost,
+      table.timestamp,
+      table.sessionId,
+      table.modelId,
+      table.totalTokens,
+      table.inputTokens,
+      table.outputTokens,
+      table.cacheReadTokens,
+      table.cacheWriteTokens,
+      table.reasoningTokens,
+      table.tokenConfidence
+    )
   })
 );
 
@@ -188,7 +231,13 @@ export const scanFiles = sqliteTable(
   },
   (table) => ({
     pathHashIdx: index("scan_files_path_hash_idx").on(table.path, table.fileHash),
-    scanRunIdx: index("scan_files_run_idx").on(table.scanRunId)
+    scanRunIdx: index("scan_files_run_idx").on(table.scanRunId),
+    pathLatestIdx: index("scan_files_path_latest_idx").on(
+      table.path,
+      table.scanRunId,
+      table.status,
+      table.parser
+    )
   })
 );
 

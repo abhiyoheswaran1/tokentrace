@@ -58,9 +58,10 @@ describe("statusline CLI safety", () => {
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
     const roadmap = JSON.parse(result.stdout);
-    expect(roadmap.version).toBe("0.11.0");
+    expect(roadmap.version).toBe("0.12.0");
     expect(roadmap.release.releaseAllowed).toBe(true);
-    expect(roadmap.cards).toHaveLength(7);
+    expect(roadmap.cards).toHaveLength(10);
+    expect(roadmap.handoff.schemaVersion).toBe("tokentrace.roadmap.v2");
   });
 
   it("prints Claude setup JSON without touching the TokenTrace app data directory", async () => {

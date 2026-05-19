@@ -10,9 +10,13 @@ import { cn } from "@/src/lib/utils";
 type ScanResult = {
   filesScanned: number;
   recordsImported: number;
+  costsRecalculated: number;
   unknownCostInteractions: number;
+  staleNonUsageSessionsRemoved: number;
   warnings: string[];
   errors: string[];
+  warningCount?: number;
+  errorCount?: number;
 };
 
 type ScanStatus = {
@@ -54,7 +58,7 @@ export function ScanNowButton({
         const response = await fetch("/api/scan", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ force, folders })
+          body: JSON.stringify({ force, folders, compact: true })
         });
         const result = (await response.json()) as Partial<ScanResult> & { error?: string };
         if (!response.ok) {
@@ -63,19 +67,27 @@ export function ScanNowButton({
         }
         const filesScanned = result.filesScanned ?? 0;
         const recordsImported = result.recordsImported ?? 0;
+        const costsRecalculated = result.costsRecalculated ?? 0;
         const unknownCostInteractions = result.unknownCostInteractions ?? 0;
+        const staleNonUsageSessionsRemoved = result.staleNonUsageSessionsRemoved ?? 0;
         const warnings = result.warnings ?? [];
         const errors = result.errors ?? [];
-        const issueCount = (result.warnings?.length ?? 0) + (result.errors?.length ?? 0);
+        const warningCount = result.warningCount ?? result.warnings?.length ?? 0;
+        const errorCount = result.errorCount ?? result.errors?.length ?? 0;
+        const issueCount = warningCount + errorCount;
         setStatus({
           tone: issueCount > 0 ? "muted" : "success",
           message: "Scan complete.",
           result: {
             filesScanned,
             recordsImported,
+            costsRecalculated,
             unknownCostInteractions,
+            staleNonUsageSessionsRemoved,
             warnings,
-            errors
+            errors,
+            warningCount,
+            errorCount
           }
         });
       } catch {
@@ -105,13 +117,17 @@ export function ScanNowButton({
               <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                 <span>{status.result.filesScanned.toLocaleString()} files checked</span>
                 <span>{status.result.recordsImported.toLocaleString()} records imported</span>
-                <span>{status.result.warnings.length.toLocaleString()} warnings</span>
+                <span>{(status.result.warningCount ?? status.result.warnings.length).toLocaleString()} warnings</span>
+                <span>{(status.result.errorCount ?? status.result.errors.length).toLocaleString()} errors</span>
+                <span>{status.result.costsRecalculated.toLocaleString()} Costs recalculated</span>
                 <span>{status.result.unknownCostInteractions.toLocaleString()} unknown cost</span>
+                <span>{status.result.staleNonUsageSessionsRemoved.toLocaleString()} Stale support imports removed</span>
               </div>
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                <Link href="/diagnostics" className="font-medium text-primary underline-offset-2 hover:underline">Scan Health</Link>
-                <Link href="/repair" className="font-medium text-primary underline-offset-2 hover:underline">Repair</Link>
-                <Link href="/discovery" className="font-medium text-primary underline-offset-2 hover:underline">Discovery</Link>
+                <Link href="/diagnostics" className="font-medium text-primary underline-offset-2 hover:underline">Open Scan Health</Link>
+                <Link href="/repair" className="font-medium text-primary underline-offset-2 hover:underline">Open repair</Link>
+                <Link href="/discovery" className="font-medium text-primary underline-offset-2 hover:underline">Open Discovery</Link>
+                <Link href="/pricing" className="font-medium text-primary underline-offset-2 hover:underline">Set model rate</Link>
               </div>
             </div>
           ) : null}

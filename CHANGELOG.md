@@ -4,6 +4,48 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.12.0] - 2026-05-19
+
+### Added
+
+- 0.12.0 Local Sources & Trust roadmap, rolling the 0.13.0 Evidence Portability, 0.14.0 Local Operations, 0.15.0 Governance & Guardrails, 0.16.0 Parser Studio, 0.17.0 Reports, and 0.18.0 Agent Handoff themes into one larger release.
+- Native structured usage log ingestion for local wrappers and team JSONL/NDJSON logs with session, model, token, and source-cost fields.
+- Native Cursor-style chat/composer export ingestion with local source evidence and no raw prompt storage by default.
+- Source Catalog and Source Coverage in Scan Health so users can distinguish native, profile-assisted, fallback, and unsupported local files.
+- Privacy-safe Evidence Packs exported as JSON or Markdown with totals, confidence drivers, source files, parser notes, model-rate state, repair links, and an explicit redaction manifest.
+- Local scan scheduling settings for manual-only, on-open, hourly, and daily scans, plus scan-history retention and last scheduled scan status.
+- Scoped project/model/tool guardrails with per-guardrail warning thresholds and anomaly notes.
+- Import Profile preview for sampling a local file, checking parser fit, reviewing detected fields, and applying recommended matchers without exposing raw content.
+- Saved report definitions and export endpoints for weekly usage, high-cost sessions, unknown-cost repair, confidence trends, guardrail status, and source coverage in Markdown, JSON, and CSV.
+- Operating metadata export for settings, source catalog, schedules, guardrails, report definitions, and roadmap status without raw usage records.
+- Agent-readable Roadmap V2 with current release, next planned release, rolled-up release themes, action recipes, evidence paths, verification gates, and release status.
+
+### Changed
+
+- Settings now includes Scan Scheduling, Scoped Guardrails, Import Profile preview, and Local Exports.
+- Evidence pages now offer one-click JSON and Markdown evidence-pack exports.
+- Evidence remains a contextual drill-down from Overview, Sessions, Repair, and exports, with direct-entry guidance for users who open `/evidence` manually.
+- Scan, setup, guardrail, package-trust, folder, import-profile, and export CTAs now deep-link to the exact Settings section instead of dropping users at the top of Settings.
+- Settings scan feedback now reports files checked, records imported, warnings, errors, recalculated costs, unknown cost, stale support imports, model aliases, and next-step links to Scan Health, Repair, Discovery, and Model Rates.
+- Browser-triggered Scan now responses now return compact warning/error previews with full counts, keeping large duplicate-file scans from shipping megabytes of warning text back to the UI.
+- Settings now has sticky section navigation, and Scan Controls shows a persisted Last scan result from local scan history after reload.
+- Overview now includes a compact Last verified trust strip near the accounting totals for latest scan, package IOC, model-rate coverage, and evidence-pack availability.
+- Evidence pages now include opened-from breadcrumbs, safe return behavior, and explicit Export JSON pack / Export Markdown pack actions.
+- Route transitions now show a subtle top loading bar, and route loading states explain what is happening plus the next useful action.
+- Scan and evidence follow-up actions now consistently use Scan now, Open Scan Health, Open repair, Set model rate, View evidence, and Export pack language.
+- Period filters stay attached to the current page, preserve Evidence context, and keep desktop controls in one compact row while retaining horizontal scrolling for narrow widths.
+- Chart cards now show lightweight loading placeholders during client hydration instead of appearing blank while Recharts initializes.
+- Session Explorer now paginates large local result sets to keep dense session tables responsive.
+- Repair now opens as a capped workbench of the top visible unknown-cost groups, while keeping full summary counts and focused repair links for deep review.
+- Roadmap CLI/API now report the 0.12.0 Local Sources & Trust release contract and the next planned 0.19.0 direction.
+
+### Fixed
+
+- Overview, Evidence, and Settings now avoid full raw-row scans and oversized scan-health payloads on large local databases by using covering indexes, scoped scan-file reads, and a summary session path on Overview.
+- Repair no longer serializes the entire unknown-cost queue on first load and uses a dedicated cost-repair index for large local databases.
+- Scan Health no longer loads all scan-file evidence and full session details just to render summary panels.
+- Overview no longer blocks initial render on due scheduled scans, so opening localhost does not wait for scan work before showing the dashboard.
+
 ## [0.11.0] - 2026-05-18
 
 ### Added

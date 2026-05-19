@@ -25,7 +25,7 @@ export default function ModelAnalyticsPage() {
           title="No model usage imported yet"
           description="Scan local CLI usage first, then confirm model rates so cost and alternative suggestions are meaningful."
           actions={[
-            { label: "Set model rates", href: "/pricing", variant: "outline" }
+            { label: "Set model rate", href: "/pricing", variant: "outline" }
           ]}
         >
           <ScanNowButton size="sm" />

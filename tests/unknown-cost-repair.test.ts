@@ -391,6 +391,48 @@ describe("unknown cost repair state", () => {
     });
   });
 
+  it("can cap visible repair groups without losing full summary counts", async () => {
+    const { buildUnknownCostRepairWorkbench, sqlite } = await loadRepair();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('openai', 'OpenAI', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('codex', 'openai', 'Codex CLI')").run();
+    sqlite
+      .prepare(
+        `INSERT INTO models (id, provider_id, name, input_token_price, output_token_price, currency) VALUES
+          ('gpt-a', 'openai', 'gpt-a', NULL, NULL, 'USD'),
+          ('gpt-b', 'openai', 'gpt-b', NULL, NULL, 'USD'),
+          ('gpt-c', 'openai', 'gpt-c', NULL, NULL, 'USD')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO sessions (id, source_id, tool_id, started_at, title, source_file) VALUES
+          ('session-a', 'source-a', 'codex', 10, 'A', '/tmp/a.jsonl'),
+          ('session-b', 'source-b', 'codex', 20, 'B', '/tmp/b.jsonl'),
+          ('session-c', 'source-c', 'codex', 30, 'C', '/tmp/c.jsonl')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, input_tokens, output_tokens, total_tokens, token_confidence, cost)
+         VALUES
+          ('i-a', 'i-a-source', 'session-a', 'assistant', 'gpt-a', 100, 20, 120, 'exact', NULL),
+          ('i-b', 'i-b-source', 'session-b', 'assistant', 'gpt-b', 90, 10, 100, 'exact', NULL),
+          ('i-c', 'i-c-source', 'session-c', 'assistant', 'gpt-c', 80, 10, 90, 'exact', NULL)`
+      )
+      .run();
+
+    const workbench = buildUnknownCostRepairWorkbench({}, { limit: 2 });
+
+    expect(workbench.totalGroups).toBe(3);
+    expect(workbench.shownGroups).toBe(2);
+    expect(workbench.hasMoreGroups).toBe(true);
+    expect(workbench.summary.totalInteractions).toBe(3);
+    expect(workbench.summary.unresolved).toBe(3);
+    expect(workbench.groups).toHaveLength(2);
+  });
+
   it("marks missing-pricing repair items resolved when a price update recalculates their costs", async () => {
     const { buildUnknownCostRepairWorkbench, getUnknownCostReview, sqlite } = await loadRepair();
 

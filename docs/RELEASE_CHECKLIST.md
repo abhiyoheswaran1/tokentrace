@@ -23,9 +23,27 @@ asks for that public release.
   In sandboxed runs it may skip packed installation, but the tarball payload
   inspection still runs.
 - Use `tokentrace roadmap --json` or `/api/roadmap` to confirm release blockers
-  still show `releaseAllowed: false` during internal 0.11.0 development.
+  stay aligned with the current milestone. During pre-bump development,
+  `releaseAllowed` should remain `false`; after a maintainer-approved bump it
+  should be `true`.
 - Keep the release-note extractor green when release documentation changes:
-  `npm run release:notes -- v0.4.0`.
+  `npm run release:notes -- v0.12.0`.
+- For UI milestones, manually smoke the live app before release notes are
+  considered current:
+  - Overview renders Usage Pulse, accounting, cost/session, trends, Review
+    Status, and Top repair items without blank charts.
+  - Configure scan opens `/settings#scan-controls` and lands on Scan Controls
+    after hydration.
+  - Settings deep links land on Custom Folders, Scan Controls, Scan Scheduling,
+    Scoped Guardrails, Package Trust, Import Profiles, and Local Exports.
+  - Scan now feedback reports files checked, records imported, warnings, errors,
+    recalculated costs, unknown cost, stale support imports, aliases, and links
+    to Scan Health, Repair, Discovery, and Model Rates.
+  - Evidence opened directly explains its contextual role, supports JSON and
+    Markdown exports, and provides next actions to Overview, Sessions, Repair,
+    and Model Rates.
+  - Mobile Overview keeps period controls, trend controls, charts, and dense
+    summaries usable without widening the page.
 - Commit the slice with a plain milestone message.
 - Do not run `npm version`, `git tag`, `gh release create`, or `npm publish`.
 
@@ -33,12 +51,12 @@ asks for that public release.
 
 Use this only when the maintainer explicitly asks to release.
 
-1. Confirm the target version, for example `0.4.0`.
+1. Confirm the target version, for example `0.12.0`.
 2. Move changelog entries from `Unreleased` into the target version section.
 3. Run:
 
    ```bash
-   npm version 0.5.0 --no-git-tag-version
+   npm version 0.12.0 --no-git-tag-version
    npm run release:check
    ```
 
@@ -52,15 +70,15 @@ Use this only when the maintainer explicitly asks to release.
 
    ```bash
    git add package.json package-lock.json CHANGELOG.md README.md docs SECURITY.md .github scripts tests
-   git commit -m "Release 0.5.0"
+   git commit -m "Release 0.12.0"
    ```
 
 6. Tag and push only after verification:
 
    ```bash
-   git tag -a v0.5.0 -m "Release 0.5.0"
+   git tag -a v0.12.0 -m "Release 0.12.0"
    git push origin main
-   git push origin v0.5.0
+   git push origin v0.12.0
    ```
 
 7. Push the tag. The GitHub Actions `Publish Package` workflow verifies the tag,

@@ -6,7 +6,7 @@ function read(relativePath: string) {
   return fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
 }
 
-describe("0.10.1 product polish bundle", () => {
+describe("product polish bundle", () => {
   it("gives scan feedback enough detail to guide the next action", () => {
     const source = read("components/scan-now-button.tsx");
 
@@ -14,9 +14,9 @@ describe("0.10.1 product polish bundle", () => {
     expect(source).toContain("records imported");
     expect(source).toContain("warnings");
     expect(source).toContain("unknown cost");
-    expect(source).toContain("Scan Health");
-    expect(source).toContain("Repair");
-    expect(source).toContain("Discovery");
+    expect(source).toContain("Open Scan Health");
+    expect(source).toContain("Open repair");
+    expect(source).toContain("Open Discovery");
   });
 
   it("uses action-oriented empty states for first-run pages", () => {
@@ -33,11 +33,11 @@ describe("0.10.1 product polish bundle", () => {
       expect(source).toContain("<EmptyState");
     }
     expect(tools).toContain("ScanNowButton");
-    expect(models).toContain("Set model rates");
+    expect(models).toContain("Set model rate");
     expect(projects).toContain("Open Discovery");
     expect(sessions).toContain("Open Scan Health");
-    expect(repair).toContain("Set model rates");
-    expect(evidence).toContain("Open sessions");
+    expect(repair).toContain("Set model rate");
+    expect(evidence).toContain("Open Sessions");
   });
 
   it("makes repair read as a guided workbench", () => {
@@ -93,7 +93,8 @@ describe("0.10.1 product polish bundle", () => {
     expect(readme).toContain("Local-first AI CLI usage analytics");
     expect(readme).toContain("https://www.abhiyoheswaran.com/apps/tokentrace");
     expect(websitePrompt).toContain("local-first AI CLI usage analytics");
-    expect(websitePrompt).toContain("overview-0.10.0.png");
-    expect(websitePrompt).toContain("scan-health-0.10.0.png");
+    expect(websitePrompt).toContain("overview-0.12.0.png");
+    expect(websitePrompt).toContain("scan-health-0.12.0.png");
+    expect(websitePrompt).toContain("Local Sources & Trust");
   });
 });

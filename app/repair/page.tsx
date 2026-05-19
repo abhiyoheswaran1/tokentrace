@@ -18,6 +18,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const REPAIR_PAGE_GROUP_LIMIT = 25;
+
 function causeVariant(cause: UnknownCostRepairWorkbenchGroup["cause"]) {
   if (cause === "missing pricing") return "warning";
   if (cause === "missing model" || cause === "missing token count") return "destructive";
@@ -195,8 +197,12 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
   const range = resolveDateRange(params);
   const rangeLinkParams = dateRangeQueryParams(range);
   const focusKey = firstQueryValue(params.key);
-  const workbench = buildUnknownCostRepairWorkbench(range.filters);
-  const hasGroups = workbench.groups.length > 0;
+  const workbench = buildUnknownCostRepairWorkbench(range.filters, {
+    limit: REPAIR_PAGE_GROUP_LIMIT,
+    requiredKey: focusKey
+  });
+  const visibleRepairKeys = workbench.groups.map((group) => group.key);
+  const hasGroups = workbench.totalGroups > 0;
   const focusedGroup = focusKey ? workbench.groups.find((group) => group.key === focusKey) ?? null : null;
 
   return (
@@ -222,7 +228,7 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
         }
       />
 
-      <PeriodFilter range={range} />
+      <PeriodFilter range={range} basePath="/repair" />
 
       <RepairFlowSteps />
 
@@ -247,11 +253,15 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
           <div>
             <CardTitle>Repair Items</CardTitle>
             <CardDescription>
-              Groups are split by cause, source file, provider, model, and tool so review state stays stable.
+              Showing the highest-impact visible repair groups first. Groups stay split by cause, source file, provider, model, and tool.
             </CardDescription>
           </div>
           {hasGroups ? (
-            <Badge variant="secondary">{workbench.groups.length.toLocaleString()} groups</Badge>
+            <Badge variant="secondary">
+              {workbench.hasMoreGroups
+                ? `${workbench.shownGroups.toLocaleString()} of ${workbench.totalGroups.toLocaleString()} groups`
+                : `${workbench.totalGroups.toLocaleString()} groups`}
+            </Badge>
           ) : (
             <Badge variant="success">priced</Badge>
           )}
@@ -259,8 +269,14 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
         <CardContent className="table-scroll overflow-x-auto">
           {hasGroups ? (
             <div className="space-y-3">
+              {workbench.hasMoreGroups ? (
+                <div className="rounded-md border bg-muted/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
+                  The table is capped at {REPAIR_PAGE_GROUP_LIMIT.toLocaleString()} visible repair groups so the page stays responsive on large local databases.
+                  Narrow the period or open a focused repair link to inspect a specific group.
+                </div>
+              ) : null}
               <RepairBulkActions
-                keys={workbench.groups.map((group) => group.key)}
+                keys={visibleRepairKeys}
                 modelRatesHref={mergeHrefParams("/pricing", rangeLinkParams)}
                 scanHealthHref="/diagnostics"
               />
@@ -355,7 +371,7 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
               title="No unknown-cost repair items"
               description="Cost coverage is clear for the selected period. If cost is still missing, refresh model rates or inspect Scan Health."
               actions={[
-                { label: "Set model rates", href: "/pricing" },
+                { label: "Set model rate", href: "/pricing" },
                 { label: "Open Scan Health", href: "/diagnostics", variant: "outline" }
               ]}
             />

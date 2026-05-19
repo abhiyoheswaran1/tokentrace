@@ -106,8 +106,8 @@ function assertDiscoverySmoke(bin, cwd, env) {
   }
 
   const roadmap = runJson(bin, ["roadmap", "--json"], { cwd, env });
-  if (roadmap.version !== "0.11.0" || roadmap.release?.releaseAllowed !== true) {
-    throw new Error("Packed tokentrace roadmap --json is missing the 0.11.0 release-ready status.");
+  if (roadmap.version !== "0.12.0" || roadmap.release?.releaseAllowed !== true) {
+    throw new Error("Packed tokentrace roadmap --json is missing the 0.12.0 release-ready status.");
   }
 }
 

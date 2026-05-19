@@ -133,7 +133,7 @@ export function buildAccountingInvariants(filters: AnalyticsFilters = {}): Accou
         `SELECT
           p.name AS provider,
           t.name AS tool,
-          COUNT(i.id) AS interactions,
+          COUNT(*) AS interactions,
           COALESCE(SUM(i.total_tokens), 0) AS processedTokens,
           COALESCE(SUM(i.input_tokens + i.output_tokens + i.reasoning_tokens), 0) AS nonCacheTokens,
           COALESCE(SUM(i.cache_read_tokens + i.cache_write_tokens), 0) AS cachedTokens,

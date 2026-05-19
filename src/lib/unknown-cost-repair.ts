@@ -69,6 +69,14 @@ export type UnknownCostRepairWorkbench = {
     totalInteractions: number;
   };
   groups: UnknownCostRepairWorkbenchGroup[];
+  totalGroups: number;
+  shownGroups: number;
+  hasMoreGroups: boolean;
+};
+
+export type UnknownCostRepairWorkbenchOptions = {
+  limit?: number;
+  requiredKey?: string | null;
 };
 
 function normalizeStatus(value: unknown): UnknownCostRepairStatus {
@@ -108,6 +116,19 @@ function normalizeNote(value: unknown) {
 
 function number(value: unknown) {
   return Number(value ?? 0);
+}
+
+function emptyReview(key: string): UnknownCostReviewModel {
+  return {
+    key,
+    sourceFile: "",
+    model: "",
+    cause: "",
+    status: "unresolved",
+    notes: "",
+    createdAt: null,
+    updatedAt: null
+  };
 }
 
 function rows<T>(sql: string, ...params: unknown[]) {
@@ -334,16 +355,7 @@ function fallbackMetadataForKey(key: string) {
 export function getUnknownCostReview(key: string): UnknownCostReviewModel {
   const row = db.select().from(unknownCostReviews).where(eq(unknownCostReviews.key, key)).get();
   if (row) return toModel(row);
-  return {
-    key,
-    sourceFile: "",
-    model: "",
-    cause: "",
-    status: "unresolved",
-    notes: "",
-    createdAt: null,
-    updatedAt: null
-  };
+  return emptyReview(key);
 }
 
 export function saveUnknownCostReview(input: {
@@ -430,8 +442,14 @@ export function bulkUpdateUnknownCostRepairs(input: {
   };
 }
 
-export function buildUnknownCostRepairWorkbench(filters: AnalyticsFilters = {}): UnknownCostRepairWorkbench {
+export function buildUnknownCostRepairWorkbench(
+  filters: AnalyticsFilters = {},
+  options: UnknownCostRepairWorkbenchOptions = {}
+): UnknownCostRepairWorkbench {
   const { pricedByProvider, displayByProviderModel } = buildPricedModelLookup();
+  const reviewRows = listUnknownCostRepairs();
+  const reviewsByKey = new Map(reviewRows.map((review) => [review.key, review]));
+  const reviewFor = (key: string, legacyKey: string) => reviewsByKey.get(key) ?? reviewsByKey.get(legacyKey) ?? emptyReview(key);
   const dateFilter = interactionDateFilter(filters);
   const queryRows = rows<{
     cause: UnknownCostRepairWorkbenchGroup["cause"];
@@ -471,14 +489,14 @@ export function buildUnknownCostRepairWorkbench(filters: AnalyticsFilters = {}):
       COALESCE(p.name, tool_provider.name, 'Unknown') AS provider,
       t.name AS tool,
       s.source_file AS sourceFile,
-      COUNT(i.id) AS interactions,
+      COUNT(*) AS interactions,
       COUNT(DISTINCT s.id) AS sessions,
       COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
       COALESCE(SUM(i.input_tokens), 0) AS inputTokens,
       COALESCE(SUM(i.output_tokens), 0) AS outputTokens,
       COALESCE(SUM(i.cache_read_tokens + i.cache_write_tokens), 0) AS cachedTokens,
       COALESCE(SUM(i.reasoning_tokens), 0) AS reasoningTokens
-     FROM interactions i
+     FROM interactions i INDEXED BY interactions_cost_repair_idx
      JOIN sessions s ON s.id = i.session_id
      JOIN tools t ON t.id = s.tool_id
      LEFT JOIN providers tool_provider ON tool_provider.id = t.provider_id
@@ -502,7 +520,7 @@ export function buildUnknownCostRepairWorkbench(filters: AnalyticsFilters = {}):
     ...dateFilter.params
   );
 
-  const groups = queryRows.map((row) => {
+  const allGroups = queryRows.map((row) => {
     const cause = row.cause;
     const base = {
       cause,
@@ -513,8 +531,7 @@ export function buildUnknownCostRepairWorkbench(filters: AnalyticsFilters = {}):
     };
     const key = repairKey(base);
     const legacyKey = legacyRepairKey(base);
-    const currentReview = getUnknownCostReview(key);
-    const review = currentReview.updatedAt == null ? getUnknownCostReview(legacyKey) : currentReview;
+    const review = reviewFor(key, legacyKey);
     const suggestion = aliasSuggestion({
       cause,
       model: row.model,
@@ -558,7 +575,7 @@ export function buildUnknownCostRepairWorkbench(filters: AnalyticsFilters = {}):
     };
   });
 
-  const summary = groups.reduce<UnknownCostRepairWorkbench["summary"]>(
+  const summary = allGroups.reduce<UnknownCostRepairWorkbench["summary"]>(
     (current, group) => {
       current.totalInteractions += group.interactions;
       if (group.review.status === "needs-parser-review") current.needsParserReview += 1;
@@ -574,5 +591,26 @@ export function buildUnknownCostRepairWorkbench(filters: AnalyticsFilters = {}):
     }
   );
 
-  return { summary, groups };
+  const requestedLimit = typeof options.limit === "number" && Number.isFinite(options.limit)
+    ? Math.max(0, Math.floor(options.limit))
+    : null;
+  let groups = requestedLimit === null ? allGroups : allGroups.slice(0, requestedLimit);
+  const requiredKey = options.requiredKey?.trim();
+
+  if (requiredKey && !groups.some((group) => group.key === requiredKey || legacyRepairKey(group) === requiredKey)) {
+    const requiredGroup = allGroups.find((group) => group.key === requiredKey || legacyRepairKey(group) === requiredKey);
+    if (requiredGroup) {
+      groups = requestedLimit === null
+        ? [requiredGroup, ...groups.filter((group) => group.key !== requiredGroup.key)]
+        : [requiredGroup, ...groups.filter((group) => group.key !== requiredGroup.key)].slice(0, requestedLimit);
+    }
+  }
+
+  return {
+    summary,
+    groups,
+    totalGroups: allGroups.length,
+    shownGroups: groups.length,
+    hasMoreGroups: groups.length < allGroups.length
+  };
 }

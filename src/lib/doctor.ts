@@ -153,7 +153,7 @@ function buildRecommendations(args: {
       "Run the first local scan",
       "TokenTrace has no scan history yet.",
       "Run `tokentrace scan` or use Settings -> Scan now.",
-      "/settings"
+      "/settings#scan-controls"
     ));
   }
 
@@ -164,7 +164,7 @@ function buildRecommendations(args: {
       "Add a readable CLI folder",
       "No Claude, Codex, OpenAI, project, or custom roots are currently readable.",
       "Open Settings and add the folder containing your CLI usage logs.",
-      "/settings"
+      "/settings#custom-folders"
     ));
   }
 
@@ -175,7 +175,7 @@ function buildRecommendations(args: {
       "Latest scan only found duplicates",
       zeroImport,
       "No action is required unless you expected new sessions. Use force rescan only when parser behavior changed.",
-      "/settings"
+      "/settings#scan-controls"
     ));
   } else if (zeroImport) {
     recommendations.push(recommendation(

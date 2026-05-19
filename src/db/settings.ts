@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { normalizeImportProfiles, type ImportProfile } from "@/src/lib/import-profiles";
+import { normalizeScanSchedule, type ScanSchedule } from "@/src/lib/scan-schedule";
 import { db } from "./client";
 import { settings } from "./schema";
 
@@ -8,11 +9,22 @@ export type AppSettings = {
   storeRawMessageContent: boolean;
   usageGuardrails: UsageGuardrails;
   importProfiles: ImportProfile[];
+  scanSchedule: ScanSchedule;
 };
 
 export type UsageGuardrails = {
   monthlyCostLimitUsd: number | null;
   monthlyTokenLimit: number | null;
+  scoped: ScopedUsageGuardrail[];
+};
+
+export type ScopedUsageGuardrail = {
+  id: string;
+  scope: "project" | "model" | "tool";
+  name: string;
+  monthlyCostLimitUsd: number | null;
+  monthlyTokenLimit: number | null;
+  warningThreshold: number;
 };
 
 const defaultSettings: AppSettings = {
@@ -20,9 +32,11 @@ const defaultSettings: AppSettings = {
   storeRawMessageContent: false,
   usageGuardrails: {
     monthlyCostLimitUsd: null,
-    monthlyTokenLimit: null
+    monthlyTokenLimit: null,
+    scoped: []
   },
-  importProfiles: normalizeImportProfiles(null)
+  importProfiles: normalizeImportProfiles(null),
+  scanSchedule: normalizeScanSchedule(null)
 };
 
 function positiveLimit(value: unknown) {
@@ -39,8 +53,45 @@ export function normalizeUsageGuardrails(value: unknown): UsageGuardrails {
   const candidate = value as Partial<UsageGuardrails>;
   return {
     monthlyCostLimitUsd: positiveLimit(candidate.monthlyCostLimitUsd),
-    monthlyTokenLimit: positiveLimit(candidate.monthlyTokenLimit)
+    monthlyTokenLimit: positiveLimit(candidate.monthlyTokenLimit),
+    scoped: normalizeScopedUsageGuardrails(candidate.scoped)
   };
+}
+
+function normalizeScope(value: unknown): ScopedUsageGuardrail["scope"] | null {
+  if (value === "project" || value === "model" || value === "tool") return value;
+  return null;
+}
+
+function normalizeWarningThreshold(value: unknown) {
+  const parsed = typeof value === "number" ? value : typeof value === "string" ? Number(value) : 0.8;
+  if (!Number.isFinite(parsed)) return 0.8;
+  return Math.min(0.99, Math.max(0.1, parsed));
+}
+
+function normalizeScopedUsageGuardrails(value: unknown): ScopedUsageGuardrail[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+    .map((item, index) => {
+      const scope = normalizeScope(item.scope);
+      const name = typeof item.name === "string" ? item.name.trim() : "";
+      if (!scope || !name) return null;
+      const id =
+        typeof item.id === "string" && item.id.trim()
+          ? item.id.trim()
+          : `${scope}-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || index}`;
+      return {
+        id,
+        scope,
+        name: name.slice(0, 120),
+        monthlyCostLimitUsd: positiveLimit(item.monthlyCostLimitUsd),
+        monthlyTokenLimit: positiveLimit(item.monthlyTokenLimit),
+        warningThreshold: normalizeWarningThreshold(item.warningThreshold)
+      };
+    })
+    .filter((item): item is ScopedUsageGuardrail => Boolean(item))
+    .slice(0, 100);
 }
 
 function normalizeSettings(value: unknown): AppSettings {
@@ -55,7 +106,8 @@ function normalizeSettings(value: unknown): AppSettings {
       : [],
     storeRawMessageContent: candidate.storeRawMessageContent === true,
     usageGuardrails: normalizeUsageGuardrails(candidate.usageGuardrails),
-    importProfiles: normalizeImportProfiles(candidate.importProfiles)
+    importProfiles: normalizeImportProfiles(candidate.importProfiles),
+    scanSchedule: normalizeScanSchedule(candidate.scanSchedule)
   };
 }
 

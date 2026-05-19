@@ -4,6 +4,22 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrency, formatTokens } from "@/src/lib/format";
 import { useChartSize } from "@/components/charts/use-chart-size";
 
+function ChartSkeleton() {
+  return (
+    <div className="grid h-full grid-cols-[7rem_minmax(0,1fr)]" aria-label="Chart loading">
+      <div className="space-y-10 border-r border-border/70 pt-10">
+        <div className="h-3 w-20 rounded bg-muted" />
+        <div className="h-3 w-16 rounded bg-muted" />
+      </div>
+      <div className="relative overflow-hidden p-8">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e7ded3_1px,transparent_1px),linear-gradient(to_bottom,#e7ded3_1px,transparent_1px)] bg-[size:25%_33%] opacity-80" />
+        <div className="relative mt-8 h-10 w-[82%] rounded-r bg-primary/20" />
+        <div className="relative mt-10 h-10 w-[22%] rounded-r bg-primary/15" />
+      </div>
+    </div>
+  );
+}
+
 export function RankBarChart({
   data,
   nameKey,
@@ -63,7 +79,9 @@ export function RankBarChart({
           />
           <Bar dataKey="value" fill={color} radius={[0, 4, 4, 0]} />
         </BarChart>
-      ) : null}
+      ) : (
+        <ChartSkeleton />
+      )}
     </div>
   );
 }

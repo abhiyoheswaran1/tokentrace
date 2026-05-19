@@ -213,7 +213,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
           {health.actions.map((item) => (
             <Button key={`${item.href}-${item.label}`} asChild size="sm" variant={actionVariant(item.tone)}>
               <Link href={item.href} title={item.reason}>
-                {item.label === "Export diagnostics" ? <Download className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+                {item.label === "Export pack" ? <Download className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
                 {item.label}
               </Link>
             </Button>

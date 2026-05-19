@@ -242,8 +242,35 @@ export function extractUsage(record: Record<string, unknown>) {
     cacheReadTokens,
     cacheWriteTokens,
     reasoningTokens,
-    totalTokens
+    totalTokens:
+      totalTokens ??
+      (inputTokens ?? 0) +
+        (outputTokens ?? 0) +
+        (cacheReadTokens ?? 0) +
+        (cacheWriteTokens ?? 0) +
+        (reasoningTokens ?? 0)
   };
+}
+
+export function extractCostUsd(record: Record<string, unknown>) {
+  const payload = asObject(record.payload);
+  const usage = asObject(record.usage) ?? asObject(payload?.usage);
+  const value =
+    record.cost_usd ??
+    record.costUsd ??
+    record.cost ??
+    record.total_cost_usd ??
+    record.totalCostUsd ??
+    usage?.cost_usd ??
+    usage?.costUsd ??
+    usage?.cost;
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) return value;
+  if (typeof value === "string" && value.trim()) {
+    const normalized = value.trim().replace(/^\$/, "");
+    const parsed = Number(normalized);
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  return null;
 }
 
 export function extractModel(record: Record<string, unknown>) {
@@ -355,6 +382,8 @@ export function normalizeInteraction(
     totalTokens: usage.totalTokens,
     estimatedTokens: false,
     tokenConfidence: hasUsage ? "exact" : text ? "high-confidence estimate" : "unknown",
+    costUsd: extractCostUsd(record),
+    costEstimated: record.cost_estimated === true || record.costEstimated === true,
     latencyMs: firstNumber(record.latency_ms, record.latencyMs, payload?.latency_ms, message?.latency_ms),
     rawText: storeRawMessageContent ? text : null,
     rawTextPreview: previewText(text),

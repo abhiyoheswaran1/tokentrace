@@ -180,15 +180,15 @@ const commands: AgentDiscoveryCommand[] = [
   },
   {
     id: "roadmap",
-    title: "Print Accuracy & Evidence release implementation status",
+    title: "Print Local Sources & Trust release handoff",
     command: ["tokentrace", "roadmap", "--json"],
-    description: "Return implemented roadmap cards, evidence paths, verification gates, and release status.",
+    description: "Return current release, rolled-up roadmap themes, action recipes, evidence paths, verification gates, and release status.",
     output: "json",
     mutatesLocalState: false,
     startsLongRunningProcess: false,
     requiresNetwork: false,
     safeForAutomation: true,
-    useWhen: "The agent needs to explain Accuracy & Evidence implementation and verification status.",
+    useWhen: "The agent needs to explain Local Sources & Trust implementation, action recipes, and verification status.",
     followUps: [
       ["tokentrace", "agent", "--json"]
     ]

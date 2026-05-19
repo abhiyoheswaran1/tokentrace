@@ -5,6 +5,7 @@ import { getAppSettings } from "@/src/db/settings";
 import { recalculateInteractionCosts, type CostRecalculationResult } from "@/src/lib/cost-recalculation";
 import { hashContent, stableId } from "@/src/lib/ids";
 import { importProfileForAdapter } from "@/src/lib/import-profiles";
+import { sourceCatalogEntryForParser } from "@/src/lib/source-catalog";
 import { nonUsageFileReason } from "@/src/ingestion/path-classifier";
 import { adapters } from "./adapters";
 import { discoverFilesWithIgnored, expandHome, getDefaultSearchRoots } from "./discovery";
@@ -300,6 +301,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
         rawMetadata: {
           parser: parserMetadata(adapterChoice.selected.adapter),
           importProfile: importProfileForAdapter(adapterChoice.selected.adapter.id, file.path, settings.importProfiles),
+          sourceCatalog: sourceCatalogEntryForParser(adapterChoice.selected.adapter.id),
           confidence: adapterChoice.selected.confidence,
           reason: adapterChoice.selected.reason,
           tokenConfidence,

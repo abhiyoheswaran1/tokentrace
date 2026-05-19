@@ -47,7 +47,7 @@ export function buildFirstRunStatus({
       detail: rootCount > 0
         ? `${rootCount.toLocaleString()} readable roots are available.`
         : "Add Claude Code, Codex, OpenAI, project, or custom usage folders.",
-      href: "/settings",
+      href: "/settings#custom-folders",
       action: "Configure roots"
     },
     {
@@ -57,7 +57,7 @@ export function buildFirstRunStatus({
       detail: latestScan
         ? `${latestScan.filesScanned.toLocaleString()} files checked, ${latestScan.recordsImported.toLocaleString()} records imported.`
         : "Scan once after using Claude Code, Codex, or another supported CLI.",
-      href: "/settings",
+      href: "/settings#scan-controls",
       action: "Scan now"
     },
     {
@@ -144,7 +144,7 @@ export function buildFirstRunStatus({
       title: "Add a readable CLI folder",
       description: "TokenTrace needs at least one local CLI usage folder before it can scan.",
       tone: "warning",
-      primaryAction: { label: "Configure scan roots", href: "/settings" },
+      primaryAction: { label: "Configure scan roots", href: "/settings#custom-folders" },
       checks,
       setupSteps
     };
@@ -155,7 +155,7 @@ export function buildFirstRunStatus({
       title: "Run the first local scan",
       description: "TokenTrace has model rates and roots ready, but no scan history yet.",
       tone: "default",
-      primaryAction: { label: "Open scan settings", href: "/settings" },
+      primaryAction: { label: "Open scan settings", href: "/settings#scan-controls" },
       checks,
       setupSteps
     };

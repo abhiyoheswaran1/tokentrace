@@ -52,13 +52,23 @@ describe("app settings normalization", () => {
       storeRawMessageContent: false,
       usageGuardrails: {
         monthlyCostLimitUsd: 6000,
-        monthlyTokenLimit: 10000000
+        monthlyTokenLimit: 10000000,
+        scoped: []
       },
       importProfiles: expect.arrayContaining([
+        expect.objectContaining({ id: "structured-usage-log", enabled: true }),
+        expect.objectContaining({ id: "cursor-chat-export", enabled: true }),
         expect.objectContaining({ id: "generic-jsonl", enabled: true }),
         expect.objectContaining({ id: "generic-text-log", enabled: true }),
         expect.objectContaining({ id: "sqlite-history", enabled: true })
-      ])
+      ]),
+      scanSchedule: {
+        mode: "manual",
+        retentionRuns: 30,
+        lastScheduledScanAt: null,
+        lastScheduledScanStatus: null,
+        lastScheduledScanMessage: null
+      }
     });
   });
 });

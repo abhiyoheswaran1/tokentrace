@@ -373,6 +373,6 @@ describe("scan health", () => {
 
     expect(health.tone).toBe("warning");
     expect(health.costCoverage.priced).toBe(3);
-    expect(health.actions.some((item) => item.label === "Set missing model rates")).toBe(true);
+    expect(health.actions.some((item) => item.label === "Set model rate")).toBe(true);
   });
 });

@@ -3,6 +3,7 @@ import { getDatabasePath } from "@/src/db/client";
 import { getAppSettings, normalizeUsageGuardrails, saveAppSettings } from "@/src/db/settings";
 import { jsonBooleanFlag, readJsonObject } from "@/src/lib/api-json";
 import { normalizeImportProfiles } from "@/src/lib/import-profiles";
+import { normalizeScanSchedule } from "@/src/lib/scan-schedule";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,8 @@ export async function PUT(request: Request) {
     customFolders,
     storeRawMessageContent: jsonBooleanFlag(body.storeRawMessageContent),
     usageGuardrails: normalizeUsageGuardrails(body.usageGuardrails),
-    importProfiles: normalizeImportProfiles(body.importProfiles)
+    importProfiles: normalizeImportProfiles(body.importProfiles),
+    scanSchedule: normalizeScanSchedule(body.scanSchedule)
   });
 
   return NextResponse.json(saved);

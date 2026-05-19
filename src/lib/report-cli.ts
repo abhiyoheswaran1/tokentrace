@@ -9,6 +9,8 @@ export type DigestCliOptions = JsonReportCliOptions & {
 
 export type MarkdownReportCliOptions = DigestCliOptions & {
   markdown: boolean;
+  csv: boolean;
+  type: string | null;
 };
 
 export function jsonReportUsage(command: string) {
@@ -29,11 +31,13 @@ Options:
 }
 
 export function markdownReportUsage() {
-  return `Usage: tokentrace report [--markdown|--json] [--since <last-scan|yesterday|YYYY-MM-DD>]
+  return `Usage: tokentrace report [--markdown|--json|--csv] [--type <weekly-usage|high-cost-sessions|unknown-cost-repair|confidence-trends|guardrail-status|source-coverage>] [--since <last-scan|yesterday|YYYY-MM-DD>]
 
 Options:
   --markdown   Print a deterministic Markdown report
   --json       Print report data as JSON
+  --csv        Print saved report rows as CSV
+  --type       Render a saved report definition
   --since      Limit report to local usage since a scan or date
   -h, --help   Print report help`;
 }
@@ -104,6 +108,8 @@ export function parseMarkdownReportArgs(argv: string[]): MarkdownReportCliOption
     help: false,
     json: false,
     markdown: false,
+    csv: false,
+    type: null,
     since: null
   };
 
@@ -119,6 +125,17 @@ export function parseMarkdownReportArgs(argv: string[]): MarkdownReportCliOption
     }
     if (arg === "--markdown") {
       options.markdown = true;
+      continue;
+    }
+    if (arg === "--csv") {
+      options.csv = true;
+      continue;
+    }
+    if (arg === "--type") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--type requires a report definition id.");
+      options.type = value;
+      index += 1;
       continue;
     }
     if (arg === "--since") {

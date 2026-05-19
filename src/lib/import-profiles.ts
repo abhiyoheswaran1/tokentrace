@@ -1,7 +1,7 @@
 export type ImportProfile = {
   id: string;
   label: string;
-  kind: "jsonl" | "text-log" | "sqlite-history";
+  kind: "jsonl" | "text-log" | "sqlite-history" | "cursor-chat";
   description: string;
   matchers: string[];
   enabled: boolean;
@@ -9,6 +9,24 @@ export type ImportProfile = {
 };
 
 export const builtInImportProfiles: ImportProfile[] = [
+  {
+    id: "structured-usage-log",
+    label: "Structured usage logs",
+    kind: "jsonl",
+    description: "Local wrapper or team JSONL records with session, model, usage, and optional cost fields.",
+    matchers: [".jsonl", ".ndjson"],
+    enabled: true,
+    builtIn: true
+  },
+  {
+    id: "cursor-chat-export",
+    label: "Cursor chat exports",
+    kind: "cursor-chat",
+    description: "Cursor-style JSON chat or composer exports with conversations and messages.",
+    matchers: ["cursor", "composer", ".json"],
+    enabled: true,
+    builtIn: true
+  },
   {
     id: "generic-jsonl",
     label: "Generic JSONL usage",
@@ -43,7 +61,7 @@ function slug(value: string) {
 }
 
 function normalizeKind(value: unknown): ImportProfile["kind"] {
-  if (value === "sqlite-history" || value === "text-log" || value === "jsonl") return value;
+  if (value === "sqlite-history" || value === "text-log" || value === "jsonl" || value === "cursor-chat") return value;
   return "text-log";
 }
 
@@ -118,6 +136,8 @@ export function importProfileForAdapter(adapterId: string, filePath?: string, pr
     : null;
   if (custom) return custom;
   if (adapterId === "sqlite-history") return profiles.find((profile) => profile.id === "sqlite-history") ?? null;
+  if (adapterId === "structured-usage-log") return profiles.find((profile) => profile.id === "structured-usage-log") ?? null;
+  if (adapterId === "cursor-chat-export") return profiles.find((profile) => profile.id === "cursor-chat-export") ?? null;
   if (adapterId === "generic-jsonl") return profiles.find((profile) => profile.id === "generic-jsonl") ?? null;
   if (adapterId === "generic-log") return profiles.find((profile) => profile.id === "generic-text-log") ?? null;
   return null;

@@ -28,7 +28,9 @@ describe("daily digest", () => {
           percent: 0.5,
           remaining: 100_000,
           status: "ok"
-        }
+        },
+        scoped: [],
+        anomalies: []
       },
       reviewQueue: [
         {

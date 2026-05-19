@@ -57,6 +57,34 @@ describe("write API validation", () => {
     expect(runScan).toHaveBeenLastCalledWith({ folders: undefined, force: false });
   });
 
+  it("compacts manual scan responses for browser feedback", async () => {
+    const runScan = vi.fn(() => ({
+      scanRunId: "scan-1",
+      filesScanned: 100,
+      recordsImported: 2,
+      costsRecalculated: 3,
+      unknownCostInteractions: 4,
+      staleNonUsageSessionsRemoved: 0,
+      warnings: Array.from({ length: 30 }, (_, index) => `warning-${index}`),
+      errors: Array.from({ length: 3 }, (_, index) => `error-${index}`)
+    }));
+    vi.doMock("@/src/ingestion/scan", () => ({ runScan }));
+    const { POST } = await import("@/app/api/scan/route");
+
+    const response = await POST(new Request("http://localhost/api/scan", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ compact: true })
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.warningCount).toBe(30);
+    expect(body.errorCount).toBe(3);
+    expect(body.warnings).toHaveLength(25);
+    expect(body.errors).toHaveLength(3);
+  });
+
   it("rejects malformed pricing JSON without saving a price row", async () => {
     const upsertPricing = vi.fn();
     vi.doMock("@/src/lib/pricing", () => ({
@@ -215,7 +243,7 @@ describe("write API validation", () => {
     vi.doMock("@/src/db/client", () => ({ getDatabasePath: vi.fn(() => "/tmp/tokentrace.db") }));
     vi.doMock("@/src/db/settings", () => ({
       getAppSettings: vi.fn(() => ({})),
-      normalizeUsageGuardrails: vi.fn(() => ({ monthlyCostLimitUsd: null, monthlyTokenLimit: null })),
+      normalizeUsageGuardrails: vi.fn(() => ({ monthlyCostLimitUsd: null, monthlyTokenLimit: null, scoped: [] })),
       saveAppSettings
     }));
     const { PUT } = await import("@/app/api/settings/route");
@@ -233,12 +261,21 @@ describe("write API validation", () => {
     expect(saveAppSettings).toHaveBeenCalledWith({
       customFolders: ["/tmp/usage", "/tmp/other"],
       storeRawMessageContent: false,
-      usageGuardrails: { monthlyCostLimitUsd: null, monthlyTokenLimit: null },
+      usageGuardrails: { monthlyCostLimitUsd: null, monthlyTokenLimit: null, scoped: [] },
       importProfiles: expect.arrayContaining([
+        expect.objectContaining({ id: "structured-usage-log" }),
+        expect.objectContaining({ id: "cursor-chat-export" }),
         expect.objectContaining({ id: "generic-jsonl" }),
         expect.objectContaining({ id: "generic-text-log" }),
         expect.objectContaining({ id: "sqlite-history" })
-      ])
+      ]),
+      scanSchedule: {
+        mode: "manual",
+        retentionRuns: 30,
+        lastScheduledScanAt: null,
+        lastScheduledScanStatus: null,
+        lastScheduledScanMessage: null
+      }
     });
   });
 });

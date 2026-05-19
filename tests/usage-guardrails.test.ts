@@ -6,11 +6,29 @@ describe("usage guardrails", () => {
     const progress = buildUsageGuardrailProgress({
       guardrails: {
         monthlyCostLimitUsd: 100,
-        monthlyTokenLimit: 1_000
+        monthlyTokenLimit: 1_000,
+        scoped: [
+          {
+            id: "project-token-trace",
+            scope: "project",
+            name: "TokenTrace",
+            monthlyCostLimitUsd: 50,
+            monthlyTokenLimit: 500,
+            warningThreshold: 0.7
+          }
+        ]
       },
       usage: {
         cost: 85,
-        tokens: 1_250
+        tokens: 1_250,
+        scoped: [
+          {
+            scope: "project",
+            name: "TokenTrace",
+            cost: 40,
+            tokens: 300
+          }
+        ]
       },
       now: new Date("2026-05-11T12:00:00.000Z")
     });
@@ -32,17 +50,33 @@ describe("usage guardrails", () => {
       remaining: 0,
       status: "exceeded"
     });
+    expect(progress.scoped[0]).toMatchObject({
+      scope: "project",
+      name: "TokenTrace",
+      cost: {
+        used: 40,
+        limit: 50,
+        status: "warning"
+      },
+      tokens: {
+        used: 300,
+        limit: 500,
+        status: "ok"
+      }
+    });
   });
 
   it("keeps unconfigured guardrails explicit instead of inventing limits", () => {
     const progress = buildUsageGuardrailProgress({
       guardrails: {
         monthlyCostLimitUsd: null,
-        monthlyTokenLimit: null
+        monthlyTokenLimit: null,
+        scoped: []
       },
       usage: {
         cost: 12.5,
-        tokens: 500
+        tokens: 500,
+        scoped: []
       },
       now: new Date("2026-05-11T12:00:00.000Z")
     });
@@ -57,5 +91,6 @@ describe("usage guardrails", () => {
       limit: null,
       status: "not-configured"
     });
+    expect(progress.scoped).toEqual([]);
   });
 });

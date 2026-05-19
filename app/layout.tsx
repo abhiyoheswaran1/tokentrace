@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
+import { NavigationProgress } from "@/components/navigation-progress";
 import { MobileNav, Sidebar } from "@/components/sidebar";
 import { TokenTraceLogo } from "@/components/token-trace-logo";
 import { formatAppVersion, getAppVersion } from "@/src/lib/app-version";
@@ -16,6 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
+        <React.Suspense fallback={null}>
+          <NavigationProgress />
+        </React.Suspense>
         <div className="flex min-h-screen">
           <Sidebar appVersion={appVersion} />
           <main className="min-w-0 flex-1 overflow-x-clip">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { BookmarkPlus, Download, Filter, RotateCcw, Trash2 } from "lucide-react";
 import type { SessionRow } from "@/src/lib/analytics";
@@ -18,6 +18,20 @@ import { DataValue, FieldLabel, MonoText } from "@/components/ui/typography";
 
 type ExactFilter = "all" | "exact" | "estimated";
 type CostFilter = "all" | "priced" | "unknown";
+const SESSION_PAGE_SIZE = 50;
+
+export function getPaginationWindow(total: number, page: number, pageSize = SESSION_PAGE_SIZE) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const start = (currentPage - 1) * pageSize;
+  const end = Math.min(total, start + pageSize);
+  return {
+    totalPages,
+    currentPage,
+    start,
+    end
+  };
+}
 
 function confidenceVariant(grade: string) {
   if (grade === "high") return "success";
@@ -69,6 +83,7 @@ export function SessionExplorer({
   const [customViews, setCustomViews] = useState<SavedView[]>(savedViews.custom);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
 
   const tools = useMemo(() => Array.from(new Set(sessions.map((session) => session.tool))).sort(), [sessions]);
   const models = useMemo(
@@ -156,6 +171,8 @@ export function SessionExplorer({
     highCost ||
     hasCache;
   const hasEvidenceContext = Boolean(initialProject || initialTool || initialModel || initialSource || initialCost || initialCache);
+  const pagination = getPaginationWindow(filtered.length, page);
+  const visibleSessions = filtered.slice(pagination.start, pagination.end);
   const currentFilters = useMemo(() => {
     const filters: Record<string, string | boolean> = {};
     if (query) filters.query = query;
@@ -169,6 +186,10 @@ export function SessionExplorer({
     if (highCost) filters.highCost = true;
     if (hasCache) filters.cache = true;
     return filters;
+  }, [cost, exact, from, hasCache, highCost, model, project, query, to, tool]);
+
+  useEffect(() => {
+    setPage(1);
   }, [cost, exact, from, hasCache, highCost, model, project, query, to, tool]);
 
   function clearFilters() {
@@ -414,7 +435,12 @@ export function SessionExplorer({
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Sessions</CardTitle>
-            <CardDescription>{filtered.length.toLocaleString()} sessions match the current filters.</CardDescription>
+            <CardDescription>
+              {filtered.length.toLocaleString()} sessions match the current filters.
+              {filtered.length > SESSION_PAGE_SIZE
+                ? ` Showing ${pagination.start + 1}-${pagination.end}.`
+                : ""}
+            </CardDescription>
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
@@ -468,7 +494,7 @@ export function SessionExplorer({
             </TableHeader>
             <TableBody>
               {filtered.length ? (
-                filtered.map((session) => (
+                visibleSessions.map((session) => (
                   <TableRow key={session.id}>
                     <TableCell>{formatDate(session.startedAt)}</TableCell>
                     <TableCell className="font-medium">{session.tool}</TableCell>
@@ -527,6 +553,33 @@ export function SessionExplorer({
             </TableBody>
           </Table>
           </div>
+          {filtered.length > SESSION_PAGE_SIZE ? (
+            <div className="flex flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-muted-foreground">
+                Page {pagination.currentPage.toLocaleString()} of {pagination.totalPages.toLocaleString()}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={pagination.currentPage <= 1}
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={pagination.currentPage >= pagination.totalPages}
+                  onClick={() => setPage((current) => Math.min(pagination.totalPages, current + 1))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

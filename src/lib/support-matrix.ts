@@ -80,7 +80,7 @@ export function getSupportMatrix(): SupportMatrixItem[] {
       category: "package",
       level: "stable",
       description: "Releases use GitHub Trusted Publishing, no TokenTrace lifecycle scripts, source-first package inspection, and production audit checks.",
-      href: "/settings"
+      href: "/settings#package-trust"
     },
     {
       id: "desktop-apps",

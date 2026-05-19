@@ -61,7 +61,9 @@ describe("post-session review", () => {
           percent: 0.9,
           remaining: 100_000,
           status: "warning"
-        }
+        },
+        scoped: [],
+        anomalies: []
       },
       summary: {
         unknownCostInteractions: 4

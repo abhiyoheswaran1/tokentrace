@@ -9,12 +9,38 @@ export type RoadmapCard = {
   evidence: string[];
 };
 
+export type RolledUpRelease = {
+  version: string;
+  title: string;
+  thesis: string;
+  includedIn: "0.12.0";
+};
+
+export type RoadmapActionRecipe = {
+  id: string;
+  title: string;
+  command: string;
+  uiHref: string;
+  expectedEvidence: string[];
+};
+
 export type RoadmapStatus = {
-  version: "0.11.0";
-  codename: "Accuracy & Evidence";
+  version: "0.12.0";
+  codename: "Local Sources & Trust";
   packageVersion: string;
   thesis: string;
+  next: {
+    version: "0.19.0";
+    title: "Team Operating Layer";
+    note: string;
+  };
+  rolledUpReleases: RolledUpRelease[];
   cards: RoadmapCard[];
+  handoff: {
+    schemaVersion: "tokentrace.roadmap.v2";
+    agentEntryPoints: string[];
+    actionRecipes: RoadmapActionRecipe[];
+  };
   verification: {
     requiredCommands: string[];
     notes: string[];
@@ -47,143 +73,258 @@ function isAtLeastVersion(version: string | undefined, target: string) {
   return true;
 }
 
+const rolledUpReleases: RolledUpRelease[] = [
+  {
+    version: "0.12.0",
+    title: "Local Sources",
+    thesis: "Make local source support explicit through native adapters, source catalog, and coverage metadata.",
+    includedIn: "0.12.0"
+  },
+  {
+    version: "0.13.0",
+    title: "Evidence Portability",
+    thesis: "Make evidence exportable without leaking raw prompt or message content.",
+    includedIn: "0.12.0"
+  },
+  {
+    version: "0.14.0",
+    title: "Local Operations",
+    thesis: "Add local scan scheduling, scan result status, and operating metadata.",
+    includedIn: "0.12.0"
+  },
+  {
+    version: "0.15.0",
+    title: "Governance & Guardrails",
+    thesis: "Add scoped guardrails, thresholds, movement, and anomaly surfaces.",
+    includedIn: "0.12.0"
+  },
+  {
+    version: "0.16.0",
+    title: "Parser Studio",
+    thesis: "Let users preview local files and build import profiles without parser code.",
+    includedIn: "0.12.0"
+  },
+  {
+    version: "0.17.0",
+    title: "Reports",
+    thesis: "Turn local usage into reusable Markdown, JSON, and CSV operating artifacts.",
+    includedIn: "0.12.0"
+  },
+  {
+    version: "0.18.0",
+    title: "Agent Handoff",
+    thesis: "Expose roadmap, actions, evidence paths, and release gates in stable machine-readable JSON.",
+    includedIn: "0.12.0"
+  }
+];
+
 const cards: RoadmapCard[] = [
   {
-    id: "TT-110-01",
-    title: "Tokenizer-Backed Estimates",
-    outcome: "Estimated token rows disclose provider-aware tokenizer estimates before falling back to simple character estimates.",
+    id: "TT-120-01",
+    title: "Native Adapter Expansion",
+    outcome: "More local usage formats are imported by first-class adapters before generic fallbacks.",
     status: "implemented",
     details: [
-      "Token estimator now returns exact labels for tokenizer estimate and simple estimate paths.",
-      "Persistence stores token estimate metadata with tokenizer family and confidence.",
-      "Session and scan confidence surfaces distinguish exact, tokenizer, simple, and unknown token evidence."
+      "structured local usage logs import session, model, token, and source cost fields.",
+      "Cursor-style chat and composer exports import as native local source evidence.",
+      "Generic adapters remain lower-priority fallbacks with profile-assisted metadata."
     ],
     evidence: [
-      "src/lib/token-estimator.ts",
-      "src/ingestion/persist.ts",
-      "tests/token-estimator.test.ts"
+      "src/ingestion/adapters/structured-usage-log.ts",
+      "src/ingestion/adapters/cursor-chat.ts",
+      "src/ingestion/adapters/index.ts",
+      "tests/native-adapters-0-12.test.ts"
     ]
   },
   {
-    id: "TT-110-02",
-    title: "Native SQLite History Adapter",
-    outcome: "Local SQLite usage histories can be ingested with source evidence and source-provided costs preserved.",
+    id: "TT-120-02",
+    title: "Source Catalog & Coverage Matrix",
+    outcome: "Users can see what TokenTrace supports and what action to take for unsupported local files.",
     status: "implemented",
     details: [
-      "SQLite history adapter detects usage-shaped tables in local .db, .sqlite, and .sqlite3 files.",
-      "Imported source costs survive post-scan cost recalculation.",
-      "Scan-file metadata records the SQLite import profile and parser provenance."
+      "Source catalog lists native, profile-assisted, and fallback import paths.",
+      "Coverage summary separates native files, profile-assisted files, fallback files, and unsupported files.",
+      "Each source entry includes matchers, confidence, and a next action."
+    ],
+    evidence: ["src/lib/source-catalog.ts", "tests/source-catalog.test.ts"]
+  },
+  {
+    id: "TT-120-03",
+    title: "Evidence Packs",
+    outcome: "Users can export privacy-safe evidence bundles for metrics and drilldowns.",
+    status: "implemented",
+    details: [
+      "Evidence packs include totals, confidence drivers, source files, parser notes, model-rate state, and repair links.",
+      "Raw prompt and message bodies are excluded by default with an explicit redaction manifest.",
+      "Markdown and JSON renderers keep deterministic ordering."
     ],
     evidence: [
-      "src/ingestion/adapters/sqlite-history.ts",
-      "src/lib/cost-recalculation.ts",
-      "tests/sqlite-history-adapter.test.ts"
+      "src/lib/evidence-pack.ts",
+      "app/api/evidence-pack/route.ts",
+      "tests/evidence-pack.test.ts"
     ]
   },
   {
-    id: "TT-110-03",
-    title: "Session Drilldown V2",
-    outcome: "One session explains spikes, model changes, cache activity, cost coverage, confidence, and repair next steps.",
+    id: "TT-120-04",
+    title: "Scan Scheduling",
+    outcome: "Local scheduled scans can run on open, hourly, daily, or manual-only.",
     status: "implemented",
     details: [
-      "Session timelines now expose data confidence, spike summaries, cost coverage, and unknown-cost repair links.",
-      "Session UI shows exact/tokenizer/simple token counts, priced versus unknown cost, and spike clues.",
-      "Repair links route directly to the relevant source-file workbench item."
+      "Settings store manual, on-open, hourly, and daily scan policy.",
+      "Due-scan logic stays local and opportunistic.",
+      "Scheduled scan summaries expose files checked, records imported, warnings, errors, and next action."
+    ],
+    evidence: ["src/lib/scan-schedule.ts", "src/db/settings.ts", "tests/scan-schedule.test.ts"]
+  },
+  {
+    id: "TT-120-05",
+    title: "Budget & Guardrail V2",
+    outcome: "Guardrails can be scoped by project, model, and tool with warning thresholds and anomaly notes.",
+    status: "implemented",
+    details: [
+      "Scoped guardrails support project, model, and tool cost/token limits.",
+      "Warning thresholds are configurable per scoped guardrail.",
+      "anomaly notes flag warning and exceeded scoped guardrails."
+    ],
+    evidence: ["src/lib/usage-guardrails.ts", "src/db/settings.ts", "tests/usage-guardrails.test.ts"]
+  },
+  {
+    id: "TT-120-06",
+    title: "Parser / Import Profile Builder",
+    outcome: "Users can preview a local file before adding an import profile.",
+    status: "implemented",
+    details: [
+      "Preview runs adapter detection and parse summaries for a local sample path.",
+      "Preview returns fields, recommended matchers, warnings, and errors without raw message content.",
+      "Profile builder can convert previewed matchers into local import profiles."
     ],
     evidence: [
-      "src/lib/session-timeline.ts",
-      "app/sessions/[id]/page.tsx",
-      "tests/session-timeline.test.ts"
+      "src/lib/import-profile-preview.ts",
+      "app/api/import-profile-preview/route.ts",
+      "tests/import-profile-preview.test.ts"
     ]
   },
   {
-    id: "TT-110-04",
-    title: "Repair Workbench V2",
-    outcome: "Unknown-cost repair supports operational bulk review and clearer workbench steps.",
+    id: "TT-120-07",
+    title: "Saved Reports",
+    outcome: "Users can export recurring reports without hand-building filters.",
     status: "implemented",
     details: [
-      "Repair API accepts bulk key updates with the same validation as single-item reviews.",
-      "Repair UI includes a bulk workbench for mark verified, parser review, ignore, and reopen.",
-      "Repair flow remains Problem, Evidence, Fix, Recalculate, Verified."
+      "Weekly usage, high-cost sessions, unknown-cost repair, confidence trends, guardrail status, and source coverage reports are defined.",
+      "Markdown, JSON, and CSV formats use the same report payload.",
+      "Reports default to no raw content."
     ],
-    evidence: [
-      "src/lib/unknown-cost-repair.ts",
-      "app/api/repair-items/route.ts",
-      "components/repair-bulk-actions.tsx",
-      "app/repair/page.tsx",
-      "tests/unknown-cost-repair.test.ts"
-    ]
+    evidence: ["src/lib/saved-reports.ts", "app/api/reports/route.ts", "tests/saved-reports-0-12.test.ts"]
   },
   {
-    id: "TT-110-05",
-    title: "Import Profiles",
-    outcome: "Power users can describe safe local log conventions without writing parser code.",
+    id: "TT-120-08",
+    title: "Performance Pass",
+    outcome: "Dense pages stay responsive as imported data grows.",
     status: "implemented",
     details: [
-      "Settings includes built-in and custom import profiles with matchers.",
-      "Discovery uses enabled profile extensions in addition to built-in supported extensions.",
-      "Scan evidence records the matched import profile for imported files."
+      "Session Explorer paginates large local result sets.",
+      "Global loading state remains visible during route transitions.",
+      "Scan result summaries stay compact after scan actions."
     ],
-    evidence: [
-      "src/lib/import-profiles.ts",
-      "src/db/settings.ts",
-      "components/settings-panel.tsx",
-      "src/ingestion/discovery.ts",
-      "src/ingestion/scan.ts",
-      "tests/settings.test.ts"
-    ]
+    evidence: ["components/session-explorer.tsx", "app/loading.tsx", "tests/session-explorer-pagination.test.tsx"]
   },
   {
-    id: "TT-110-06",
-    title: "Data Confidence Score",
-    outcome: "Users can see whether page, project, and session numbers are trustworthy before acting.",
+    id: "TT-120-09",
+    title: "Local Backup & Operating Metadata",
+    outcome: "Users can export local operating metadata without exporting raw usage content.",
     status: "implemented",
     details: [
-      "Data confidence combines token source, cost coverage, parser confidence, and scan freshness.",
-      "Overview displays a compact confidence strip with repair and Scan Health pivots.",
-      "Projects and Sessions expose confidence badges for drilldown decisions."
+      "Operating metadata includes settings, source catalog, schedules, report definitions, and roadmap status.",
+      "Usage records and raw prompt text are excluded by default.",
+      "Metadata export shape is restore-safe for future import work."
     ],
-    evidence: [
-      "src/lib/data-confidence.ts",
-      "src/lib/analytics.ts",
-      "app/page.tsx",
-      "app/projects/page.tsx",
-      "components/session-explorer.tsx",
-      "tests/data-confidence.test.ts"
-    ]
+    evidence: ["src/lib/operating-metadata.ts", "app/api/operating-metadata/route.ts"]
   },
   {
-    id: "TT-110-07",
-    title: "Supply Chain Check In Scan Health",
-    outcome: "The package IOC guardrail is visible in the product, not only release scripts.",
+    id: "TT-120-10",
+    title: "Agent-Readable Roadmap V2",
+    outcome: "Roadmap JSON becomes a live handoff for agents.",
     status: "implemented",
     details: [
-      "Local and CI release checks run npm run security:ioc.",
-      "Scan Health runs the IOC check and displays pass/fail status.",
-      "Guide troubleshooting points users to Scan Health for package trust review."
+      "Roadmap status includes current release, next planned release, and rolled-up release themes.",
+      "Action recipes cover scan, evidence export, repair review, reports, Scan Health, and model-rate review.",
+      "Evidence paths and verification gates remain machine-readable."
     ],
-    evidence: [
-      "scripts/security-ioc.mjs",
-      "src/lib/supply-chain-health.ts",
-      "components/scan-health-summary.tsx",
-      "app/diagnostics/page.tsx",
-      "app/guide/page.tsx",
-      "tests/security-ioc.test.ts",
-      "tests/scan-health.test.ts"
-    ]
+    evidence: ["src/lib/roadmap-status.ts", "scripts/roadmap.ts", "tests/roadmap-status.test.ts"]
+  }
+];
+
+const actionRecipes: RoadmapActionRecipe[] = [
+  {
+    id: "scan-now",
+    title: "Run local scan",
+    command: "tokentrace scan",
+    uiHref: "/settings#scan-controls",
+    expectedEvidence: ["scan_runs", "scan_files", "Scan Health"]
+  },
+  {
+    id: "export-evidence-pack",
+    title: "Export evidence pack",
+    command: "tokentrace evidence --json",
+    uiHref: "/evidence",
+    expectedEvidence: ["evidence pack redaction manifest", "source files", "confidence drivers"]
+  },
+  {
+    id: "repair-review",
+    title: "Review unknown-cost repairs",
+    command: "tokentrace repair --json",
+    uiHref: "/repair",
+    expectedEvidence: ["unknown cost groups", "model-rate state", "parser links"]
+  },
+  {
+    id: "export-report",
+    title: "Export saved report",
+    command: "tokentrace report --markdown",
+    uiHref: "/api/reports",
+    expectedEvidence: ["weekly usage", "high-cost sessions", "confidence trends"]
+  },
+  {
+    id: "scan-health",
+    title: "Check scan health",
+    command: "tokentrace doctor --json",
+    uiHref: "/diagnostics",
+    expectedEvidence: ["parser coverage", "supply-chain IOC status", "cost coverage"]
+  },
+  {
+    id: "model-rate-review",
+    title: "Review model rates",
+    command: "tokentrace pricing refresh",
+    uiHref: "/pricing",
+    expectedEvidence: ["provider model rates", "unknown-cost repair links"]
   }
 ];
 
 export function buildRoadmapStatus(options: RoadmapStatusOptions = {}): RoadmapStatus {
-  const versionBumped = isAtLeastVersion(options.packageVersion, "0.11.0");
+  const versionBumped = isAtLeastVersion(options.packageVersion, "0.12.0");
 
   return {
-    version: "0.11.0",
-    codename: "Accuracy & Evidence",
+    version: "0.12.0",
+    codename: "Local Sources & Trust",
     packageVersion: options.packageVersion ?? "unknown",
     thesis:
-      "TokenTrace should make local AI CLI numbers trustworthy by showing token source, cost coverage, parser evidence, repair paths, and package trust checks.",
+      "TokenTrace should import more local sources, make evidence portable, run local operations, enforce scoped guardrails, support parser setup, export reports, and hand agents a stable roadmap contract.",
+    next: {
+      version: "0.19.0",
+      title: "Team Operating Layer",
+      note: "After the rolled-up 0.12.0 release, the next roadmap can focus on team sharing, policy workflows, and deeper source-specific integrations."
+    },
+    rolledUpReleases,
     cards,
+    handoff: {
+      schemaVersion: "tokentrace.roadmap.v2",
+      agentEntryPoints: [
+        "tokentrace agent --json",
+        "tokentrace roadmap --json",
+        "GET /api/agent",
+        "GET /api/roadmap"
+      ],
+      actionRecipes
+    },
     verification: {
       requiredCommands: [
         "npm run verify",
@@ -195,8 +336,9 @@ export function buildRoadmapStatus(options: RoadmapStatusOptions = {}): RoadmapS
         "npm run projscan:doctor"
       ],
       notes: [
-        "Serve smoke may be skipped when sandbox network binding is disabled.",
-        "ProjScan is required after substantial changes and before release readiness claims."
+        "Serve smoke may be skipped when sandbox network binding is disabled; run unsandboxed before release.",
+        "ProjScan is required after substantial changes and before release readiness claims.",
+        "Evidence packs must keep raw content excluded by default."
       ]
     },
     release: {
@@ -206,7 +348,7 @@ export function buildRoadmapStatus(options: RoadmapStatusOptions = {}): RoadmapS
         ? []
         : [
             "No bump or release until maintainer explicitly asks for it.",
-            "CHANGELOG.md must have a complete versioned 0.11.0 section moved out of Unreleased.",
+            "CHANGELOG.md must have a complete versioned 0.12.0 section moved out of Unreleased.",
             "Final release requires docs/RELEASE_CHECKLIST.md and npm run release:check."
           ]
     }

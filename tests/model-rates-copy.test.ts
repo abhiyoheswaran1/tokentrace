@@ -20,7 +20,7 @@ describe("Model rates user-facing copy", () => {
     expect(modelRatesPage).toContain('title="Model Rates"');
     expect(modelRatesPage).toContain("TokenTrace does not bill or meter usage.");
     expect(modelRatesPage).not.toContain("Pricing Configuration");
-    expect(evidencePage).toContain("Model rates / repair");
+    expect(evidencePage).toContain("Set model rate");
     expect(evidencePage).not.toContain("Pricing / repair");
     expect(repairPage).toContain("Set model rate");
     expect(repairPage).toContain("Model Rates");
