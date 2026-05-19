@@ -1000,7 +1000,11 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   const params = (await searchParams) ?? {};
   const range = resolveDateRange(params);
   const trendDefaultWindow: TrendWindow = range.key === "all" ? "30d" : "all";
-  const data = getAnalyticsData(range.filters, { scanFileScope: "recent", sessionDetail: "summary" });
+  const data = getAnalyticsData(range.filters, {
+    scanFileScope: "recent",
+    sessionDetail: "summary",
+    analyticsProfile: "overview"
+  });
   const trust = data.scanTrust;
   const accountingReport = buildAccountingInvariants(range.filters);
   const postSessionReview = buildPostSessionReview({

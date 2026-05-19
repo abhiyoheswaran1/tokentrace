@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { applyMigrations } from "./migrate-core";
+import { registerSqliteFunctions } from "./sqlite-functions";
 import * as schema from "./schema";
 
 const defaultDbPath = path.join(process.cwd(), ".tokentrace", "tokentrace.db");
@@ -24,6 +25,7 @@ fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 export const sqlite = new Database(dbPath);
 sqlite.pragma("busy_timeout = 10000");
 sqlite.pragma("foreign_keys = ON");
+registerSqliteFunctions(sqlite);
 applyMigrations(sqlite);
 
 export const db = drizzle(sqlite, { schema });

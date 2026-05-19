@@ -88,4 +88,25 @@ describe("localhost performance regressions", () => {
     expect(diagnosticsPage).not.toContain("const baseData = getScanTrustData();");
     expect(diagnosticsPage).not.toContain("const analytics = getAnalyticsData();");
   });
+
+  it("keeps trend aggregation off SQLite localtime bucketing", () => {
+    const analytics = read("src/lib/analytics.ts");
+    const client = read("src/db/client.ts");
+
+    expect(analytics).toContain("local_date_key(i.timestamp) AS date");
+    expect(analytics).not.toContain("'localtime'");
+    expect(client).toContain("registerSqliteFunctions(sqlite)");
+  });
+
+  it("keeps Overview on a page-specific analytics profile", () => {
+    const overview = read("app/page.tsx");
+    const analytics = read("src/lib/analytics.ts");
+
+    expect(overview).toContain('analyticsProfile: "overview"');
+    expect(analytics).toContain('analyticsProfile?: "full" | "overview"');
+    expect(analytics).toContain('const overviewOnly = options.analyticsProfile === "overview"');
+    expect(analytics).toContain('const models = overviewOnly ? [] : getModelRows(filters);');
+    expect(analytics).toContain('const modelAliasSuggestions = overviewOnly ? [] : getModelAliasSuggestions(filters);');
+    expect(analytics).toContain('const insights = overviewOnly ? [] : buildInsights({ summary, trends, models, projects, sessions });');
+  });
 });

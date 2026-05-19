@@ -215,6 +215,7 @@ export type ScanTrustData = {
 export type ScanTrustOptions = {
   scanFileScope?: "all" | "recent" | "latest" | "none";
   sessionDetail?: "full" | "summary";
+  analyticsProfile?: "full" | "overview";
 };
 
 export type AnalyticsData = {
@@ -555,7 +556,7 @@ function getTrends(filters: AnalyticsFilters = {}): TrendPoint[] {
   const filter = timestampWhere(filters, "i", "AND");
   const points = rows<TrendPoint>(
     `SELECT
-      date(COALESCE(i.timestamp, 0) / 1000, 'unixepoch', 'localtime') AS date,
+      local_date_key(i.timestamp) AS date,
       COALESCE(SUM(i.total_tokens), 0) AS totalTokens,
       COALESCE(SUM(i.input_tokens), 0) AS inputTokens,
       COALESCE(SUM(i.output_tokens), 0) AS outputTokens,
@@ -1227,6 +1228,7 @@ export function getAnalyticsData(
   filters: AnalyticsFilters = {},
   options: ScanTrustOptions = {}
 ): AnalyticsData {
+  const overviewOnly = options.analyticsProfile === "overview";
   const summary = getSummary(filters);
   const scanTrust = getScanTrustData(filters, options);
   const dataConfidence = buildDataConfidenceScore({
@@ -1257,17 +1259,19 @@ export function getAnalyticsData(
   const usageGuardrails = getUsageGuardrailProgress();
   const trends = getTrends(filters);
   const tools = getToolComparison(filters);
-  const models = getModelRows(filters);
+  const models = overviewOnly ? [] : getModelRows(filters);
   const projects = getProjectRows(filters);
   const sessions = getSessions(filters, options.sessionDetail ?? "full");
   const unknownCosts = getUnknownCostQueue(filters);
-  const modelAliasSuggestions = getModelAliasSuggestions(filters);
-  const sessionComparisons = buildSessionComparisons(sessions);
-  const projectSignals = buildProjectSignals({
-    totalTokens: summary.totalTokens,
-    projects,
-    sessions
-  });
+  const modelAliasSuggestions = overviewOnly ? [] : getModelAliasSuggestions(filters);
+  const sessionComparisons = overviewOnly ? [] : buildSessionComparisons(sessions);
+  const projectSignals = overviewOnly
+    ? []
+    : buildProjectSignals({
+      totalTokens: summary.totalTokens,
+      projects,
+      sessions
+    });
   const recommendations = buildLocalRecommendations({
     summary,
     tools,
@@ -1276,16 +1280,18 @@ export function getAnalyticsData(
     guardrails: usageGuardrails,
     scan: getLatestScanRecommendationStats()
   });
-  const reviewQueue = buildReviewQueue({
-    summary,
-    guardrails: usageGuardrails,
-    unknownCosts,
-    sessions,
-    projects,
-    models,
-    tools
-  });
-  const insights = buildInsights({ summary, trends, models, projects, sessions });
+  const reviewQueue = overviewOnly
+    ? []
+    : buildReviewQueue({
+      summary,
+      guardrails: usageGuardrails,
+      unknownCosts,
+      sessions,
+      projects,
+      models,
+      tools
+    });
+  const insights = overviewOnly ? [] : buildInsights({ summary, trends, models, projects, sessions });
 
   return {
     summary,
