@@ -1,11 +1,10 @@
 # Release Checklist
 
-TokenTrace uses internal milestone commits while building toward the next public
-minor release. Do not bump, tag, create a GitHub Release, push release tags, or
-publish npm for internal planning checkpoints unless a maintainer explicitly
-asks for that public release.
+TokenTrace keeps development slices separate from public releases. Do not bump,
+tag, create a GitHub Release, push release tags, or publish npm unless a
+maintainer explicitly asks for that public release.
 
-## Internal Milestone Checklist
+## Development Slice Checklist
 
 - Keep `package.json` and `package-lock.json` at the current development version.
 - Add user-facing changes to `CHANGELOG.md` under `Unreleased`.

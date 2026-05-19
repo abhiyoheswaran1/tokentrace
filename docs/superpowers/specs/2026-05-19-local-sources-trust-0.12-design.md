@@ -2,8 +2,7 @@
 
 ## Goal
 
-0.12.0 is a larger Local Sources & Trust release. It rolls the next several
-minor-version themes into one public release so users get a deeper product
+0.12.0 is a larger Local Sources & Trust release so users get a deeper product
 upgrade instead of daily releases.
 
 ## Product Thesis
@@ -12,9 +11,9 @@ upgrade instead of daily releases.
 first-class, makes evidence portable, and turns repair, guardrails, reports, and
 agent handoff into operational workflows.
 
-## Rolled-Up Release Scope
+## Release Scope
 
-### 0.12.0 Local Sources
+### Local Sources
 
 The import layer should feel intentional, not opportunistic.
 
@@ -25,7 +24,7 @@ The import layer should feel intentional, not opportunistic.
   parsed by a native adapter, profile-assisted generic adapter, or fallback.
 - Preserve source-provided costs and parser provenance.
 
-### 0.13.0 Evidence Portability
+### Evidence Exports
 
 Evidence should be usable outside the dashboard without leaking prompts.
 
@@ -37,7 +36,7 @@ Evidence should be usable outside the dashboard without leaking prompts.
 - Add evidence-pack links from Evidence, Sessions, Repair, Projects, and Scan
   Health.
 
-### 0.14.0 Local Operations
+### Local Operations
 
 TokenTrace should behave like a local tool users can leave running.
 
@@ -47,7 +46,7 @@ TokenTrace should behave like a local tool users can leave running.
   next action.
 - Add scan history retention settings and a local backup/export command surface.
 
-### 0.15.0 Governance & Guardrails
+### Scoped Guardrails
 
 Guardrails should help users prevent surprises instead of only reporting totals.
 
@@ -57,7 +56,7 @@ Guardrails should help users prevent surprises instead of only reporting totals.
 - Add anomaly flags for sudden spikes, unknown-cost growth, and confidence drops.
 - Add guardrail policy templates for solo developers, teams, and CI/wrapper use.
 
-### 0.16.0 Parser Studio
+### Import Profile Preview
 
 Import Profiles should be something users can create safely without reading
 parser code.
@@ -69,7 +68,7 @@ parser code.
 - Add parser fixture export so users can report parser issues without prompts.
 - Add confidence notes explaining why a parser matched or declined a file.
 
-### 0.17.0 Reports
+### Reports
 
 Reports should turn local usage into shareable operating artifacts.
 
@@ -80,13 +79,13 @@ Reports should turn local usage into shareable operating artifacts.
 - Add report previews in the dashboard.
 - Add deterministic filenames and no-raw-content defaults.
 
-### 0.18.0 Agent Handoff
+### Agent Release Handoff
 
 Agents should be able to find, understand, verify, and operate TokenTrace.
 
 - Upgrade `tokentrace roadmap --json` to a live release handoff.
-- Add next planned release, rolled-up themes, open/future cards, evidence paths,
-  verification gates, command hints, and release status.
+- Add implemented cards, evidence paths, verification gates, command hints, and
+  release status.
 - Add action recipes for scan, evidence export, repair review, report export,
   and health checks.
 - Keep schema stable and documented for non-human consumers.
@@ -115,8 +114,8 @@ API routes so the same logic can later be reused by CLI commands.
 - Saved reports: expose deterministic report bundles through `/api/reports`.
 - Performance: paginate dense session tables client-side, expose scan
   progress/result summaries, and keep page transitions visibly loading.
-- Roadmap V2: include `current`, `next`, `rolledUpReleases`, `cards`,
-  `verification`, `handoff`, and action recipes in roadmap JSON.
+- Roadmap status: include `current`, `cards`, `verification`, `handoff`, and
+  action recipes in roadmap JSON.
 
 ## Privacy Rules
 

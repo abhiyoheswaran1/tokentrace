@@ -40,7 +40,7 @@ tokentrace agent --json # Print machine-readable agent discovery manifest
 tokentrace capabilities --json
                         # Alias for agent discovery manifest
 tokentrace roadmap --json
-                        # Print Local Sources & Trust release handoff
+                        # Print release status handoff
 tokentrace scan         # Scan local AI CLI usage logs
 tokentrace doctor --json
                         # Inspect scan health and repair recommendations
@@ -159,10 +159,9 @@ tokentrace roadmap --json
 
 ## Local Sources And Trust
 
-TokenTrace 0.12.0 rolls the next several roadmap themes into one larger
-release: local source expansion, evidence portability, local operations,
-scoped guardrails, parser profile preview, saved reports, and agent-readable
-roadmap handoff.
+TokenTrace 0.12.0 bundles local source expansion, evidence exports, scan
+scheduling, scoped guardrails, parser profile preview, saved reports, and
+agent-readable release status.
 
 New trust surfaces include:
 
@@ -196,9 +195,9 @@ The dashboard surfaces a Data Confidence score on Overview, Projects, Sessions,
 and Session Timeline pages. Scan Health also includes a supply-chain IOC check
 so package trust is visible in the product, not only in release scripts.
 
-Release work uses internal milestone commits until the next public minor
-release. See [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) before
-bumping versions, tagging, creating GitHub releases, or publishing npm.
+Public releases require maintainer approval. See
+[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) before bumping versions,
+tagging, creating GitHub releases, or publishing npm.
 
 In local development, the SQLite database defaults to `.tokentrace/tokentrace.db`. Override it with:
 

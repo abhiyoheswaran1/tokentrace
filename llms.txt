@@ -31,7 +31,7 @@ Roadmap status is available through `tokentrace roadmap --json` and
 - `tokentrace evidence --json`: trace aggregate numbers back to local sources.
 - `tokentrace repair --json`: inspect unknown-cost repair work.
 - `tokentrace digest --json`: summarize local usage.
-- `tokentrace roadmap --json`: inspect the 0.12.0 Local Sources & Trust handoff, action recipes, evidence paths, and release blockers.
+- `tokentrace roadmap --json`: inspect the current release handoff, action recipes, evidence paths, and release status.
 - `tokentrace statusline setup claude`: print Claude Code status-line setup.
 - `tokentrace watch --session --compact`: terminal sidecar fallback for Codex.
 

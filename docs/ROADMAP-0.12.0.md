@@ -2,11 +2,9 @@
 
 0.12.0 is the Local Sources & Trust release.
 
-This release rolls the next several planned minor-version themes into one larger
-public release. The goal is to avoid daily releases while still shipping a
-meaningful product step: more local sources, portable evidence, local
-operations, scoped guardrails, better parser setup, saved reports, performance
-polish, and a stronger agent-readable handoff.
+This release ships a larger public product step: more local sources, portable
+evidence, local operations, scoped guardrails, better parser setup, saved
+reports, performance polish, and a stronger agent-readable release handoff.
 
 ## Product Thesis
 
@@ -15,9 +13,9 @@ agents should be able to import more local usage sources, explain every number,
 export privacy-safe evidence, repair gaps, enforce local guardrails, and inspect
 the release plan from a stable machine-readable endpoint.
 
-## Rolled-Up Minor Roadmap
+## Shipped 0.12.0 Scope
 
-### 0.12.0 Local Sources
+### Local Sources
 
 **Thesis:** TokenTrace should tell users exactly which local AI usage sources it
 understands and import more of them through native adapters.
@@ -28,7 +26,7 @@ understands and import more of them through native adapters.
 - Adapter coverage matrix in Scan Health.
 - Source-provided cost preservation and parser provenance.
 
-### 0.13.0 Evidence Portability
+### Evidence Exports
 
 **Thesis:** The evidence behind a number should be portable without exposing raw
 prompts.
@@ -39,9 +37,9 @@ prompts.
 - Redaction manifest showing raw prompt/message bodies are excluded by default.
 - Evidence-pack links from Evidence, Sessions, Projects, Repair, and Scan
   Health.
-- CLI-compatible evidence-pack builder for later automation.
+- CLI-compatible evidence-pack builder for automation.
 
-### 0.14.0 Local Operations
+### Local Operations
 
 **Thesis:** TokenTrace should operate like a dependable local utility, not a
 dashboard that only updates when users remember to click.
@@ -53,7 +51,7 @@ dashboard that only updates when users remember to click.
 - Scan history retention setting.
 - Local backup/export surface for settings and operating metadata.
 
-### 0.15.0 Governance & Guardrails
+### Scoped Guardrails
 
 **Thesis:** Guardrails should flag risk before users get surprised by provider
 spend, token volume, or confidence drops.
@@ -65,7 +63,7 @@ spend, token volume, or confidence drops.
 - Anomaly flags for sudden spikes, unknown-cost growth, and confidence drops.
 - Policy templates for solo developers, teams, and wrapper/CI use.
 
-### 0.16.0 Parser Studio
+### Import Profile Preview
 
 **Thesis:** Users should be able to teach TokenTrace safe local log conventions
 without writing parser code.
@@ -77,7 +75,7 @@ without writing parser code.
 - Parser fixture export for bug reports without raw prompts.
 - Confidence notes explaining why parsers matched or declined.
 
-### 0.17.0 Reports
+### Reports
 
 **Thesis:** TokenTrace should create reusable operating artifacts, not just
 screens.
@@ -89,13 +87,13 @@ screens.
 - CLI report support for the same report definitions.
 - Deterministic filenames and no-raw-content defaults.
 
-### 0.18.0 Agent Handoff
+### Agent Release Handoff
 
 **Thesis:** Agents should be able to discover TokenTrace, understand its release
 state, and operate core workflows from stable machine-readable entry points.
 
-- Roadmap JSON with current release, next planned release, rolled-up themes,
-  cards, evidence paths, verification gates, blockers, and release status.
+- Roadmap JSON with current release, implemented cards, evidence paths,
+  verification gates, blockers, and release status.
 - Action recipes for scan, health check, evidence pack export, repair review,
   report export, and model-rate review.
 - Stable schema documentation.
@@ -197,13 +195,13 @@ usage content.
 - Keep usage records and raw prompt text out of metadata backup by default.
 - Provide a restore-safe JSON shape for future imports.
 
-### TT-120-10 Agent-Readable Roadmap V2
+### TT-120-10 Agent-Readable Release Status
 
 **Outcome:** `tokentrace roadmap --json` and `/api/roadmap` become a live
 handoff for agents.
 
-- Include current release, next planned release, rolled-up release themes,
-  cards, evidence paths, verification gates, and release status.
+- Include current release, implemented cards, evidence paths, verification
+  gates, and release status.
 - Keep the shape stable for non-human consumers.
 - Add action recipes for scan, evidence export, repair review, reports, Scan
   Health, and model-rate review.
@@ -211,8 +209,8 @@ handoff for agents.
 ## Release Criteria
 
 - `CHANGELOG.md` has a complete 0.12.0 section.
-- `tokentrace roadmap --json` reports current `0.12.0` and next planned
-  `0.19.0`.
+- `tokentrace roadmap --json` reports current `0.12.0` release status without
+  exposing unreleased planning details.
 - Evidence packs do not include raw prompt text by default.
 - Native adapter, scheduler, guardrail, profile preview, report, and roadmap
   tests pass.

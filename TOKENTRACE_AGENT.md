@@ -26,9 +26,9 @@ curl http://127.0.0.1:3030/api/agent
 curl http://127.0.0.1:3030/api/capabilities
 ```
 
-## Roadmap Status
+## Release Status
 
-Inspect the current 0.12.0 Local Sources & Trust handoff, action recipes, and release blockers:
+Inspect the current release handoff, action recipes, and release status:
 
 ```bash
 tokentrace roadmap --json

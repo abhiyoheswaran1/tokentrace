@@ -23,7 +23,8 @@ describe("roadmap API", () => {
     expect(body.version).toBe("0.12.0");
     expect(body.packageVersion).toBe(packageJson.version);
     expect(body.cards).toHaveLength(10);
-    expect(body.rolledUpReleases).toHaveLength(7);
+    expect(body).not.toHaveProperty("rolledUpReleases");
+    expect(body).not.toHaveProperty("next");
     expect(body.handoff.schemaVersion).toBe("tokentrace.roadmap.v2");
     expect(body.cards.every((card: { status: string }) => card.status === "implemented")).toBe(true);
     expect(body.release.releaseAllowed).toBe(atLeast(packageJson.version, "0.12.0"));

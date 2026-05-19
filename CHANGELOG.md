@@ -4,11 +4,18 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.12.1] - 2026-05-19
+
+### Fixed
+
+- Public docs, CLI help, package runtime output, and agent-readable release status now describe shipped TokenTrace behavior only.
+- Future-version roadmap labels no longer appear in public package surfaces.
+
 ## [0.12.0] - 2026-05-19
 
 ### Added
 
-- 0.12.0 Local Sources & Trust roadmap, rolling the 0.13.0 Evidence Portability, 0.14.0 Local Operations, 0.15.0 Governance & Guardrails, 0.16.0 Parser Studio, 0.17.0 Reports, and 0.18.0 Agent Handoff themes into one larger release.
+- Local Sources & Trust release bundle covering native local ingestion, evidence packs, scan scheduling, scoped guardrails, import-profile preview, saved reports, operating metadata export, and agent-readable release status.
 - Native structured usage log ingestion for local wrappers and team JSONL/NDJSON logs with session, model, token, and source-cost fields.
 - Native Cursor-style chat/composer export ingestion with local source evidence and no raw prompt storage by default.
 - Source Catalog and Source Coverage in Scan Health so users can distinguish native, profile-assisted, fallback, and unsupported local files.
@@ -18,7 +25,7 @@ All notable changes to TokenTrace are documented here.
 - Import Profile preview for sampling a local file, checking parser fit, reviewing detected fields, and applying recommended matchers without exposing raw content.
 - Saved report definitions and export endpoints for weekly usage, high-cost sessions, unknown-cost repair, confidence trends, guardrail status, and source coverage in Markdown, JSON, and CSV.
 - Operating metadata export for settings, source catalog, schedules, guardrails, report definitions, and roadmap status without raw usage records.
-- Agent-readable Roadmap V2 with current release, next planned release, rolled-up release themes, action recipes, evidence paths, verification gates, and release status.
+- Agent-readable release status with implemented cards, action recipes, evidence paths, verification gates, and release status.
 
 ### Changed
 
@@ -37,7 +44,7 @@ All notable changes to TokenTrace are documented here.
 - Chart cards now show lightweight loading placeholders during client hydration instead of appearing blank while Recharts initializes.
 - Session Explorer now paginates large local result sets to keep dense session tables responsive.
 - Repair now opens as a capped workbench of the top visible unknown-cost groups, while keeping full summary counts and focused repair links for deep review.
-- Roadmap CLI/API now report the 0.12.0 Local Sources & Trust release contract and the next planned 0.19.0 direction.
+- Roadmap CLI/API now report the 0.12.0 release contract, implemented cards, action recipes, evidence paths, verification gates, and release status.
 
 ### Fixed
 
@@ -295,7 +302,7 @@ All notable changes to TokenTrace are documented here.
 ### Added
 
 - Visible running TokenTrace version in the desktop sidebar, mobile header, and Settings.
-- 0.4.0 roadmap and release checklist documenting internal milestones without intermediate public releases.
+- 0.4.0 roadmap and release checklist for maintainer-approved public releases.
 - `tokentrace doctor --json` plus a shared Doctor report model for scan health and repair recommendations.
 - Bundled parser provenance metadata on imported scan files, including parser id, display name, source, and version.
 - Unknown-cost repair queue on Overview, grouped by cause, model, tool, source file, and repair path.

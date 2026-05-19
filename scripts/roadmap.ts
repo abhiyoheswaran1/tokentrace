@@ -7,7 +7,7 @@ function usage() {
   tokentrace roadmap --json
 
 Options:
-  --json       Print the machine-readable Local Sources & Trust release handoff
+  --json       Print the machine-readable release status handoff
   -h, --help   Print roadmap help`;
 }
 

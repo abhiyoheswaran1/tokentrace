@@ -9,13 +9,6 @@ export type RoadmapCard = {
   evidence: string[];
 };
 
-export type RolledUpRelease = {
-  version: string;
-  title: string;
-  thesis: string;
-  includedIn: "0.12.0";
-};
-
 export type RoadmapActionRecipe = {
   id: string;
   title: string;
@@ -29,12 +22,6 @@ export type RoadmapStatus = {
   codename: "Local Sources & Trust";
   packageVersion: string;
   thesis: string;
-  next: {
-    version: "0.19.0";
-    title: "Team Operating Layer";
-    note: string;
-  };
-  rolledUpReleases: RolledUpRelease[];
   cards: RoadmapCard[];
   handoff: {
     schemaVersion: "tokentrace.roadmap.v2";
@@ -72,51 +59,6 @@ function isAtLeastVersion(version: string | undefined, target: string) {
 
   return true;
 }
-
-const rolledUpReleases: RolledUpRelease[] = [
-  {
-    version: "0.12.0",
-    title: "Local Sources",
-    thesis: "Make local source support explicit through native adapters, source catalog, and coverage metadata.",
-    includedIn: "0.12.0"
-  },
-  {
-    version: "0.13.0",
-    title: "Evidence Portability",
-    thesis: "Make evidence exportable without leaking raw prompt or message content.",
-    includedIn: "0.12.0"
-  },
-  {
-    version: "0.14.0",
-    title: "Local Operations",
-    thesis: "Add local scan scheduling, scan result status, and operating metadata.",
-    includedIn: "0.12.0"
-  },
-  {
-    version: "0.15.0",
-    title: "Governance & Guardrails",
-    thesis: "Add scoped guardrails, thresholds, movement, and anomaly surfaces.",
-    includedIn: "0.12.0"
-  },
-  {
-    version: "0.16.0",
-    title: "Parser Studio",
-    thesis: "Let users preview local files and build import profiles without parser code.",
-    includedIn: "0.12.0"
-  },
-  {
-    version: "0.17.0",
-    title: "Reports",
-    thesis: "Turn local usage into reusable Markdown, JSON, and CSV operating artifacts.",
-    includedIn: "0.12.0"
-  },
-  {
-    version: "0.18.0",
-    title: "Agent Handoff",
-    thesis: "Expose roadmap, actions, evidence paths, and release gates in stable machine-readable JSON.",
-    includedIn: "0.12.0"
-  }
-];
 
 const cards: RoadmapCard[] = [
   {
@@ -242,13 +184,13 @@ const cards: RoadmapCard[] = [
   },
   {
     id: "TT-120-10",
-    title: "Agent-Readable Roadmap V2",
-    outcome: "Roadmap JSON becomes a live handoff for agents.",
+    title: "Agent-Readable Release Status",
+    outcome: "Roadmap JSON reports shipped release status for agents.",
     status: "implemented",
     details: [
-      "Roadmap status includes current release, next planned release, and rolled-up release themes.",
+      "Roadmap status includes the current release, implemented cards, action recipes, evidence paths, verification gates, and release status.",
       "Action recipes cover scan, evidence export, repair review, reports, Scan Health, and model-rate review.",
-      "Evidence paths and verification gates remain machine-readable."
+      "Unreleased planning details stay out of machine-readable public status."
     ],
     evidence: ["src/lib/roadmap-status.ts", "scripts/roadmap.ts", "tests/roadmap-status.test.ts"]
   }
@@ -307,13 +249,7 @@ export function buildRoadmapStatus(options: RoadmapStatusOptions = {}): RoadmapS
     codename: "Local Sources & Trust",
     packageVersion: options.packageVersion ?? "unknown",
     thesis:
-      "TokenTrace should import more local sources, make evidence portable, run local operations, enforce scoped guardrails, support parser setup, export reports, and hand agents a stable roadmap contract.",
-    next: {
-      version: "0.19.0",
-      title: "Team Operating Layer",
-      note: "After the rolled-up 0.12.0 release, the next roadmap can focus on team sharing, policy workflows, and deeper source-specific integrations."
-    },
-    rolledUpReleases,
+      "TokenTrace should import more local sources, explain evidence, run local scans, enforce scoped guardrails, support parser setup, export reports, and give agents a stable release-status contract.",
     cards,
     handoff: {
       schemaVersion: "tokentrace.roadmap.v2",

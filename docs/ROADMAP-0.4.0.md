@@ -1,19 +1,19 @@
 # TokenTrace 0.4.0 Roadmap
 
-TokenTrace 0.4.0 is the Trust + Live CLI release. Internal milestone names use
-0.3.x labels for planning only; public version bumps, tags, GitHub releases, and
-npm publishes wait until the final 0.4.0 release.
+TokenTrace 0.4.0 is the Trust + Live CLI release. Development slice labels stay
+out of public version bumps, tags, GitHub releases, and npm publishes until the
+final 0.4.0 release.
 
 ## Release Rules
 
 - Keep `package.json` at the current published development version until the
   final release bump.
 - Record user-facing changes under `CHANGELOG.md` `Unreleased`.
-- Commit internal slices normally.
-- Do not create public tags or GitHub releases for internal milestones.
+- Commit development slices normally.
+- Do not create public tags or GitHub releases for development slices.
 - Do not run `npm publish` until the final 0.4.0 package is verified.
 
-## Internal Milestones
+## Development Slices
 
 ### 0.3.1: Release Hygiene
 
