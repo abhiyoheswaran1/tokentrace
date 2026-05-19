@@ -8,6 +8,7 @@ coverage
 .cache
 .projscan-memory
 tsconfig.tsbuildinfo
+.worktrees
 
 .env*
 .npmrc
