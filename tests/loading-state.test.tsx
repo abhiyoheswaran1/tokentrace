@@ -15,5 +15,7 @@ describe("route loading state", () => {
     expect(source).toContain("animate-pulse");
     expect(source).toContain("aria-live=\"polite\"");
     expect(source).toContain("rounded-lg border bg-card");
+    expect(source).toContain("Local database only");
+    expect(source).toContain("No telemetry is sent while this view loads.");
   });
 });

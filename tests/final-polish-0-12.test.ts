@@ -84,5 +84,7 @@ describe("0.12 final polish", () => {
     expect(source).toContain("Next step");
     expect(source).toContain("View evidence");
     expect(source).toContain("Open Scan Health");
+    expect(source).toContain("Local database only");
+    expect(source).toContain("No telemetry is sent while this view loads.");
   });
 });

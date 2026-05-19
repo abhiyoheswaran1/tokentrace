@@ -25,14 +25,14 @@ export default function Loading() {
       <div>
         <div className="text-2xl font-semibold tracking-normal text-foreground">Loading local data</div>
         <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted-foreground">
-          Reading the local database and preparing the next view.
+          Reading the local database and preparing the next view. No telemetry is sent while this view loads.
         </p>
       </div>
       <div className="grid gap-3 rounded-lg border bg-card p-3 text-sm md:grid-cols-2">
         <div>
           <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">What is happening</div>
           <p className="mt-1 leading-6 text-muted-foreground">
-            TokenTrace is loading local scan, evidence, and model-rate records for this page.
+            Local database only. TokenTrace is loading scan, evidence, and model-rate records already stored on this machine.
           </p>
         </div>
         <div>
