@@ -4,11 +4,11 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("moves Guide polish into the 0.10.1 release section", () => {
+  it("moves Accuracy & Evidence work into the 0.11.0 release section", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.10.1");
-    expect(changelog).toContain("## [0.10.1] - 2026-05-18");
-    expect(changelog).toContain("Guide now uses a manual-style layout");
+    expect(packageJson.version).toBe("0.11.0");
+    expect(changelog).toContain("## [0.11.0] - 2026-05-18");
+    expect(changelog).toContain("Tokenizer-backed estimates");
   });
 });

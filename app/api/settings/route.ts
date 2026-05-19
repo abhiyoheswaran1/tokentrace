@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDatabasePath } from "@/src/db/client";
 import { getAppSettings, normalizeUsageGuardrails, saveAppSettings } from "@/src/db/settings";
 import { jsonBooleanFlag, readJsonObject } from "@/src/lib/api-json";
+import { normalizeImportProfiles } from "@/src/lib/import-profiles";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,8 @@ export async function PUT(request: Request) {
   const saved = saveAppSettings({
     customFolders,
     storeRawMessageContent: jsonBooleanFlag(body.storeRawMessageContent),
-    usageGuardrails: normalizeUsageGuardrails(body.usageGuardrails)
+    usageGuardrails: normalizeUsageGuardrails(body.usageGuardrails),
+    importProfiles: normalizeImportProfiles(body.importProfiles)
   });
 
   return NextResponse.json(saved);

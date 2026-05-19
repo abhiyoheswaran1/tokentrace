@@ -65,6 +65,27 @@ describe("scan health", () => {
     expect(health.actions[0].label).toBe("Run first scan");
   });
 
+  it("surfaces supply-chain check status as a scan health action", () => {
+    const health = buildScanHealth({
+      scanRuns: [],
+      scanFiles: [],
+      confidence: emptyConfidence,
+      supplyChain: {
+        status: "failed",
+        checkedAt: 1800000000000,
+        findings: 2,
+        summary: "Two local hook IOCs need review."
+      }
+    });
+
+    expect(health.supplyChain.status).toBe("failed");
+    expect(health.actions[0]).toMatchObject({
+      label: "Review supply-chain check",
+      href: "/diagnostics#supply-chain",
+      tone: "destructive"
+    });
+  });
+
   it("prioritizes parser failures over warnings", () => {
     const health = buildScanHealth({
       scanRuns: [

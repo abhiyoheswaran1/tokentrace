@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  bulkUpdateUnknownCostRepairs,
   buildUnknownCostRepairWorkbench,
   getUnknownCostReview,
   saveUnknownCostReview,
@@ -40,8 +41,29 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
   const body = parsed.body;
+  const keys = Array.isArray(body.keys)
+    ? body.keys.map((value) => text(value, 1000)).filter(Boolean)
+    : [];
   const key = text(body.key, 1000);
   const status = reviewState(body.status ?? body.state);
+
+  if (keys.length) {
+    if (!status) {
+      return NextResponse.json({ error: "status must be unresolved, ignored, resolved, or needs-parser-review" }, { status: 400 });
+    }
+    const currentKeys = new Set(buildUnknownCostRepairWorkbench().groups.map((group) => group.key));
+    const missingKey = keys.find((item) => !currentKeys.has(item) && !getUnknownCostReview(item)?.updatedAt);
+    if (missingKey) {
+      return NextResponse.json({ error: "one or more repair keys were not found in current workbench evidence" }, { status: 404 });
+    }
+    return NextResponse.json(
+      bulkUpdateUnknownCostRepairs({
+        keys,
+        status,
+        notes: text(body.notes ?? body.note, 500)
+      })
+    );
+  }
 
   if (!key) {
     return NextResponse.json({ error: "key is required" }, { status: 400 });

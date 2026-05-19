@@ -12,6 +12,13 @@ import { formatCurrency, formatDate, formatTokens } from "@/src/lib/format";
 
 export const dynamic = "force-dynamic";
 
+function confidenceVariant(grade: string) {
+  if (grade === "high") return "success";
+  if (grade === "medium") return "warning";
+  if (grade === "low") return "destructive";
+  return "secondary";
+}
+
 export default function ProjectAnalyticsPage() {
   const data = getAnalyticsData();
   const mostExpensive = data.projects[0];
@@ -145,6 +152,7 @@ export default function ProjectAnalyticsPage() {
                 <TableHead>Cost</TableHead>
                 <TableHead>Sessions</TableHead>
                 <TableHead>Interactions</TableHead>
+                <TableHead>Confidence</TableHead>
                 <TableHead>Output/Input</TableHead>
                 <TableHead>Last used</TableHead>
               </TableRow>
@@ -164,6 +172,11 @@ export default function ProjectAnalyticsPage() {
                   <TableCell>{formatCurrency(project.cost)}</TableCell>
                   <TableCell>{project.sessions.toLocaleString()}</TableCell>
                   <TableCell>{project.interactions.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <Badge variant={confidenceVariant(project.confidenceGrade ?? "empty")}>
+                      {project.confidenceScore ?? 0}/100 {project.confidenceGrade ?? "empty"}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{project.outputInputRatio.toFixed(2)}x</TableCell>
                   <TableCell>{formatDate(project.lastUsedAt)}</TableCell>
                 </TableRow>

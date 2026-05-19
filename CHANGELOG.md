@@ -4,7 +4,27 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
-No unreleased changes yet.
+## [0.11.0] - 2026-05-18
+
+### Added
+
+- `npm run security:ioc` scans project files and local Claude/VS Code hook files for high-signal Mini Shai-Hulud/TanStack supply-chain indicators before release.
+- Tokenizer-backed estimates for recognized OpenAI/Codex and Claude-family model names, with explicit `tokenizer estimate` and `simple estimate` confidence labels.
+- Native SQLite history ingestion for local usage databases with usage-shaped tables, source-file evidence, import-profile metadata, and source-provided cost preservation.
+- Data Confidence scoring on Overview, Projects, Sessions, and Session Timeline views, combining token source, cost coverage, parser confidence, and scan freshness.
+- Import Profiles in Settings so users can define safe local wrapper-log matchers without writing parser code.
+- Repair Workbench bulk actions for marking visible unknown-cost groups verified, parser-review, ignored, or reopened.
+- Supply-chain IOC status in Scan Health, backed by the same local `security:ioc` scanner used by release checks.
+
+### Changed
+
+- Session Timeline pages now explain token spikes, model changes, cache activity, cost coverage, confidence drivers, and direct unknown-cost repair links.
+- Scan Health now distinguishes exact, tokenizer-estimated, simple-estimated, high-confidence, low-confidence, and unknown token rows.
+- The roadmap API and CLI now report the 0.11.0 Accuracy & Evidence release contract.
+
+### Fixed
+
+- Source-provided interaction costs are no longer overwritten as unknown during post-scan cost recalculation when model rates are missing.
 
 ## [0.10.1] - 2026-05-18
 

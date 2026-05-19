@@ -19,6 +19,13 @@ import { DataValue, FieldLabel, MonoText } from "@/components/ui/typography";
 type ExactFilter = "all" | "exact" | "estimated";
 type CostFilter = "all" | "priced" | "unknown";
 
+function confidenceVariant(grade: string) {
+  if (grade === "high") return "success";
+  if (grade === "medium") return "warning";
+  if (grade === "low") return "destructive";
+  return "secondary";
+}
+
 export function SessionExplorer({
   sessions,
   initialProject,
@@ -453,6 +460,7 @@ export function SessionExplorer({
                 <TableHead className="w-24">Cost</TableHead>
                 <TableHead className="w-20">Duration</TableHead>
                 <TableHead className="w-32">Flag</TableHead>
+                <TableHead className="w-32">Confidence</TableHead>
                 <TableHead className="w-36">Parser</TableHead>
                 <TableHead className="w-28">Evidence</TableHead>
                 <TableHead className="w-80">Source file</TableHead>
@@ -472,6 +480,11 @@ export function SessionExplorer({
                     <TableCell>
                       <Badge variant={session.tokenConfidence === "exact" ? "success" : session.tokenConfidence === "unknown" ? "destructive" : "warning"}>
                         {session.tokenConfidence}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={confidenceVariant(session.confidenceGrade ?? "empty")}>
+                        {session.confidenceScore ?? 0}/100 {session.confidenceGrade ?? "empty"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -506,7 +519,7 @@ export function SessionExplorer({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={11} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={12} className="py-8 text-center text-sm text-muted-foreground">
                     No sessions match the current filters.
                   </TableCell>
                 </TableRow>

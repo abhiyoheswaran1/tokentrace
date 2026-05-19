@@ -25,6 +25,8 @@ export type ScanHealthFile = {
 export type ScanConfidenceSummary = {
   interactions: number;
   exactTokenInteractions: number;
+  tokenizerEstimateInteractions?: number;
+  simpleEstimateInteractions?: number;
   highConfidenceTokenInteractions: number;
   lowConfidenceTokenInteractions: number;
   unknownTokenInteractions: number;
@@ -45,6 +47,13 @@ export type ScanHealthAction = {
   href: string;
   reason: string;
   tone: "default" | "warning" | "destructive";
+};
+
+export type SupplyChainHealth = {
+  status: "passed" | "failed" | "not-run";
+  checkedAt: number | null;
+  findings: number;
+  summary: string;
 };
 
 export type ScanHealthNoteGroup = {
@@ -74,6 +83,8 @@ export type ScanHealth = {
   };
   tokenCoverage: {
     exact: number;
+    tokenizerEstimate: number;
+    simpleEstimate: number;
     highConfidenceEstimate: number;
     lowConfidenceEstimate: number;
     unknown: number;
@@ -88,6 +99,7 @@ export type ScanHealth = {
     unknownCauses: ScanConfidenceSummary["unknownCostCauses"];
     total: number;
   };
+  supplyChain: SupplyChainHealth;
   actions: ScanHealthAction[];
 };
 
@@ -206,11 +218,13 @@ export function buildScanHealth({
   scanRuns,
   scanFiles,
   confidence,
+  supplyChain,
   now = Date.now()
 }: {
   scanRuns: ScanHealthRun[];
   scanFiles: ScanHealthFile[];
   confidence: ScanConfidenceSummary;
+  supplyChain?: SupplyChainHealth;
   now?: number;
 }): ScanHealth {
   const latestRun = scanRuns[0] ?? null;
@@ -248,12 +262,14 @@ export function buildScanHealth({
       .reduce((total, file) => total + file.errors.length, 0);
 
   const tokenCoverage = {
-    exact: confidence.exactTokenInteractions,
-    highConfidenceEstimate: confidence.highConfidenceTokenInteractions,
-    lowConfidenceEstimate: confidence.lowConfidenceTokenInteractions,
-    unknown: confidence.unknownTokenInteractions,
-    estimated: confidence.estimatedTokenInteractions,
-    total: confidence.interactions
+    exact: confidence.exactTokenInteractions ?? 0,
+    tokenizerEstimate: confidence.tokenizerEstimateInteractions ?? 0,
+    simpleEstimate: confidence.simpleEstimateInteractions ?? 0,
+    highConfidenceEstimate: confidence.highConfidenceTokenInteractions ?? 0,
+    lowConfidenceEstimate: confidence.lowConfidenceTokenInteractions ?? 0,
+    unknown: confidence.unknownTokenInteractions ?? 0,
+    estimated: confidence.estimatedTokenInteractions ?? 0,
+    total: confidence.interactions ?? 0
   };
   const costCoverage = {
     priced: confidence.exactCostInteractions + confidence.estimatedCostInteractions,
@@ -265,9 +281,19 @@ export function buildScanHealth({
   };
 
   const actions: ScanHealthAction[] = [];
+  const supplyChainStatus = supplyChain ?? {
+    status: "not-run" as const,
+    checkedAt: null,
+    findings: 0,
+    summary: "Supply-chain IOC check has not run in this dashboard process."
+  };
   let headline = "No scans yet";
   let description = "Run a local scan to discover Claude Code, Codex CLI, and generic AI CLI artifacts.";
   let tone: ScanHealth["tone"] = "secondary";
+
+  if (supplyChainStatus.status === "failed") {
+    actions.push(action("Review supply-chain check", "/diagnostics#supply-chain", supplyChainStatus.summary, "destructive"));
+  }
 
   if (!latestRun) {
     actions.push(action("Run first scan", "/settings", "Discover local AI CLI usage files."));
@@ -328,6 +354,7 @@ export function buildScanHealth({
     freshness,
     tokenCoverage,
     costCoverage,
+    supplyChain: supplyChainStatus,
     actions
   };
 }

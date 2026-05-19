@@ -53,7 +53,12 @@ describe("app settings normalization", () => {
       usageGuardrails: {
         monthlyCostLimitUsd: 6000,
         monthlyTokenLimit: 10000000
-      }
+      },
+      importProfiles: expect.arrayContaining([
+        expect.objectContaining({ id: "generic-jsonl", enabled: true }),
+        expect.objectContaining({ id: "generic-text-log", enabled: true }),
+        expect.objectContaining({ id: "sqlite-history", enabled: true })
+      ])
     });
   });
 });

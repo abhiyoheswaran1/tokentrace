@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { normalizeImportProfiles, type ImportProfile } from "@/src/lib/import-profiles";
 import { db } from "./client";
 import { settings } from "./schema";
 
@@ -6,6 +7,7 @@ export type AppSettings = {
   customFolders: string[];
   storeRawMessageContent: boolean;
   usageGuardrails: UsageGuardrails;
+  importProfiles: ImportProfile[];
 };
 
 export type UsageGuardrails = {
@@ -19,7 +21,8 @@ const defaultSettings: AppSettings = {
   usageGuardrails: {
     monthlyCostLimitUsd: null,
     monthlyTokenLimit: null
-  }
+  },
+  importProfiles: normalizeImportProfiles(null)
 };
 
 function positiveLimit(value: unknown) {
@@ -51,7 +54,8 @@ function normalizeSettings(value: unknown): AppSettings {
           .filter(Boolean)
       : [],
     storeRawMessageContent: candidate.storeRawMessageContent === true,
-    usageGuardrails: normalizeUsageGuardrails(candidate.usageGuardrails)
+    usageGuardrails: normalizeUsageGuardrails(candidate.usageGuardrails),
+    importProfiles: normalizeImportProfiles(candidate.importProfiles)
   };
 }
 

@@ -26,6 +26,7 @@ import { buildPostSessionReview, type PostSessionReview } from "@/src/lib/post-s
 export const dynamic = "force-dynamic";
 
 type UsageComparison = ReturnType<typeof getAnalyticsData>["comparison"];
+type DataConfidence = ReturnType<typeof getAnalyticsData>["dataConfidence"];
 
 function CostSessionsMetricPane({
   label,
@@ -638,6 +639,41 @@ function UsagePulsePanel({ comparison }: { comparison: UsageComparison }) {
   );
 }
 
+function confidenceVariant(grade: DataConfidence["grade"]) {
+  if (grade === "high") return "success";
+  if (grade === "medium") return "warning";
+  if (grade === "low") return "destructive";
+  return "secondary";
+}
+
+function DataConfidenceStrip({ confidence }: { confidence: DataConfidence }) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-sm font-semibold">Data Confidence</div>
+            <Badge variant={confidenceVariant(confidence.grade)}>{confidence.score}/100 {confidence.grade}</Badge>
+          </div>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            {confidence.drivers.slice(0, 2).join(" ")}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {confidence.repairHref ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={confidence.repairHref}>Open repair <ArrowRight className="h-4 w-4" /></Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="outline" size="sm">
+            <Link href="/diagnostics">Open Scan Health <ArrowRight className="h-4 w-4" /></Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function guardrailBadgeVariant(status: UsageGuardrailMetric["status"]) {
   if (status === "exceeded") return "destructive";
   if (status === "warning") return "warning";
@@ -933,6 +969,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
       ) : null}
 
       <UsagePulsePanel comparison={data.comparison} />
+
+      <DataConfidenceStrip confidence={data.dataConfidence} />
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <TokenAccountingCard

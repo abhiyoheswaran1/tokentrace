@@ -210,8 +210,8 @@ try {
   }
 
   const roadmap = jsonCommand(["roadmap", "--json"]);
-  if (roadmap.version !== "0.10.0" || roadmap.release?.releaseAllowed !== true) {
-    throw new Error("Roadmap JSON is missing 0.10.0 release-ready status.");
+  if (roadmap.version !== "0.11.0" || roadmap.release?.releaseAllowed !== true) {
+    throw new Error("Roadmap JSON is missing 0.11.0 release-ready status.");
   }
 
   const scan = jsonCommand(["scan", "fixtures/generic-jsonl", "--json"]);

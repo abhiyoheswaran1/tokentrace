@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, CircleDashed, Search, Settings2 } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { PeriodFilter } from "@/components/period-filter";
+import { RepairBulkActions } from "@/components/repair-bulk-actions";
 import { RepairStateControl } from "@/components/repair-state-control";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -257,99 +258,98 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
         </CardHeader>
         <CardContent className="table-scroll overflow-x-auto">
           {hasGroups ? (
-            <Table className="min-w-[84rem]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>State</TableHead>
-                  <TableHead>Cause</TableHead>
-                  <TableHead className="min-w-56">Model</TableHead>
-                  <TableHead className="min-w-72">Suggestion</TableHead>
-                  <TableHead className="min-w-80">Source</TableHead>
-                  <TableHead>Interactions</TableHead>
-                  <TableHead>Tokens</TableHead>
-                  <TableHead className="min-w-28">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {workbench.groups.map((group) => (
-                  <TableRow key={group.key} className={focusKey === group.key ? "bg-muted/40" : undefined}>
-                    <TableCell className="align-top">
-                      <RepairStateControl
-                        repairKey={group.key}
-                        initialStatus={group.review.status}
-                        initialNotes={group.review.notes}
-                        sourceFile={group.sourceFile}
-                        model={group.model}
-                        provider={group.provider}
-                        cause={group.cause}
-                      />
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <Badge variant={causeVariant(group.cause)}>{causeLabel(group.cause)}</Badge>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="font-medium">{group.model}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{group.provider} / {group.tool}</div>
-                    </TableCell>
-                    <TableCell className="min-w-72 max-w-80 align-top">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        {group.suggestion.suggestedModel ? (
-                          <CheckCircle2 className="h-4 w-4 text-primary" />
-                        ) : (
-                          <CircleDashed className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        {suggestionLabel(group)}
-                      </div>
-                      <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {group.suggestion.confidence} confidence. {group.suggestion.reason}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-96 align-top">
-                      <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} title={group.sourceFile}>
-                        <MonoText className="block truncate text-xs text-muted-foreground underline-offset-4 hover:underline">
-                          {group.sourceFile}
-                        </MonoText>
-                      </Link>
-                    </TableCell>
-                    <TableCell className="align-top">{group.interactions.toLocaleString()}</TableCell>
-                    <TableCell className="min-w-28 align-top">
-                      <div>{formatTokens(group.totalTokens)}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {formatTokens(group.inputTokens)} in, {formatTokens(group.outputTokens)} out
-                      </div>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="flex flex-wrap gap-2">
-                        <Link
-                          href={
-                            group.pricingHref
-                              ? mergeHrefParams(group.pricingHref, { returnTo: mergeHrefParams(group.itemHref, rangeLinkParams) })
-                              : mergeHrefParams(group.repairHref, rangeLinkParams)
-                          }
-                          className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
-                        >
-                          {group.pricingHref ? "Set model rate" : "Review parser"} <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-                        <Link href={mergeHrefParams(group.itemHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                          Open repair
-                        </Link>
-                        <Link href={mergeHrefParams(group.parserHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                          Review parser
-                        </Link>
-                        {group.pricingHref ? (
-                          <Link href={mergeHrefParams(group.pricingHref, { returnTo: mergeHrefParams(group.itemHref, rangeLinkParams) })} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                            Set model rate
-                          </Link>
-                        ) : null}
-                        <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                          View evidence
-                        </Link>
-                      </div>
-                    </TableCell>
+            <div className="space-y-3">
+              <RepairBulkActions
+                keys={workbench.groups.map((group) => group.key)}
+                modelRatesHref={mergeHrefParams("/pricing", rangeLinkParams)}
+                scanHealthHref="/diagnostics"
+              />
+              <Table className="min-w-[84rem]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>State</TableHead>
+                    <TableHead>Cause</TableHead>
+                    <TableHead className="min-w-56">Model</TableHead>
+                    <TableHead className="min-w-72">Suggestion</TableHead>
+                    <TableHead className="min-w-80">Source</TableHead>
+                    <TableHead>Interactions</TableHead>
+                    <TableHead>Tokens</TableHead>
+                    <TableHead className="min-w-28">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {workbench.groups.map((group) => (
+                    <TableRow key={group.key} className={focusKey === group.key ? "bg-muted/40" : undefined}>
+                      <TableCell className="align-top">
+                        <RepairStateControl
+                          repairKey={group.key}
+                          initialStatus={group.review.status}
+                          initialNotes={group.review.notes}
+                          sourceFile={group.sourceFile}
+                          model={group.model}
+                          provider={group.provider}
+                          cause={group.cause}
+                        />
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <Badge variant={causeVariant(group.cause)}>{causeLabel(group.cause)}</Badge>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <div className="font-medium">{group.model}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">{group.provider} / {group.tool}</div>
+                      </TableCell>
+                      <TableCell className="min-w-72 max-w-80 align-top">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          {group.suggestion.suggestedModel ? (
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                          ) : (
+                            <CircleDashed className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          {suggestionLabel(group)}
+                        </div>
+                        <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {group.suggestion.confidence} confidence. {group.suggestion.reason}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-96 align-top">
+                        <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} title={group.sourceFile}>
+                          <MonoText className="block truncate text-xs text-muted-foreground underline-offset-4 hover:underline">
+                            {group.sourceFile}
+                          </MonoText>
+                        </Link>
+                      </TableCell>
+                      <TableCell className="align-top">{group.interactions.toLocaleString()}</TableCell>
+                      <TableCell className="min-w-28 align-top">
+                        <div>{formatTokens(group.totalTokens)}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {formatTokens(group.inputTokens)} in, {formatTokens(group.outputTokens)} out
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={
+                              group.pricingHref
+                                ? mergeHrefParams(group.pricingHref, { returnTo: mergeHrefParams(group.itemHref, rangeLinkParams) })
+                                : mergeHrefParams(group.repairHref, rangeLinkParams)
+                            }
+                            className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+                          >
+                            {group.pricingHref ? "Set model rate" : "Review parser"} <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
+                          <Link href={mergeHrefParams(group.itemHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                            Open repair
+                          </Link>
+                          <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
+                            View evidence
+                          </Link>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <EmptyState
               title="No unknown-cost repair items"

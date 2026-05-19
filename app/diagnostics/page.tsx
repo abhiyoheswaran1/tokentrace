@@ -7,8 +7,10 @@ import { DataValue, FieldLabel, MonoText, PageHeader } from "@/components/ui/typ
 import { ScanHealthSummary } from "@/components/scan-health-summary";
 import { getAnalyticsData, getScanTrustData, type DebugScanRun } from "@/src/lib/analytics";
 import { buildDoctorReport, type DoctorReport } from "@/src/lib/doctor";
+import { buildScanHealth } from "@/src/lib/scan-health";
 import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
 import { formatDate } from "@/src/lib/format";
+import { getSupplyChainHealth } from "@/src/lib/supply-chain-health";
 
 export const dynamic = "force-dynamic";
 
@@ -461,7 +463,17 @@ function ScanHistoryPanel({ scanRuns }: { scanRuns: DebugScanRun[] }) {
 }
 
 export default async function DiagnosticsPage() {
-  const data = getScanTrustData();
+  const baseData = getScanTrustData();
+  const supplyChain = getSupplyChainHealth();
+  const data = {
+    ...baseData,
+    health: buildScanHealth({
+      scanRuns: baseData.scanRuns,
+      scanFiles: baseData.scanFiles,
+      confidence: baseData.confidence,
+      supplyChain
+    })
+  };
   const analytics = getAnalyticsData();
   const roots = await getDefaultSearchRoots();
   const doctorReport = buildDoctorReport({

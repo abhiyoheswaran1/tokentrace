@@ -4,7 +4,7 @@
 
 # TokenTrace CLI
 
-Local-first AI CLI usage analytics. TokenTrace scans local CLI logs, normalizes token usage, estimates missing counts, and shows cost, model, project, and session analytics in a browser dashboard.
+Local-first AI CLI usage analytics. TokenTrace scans local CLI logs and local usage databases, normalizes token usage, estimates missing counts with confidence labels, and shows cost, model, project, session, repair, and evidence analytics in a browser dashboard.
 
 TokenTrace is designed for local development machines first, with macOS-oriented defaults. It does not require a cloud account and does not send telemetry or logs anywhere.
 
@@ -40,7 +40,7 @@ tokentrace agent --json # Print machine-readable agent discovery manifest
 tokentrace capabilities --json
                         # Alias for agent discovery manifest
 tokentrace roadmap --json
-                        # Print Guided Operator release implementation status
+                        # Print Accuracy & Evidence release implementation status
 tokentrace scan         # Scan local AI CLI usage logs
 tokentrace doctor --json
                         # Inspect scan health and repair recommendations
@@ -114,7 +114,7 @@ curl http://127.0.0.1:3030/api/agent
 curl http://127.0.0.1:3030/api/capabilities
 ```
 
-The Guided Operator release status is also machine-readable:
+The Accuracy & Evidence release status is also machine-readable:
 
 ```bash
 tokentrace roadmap --json
@@ -149,11 +149,27 @@ npm run verify       # Run Vitest, TypeScript, and ESLint checks
 npm run package:test # Verify, build, and dry-run the npm package
 npm run package:inspect
                     # Check package transparency guardrails
+npm run security:ioc
+                    # Scan lockfiles, workflows, and local AI-tool hooks for supply-chain IOCs
 npm run smoke:packed
                     # Inspect packed tarball and smoke test packed CLI
 tokentrace roadmap --json
                     # Inspect evidence gates and release status
 ```
+
+## Accuracy And Evidence
+
+TokenTrace labels the trust level behind imported numbers:
+
+- exact provider token counts
+- tokenizer estimates for recognized OpenAI/Codex and Claude-family model names
+- simple estimates when only text-like content is available
+- source-provided costs from local SQLite histories
+- unknown cost repair groups when model, token, or rate evidence is missing
+
+The dashboard surfaces a Data Confidence score on Overview, Projects, Sessions,
+and Session Timeline pages. Scan Health also includes a supply-chain IOC check
+so package trust is visible in the product, not only in release scripts.
 
 Release work uses internal milestone commits until the next public minor
 release. See [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) before
@@ -324,6 +340,7 @@ Stop the server with `Ctrl+C` in the terminal where `tokentrace` is running.
 - The published package ships readable application source and the compiled CLI runtime, not generated `.next/server` route bundles.
 - `tokentrace serve` prepares the local dashboard build in the user's TokenTrace app-data directory the first time it is needed.
 - `npm run package:inspect` fails if generated Next.js build output appears in the published tarball.
+- `npm run security:ioc` scans lockfiles, workflows, and local Claude/VS Code hook files for high-signal supply-chain compromise indicators.
 - Public npm publishing is configured through GitHub Actions Trusted Publishing and provenance from version tags.
 - Socket GitHub checks and ProjScan are used as release guardrails, alongside `npm audit --audit-level=moderate`.
 - Release notes are published directly in GitHub Releases from the relevant changelog section, not as a link-only summary.

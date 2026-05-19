@@ -628,4 +628,41 @@ describe("unknown cost repair state", () => {
       notes: "Backfilled pricing."
     });
   });
+
+  it("applies bulk review actions to unresolved repair groups", async () => {
+    const { buildUnknownCostRepairWorkbench, bulkUpdateUnknownCostRepairs, sqlite } = await loadRepair();
+
+    sqlite.prepare("INSERT INTO providers (id, name, type) VALUES ('openai', 'OpenAI', 'llm-provider')").run();
+    sqlite.prepare("INSERT INTO tools (id, provider_id, name) VALUES ('local-wrapper', 'openai', 'Local Wrapper')").run();
+    sqlite.prepare("INSERT INTO models (id, provider_id, name) VALUES ('unknown-model', 'openai', 'unknown')").run();
+    sqlite
+      .prepare(
+        `INSERT INTO sessions (id, source_id, tool_id, source_file)
+         VALUES ('session-1', 'source-1', 'local-wrapper', '/tmp/local.db')`
+      )
+      .run();
+    sqlite
+      .prepare(
+        `INSERT INTO interactions
+          (id, source_id, session_id, role, model_id, total_tokens, token_confidence, cost)
+         VALUES
+          ('i1', 'i1-source', 'session-1', 'assistant', 'unknown-model', 0, 'unknown', NULL),
+          ('i2', 'i2-source', 'session-1', 'assistant', 'unknown-model', 0, 'unknown', NULL)`
+      )
+      .run();
+
+    const before = buildUnknownCostRepairWorkbench();
+    const key = before.groups[0].key;
+    const result = bulkUpdateUnknownCostRepairs({
+      keys: [key],
+      status: "needs-parser-review",
+      notes: "Bulk parser review"
+    });
+
+    expect(result.updated).toBe(1);
+    expect(buildUnknownCostRepairWorkbench().groups[0].review).toMatchObject({
+      status: "needs-parser-review",
+      notes: "Bulk parser review"
+    });
+  });
 });

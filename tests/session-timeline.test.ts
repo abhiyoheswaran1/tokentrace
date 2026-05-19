@@ -108,6 +108,29 @@ describe("session timeline", () => {
     expect(JSON.stringify(timeline)).not.toContain("secret prompt");
   });
 
+  it("summarizes session confidence and repairable unknown-cost causes", async () => {
+    const { buildSessionTimeline, sqlite } = await loadTimeline();
+    seedTimeline(sqlite);
+
+    const timeline = buildSessionTimeline("session-1");
+
+    expect(timeline?.confidence).toMatchObject({
+      grade: "medium",
+      exactTokenInteractions: 2,
+      tokenizerEstimateInteractions: 0,
+      pricedCostInteractions: 2,
+      unknownCostInteractions: 1
+    });
+    expect(timeline?.repair).toMatchObject({
+      unknownCostCause: "missing pricing",
+      repairHref: expect.stringContaining("/repair?key=")
+    });
+    expect(timeline?.spikes[0]).toMatchObject({
+      interactionId: "i2",
+      reason: expect.stringContaining("above this session")
+    });
+  });
+
   it("returns null for missing sessions", async () => {
     const { buildSessionTimeline } = await loadTimeline();
 

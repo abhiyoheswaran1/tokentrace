@@ -33,6 +33,9 @@ jobs:
       - name: Inspect package transparency
         run: npm run package:inspect
 
+      - name: Scan supply-chain indicators
+        run: npm run security:ioc -- --no-home
+
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 

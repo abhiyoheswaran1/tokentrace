@@ -40,8 +40,12 @@ When running from source, the default development database is
 ## Release Trust
 
 Public package releases are built from Git tags. The release flow includes
-package inspection, production dependency audit, ProjScan checks, and npm
-Trusted Publishing through GitHub Actions.
+package inspection, supply-chain IOC scanning, production dependency audit,
+ProjScan checks, and npm Trusted Publishing through GitHub Actions.
+
+Run `npm run security:ioc` to check lockfiles, GitHub Actions workflows, and
+local Claude/VS Code hook files for high-signal Mini Shai-Hulud/TanStack-style
+indicators before release or after a dependency scare.
 
 ## Reporting
 

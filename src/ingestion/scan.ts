@@ -4,6 +4,7 @@ import { sqlite } from "@/src/db/client";
 import { getAppSettings } from "@/src/db/settings";
 import { recalculateInteractionCosts, type CostRecalculationResult } from "@/src/lib/cost-recalculation";
 import { hashContent, stableId } from "@/src/lib/ids";
+import { importProfileForAdapter } from "@/src/lib/import-profiles";
 import { nonUsageFileReason } from "@/src/ingestion/path-classifier";
 import { adapters } from "./adapters";
 import { discoverFilesWithIgnored, expandHome, getDefaultSearchRoots } from "./discovery";
@@ -189,7 +190,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
     options.includeDefaults === false
       ? explicitFolders.map((folder) => path.resolve(expandHome(folder)))
       : await getDefaultSearchRoots([...settings.customFolders, ...explicitFolders]);
-  const discovery = await discoverFilesWithIgnored(roots);
+  const discovery = await discoverFilesWithIgnored(roots, settings.importProfiles);
   const candidates = discovery.candidates;
   const startedAt = new Date();
   const scanRunId = stableId("scan", [startedAt.getTime(), roots.join("|")]);
@@ -298,6 +299,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
         errors,
         rawMetadata: {
           parser: parserMetadata(adapterChoice.selected.adapter),
+          importProfile: importProfileForAdapter(adapterChoice.selected.adapter.id, file.path, settings.importProfiles),
           confidence: adapterChoice.selected.confidence,
           reason: adapterChoice.selected.reason,
           tokenConfidence,

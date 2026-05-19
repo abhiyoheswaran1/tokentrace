@@ -180,7 +180,7 @@ const commands: AgentDiscoveryCommand[] = [
   },
   {
     id: "roadmap",
-    title: "Print Guided Operator release implementation status",
+    title: "Print Accuracy & Evidence release implementation status",
     command: ["tokentrace", "roadmap", "--json"],
     description: "Return implemented roadmap cards, evidence paths, verification gates, and release status.",
     output: "json",
@@ -188,7 +188,7 @@ const commands: AgentDiscoveryCommand[] = [
     startsLongRunningProcess: false,
     requiresNetwork: false,
     safeForAutomation: true,
-    useWhen: "The agent needs to explain Guided Operator implementation and verification status.",
+    useWhen: "The agent needs to explain Accuracy & Evidence implementation and verification status.",
     followUps: [
       ["tokentrace", "agent", "--json"]
     ]

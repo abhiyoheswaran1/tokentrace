@@ -11,6 +11,7 @@ import { buildReviewQueue, type ReviewQueueItem } from "@/src/lib/review-queue";
 import { buildSessionComparisons, type SessionComparisonRow } from "@/src/lib/session-comparison";
 import { buildProjectSignals, type ProjectSignalRow } from "@/src/lib/project-signals";
 import { evidenceHref, type EvidenceMetric } from "@/src/lib/evidence-trail";
+import { buildDataConfidenceScore, type DataConfidenceGrade, type DataConfidenceScore } from "@/src/lib/data-confidence";
 
 export type TrendPoint = {
   date: string;
@@ -102,6 +103,8 @@ export type ProjectAnalyticsRow = {
   interactions: number;
   outputInputRatio: number;
   lastUsedAt: number | null;
+  confidenceScore?: number;
+  confidenceGrade?: DataConfidenceGrade;
 };
 
 export type SessionRow = {
@@ -133,6 +136,8 @@ export type SessionRow = {
   pricingHref: string | null;
   interactionCount: number;
   durationMs: number | null;
+  confidenceScore?: number;
+  confidenceGrade?: DataConfidenceGrade;
 };
 
 export type Insight = {
@@ -209,6 +214,7 @@ export type ScanTrustData = {
 
 export type AnalyticsData = {
   summary: SummaryMetrics;
+  dataConfidence: DataConfidenceScore;
   evidenceLinks: EvidenceLinkMap;
   comparison: UsageComparison;
   trends: TrendPoint[];
@@ -699,7 +705,18 @@ function getModelRows(filters: AnalyticsFilters = {}): ModelAnalyticsRow[] {
 
 function getProjectRows(filters: AnalyticsFilters = {}): ProjectAnalyticsRow[] {
   const filter = timestampJoinCondition(filters, "i");
-  return rows<ProjectAnalyticsRow & { inputTokens: number; outputTokens: number }>(
+  return rows<
+    ProjectAnalyticsRow & {
+      inputTokens: number;
+      outputTokens: number;
+      exactTokenInteractions: number;
+      tokenizerEstimateInteractions: number;
+      simpleEstimateInteractions: number;
+      unknownTokenInteractions: number;
+      pricedCostInteractions: number;
+      unknownCostInteractions: number;
+    }
+  >(
     `SELECT
       pr.id,
       pr.name AS project,
@@ -710,6 +727,12 @@ function getProjectRows(filters: AnalyticsFilters = {}): ProjectAnalyticsRow[] {
       COALESCE(SUM(i.cost), 0) AS cost,
       COUNT(DISTINCT s.id) AS sessions,
       COUNT(i.id) AS interactions,
+      COALESCE(SUM(CASE WHEN i.token_confidence = 'exact' THEN 1 ELSE 0 END), 0) AS exactTokenInteractions,
+      COALESCE(SUM(CASE WHEN i.token_confidence = 'tokenizer estimate' THEN 1 ELSE 0 END), 0) AS tokenizerEstimateInteractions,
+      COALESCE(SUM(CASE WHEN i.token_confidence IN ('simple estimate', 'high-confidence estimate', 'low-confidence estimate') THEN 1 ELSE 0 END), 0) AS simpleEstimateInteractions,
+      COALESCE(SUM(CASE WHEN i.token_confidence = 'unknown' THEN 1 ELSE 0 END), 0) AS unknownTokenInteractions,
+      COALESCE(SUM(CASE WHEN i.cost IS NOT NULL THEN 1 ELSE 0 END), 0) AS pricedCostInteractions,
+      COALESCE(SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END), 0) AS unknownCostInteractions,
       MAX(i.timestamp) AS lastUsedAt
      FROM projects pr
      JOIN sessions s ON s.project_id = pr.id
@@ -717,27 +740,49 @@ function getProjectRows(filters: AnalyticsFilters = {}): ProjectAnalyticsRow[] {
      GROUP BY pr.id
      ORDER BY totalTokens DESC`,
     ...filter.params
-  ).map((row) => ({
-    id: row.id,
-    project: row.project,
-    path: row.path,
-    totalTokens: number(row.totalTokens),
-    cost: number(row.cost),
-    sessions: number(row.sessions),
-    interactions: number(row.interactions),
-    outputInputRatio: row.inputTokens ? number(row.outputTokens) / number(row.inputTokens) : 0,
-    lastUsedAt: row.lastUsedAt
-  }));
+  ).map((row) => {
+    const confidence = buildDataConfidenceScore({
+      totalInteractions: number(row.interactions),
+      exactTokenInteractions: number(row.exactTokenInteractions),
+      tokenizerEstimateInteractions: number(row.tokenizerEstimateInteractions),
+      simpleEstimateInteractions: number(row.simpleEstimateInteractions),
+      unknownTokenInteractions: number(row.unknownTokenInteractions),
+      pricedCostInteractions: number(row.pricedCostInteractions),
+      unknownCostInteractions: number(row.unknownCostInteractions),
+      parserConfidence: null,
+      scanFreshness: "fresh"
+    });
+
+    return {
+      id: row.id,
+      project: row.project,
+      path: row.path,
+      totalTokens: number(row.totalTokens),
+      cost: number(row.cost),
+      sessions: number(row.sessions),
+      interactions: number(row.interactions),
+      outputInputRatio: row.inputTokens ? number(row.outputTokens) / number(row.inputTokens) : 0,
+      lastUsedAt: row.lastUsedAt,
+      confidenceScore: confidence.score,
+      confidenceGrade: confidence.grade
+    };
+  });
 }
 
 function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
   const filter = timestampJoinCondition(filters, "i");
   return rows<
-    Omit<SessionRow, "costEstimated" | "estimatedTokens"> & {
+    Omit<SessionRow, "costEstimated" | "estimatedTokens" | "confidenceGrade" | "confidenceScore"> & {
       costEstimated: 0 | 1;
       estimatedTokens: 0 | 1;
       parserRawMetadata: string | null;
       pricingModel: string | null;
+      exactTokenInteractions: number;
+      tokenizerEstimateInteractions: number;
+      simpleEstimateInteractions: number;
+      unknownTokenInteractions: number;
+      pricedCostInteractions: number;
+      unknownCostInteractions: number;
     }
   >(
     `SELECT
@@ -770,10 +815,18 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
       MAX(i.estimated_tokens) AS estimatedTokens,
       CASE
         WHEN SUM(CASE WHEN i.token_confidence = 'unknown' THEN 1 ELSE 0 END) > 0 THEN 'unknown'
+        WHEN SUM(CASE WHEN i.token_confidence = 'simple estimate' THEN 1 ELSE 0 END) > 0 THEN 'simple estimate'
         WHEN SUM(CASE WHEN i.token_confidence = 'low-confidence estimate' THEN 1 ELSE 0 END) > 0 THEN 'low-confidence estimate'
+        WHEN SUM(CASE WHEN i.token_confidence = 'tokenizer estimate' THEN 1 ELSE 0 END) > 0 THEN 'tokenizer estimate'
         WHEN SUM(CASE WHEN i.token_confidence = 'high-confidence estimate' THEN 1 ELSE 0 END) > 0 THEN 'high-confidence estimate'
         ELSE 'exact'
       END AS tokenConfidence,
+      COALESCE(SUM(CASE WHEN i.token_confidence = 'exact' THEN 1 ELSE 0 END), 0) AS exactTokenInteractions,
+      COALESCE(SUM(CASE WHEN i.token_confidence = 'tokenizer estimate' THEN 1 ELSE 0 END), 0) AS tokenizerEstimateInteractions,
+      COALESCE(SUM(CASE WHEN i.token_confidence IN ('simple estimate', 'high-confidence estimate', 'low-confidence estimate') THEN 1 ELSE 0 END), 0) AS simpleEstimateInteractions,
+      COALESCE(SUM(CASE WHEN i.token_confidence = 'unknown' THEN 1 ELSE 0 END), 0) AS unknownTokenInteractions,
+      COALESCE(SUM(CASE WHEN i.cost IS NOT NULL THEN 1 ELSE 0 END), 0) AS pricedCostInteractions,
+      COALESCE(SUM(CASE WHEN i.cost IS NULL THEN 1 ELSE 0 END), 0) AS unknownCostInteractions,
       sf.parser AS parser,
       sf.status AS parserStatus,
       sf.raw_metadata AS parserRawMetadata,
@@ -800,6 +853,18 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
   ).map((row) => {
     const parserMetadata = parseJson<Record<string, unknown>>(row.parserRawMetadata, {});
     const pricingModel = row.pricingModel && row.pricingModel !== "unknown" ? row.pricingModel : null;
+    const parserConfidence = numberMetadata(parserMetadata, "confidence");
+    const confidence = buildDataConfidenceScore({
+      totalInteractions: number(row.interactionCount),
+      exactTokenInteractions: number(row.exactTokenInteractions),
+      tokenizerEstimateInteractions: number(row.tokenizerEstimateInteractions),
+      simpleEstimateInteractions: number(row.simpleEstimateInteractions),
+      unknownTokenInteractions: number(row.unknownTokenInteractions),
+      pricedCostInteractions: number(row.pricedCostInteractions),
+      unknownCostInteractions: number(row.unknownCostInteractions),
+      parserConfidence,
+      scanFreshness: "fresh"
+    });
     return {
       ...row,
       totalTokens: number(row.totalTokens),
@@ -810,12 +875,14 @@ function getSessions(filters: AnalyticsFilters = {}): SessionRow[] {
       cost: row.cost == null ? null : number(row.cost),
       costEstimated: Boolean(row.costEstimated),
       estimatedTokens: Boolean(row.estimatedTokens),
-      parserConfidence: numberMetadata(parserMetadata, "confidence"),
+      parserConfidence,
       parserReason: stringMetadata(parserMetadata, "reason"),
       sourceHref: withQuery("/sessions", { source: row.sourceFile }),
       parserHref: withQuery("/parser-debug", { source: row.sourceFile }),
       pricingHref: pricingModel ? withQuery("/pricing", { model: pricingModel }) : null,
-      interactionCount: number(row.interactionCount)
+      interactionCount: number(row.interactionCount),
+      confidenceScore: confidence.score,
+      confidenceGrade: confidence.grade
     };
   });
 }
@@ -1135,6 +1202,21 @@ function buildInsights(data: {
 
 export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData {
   const summary = getSummary(filters);
+  const scanTrust = getScanTrustData(filters);
+  const dataConfidence = buildDataConfidenceScore({
+    totalInteractions: scanTrust.confidence.interactions,
+    exactTokenInteractions: scanTrust.confidence.exactTokenInteractions,
+    tokenizerEstimateInteractions: scanTrust.confidence.tokenizerEstimateInteractions ?? 0,
+    simpleEstimateInteractions:
+      (scanTrust.confidence.simpleEstimateInteractions ?? 0) +
+      scanTrust.confidence.highConfidenceTokenInteractions +
+      scanTrust.confidence.lowConfidenceTokenInteractions,
+    unknownTokenInteractions: scanTrust.confidence.unknownTokenInteractions,
+    pricedCostInteractions: scanTrust.confidence.exactCostInteractions + scanTrust.confidence.estimatedCostInteractions,
+    unknownCostInteractions: scanTrust.confidence.unknownCostInteractions,
+    parserConfidence: null,
+    scanFreshness: scanTrust.health.freshness.state
+  });
   const evidenceLinks: EvidenceLinkMap = {
     "processed-tokens": evidenceHref("processed-tokens"),
     "non-cache-tokens": evidenceHref("non-cache-tokens"),
@@ -1181,6 +1263,7 @@ export function getAnalyticsData(filters: AnalyticsFilters = {}): AnalyticsData 
 
   return {
     summary,
+    dataConfidence,
     evidenceLinks,
     comparison,
     trends,
@@ -1250,6 +1333,8 @@ export function getScanConfidenceSummary(filters: AnalyticsFilters = {}): ScanCo
       `SELECT
         COUNT(*) AS interactions,
         COALESCE(SUM(CASE WHEN token_confidence = 'exact' THEN 1 ELSE 0 END), 0) AS exactTokenInteractions,
+        COALESCE(SUM(CASE WHEN token_confidence = 'tokenizer estimate' THEN 1 ELSE 0 END), 0) AS tokenizerEstimateInteractions,
+        COALESCE(SUM(CASE WHEN token_confidence = 'simple estimate' THEN 1 ELSE 0 END), 0) AS simpleEstimateInteractions,
         COALESCE(SUM(CASE WHEN token_confidence = 'high-confidence estimate' THEN 1 ELSE 0 END), 0) AS highConfidenceTokenInteractions,
         COALESCE(SUM(CASE WHEN token_confidence = 'low-confidence estimate' THEN 1 ELSE 0 END), 0) AS lowConfidenceTokenInteractions,
         COALESCE(SUM(CASE WHEN token_confidence = 'unknown' THEN 1 ELSE 0 END), 0) AS unknownTokenInteractions,
@@ -1291,6 +1376,8 @@ export function getScanConfidenceSummary(filters: AnalyticsFilters = {}): ScanCo
   return {
     interactions: number(row.interactions),
     exactTokenInteractions: number(row.exactTokenInteractions),
+    tokenizerEstimateInteractions: number(row.tokenizerEstimateInteractions),
+    simpleEstimateInteractions: number(row.simpleEstimateInteractions),
     highConfidenceTokenInteractions: number(row.highConfidenceTokenInteractions),
     lowConfidenceTokenInteractions: number(row.lowConfidenceTokenInteractions),
     unknownTokenInteractions: number(row.unknownTokenInteractions),

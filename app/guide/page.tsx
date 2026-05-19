@@ -168,6 +168,11 @@ const workflows = [
     problem: "Parser warnings",
     path: "Parsers, Discovery, Scan Health",
     action: "Check parser confidence, unsupported files, and imported-with-errors rows before trusting an adapter."
+  },
+  {
+    problem: "Package trust check",
+    path: "Scan Health",
+    action: "Review the supply-chain IOC check alongside parser and model-rate health before release or upgrade work."
   }
 ];
 
@@ -175,7 +180,7 @@ const pageMap = [
   ["Overview", "Top-level totals, trends, repair queue, guardrails, and recommended next actions."],
   ["Sessions", "Per-session evidence with models, costs, cache activity, parser provenance, and tool calls."],
   ["Model Rates", "Editable provider model rates used for dashboard cost estimates and unknown-cost repair."],
-  ["Scan Health", "First-run checklist, scan health, supported file types, and diagnostics for missing data."],
+  ["Scan Health", "First-run checklist, scan health, supply-chain IOC check, supported file types, and diagnostics for missing data."],
   ["Discovery", "Recently scanned files grouped by parser, source family, status, and import yield."],
   ["Parsers", "Adapter choices, warnings, confidence, and parser repair clues for local files."]
 ];
@@ -483,8 +488,8 @@ export default function GuidePage() {
                   <h3 className="text-sm font-semibold leading-tight">Release readiness</h3>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Current package version is {roadmapStatus.packageVersion}. The 0.10.0 roadmap is released, and 0.10.1 carries
-                  the current guide, scan, evidence, and overview polish.
+                  Current package version is {roadmapStatus.packageVersion}. The current roadmap focuses on accuracy, evidence,
+                  repair workflow, import profiles, and package-trust checks.
                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div>

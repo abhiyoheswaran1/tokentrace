@@ -68,7 +68,10 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
   const pricedPercent = ratio(priced, health.costCoverage.total);
   const exactTokenPercent = ratio(health.tokenCoverage.exact, health.tokenCoverage.total);
   const estimatedTokenPercent = ratio(
-    health.tokenCoverage.highConfidenceEstimate + health.tokenCoverage.lowConfidenceEstimate,
+    health.tokenCoverage.tokenizerEstimate +
+      health.tokenCoverage.simpleEstimate +
+      health.tokenCoverage.highConfidenceEstimate +
+      health.tokenCoverage.lowConfidenceEstimate,
     health.tokenCoverage.total
   );
   const costCauseItems = unknownCostCauseItems(health);
@@ -135,6 +138,8 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
             </div>
             <div className="mt-2 text-xs leading-relaxed text-muted-foreground">
               {health.tokenCoverage.exact.toLocaleString()} exact,{" "}
+              {health.tokenCoverage.tokenizerEstimate.toLocaleString()} tokenizer estimate,{" "}
+              {health.tokenCoverage.simpleEstimate.toLocaleString()} simple estimate,{" "}
               {health.tokenCoverage.highConfidenceEstimate.toLocaleString()} high-confidence estimate,{" "}
               {health.tokenCoverage.lowConfidenceEstimate.toLocaleString()} low-confidence estimate,{" "}
               {health.tokenCoverage.unknown.toLocaleString()} unknown.
@@ -161,6 +166,22 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
                 ? `Unknown cost causes: ${costCauseItems.join(", ")}.`
                 : "Unknown cost usually means missing model rates or missing token counts."}
             </div>
+          </div>
+        </div>
+
+        <div id="supply-chain" className="border-y py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold leading-tight">Supply-chain IOC check</div>
+              <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{health.supplyChain.summary}</div>
+            </div>
+            <Badge variant={health.supplyChain.status === "passed" ? "success" : health.supplyChain.status === "failed" ? "destructive" : "secondary"}>
+              {health.supplyChain.status === "passed"
+                ? "passed"
+                : health.supplyChain.status === "failed"
+                  ? `${health.supplyChain.findings.toLocaleString()} findings`
+                  : "not run"}
+            </Badge>
           </div>
         </div>
 

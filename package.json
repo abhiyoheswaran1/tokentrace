@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {
     "name": "Abhi Yoheswaran",
@@ -59,11 +59,12 @@
     "verify": "npm test && tsc --noEmit && npm run lint",
     "package:inspect": "node scripts/package-inspect.mjs",
     "release:notes": "node scripts/extract-release-notes.mjs",
+    "security:ioc": "node scripts/security-ioc.mjs",
     "security:package": "npm run package:inspect && npm audit --audit-level=moderate",
     "smoke:cli": "npm run build && node scripts/smoke-cli.mjs",
     "smoke:packed": "node scripts/smoke-packed-install.mjs",
     "package:test": "npm run verify && npm pack --dry-run",
-    "release:check": "npm run package:test && npm run smoke:cli && npm run smoke:packed && npm run security:package && npm run projscan:doctor",
+    "release:check": "npm run package:test && npm run smoke:cli && npm run smoke:packed && npm run security:ioc && npm run security:package && npm run projscan:doctor",
     "visual:smoke": "node scripts/visual-smoke.mjs",
     "projscan:doctor": "npx --yes projscan@latest doctor",
     "prepack": "npm run build:runtime"

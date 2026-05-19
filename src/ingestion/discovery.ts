@@ -2,19 +2,11 @@ import fs from "node:fs/promises";
 import type { Dirent } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { builtInImportProfiles, enabledImportProfileMatchers, type ImportProfile } from "@/src/lib/import-profiles";
 import { FileCandidate, IgnoredFileCandidate } from "./types";
 import { isClaudeCodeUsagePath, isCodexCliUsagePath, nonUsageFileReason } from "./path-classifier";
 
-const supportedExtensions = new Set([
-  ".jsonl",
-  ".json",
-  ".log",
-  ".txt",
-  ".md",
-  ".db",
-  ".sqlite",
-  ".sqlite3"
-]);
+const supportedExtensions = new Set([".json", ...enabledImportProfileMatchers(builtInImportProfiles)]);
 
 const skippedDirectories = new Set([
   "node_modules",
@@ -77,9 +69,13 @@ type DiscoveryBuckets = {
   ignored: IgnoredFileCandidate[];
 };
 
-async function addSupportedFile(fullPath: string, buckets: DiscoveryBuckets) {
+function supportedExtensionsFor(profiles: ImportProfile[] = builtInImportProfiles) {
+  return new Set([...supportedExtensions, ...enabledImportProfileMatchers(profiles)]);
+}
+
+async function addSupportedFile(fullPath: string, buckets: DiscoveryBuckets, extensions: Set<string>) {
   const extension = path.extname(fullPath).toLowerCase();
-  if (!supportedExtensions.has(extension)) return;
+  if (!extensions.has(extension)) return;
 
   try {
     const stat = await fs.stat(fullPath);
@@ -112,7 +108,7 @@ async function addSupportedFile(fullPath: string, buckets: DiscoveryBuckets) {
   }
 }
 
-async function walkDirectory(root: string, depth: number, maxDepth: number, buckets: DiscoveryBuckets) {
+async function walkDirectory(root: string, depth: number, maxDepth: number, buckets: DiscoveryBuckets, extensions: Set<string>) {
   if (depth > maxDepth) return;
   let entries: Dirent[];
   try {
@@ -125,30 +121,31 @@ async function walkDirectory(root: string, depth: number, maxDepth: number, buck
     const fullPath = path.join(root, entry.name);
     if (entry.isDirectory()) {
       if (skippedDirectories.has(entry.name)) continue;
-      await walkDirectory(fullPath, depth + 1, maxDepth, buckets);
+      await walkDirectory(fullPath, depth + 1, maxDepth, buckets, extensions);
       continue;
     }
 
     if (!entry.isFile()) continue;
-    await addSupportedFile(fullPath, buckets);
+    await addSupportedFile(fullPath, buckets, extensions);
   }
 }
 
-export async function discoverFilesWithIgnored(roots: string[]) {
+export async function discoverFilesWithIgnored(roots: string[], importProfiles?: ImportProfile[]) {
   const buckets: DiscoveryBuckets = {
     candidates: [],
     ignored: []
   };
+  const extensions = supportedExtensionsFor(importProfiles);
 
   for (const root of roots) {
     const stat = await fs.stat(root).catch(() => null);
     if (!stat) continue;
     if (stat.isFile()) {
-      await addSupportedFile(root, buckets);
+      await addSupportedFile(root, buckets, extensions);
       continue;
     }
     if (stat.isDirectory()) {
-      await walkDirectory(root, 0, 12, buckets);
+      await walkDirectory(root, 0, 12, buckets, extensions);
     }
   }
 

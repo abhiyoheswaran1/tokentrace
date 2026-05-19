@@ -144,7 +144,7 @@ function ensureProject(session: NormalizedSession) {
   );
 }
 
-function normalizeTokens(interaction: NormalizedInteraction) {
+function normalizeTokens(interaction: NormalizedInteraction, providerId: string) {
   const providedAnyToken = [
     interaction.inputTokens,
     interaction.outputTokens,
@@ -154,7 +154,10 @@ function normalizeTokens(interaction: NormalizedInteraction) {
     interaction.totalTokens
   ].some((value) => value != null && value > 0);
   const baseText = interaction.rawText || interaction.rawTextPreview || "";
-  const estimate = estimateTokensFromText(baseText).tokens;
+  const estimate = estimateTokensFromText(baseText, {
+    providerId,
+    modelName: interaction.modelName
+  });
   const estimatedTokens = Boolean(interaction.estimatedTokens || !providedAnyToken);
   let tokenConfidence = interaction.tokenConfidence ?? "unknown";
 
@@ -164,10 +167,10 @@ function normalizeTokens(interaction: NormalizedInteraction) {
   const cacheWriteTokens = interaction.cacheWriteTokens ?? 0;
   const reasoningTokens = interaction.reasoningTokens ?? 0;
 
-  if (!providedAnyToken && estimate > 0) {
-    if (interaction.role === "assistant") outputTokens = estimate;
-    else inputTokens = estimate;
-    if (tokenConfidence === "unknown") tokenConfidence = "low-confidence estimate";
+  if (!providedAnyToken && estimate.tokens > 0) {
+    if (interaction.role === "assistant") outputTokens = estimate.tokens;
+    else inputTokens = estimate.tokens;
+    if (tokenConfidence === "unknown") tokenConfidence = estimate.confidence;
   }
 
   const summed = inputTokens + outputTokens + cacheReadTokens + cacheWriteTokens + reasoningTokens;
@@ -181,7 +184,8 @@ function normalizeTokens(interaction: NormalizedInteraction) {
     reasoningTokens,
     totalTokens,
     estimatedTokens,
-    tokenConfidence
+    tokenConfidence,
+    estimate
   };
 }
 
@@ -252,14 +256,26 @@ export function importSessions(
         const modelProviderId = inferredProvider?.id ?? providerId;
         if (inferredProvider) ensureProvider(inferredProvider.id, inferredProvider.name);
         const model = ensureModel(modelProviderId, interaction.modelName);
-        const tokens = normalizeTokens(interaction);
-        const cost = calculateInteractionCost(tokens, {
+        const tokens = normalizeTokens(interaction, modelProviderId);
+        const sourceCost =
+          typeof interaction.costUsd === "number" && Number.isFinite(interaction.costUsd)
+            ? interaction.costUsd
+            : null;
+        const calculatedCost = calculateInteractionCost(tokens, {
           inputTokenPrice: model.input_token_price,
           outputTokenPrice: model.output_token_price,
           cachedInputTokenPrice: model.cached_input_token_price,
           cacheWriteTokenPrice: model.cache_write_token_price,
           currency: model.currency
         });
+        const cost = sourceCost == null
+          ? calculatedCost
+          : {
+              amount: sourceCost,
+              currency: model.currency,
+              status: interaction.costEstimated ? "estimated" : "exact",
+              explanation: "Cost was imported from the source history record."
+            };
         const interactionSourceId = stableId("interaction-source", [
           sessionSourceId,
           interaction.externalId,
@@ -296,6 +312,13 @@ export function importSessions(
             interaction.rawText ?? null,
             json({
               ...(interaction.rawMetadata ?? {}),
+              tokenEstimate: tokens.estimatedTokens
+                ? {
+                    method: tokens.estimate.method,
+                    confidence: tokens.estimate.confidence,
+                    tokenizerFamily: tokens.estimate.tokenizerFamily
+                  }
+                : undefined,
               costStatus: cost.status,
               costExplanation: cost.explanation
             })

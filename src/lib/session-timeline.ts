@@ -1,4 +1,6 @@
 import { sqlite } from "@/src/db/client";
+import { buildDataConfidenceScore, type DataConfidenceScore } from "@/src/lib/data-confidence";
+import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
 
 export type SessionTimelineEventKind =
   | "interaction"
@@ -56,6 +58,23 @@ export type SessionTimeline = {
     parserReason: string | null;
     toolCalls: number;
   };
+  confidence: DataConfidenceScore & {
+    exactTokenInteractions: number;
+    tokenizerEstimateInteractions: number;
+    simpleEstimateInteractions: number;
+    unknownTokenInteractions: number;
+    pricedCostInteractions: number;
+    unknownCostInteractions: number;
+  };
+  repair: {
+    unknownCostCause: string | null;
+    repairHref: string | null;
+  };
+  spikes: Array<{
+    interactionId: string;
+    totalTokens: number;
+    reason: string;
+  }>;
   events: SessionTimelineEvent[];
 };
 
@@ -227,6 +246,7 @@ export function buildSessionTimeline(sessionId: string): SessionTimeline | null 
 
   const threshold = spikeThreshold(interactions);
   const events: SessionTimelineEvent[] = [];
+  const spikes: SessionTimeline["spikes"] = [];
   let previousModel: string | null = null;
 
   interactions.forEach((interaction, index) => {
@@ -245,6 +265,11 @@ export function buildSessionTimeline(sessionId: string): SessionTimeline | null 
     );
 
     if (number(interaction.totalTokens) > threshold) {
+      spikes.push({
+        interactionId: interaction.id,
+        totalTokens: number(interaction.totalTokens),
+        reason: `${number(interaction.totalTokens).toLocaleString()} tokens is above this session's spike threshold.`
+      });
       events.push(
         eventBase(
           "token-spike",
@@ -285,6 +310,31 @@ export function buildSessionTimeline(sessionId: string): SessionTimeline | null 
   const parserMetadata = parseJson<Record<string, unknown>>(session.parserRawMetadata, {});
   const totalCost = interactions.reduce((sum, row) => sum + (row.cost == null ? 0 : number(row.cost)), 0);
   const hasPricedInteraction = interactions.some((row) => row.cost != null);
+  const exactTokenInteractions = interactions.filter((row) => row.tokenConfidence === "exact").length;
+  const tokenizerEstimateInteractions = interactions.filter((row) => row.tokenConfidence === "tokenizer estimate").length;
+  const simpleEstimateInteractions = interactions.filter((row) => (
+    row.tokenConfidence === "simple estimate" ||
+    row.tokenConfidence === "high-confidence estimate" ||
+    row.tokenConfidence === "low-confidence estimate"
+  )).length;
+  const unknownTokenInteractions = interactions.filter((row) => row.tokenConfidence === "unknown").length;
+  const pricedCostInteractions = interactions.filter((row) => row.cost != null).length;
+  const unknownCostInteractions = interactions.length - pricedCostInteractions;
+  const parserConfidence = numberMetadata(parserMetadata, "confidence");
+  const confidenceScore = buildDataConfidenceScore({
+    totalInteractions: interactions.length,
+    exactTokenInteractions,
+    tokenizerEstimateInteractions,
+    simpleEstimateInteractions,
+    unknownTokenInteractions,
+    pricedCostInteractions,
+    unknownCostInteractions,
+    parserConfidence,
+    scanFreshness: "fresh"
+  });
+  const repairGroup = unknownCostInteractions > 0
+    ? buildUnknownCostRepairWorkbench().groups.find((group) => group.sourceFile === session.sourceFile)
+    : null;
 
   return {
     session: {
@@ -317,6 +367,20 @@ export function buildSessionTimeline(sessionId: string): SessionTimeline | null 
       parserReason: stringMetadata(parserMetadata, "reason"),
       toolCalls: toolCalls.length
     },
+    confidence: {
+      ...confidenceScore,
+      exactTokenInteractions,
+      tokenizerEstimateInteractions,
+      simpleEstimateInteractions,
+      unknownTokenInteractions,
+      pricedCostInteractions,
+      unknownCostInteractions
+    },
+    repair: {
+      unknownCostCause: repairGroup?.cause ?? (unknownCostInteractions > 0 ? "other" : null),
+      repairHref: repairGroup?.itemHref ?? null
+    },
+    spikes,
     events
   };
 }

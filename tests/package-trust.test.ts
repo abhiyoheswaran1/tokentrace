@@ -60,6 +60,7 @@ describe("package trust policy", () => {
     expect(packageJson.scripts["smoke:packed"]).toContain("scripts/smoke-packed-install.mjs");
     expect(packageJson.scripts["release:check"]).toContain("npm run smoke:cli");
     expect(packageJson.scripts["release:check"]).toContain("npm run smoke:packed");
+    expect(packageJson.scripts["release:check"]).toContain("npm run security:ioc");
     expect(packageJson.scripts["release:check"]).toContain("npm run security:package");
   });
 
@@ -83,6 +84,17 @@ describe("package trust policy", () => {
     expect(inspectScript).toContain("docs/agent-discovery.schema.json");
     expect(inspectScript).toContain("bin/tokentrace.js");
     expect(inspectScript).toContain("executable");
+  });
+
+  it("runs a supply-chain IOC scan during local and CI release checks", () => {
+    const scanner = readFileSync(join(process.cwd(), "scripts/security-ioc.mjs"), "utf8");
+    const securityWorkflow = readFileSync(join(process.cwd(), ".github/workflows/security.yml"), "utf8");
+
+    expect(packageJson.scripts["security:ioc"]).toBe("node scripts/security-ioc.mjs");
+    expect(scanner).toContain("CVE-2026-45321");
+    expect(scanner).toContain("gh-token-monitor");
+    expect(scanner).toContain("pull_request_target");
+    expect(securityWorkflow).toContain("npm run security:ioc -- --no-home");
   });
 
   it("packed install smoke covers agent discovery and roadmap commands", () => {

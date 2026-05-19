@@ -233,7 +233,12 @@ describe("write API validation", () => {
     expect(saveAppSettings).toHaveBeenCalledWith({
       customFolders: ["/tmp/usage", "/tmp/other"],
       storeRawMessageContent: false,
-      usageGuardrails: { monthlyCostLimitUsd: null, monthlyTokenLimit: null }
+      usageGuardrails: { monthlyCostLimitUsd: null, monthlyTokenLimit: null },
+      importProfiles: expect.arrayContaining([
+        expect.objectContaining({ id: "generic-jsonl" }),
+        expect.objectContaining({ id: "generic-text-log" }),
+        expect.objectContaining({ id: "sqlite-history" })
+      ])
     });
   });
 });

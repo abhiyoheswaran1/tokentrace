@@ -35,7 +35,15 @@ export type NormalizedInteraction = {
   reasoningTokens?: number | null;
   totalTokens?: number | null;
   estimatedTokens?: boolean;
-  tokenConfidence?: "exact" | "high-confidence estimate" | "low-confidence estimate" | "unknown";
+  tokenConfidence?:
+    | "exact"
+    | "tokenizer estimate"
+    | "simple estimate"
+    | "high-confidence estimate"
+    | "low-confidence estimate"
+    | "unknown";
+  costUsd?: number | null;
+  costEstimated?: boolean;
   latencyMs?: number | null;
   rawText?: string | null;
   rawTextPreview?: string | null;

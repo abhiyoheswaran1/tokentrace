@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { FolderPlus, Gauge, Play, RotateCcw, ShieldCheck, Trash2 } from "lucide-react";
 import type { ScanHealth } from "@/src/lib/scan-health";
+import type { ImportProfile } from "@/src/lib/import-profiles";
 import { formatAppVersion } from "@/src/lib/app-version";
 import { formatDate, percent } from "@/src/lib/format";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ type SettingsPayload = {
     monthlyCostLimitUsd: number | null;
     monthlyTokenLimit: number | null;
   };
+  importProfiles: ImportProfile[];
   databasePath: string;
   appVersion: string;
 };
@@ -65,6 +67,9 @@ export function SettingsPanel({
     initialSettings.usageGuardrails.monthlyTokenLimit?.toString() ?? ""
   );
   const [newFolder, setNewFolder] = useState("");
+  const [importProfiles, setImportProfiles] = useState(initialSettings.importProfiles);
+  const [newProfileLabel, setNewProfileLabel] = useState("");
+  const [newProfileMatchers, setNewProfileMatchers] = useState("");
   const [force, setForce] = useState(false);
   const [message, setMessage] = useState("");
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
@@ -88,8 +93,45 @@ export function SettingsPanel({
       usageGuardrails: {
         monthlyCostLimitUsd: parseLimitInput(monthlyCostLimitUsd),
         monthlyTokenLimit: parseLimitInput(monthlyTokenLimit)
-      }
+      },
+      importProfiles
     };
+  }
+
+  function toggleImportProfile(id: string) {
+    setImportProfiles((current) =>
+      current.map((profile) =>
+        profile.id === id ? { ...profile, enabled: !profile.enabled } : profile
+      )
+    );
+  }
+
+  function addImportProfile() {
+    const label = newProfileLabel.trim();
+    const matchers = newProfileMatchers
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (!label || !matchers.length) return;
+    const id = `custom-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "profile"}`;
+    setImportProfiles((current) => [
+      ...current.filter((profile) => profile.id !== id),
+      {
+        id,
+        label,
+        kind: "text-log",
+        description: "Custom local log convention.",
+        matchers,
+        enabled: true,
+        builtIn: false
+      }
+    ]);
+    setNewProfileLabel("");
+    setNewProfileMatchers("");
+  }
+
+  function removeImportProfile(id: string) {
+    setImportProfiles((current) => current.filter((profile) => profile.id !== id || profile.builtIn));
   }
 
   function saveSettings() {
@@ -335,6 +377,66 @@ export function SettingsPanel({
               <p className="text-sm text-muted-foreground">No custom folders configured.</p>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Import Profiles</CardTitle>
+          <CardDescription>
+            Safe local log conventions for wrappers and team tools. Profiles add file matchers and evidence labels; prompts are still not sent anywhere.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 lg:grid-cols-3">
+            {importProfiles.map((profile) => (
+              <div key={profile.id} className="rounded-md border bg-card p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold">{profile.label}</div>
+                    <div className="mt-1 text-xs leading-5 text-muted-foreground">{profile.description}</div>
+                  </div>
+                  <Badge variant={profile.enabled ? "success" : "secondary"}>
+                    {profile.enabled ? "enabled" : "off"}
+                  </Badge>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {profile.matchers.map((matcher) => (
+                    <code key={matcher} className="rounded bg-muted px-1.5 py-0.5 text-xs">{matcher}</code>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => toggleImportProfile(profile.id)}>
+                    {profile.enabled ? "Disable" : "Enable"}
+                  </Button>
+                  {!profile.builtIn ? (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => removeImportProfile(profile.id)}>
+                      Remove
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-2 border-t pt-4 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto]">
+            <Input
+              value={newProfileLabel}
+              onChange={(event) => setNewProfileLabel(event.target.value)}
+              placeholder="Team wrapper logs"
+            />
+            <Input
+              value={newProfileMatchers}
+              onChange={(event) => setNewProfileMatchers(event.target.value)}
+              placeholder=".ndjson, usage-log, agent-run"
+            />
+            <Button type="button" variant="outline" onClick={addImportProfile}>
+              <FolderPlus className="h-4 w-4" />
+              Add profile
+            </Button>
+          </div>
+          <p className="text-xs leading-5 text-muted-foreground">
+            Extension matchers like <code>.ndjson</code> are added to discovery. Text matchers label evidence when the matched file is imported by a compatible parser.
+          </p>
         </CardContent>
       </Card>
 

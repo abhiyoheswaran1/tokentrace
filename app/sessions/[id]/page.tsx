@@ -22,6 +22,13 @@ function eventLabel(kind: SessionTimelineEventKind) {
   return kind.replace(/-/g, " ");
 }
 
+function confidenceVariant(grade: string) {
+  if (grade === "high") return "success";
+  if (grade === "medium") return "warning";
+  if (grade === "low") return "destructive";
+  return "secondary";
+}
+
 function SummaryTile({
   label,
   value,
@@ -145,6 +152,58 @@ export default async function SessionTimelinePage({
           icon={Terminal}
         />
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <CardTitle>Session Evidence</CardTitle>
+            <CardDescription>
+              Why this session costs what it costs, which token counts are exact or estimated, and what can be repaired.
+            </CardDescription>
+          </div>
+          <Badge variant={confidenceVariant(timeline.confidence.grade)}>
+            {timeline.confidence.score}/100 {timeline.confidence.grade} confidence
+          </Badge>
+        </CardHeader>
+        <CardContent className="grid gap-4 border-t p-4 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <FieldLabel>Token source</FieldLabel>
+              <div className="mt-1 text-sm font-medium">
+                {timeline.confidence.exactTokenInteractions.toLocaleString()} exact /{" "}
+                {timeline.confidence.tokenizerEstimateInteractions.toLocaleString()} tokenizer /{" "}
+                {timeline.confidence.simpleEstimateInteractions.toLocaleString()} simple
+              </div>
+            </div>
+            <div>
+              <FieldLabel>Cost coverage</FieldLabel>
+              <div className="mt-1 text-sm font-medium">
+                {timeline.confidence.pricedCostInteractions.toLocaleString()} priced /{" "}
+                {timeline.confidence.unknownCostInteractions.toLocaleString()} unknown
+              </div>
+            </div>
+            <div>
+              <FieldLabel>Spike clues</FieldLabel>
+              <div className="mt-1 text-sm font-medium">
+                {timeline.spikes.length ? `${timeline.spikes.length.toLocaleString()} token spikes` : "No token spikes"}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-md border bg-muted/20 p-3">
+            <FieldLabel>Next repair step</FieldLabel>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {timeline.repair.repairHref
+                ? `Unknown cost cause: ${timeline.repair.unknownCostCause}. Open the repair workbench for this source.`
+                : "No session-specific cost repair is required."}
+            </div>
+            {timeline.repair.repairHref ? (
+              <Button asChild size="sm" variant="outline" className="mt-3">
+                <Link href={timeline.repair.repairHref}>Open repair</Link>
+              </Button>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

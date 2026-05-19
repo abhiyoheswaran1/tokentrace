@@ -411,6 +411,25 @@ export function markUnknownCostRepairIgnored(key: string, notes?: string) {
   });
 }
 
+export function bulkUpdateUnknownCostRepairs(input: {
+  keys: string[];
+  status: UnknownCostRepairStatus;
+  notes?: string;
+}) {
+  const uniqueKeys = Array.from(new Set(input.keys.filter((key) => typeof key === "string" && key.trim())));
+  const reviews = uniqueKeys.map((key) =>
+    saveUnknownCostReview({
+      key,
+      status: input.status,
+      notes: input.notes
+    })
+  );
+  return {
+    updated: reviews.length,
+    reviews
+  };
+}
+
 export function buildUnknownCostRepairWorkbench(filters: AnalyticsFilters = {}): UnknownCostRepairWorkbench {
   const { pricedByProvider, displayByProviderModel } = buildPricedModelLookup();
   const dateFilter = interactionDateFilter(filters);

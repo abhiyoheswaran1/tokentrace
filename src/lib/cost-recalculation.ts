@@ -53,6 +53,14 @@ function parseMetadata(value: unknown): Record<string, unknown> {
   }
 }
 
+function finiteNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) {
+    return Number(value);
+  }
+  return null;
+}
+
 function hasCompletePricing(model: Pick<ModelPriceRow, "input_token_price" | "output_token_price">) {
   return model.input_token_price != null && model.output_token_price != null;
 }
@@ -167,6 +175,25 @@ export function recalculateInteractionCosts(): CostRecalculationResult {
 
   const transaction = sqlite.transaction(() => {
     for (const interaction of interactions) {
+      const existingMetadata = parseMetadata(interaction.raw_metadata);
+      const sourceCost = finiteNumber(existingMetadata.sourceCost);
+      if (sourceCost != null) {
+        const metadata = {
+          ...existingMetadata,
+          costStatus: "exact",
+          costSource: "source-history",
+          costExplanation: "Cost was imported from the source history record.",
+          costRecalculatedAt: new Date().toISOString()
+        };
+        interactionsUpdated += update.run(
+          sourceCost,
+          0,
+          JSON.stringify(metadata),
+          interaction.id
+        ).changes;
+        continue;
+      }
+
       const cost = calculateInteractionCost(
         {
           inputTokens: interaction.input_tokens,
@@ -189,7 +216,7 @@ export function recalculateInteractionCosts(): CostRecalculationResult {
 
       if (cost.status === "unknown") unknownCostInteractions += 1;
       const metadata = {
-        ...parseMetadata(interaction.raw_metadata),
+        ...existingMetadata,
         costStatus: cost.status,
         costExplanation: cost.explanation,
         costRecalculatedAt: new Date().toISOString()
