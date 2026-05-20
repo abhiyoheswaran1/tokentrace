@@ -1,24 +1,43 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Plus, RefreshCw, Save } from "lucide-react";
+import { Download, Plus, RefreshCw, Upload } from "lucide-react";
 import type { PricingRow } from "@/src/lib/pricing";
 import type { ModelAliasSuggestion } from "@/src/lib/analytics";
-import { formatTokens } from "@/src/lib/format";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MonoText } from "@/components/ui/typography";
+import { ModelAliasSuggestionsTable } from "@/components/pricing/model-alias-suggestions-table";
+import { ModelRatesTable } from "@/components/pricing/model-rates-table";
+import { PricingBulkPanel } from "@/components/pricing/pricing-bulk-panel";
+import { PricingContextCard } from "@/components/pricing/pricing-context-card";
+import {
+  type EditablePricingRow,
+  findDuplicatePricingRows,
+  parsePricingRowsCsv,
+  pricingRefreshResultCopy,
+  pricingSaveResultCopy,
+  serializePricingRowsCsv,
+  validatePricingRow
+} from "@/components/pricing/pricing-workflow";
 
-type EditablePricingRow = PricingRow & {
-  providerName?: string;
-};
+function pricingPayload(row: EditablePricingRow) {
+  return {
+    providerId: row.providerId.trim(),
+    providerName: (row.providerName ?? row.provider).trim(),
+    model: row.model.trim(),
+    inputTokenPrice: row.inputTokenPrice,
+    outputTokenPrice: row.outputTokenPrice,
+    cachedInputTokenPrice: row.cachedInputTokenPrice,
+    cacheWriteTokenPrice: row.cacheWriteTokenPrice,
+    currency: row.currency.trim().toUpperCase() || "USD"
+  };
+}
 
-function numberInputValue(value: number | null) {
-  return value == null ? "" : String(value);
+async function readResponseError(response: Response) {
+  const body = await response.json().catch(() => null) as { error?: string } | null;
+  return body?.error ? `: ${body.error}` : ".";
 }
 
 export function PricingSettings({
@@ -34,6 +53,8 @@ export function PricingSettings({
 }) {
   const [rows, setRows] = useState<EditablePricingRow[]>(initialRows);
   const [filter, setFilter] = useState(initialModel ?? "");
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState("");
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
   const [messageHref, setMessageHref] = useState<string | null>(null);
@@ -58,51 +79,67 @@ export function PricingSettings({
     );
   }, [filter, rows]);
 
+  const validationByRowId = useMemo(
+    () => new Map(rows.map((row) => [row.id, validatePricingRow(row)])),
+    [rows]
+  );
+  const duplicateRows = useMemo(() => findDuplicatePricingRows(rows), [rows]);
+  const duplicateRowIds = useMemo(
+    () => new Set(duplicateRows.flatMap((duplicate) => duplicate.rowIds)),
+    [duplicateRows]
+  );
+
   function updateRow(id: string, patch: Partial<EditablePricingRow>) {
     setRows((current) =>
       current.map((row) => (row.id === id ? { ...row, ...patch } : row))
     );
   }
 
-  function addRow() {
-    setRows((current) => [
-      {
-        id: `new-${Date.now()}`,
-        providerId: "custom",
-        provider: "Custom",
-        providerName: "Custom",
-        model: "",
-        inputTokenPrice: null,
-        outputTokenPrice: null,
-        cachedInputTokenPrice: null,
-        cacheWriteTokenPrice: null,
-        currency: "USD",
-        effectiveFrom: null
-      },
-      ...current
-    ]);
+  function addRow(seed: Partial<EditablePricingRow> = {}) {
+    const nextRow: EditablePricingRow = {
+      id: `new-${Date.now()}`,
+      providerId: seed.providerId ?? "custom",
+      provider: seed.provider ?? "Custom",
+      providerName: seed.providerName ?? seed.provider ?? "Custom",
+      model: seed.model ?? "",
+      inputTokenPrice: seed.inputTokenPrice ?? null,
+      outputTokenPrice: seed.outputTokenPrice ?? null,
+      cachedInputTokenPrice: seed.cachedInputTokenPrice ?? null,
+      cacheWriteTokenPrice: seed.cacheWriteTokenPrice ?? null,
+      currency: seed.currency ?? "USD",
+      effectiveFrom: null
+    };
+    setRows((current) => [nextRow, ...current]);
+    if (nextRow.model) setFilter(nextRow.model);
+  }
+
+  function addFocusedRow() {
+    addRow({
+      providerId: "custom",
+      provider: "Custom",
+      providerName: "Custom",
+      model: focusedSuggestion?.suggestedModel ?? focusedSuggestion?.model ?? initialModel ?? ""
+    });
   }
 
   function saveRow(row: EditablePricingRow) {
+    const validation = validatePricingRow(row);
+    if (!validation.valid) {
+      setMessage(`Fix this model rate first: ${validation.errors[0]}`);
+      setMessageHref(null);
+      return;
+    }
+
     startTransition(async () => {
       setMessage("");
       setMessageHref(null);
       const response = await fetch("/api/prices", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          providerId: row.providerId,
-          providerName: row.providerName ?? row.provider,
-          model: row.model,
-          inputTokenPrice: row.inputTokenPrice,
-          outputTokenPrice: row.outputTokenPrice,
-          cachedInputTokenPrice: row.cachedInputTokenPrice,
-          cacheWriteTokenPrice: row.cacheWriteTokenPrice,
-          currency: row.currency
-        })
+        body: JSON.stringify(pricingPayload(row))
       });
       if (!response.ok) {
-        setMessage("Price save failed.");
+        setMessage(`Price save failed${await readResponseError(response)}`);
         return;
       }
       const result = (await response.json()) as {
@@ -115,137 +152,88 @@ export function PricingSettings({
       };
       const latest = (await fetch("/api/prices").then((res) => res.json())) as PricingRow[];
       setRows(latest);
-      setMessage(
-        `Price saved. ${result.costsRecalculated.toLocaleString()} interactions repriced, ${result.resolvedRepairItems.toLocaleString()} repair items resolved, ${result.unknownCostInteractions.toLocaleString()} unknown-cost interactions remain.`
-      );
-      setMessageHref(returnTo ?? null);
+      setMessage(pricingSaveResultCopy(result));
+      setMessageHref(returnTo ?? (result.resolvedRepairItems > 0 ? "/repair" : null));
     });
   }
 
   function refreshDefaultPrices() {
     startTransition(async () => {
       setMessage("Refreshing public price table...");
+      setMessageHref(null);
       const response = await fetch("/api/prices/refresh", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ source: "remote" })
       });
       if (!response.ok) {
-        setMessage("Price refresh failed.");
+        setMessage(`Price refresh failed${await readResponseError(response)}`);
         return;
       }
-      const result = (await response.json()) as {
-        source: string;
-        imported: number;
-        updated: number;
-        skippedManual: number;
-        costsRecalculated: number;
-        modelAliasesUpdated: number;
-        unknownCostInteractions: number;
-        error: string | null;
-      };
+      const result = await response.json();
+      const latest = (await fetch("/api/prices").then((res) => res.json())) as PricingRow[];
+      setRows(latest);
+      setMessage(pricingRefreshResultCopy(result));
+    });
+  }
+
+  function exportVisibleCsv() {
+    setBulkOpen(true);
+    setBulkText(serializePricingRowsCsv(visibleRows));
+    setMessage("Visible model rates loaded into the CSV workspace.");
+    setMessageHref(null);
+  }
+
+  function importCsvRates() {
+    const parsed = parsePricingRowsCsv(bulkText);
+    if (parsed.errors.length) {
+      setMessage(`CSV import needs attention. ${parsed.errors.slice(0, 2).join(" ")}`);
+      setMessageHref(null);
+      return;
+    }
+    if (parsed.rows.length === 0) {
+      setMessage("CSV import needs at least one model-rate row.");
+      setMessageHref(null);
+      return;
+    }
+
+    startTransition(async () => {
+      setMessage(`Importing ${parsed.rows.length.toLocaleString()} CSV rates...`);
+      setMessageHref(null);
+      let imported = 0;
+      let firstError: string | null = null;
+      for (const row of parsed.rows) {
+        const response = await fetch("/api/prices", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(pricingPayload(row))
+        });
+        if (!response.ok) {
+          firstError = `${row.providerId} / ${row.model}${await readResponseError(response)}`;
+          break;
+        }
+        imported += 1;
+      }
       const latest = (await fetch("/api/prices").then((res) => res.json())) as PricingRow[];
       setRows(latest);
       setMessage(
-        result.error
-          ? "Remote refresh failed; bundled prices were used."
-          : `Prices refreshed. ${result.imported} added, ${result.updated} updated, ${result.skippedManual} manual rows kept. ${result.costsRecalculated} imported interactions repriced.`
+        firstError
+          ? `CSV import stopped after ${imported.toLocaleString()} rows. ${firstError}`
+          : `Imported ${imported.toLocaleString()} CSV model-rate rows. Reopen Repair or Scan Health to confirm unknown-cost coverage changed.`
       );
+      setMessageHref(returnTo ?? "/repair");
     });
   }
 
   return (
     <div className="space-y-4">
-      {focusedSuggestion || returnTo ? (
-        <Card className="border-primary/30 bg-primary/5">
-          <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <CardTitle>Repair Context</CardTitle>
-              <CardDescription>
-                Model Rates was opened from an unknown-cost workflow. Save a complete rate row to recalculate local interactions.
-              </CardDescription>
-            </div>
-            {returnTo ? (
-              <Button asChild variant="outline" size="sm">
-                <a href={returnTo}>Open repair</a>
-              </Button>
-            ) : null}
-          </CardHeader>
-          {focusedSuggestion ? (
-            <CardContent className="grid gap-3 border-t p-0 sm:grid-cols-3">
-              <div className="p-4">
-                <div className="text-xs font-medium text-muted-foreground">Observed model</div>
-                <div className="mt-1 font-medium">{focusedSuggestion.model}</div>
-              </div>
-              <div className="border-t p-4 sm:border-l sm:border-t-0">
-                <div className="text-xs font-medium text-muted-foreground">Suggested row</div>
-                <div className="mt-1 font-medium">{focusedSuggestion.suggestedModel ?? "Add or verify model rate"}</div>
-              </div>
-              <div className="border-t p-4 sm:border-l sm:border-t-0">
-                <div className="text-xs font-medium text-muted-foreground">Evidence</div>
-                <div className="mt-1 text-sm">
-                  {focusedSuggestion.interactions.toLocaleString()} interactions, {formatTokens(focusedSuggestion.totalTokens)}
-                </div>
-                <Badge className="mt-2" variant={focusedSuggestion.confidence === "high" ? "success" : focusedSuggestion.confidence === "medium" ? "warning" : "secondary"}>
-                  {focusedSuggestion.confidence} confidence
-                </Badge>
-              </div>
-            </CardContent>
-          ) : null}
-        </Card>
-      ) : null}
-
-      {aliasSuggestions.length ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Model Alias Suggestions</CardTitle>
-            <CardDescription>
-              Local repair hints for unknown-cost rows. Review before copying prices across model names.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="table-scroll">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Observed model</TableHead>
-                  <TableHead>Suggested row</TableHead>
-                  <TableHead>Confidence</TableHead>
-                  <TableHead>Evidence</TableHead>
-                  <TableHead>Repair</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {aliasSuggestions.slice(0, 8).map((suggestion) => (
-                  <TableRow key={`${suggestion.model}-${suggestion.sourceFile}`}>
-                    <TableCell className="font-medium">{suggestion.model}</TableCell>
-                    <TableCell>{suggestion.suggestedModel ?? "Parser review needed"}</TableCell>
-                    <TableCell>
-                      <Badge variant={suggestion.confidence === "high" ? "success" : suggestion.confidence === "medium" ? "warning" : "secondary"}>
-                        {suggestion.confidence}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-md text-sm text-muted-foreground">
-                      {suggestion.reason} {suggestion.interactions.toLocaleString()} interactions, {formatTokens(suggestion.totalTokens)}.
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        <a href={suggestion.repairHref} className="font-medium text-primary underline-offset-4 hover:underline">
-                          {suggestion.repairHref.startsWith("/pricing") ? "Set model rate" : "Review parser"}
-                        </a>
-                        {suggestion.repairHref !== suggestion.parserHref ? (
-                          <a href={suggestion.parserHref} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                            Review parser
-                          </a>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      ) : null}
+      <PricingContextCard
+        focusedSuggestion={focusedSuggestion}
+        initialModel={initialModel}
+        returnTo={returnTo}
+        onAddFocusedRow={addFocusedRow}
+      />
+      <ModelAliasSuggestionsTable aliasSuggestions={aliasSuggestions} onAddRow={addRow} />
 
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -256,125 +244,45 @@ export function PricingSettings({
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setBulkOpen((open) => !open)}>
+              <Upload className="h-4 w-4" />
+              CSV import/export
+            </Button>
+            <Button variant="outline" onClick={exportVisibleCsv}>
+              <Download className="h-4 w-4" />
+              Export visible CSV
+            </Button>
             <Button variant="outline" onClick={refreshDefaultPrices} disabled={isPending}>
               <RefreshCw className="h-4 w-4" />
               Refresh prices
             </Button>
-            <Button variant="outline" onClick={addRow}>
+            <Button variant="outline" onClick={() => addRow()}>
               <Plus className="h-4 w-4" />
               Add model
             </Button>
           </div>
         </CardHeader>
         <CardContent className="table-scroll">
-          <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,22rem)_auto] sm:items-end">
-            <div className="space-y-1.5">
-              <Label htmlFor="pricing-filter">Find model or provider</Label>
-              <Input
-                id="pricing-filter"
-                value={filter}
-                onChange={(event) => setFilter(event.target.value)}
-                placeholder="claude-sonnet, gpt-4.1, openai"
-              />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Showing {visibleRows.length.toLocaleString()} of {rows.length.toLocaleString()} price rows.
-            </div>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Provider ID</TableHead>
-                <TableHead>Provider</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Input / 1M</TableHead>
-                <TableHead>Output / 1M</TableHead>
-                <TableHead>Cache read / 1M</TableHead>
-                <TableHead>Cache write / 1M</TableHead>
-                <TableHead>Currency</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {visibleRows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>
-                    <Input
-                      className="w-28"
-                      value={row.providerId}
-                      onChange={(event) => updateRow(row.id, { providerId: event.target.value })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      className="w-28"
-                      value={row.providerName ?? row.provider}
-                      onChange={(event) => updateRow(row.id, { providerName: event.target.value })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      className="w-52"
-                      value={row.model}
-                      onChange={(event) => updateRow(row.id, { model: event.target.value })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      className="w-24"
-                      inputMode="decimal"
-                      value={numberInputValue(row.inputTokenPrice)}
-                      onChange={(event) => updateRow(row.id, { inputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      className="w-24"
-                      inputMode="decimal"
-                      value={numberInputValue(row.outputTokenPrice)}
-                      onChange={(event) => updateRow(row.id, { outputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      className="w-24"
-                      inputMode="decimal"
-                      value={numberInputValue(row.cachedInputTokenPrice)}
-                      onChange={(event) => updateRow(row.id, { cachedInputTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      className="w-24"
-                      inputMode="decimal"
-                      value={numberInputValue(row.cacheWriteTokenPrice)}
-                      onChange={(event) => updateRow(row.id, { cacheWriteTokenPrice: event.target.value === "" ? null : Number(event.target.value) })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      className="w-24"
-                      value={row.currency}
-                      onChange={(event) => updateRow(row.id, { currency: event.target.value })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button size="sm" onClick={() => saveRow(row)} disabled={isPending || !row.model}>
-                      <Save className="h-4 w-4" />
-                      Save
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {visibleRows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">
-                    No model-rate rows match this filter.
-                  </TableCell>
-                </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
+          {bulkOpen ? (
+            <PricingBulkPanel
+              bulkText={bulkText}
+              isPending={isPending}
+              onBulkTextChange={setBulkText}
+              onImportCsvRates={importCsvRates}
+            />
+          ) : null}
+          <ModelRatesTable
+            visibleRows={visibleRows}
+            totalRows={rows.length}
+            filter={filter}
+            duplicateRows={duplicateRows}
+            duplicateRowIds={duplicateRowIds}
+            validationByRowId={validationByRowId}
+            isPending={isPending}
+            onFilterChange={setFilter}
+            onUpdateRow={updateRow}
+            onSaveRow={saveRow}
+          />
           {message ? (
             <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span>{message}</span>
