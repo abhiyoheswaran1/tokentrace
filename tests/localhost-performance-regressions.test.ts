@@ -38,7 +38,13 @@ describe("localhost performance regressions", () => {
 
   it("keeps large-database reads on covering indexes instead of raw interaction rows", () => {
     const migrations = read("src/db/migrate-core.ts");
-    const analytics = read("src/lib/analytics.ts");
+    const analytics = [
+      read("src/lib/analytics/summary.ts"),
+      read("src/lib/analytics/trends.ts"),
+      read("src/lib/analytics/entities.ts"),
+      read("src/lib/analytics/repair.ts"),
+      read("src/lib/analytics/scan-trust.ts")
+    ].join("\n");
     const evidence = read("src/lib/evidence-trail.ts");
 
     expect(migrations).toContain("interactions_analytics_cover_idx");
@@ -95,7 +101,7 @@ describe("localhost performance regressions", () => {
   });
 
   it("keeps trend aggregation off SQLite localtime bucketing", () => {
-    const analytics = read("src/lib/analytics.ts");
+    const analytics = read("src/lib/analytics/trends.ts");
     const client = read("src/db/client.ts");
 
     expect(analytics).toContain("local_date_key(i.timestamp) AS date");
@@ -114,8 +120,10 @@ describe("localhost performance regressions", () => {
     expect(analyticsTypes).toContain('analyticsProfile?: "full" | "overview"');
     expect(analytics).toContain('const overviewOnly = options.analyticsProfile === "overview"');
     expect(analytics).toContain('const models = overviewOnly ? [] : timeAnalyticsQuery("analytics.models"');
-    expect(analytics).toContain('const modelAliasSuggestions = overviewOnly ? [] : timeAnalyticsQuery("analytics.modelAliases"');
-    expect(analytics).toContain('const insights = overviewOnly ? [] : timeAnalyticsQuery("analytics.insights"');
+    expect(analytics).toContain("const modelAliasSuggestions = overviewOnly");
+    expect(analytics).toContain('timeAnalyticsQuery("analytics.modelAliases"');
+    expect(analytics).toContain("const insights = overviewOnly");
+    expect(analytics).toContain('timeAnalyticsQuery("analytics.insights"');
   });
 
   it("keeps Overview server data assembly behind a focused helper", () => {
@@ -134,6 +142,7 @@ describe("localhost performance regressions", () => {
 
   it("surfaces slow analytics page queries through doctor-ready timing guardrails", () => {
     const analytics = read("src/lib/analytics.ts");
+    const scanTrust = read("src/lib/analytics/scan-trust.ts");
     const timing = read("src/lib/analytics-timing.ts");
     const doctor = read("src/lib/doctor.ts");
     const doctorCli = read("scripts/doctor.ts");
@@ -143,7 +152,7 @@ describe("localhost performance regressions", () => {
     expect(timing).toContain("export function getAnalyticsTimingReport");
     expect(analytics).toContain('timeAnalyticsQuery("analytics.trends"');
     expect(analytics).toContain('timeAnalyticsQuery("analytics.sessions"');
-    expect(analytics).toContain('timeAnalyticsQuery("analytics.scanTrust"');
+    expect(scanTrust).toContain('timeAnalyticsQuery("analytics.scanTrust"');
     expect(doctor).toContain("analyticsTiming");
     expect(doctorCli).toContain("Slow analytics queries");
   });
