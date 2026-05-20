@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Play } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import { repairDeltaSummary, type RepairDelta } from "@/src/lib/repair-delta";
 import { cn } from "@/src/lib/utils";
 
 type ScanResult = {
@@ -13,6 +14,7 @@ type ScanResult = {
   costsRecalculated: number;
   unknownCostInteractions: number;
   staleNonUsageSessionsRemoved: number;
+  repairDelta?: RepairDelta | null;
   warnings: string[];
   errors: string[];
   warningCount?: number;
@@ -70,6 +72,7 @@ export function ScanNowButton({
         const costsRecalculated = result.costsRecalculated ?? 0;
         const unknownCostInteractions = result.unknownCostInteractions ?? 0;
         const staleNonUsageSessionsRemoved = result.staleNonUsageSessionsRemoved ?? 0;
+        const repairDelta = result.repairDelta ?? null;
         const warnings = result.warnings ?? [];
         const errors = result.errors ?? [];
         const warningCount = result.warningCount ?? result.warnings?.length ?? 0;
@@ -84,6 +87,7 @@ export function ScanNowButton({
             costsRecalculated,
             unknownCostInteractions,
             staleNonUsageSessionsRemoved,
+            repairDelta,
             warnings,
             errors,
             warningCount,
@@ -123,6 +127,11 @@ export function ScanNowButton({
                 <span>{status.result.unknownCostInteractions.toLocaleString()} unknown cost</span>
                 <span>{status.result.staleNonUsageSessionsRemoved.toLocaleString()} Stale support imports removed</span>
               </div>
+              {status.result.repairDelta ? (
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                  {repairDeltaSummary(status.result.repairDelta)}
+                </p>
+              ) : null}
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
                 <Link href="/diagnostics" className="font-medium text-primary underline-offset-2 hover:underline">Open Scan Health</Link>
                 <Link href="/repair" className="font-medium text-primary underline-offset-2 hover:underline">Open repair</Link>

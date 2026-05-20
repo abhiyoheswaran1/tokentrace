@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     interactionsChecked: result.interactionsChecked,
     unknownCostInteractions: result.unknownCostInteractions,
     modelAliasesUpdated: result.modelsUpdated,
-    resolvedRepairItems: result.resolvedRepairItems
+    resolvedRepairItems: result.resolvedRepairItems,
+    repairDelta: result.repairDelta
   });
 }

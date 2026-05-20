@@ -1,5 +1,12 @@
 import { sqlite } from "@/src/db/client";
 import { recalculateInteractionCosts } from "@/src/lib/cost-recalculation";
+import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
+import {
+  buildRepairDelta,
+  snapshotRepairWorkbench,
+  type RepairDelta,
+  type RepairDeltaSnapshot
+} from "@/src/lib/repair-delta";
 import { nonUsageFileReason } from "@/src/ingestion/path-classifier";
 
 export type RunScanResult = {
@@ -10,6 +17,7 @@ export type RunScanResult = {
   modelAliasesUpdated: number;
   unknownCostInteractions: number;
   staleNonUsageSessionsRemoved: number;
+  repairDelta: RepairDelta | null;
   warnings: string[];
   errors: string[];
 };
@@ -77,6 +85,7 @@ export function buildRunScanResult({
   filesScanned,
   recordsImported,
   staleNonUsageSessionsRemoved,
+  beforeRepairSnapshot,
   warnings,
   errors
 }: {
@@ -84,10 +93,17 @@ export function buildRunScanResult({
   filesScanned: number;
   recordsImported: number;
   staleNonUsageSessionsRemoved: number;
+  beforeRepairSnapshot?: RepairDeltaSnapshot;
   warnings: string[];
   errors: string[];
 }): RunScanResult {
   const recalculation = recalculateInteractionCosts();
+  const repairDelta = beforeRepairSnapshot
+    ? buildRepairDelta(
+        beforeRepairSnapshot,
+        snapshotRepairWorkbench(buildUnknownCostRepairWorkbench())
+      )
+    : null;
 
   return {
     scanRunId,
@@ -97,6 +113,7 @@ export function buildRunScanResult({
     modelAliasesUpdated: recalculation.modelsUpdated,
     unknownCostInteractions: recalculation.unknownCostInteractions,
     staleNonUsageSessionsRemoved,
+    repairDelta,
     warnings,
     errors
   };

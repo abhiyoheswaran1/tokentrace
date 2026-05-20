@@ -1,11 +1,18 @@
 import { sqlite } from "@/src/db/client";
 import { recalculateInteractionCosts } from "@/src/lib/cost-recalculation";
+import { buildUnknownCostRepairWorkbench, saveUnknownCostReview } from "@/src/lib/unknown-cost-repair";
 import {
   DEFAULT_PRICING_MANIFEST_URL,
   getBundledPricingManifest,
   normalizePricingManifest,
   type PricingManifest
 } from "@/src/lib/pricing-manifest";
+import {
+  buildRepairDelta,
+  snapshotRepairWorkbench,
+  type RepairDelta,
+  type RepairDeltaSnapshot
+} from "@/src/lib/repair-delta";
 
 type RefreshOptions = {
   source?: "bundled" | "remote";
@@ -23,6 +30,8 @@ export type PricingRefreshResult = {
   costsRecalculated: number;
   modelAliasesUpdated: number;
   unknownCostInteractions: number;
+  resolvedRepairItems: number;
+  repairDelta: RepairDelta;
   error: string | null;
 };
 
@@ -182,11 +191,32 @@ function importManifest(manifest: PricingManifest, source: "bundled" | "remote",
   return { imported, updated, skippedManual };
 }
 
+function markResolvedPricingRefreshGroups(repairDelta: RepairDelta) {
+  for (const group of repairDelta.resolvedGroups) {
+    saveUnknownCostReview({
+      key: group.key,
+      status: "resolved",
+      notes: "Resolved after model-rate refresh recalculated local interaction costs."
+    });
+  }
+}
+
+function pricingRefreshDelta(beforeRepair: RepairDeltaSnapshot) {
+  const repairDelta = buildRepairDelta(
+    beforeRepair,
+    snapshotRepairWorkbench(buildUnknownCostRepairWorkbench())
+  );
+  markResolvedPricingRefreshGroups(repairDelta);
+  return repairDelta;
+}
+
 export async function refreshPricing(options: RefreshOptions = {}): Promise<PricingRefreshResult> {
+  const beforeRepair = snapshotRepairWorkbench(buildUnknownCostRepairWorkbench());
   try {
     const { manifest, source, url } = await loadManifest(options);
     const result = importManifest(manifest, source, url, Boolean(options.force));
     const recalculation = recalculateInteractionCosts();
+    const repairDelta = pricingRefreshDelta(beforeRepair);
     return {
       source,
       url,
@@ -195,12 +225,15 @@ export async function refreshPricing(options: RefreshOptions = {}): Promise<Pric
       costsRecalculated: recalculation.interactionsUpdated,
       modelAliasesUpdated: recalculation.modelsUpdated,
       unknownCostInteractions: recalculation.unknownCostInteractions,
+      resolvedRepairItems: repairDelta.resolvedGroups.length,
+      repairDelta,
       error: null
     };
   } catch (error) {
     const fallback = getBundledPricingManifest();
     const result = importManifest(fallback, "bundled", null, Boolean(options.force));
     const recalculation = recalculateInteractionCosts();
+    const repairDelta = pricingRefreshDelta(beforeRepair);
     return {
       source: "bundled",
       url: null,
@@ -209,6 +242,8 @@ export async function refreshPricing(options: RefreshOptions = {}): Promise<Pric
       costsRecalculated: recalculation.interactionsUpdated,
       modelAliasesUpdated: recalculation.modelsUpdated,
       unknownCostInteractions: recalculation.unknownCostInteractions,
+      resolvedRepairItems: repairDelta.resolvedGroups.length,
+      repairDelta,
       error: error instanceof Error ? error.message : "Model-rate refresh failed."
     };
   }

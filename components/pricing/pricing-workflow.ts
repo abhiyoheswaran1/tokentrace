@@ -1,4 +1,5 @@
 import type { PricingRow } from "@/src/lib/pricing";
+import { repairDeltaSummary, type RepairDelta } from "@/src/lib/repair-delta";
 
 export type EditablePricingRow = PricingRow & {
   providerName?: string;
@@ -21,6 +22,7 @@ export type PricingSaveResult = {
   unknownCostInteractions: number;
   modelAliasesUpdated: number;
   resolvedRepairItems: number;
+  repairDelta?: RepairDelta | null;
 };
 
 export type PricingRefreshResult = {
@@ -31,6 +33,8 @@ export type PricingRefreshResult = {
   costsRecalculated: number;
   modelAliasesUpdated: number;
   unknownCostInteractions: number;
+  resolvedRepairItems?: number;
+  repairDelta?: RepairDelta | null;
   error: string | null;
 };
 
@@ -226,10 +230,13 @@ export function parsePricingRowsCsv(csv: string): ParsedPricingRows {
 }
 
 export function pricingSaveResultCopy(result: PricingSaveResult) {
-  return `Price saved. ${result.costsRecalculated.toLocaleString()} interactions repriced, ${result.resolvedRepairItems.toLocaleString()} repair items resolved, ${result.unknownCostInteractions.toLocaleString()} unknown-cost interactions still need rate or parser review.`;
+  const delta = repairDeltaSummary(result.repairDelta);
+  return `Price saved. ${result.costsRecalculated.toLocaleString()} interactions repriced, ${result.resolvedRepairItems.toLocaleString()} repair items resolved, ${result.unknownCostInteractions.toLocaleString()} unknown-cost interactions still need rate or parser review.${delta ? ` ${delta}` : ""}`;
 }
 
 export function pricingRefreshResultCopy(result: PricingRefreshResult) {
   if (result.error) return "Remote refresh failed; bundled prices were used.";
-  return `Prices refreshed. ${result.imported.toLocaleString()} added, ${result.updated.toLocaleString()} updated, ${result.skippedManual.toLocaleString()} manual rows kept. ${result.costsRecalculated.toLocaleString()} imported interactions repriced.`;
+  const delta = repairDeltaSummary(result.repairDelta);
+  const resolved = result.resolvedRepairItems == null ? "" : ` ${result.resolvedRepairItems.toLocaleString()} repair items resolved.`;
+  return `Prices refreshed. ${result.imported.toLocaleString()} added, ${result.updated.toLocaleString()} updated, ${result.skippedManual.toLocaleString()} manual rows kept. ${result.costsRecalculated.toLocaleString()} imported interactions repriced.${resolved}${delta ? ` ${delta}` : ""}`;
 }

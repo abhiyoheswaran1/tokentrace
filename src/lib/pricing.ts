@@ -1,6 +1,11 @@
 import { sqlite } from "@/src/db/client";
 import { recalculateInteractionCosts } from "@/src/lib/cost-recalculation";
 import { buildUnknownCostRepairWorkbench, saveUnknownCostReview } from "@/src/lib/unknown-cost-repair";
+import {
+  buildRepairDelta,
+  snapshotRepairWorkbench,
+  type RepairDelta
+} from "@/src/lib/repair-delta";
 import { stableId } from "./ids";
 
 export type PricingRow = {
@@ -23,6 +28,7 @@ export type PricingUpsertResult = {
   interactionsUpdated: number;
   unknownCostInteractions: number;
   resolvedRepairItems: number;
+  repairDelta: RepairDelta;
 };
 
 export function getPricingRows() {
@@ -65,7 +71,7 @@ export function upsertPricing(input: {
   cacheWriteTokenPrice: number | null;
   currency: string;
 }): PricingUpsertResult {
-  const beforeRepairGroups = buildUnknownCostRepairWorkbench().groups;
+  const beforeRepair = snapshotRepairWorkbench(buildUnknownCostRepairWorkbench());
   const providerName = input.providerName?.trim() || input.providerId;
   sqlite
     .prepare("INSERT OR IGNORE INTO providers (id, name, type) VALUES (?, ?, 'llm-provider')")
@@ -108,19 +114,17 @@ export function upsertPricing(input: {
     );
 
   const recalculation = recalculateInteractionCosts();
-  const afterRepairKeys = new Set(buildUnknownCostRepairWorkbench().groups.map((group) => group.key));
-  let resolvedRepairItems = 0;
-  for (const group of beforeRepairGroups) {
-    if (afterRepairKeys.has(group.key) || group.review.status === "resolved") continue;
-    const notes = group.review.notes
-      ? `${group.review.notes}\nResolved after pricing update recalculated local interaction costs.`
-      : "Resolved after pricing update recalculated local interaction costs.";
+  const repairDelta = buildRepairDelta(
+    beforeRepair,
+    snapshotRepairWorkbench(buildUnknownCostRepairWorkbench())
+  );
+  for (const group of repairDelta.resolvedGroups) {
+    const notes = "Resolved after pricing update recalculated local interaction costs.";
     saveUnknownCostReview({
       key: group.key,
       status: "resolved",
       notes
     });
-    resolvedRepairItems += 1;
   }
 
   return {
@@ -129,7 +133,8 @@ export function upsertPricing(input: {
     interactionsChecked: recalculation.interactionsChecked,
     interactionsUpdated: recalculation.interactionsUpdated,
     unknownCostInteractions: recalculation.unknownCostInteractions,
-    resolvedRepairItems
+    resolvedRepairItems: repairDelta.resolvedGroups.length,
+    repairDelta
   };
 }
 

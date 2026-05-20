@@ -3,6 +3,8 @@ import { sqlite } from "@/src/db/client";
 import { getAppSettings } from "@/src/db/settings";
 import { stableId } from "@/src/lib/ids";
 import { importProfileForAdapter } from "@/src/lib/import-profiles";
+import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
+import { snapshotRepairWorkbench } from "@/src/lib/repair-delta";
 import { sourceCatalogEntryForParser } from "@/src/lib/source-catalog";
 import { hashFile, selectAdapter } from "./scan-adapters";
 import { discoverFilesWithIgnored, expandHome, getDefaultSearchRoots } from "./discovery";
@@ -40,6 +42,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
   const candidates = discovery.candidates;
   const startedAt = new Date();
   const scanRunId = stableId("scan", [startedAt.getTime(), roots.join("|")]);
+  const beforeRepairSnapshot = snapshotRepairWorkbench(buildUnknownCostRepairWorkbench());
   const allWarnings: string[] = [];
   const allErrors: string[] = [];
   let recordsImported = 0;
@@ -185,6 +188,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
     filesScanned,
     recordsImported,
     staleNonUsageSessionsRemoved,
+    beforeRepairSnapshot,
     warnings: allWarnings,
     errors: allErrors
   });

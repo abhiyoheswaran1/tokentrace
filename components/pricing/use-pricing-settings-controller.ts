@@ -5,6 +5,7 @@ import type { ModelAliasSuggestion } from "@/src/lib/analytics";
 import type { PricingRow } from "@/src/lib/pricing";
 import {
   type EditablePricingRow,
+  type PricingSaveResult,
   findDuplicatePricingRows,
   parsePricingRowsCsv,
   pricingRefreshResultCopy,
@@ -133,14 +134,7 @@ export function usePricingSettingsController({
         setMessage(`Price save failed${await readResponseError(response)}`);
         return;
       }
-      const result = (await response.json()) as {
-        id: string;
-        costsRecalculated: number;
-        interactionsChecked: number;
-        unknownCostInteractions: number;
-        modelAliasesUpdated: number;
-        resolvedRepairItems: number;
-      };
+      const result = (await response.json()) as PricingSaveResult;
       const latest = (await fetch("/api/prices").then((res) => res.json())) as PricingRow[];
       setRows(latest);
       setMessage(pricingSaveResultCopy(result));
