@@ -15,9 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, MonoText } from "@/components/ui/typography";
+import { cn } from "@/src/lib/utils";
 
 type ExactFilter = "all" | "exact" | "estimated";
 type CostFilter = "all" | "priced" | "unknown";
+type RowDensity = "comfortable" | "compact";
 const SESSION_PAGE_SIZE = 50;
 
 export function getPaginationWindow(total: number, page: number, pageSize = SESSION_PAGE_SIZE) {
@@ -84,6 +86,7 @@ export function SessionExplorer({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
+  const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
 
   const tools = useMemo(() => Array.from(new Set(sessions.map((session) => session.tool))).sort(), [sessions]);
   const models = useMemo(
@@ -173,6 +176,21 @@ export function SessionExplorer({
   const hasEvidenceContext = Boolean(initialProject || initialTool || initialModel || initialSource || initialCost || initialCache);
   const pagination = getPaginationWindow(filtered.length, page);
   const visibleSessions = filtered.slice(pagination.start, pagination.end);
+  const tableDensityClass = rowDensity === "compact" ? "[&_td]:py-2 [&_th]:h-9" : "[&_td]:py-3 [&_th]:h-10";
+  const activeFilters = useMemo(() => {
+    const filters: string[] = [];
+    if (query) filters.push(`Search: ${query}`);
+    if (tool !== "all") filters.push(`Tool: ${tool}`);
+    if (model !== "all") filters.push(`Model: ${model}`);
+    if (project !== "all") filters.push(`Project: ${project}`);
+    if (exact !== "all") filters.push(`Tokens: ${exact}`);
+    if (cost !== "all") filters.push(`Cost: ${cost}`);
+    if (from) filters.push(`From: ${from}`);
+    if (to) filters.push(`To: ${to}`);
+    if (highCost) filters.push("High-cost");
+    if (hasCache) filters.push("Has cache tokens");
+    return filters;
+  }, [cost, exact, from, hasCache, highCost, model, project, query, to, tool]);
   const currentFilters = useMemo(() => {
     const filters: Record<string, string | boolean> = {};
     if (query) filters.query = query;
@@ -343,12 +361,20 @@ export function SessionExplorer({
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filters
-          </CardTitle>
-          <CardDescription>Search by date, tool, model, project, estimated status, or high cost.</CardDescription>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              Filters
+            </CardTitle>
+            <CardDescription>Search by date, tool, model, project, estimated status, or high cost.</CardDescription>
+          </div>
+          {hasFilters ? (
+            <Button type="button" size="sm" variant="outline" onClick={clearFilters} aria-label="Clear filters">
+              <RotateCcw className="h-4 w-4" />
+              Reset
+            </Button>
+          ) : null}
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-4">
@@ -420,14 +446,24 @@ export function SessionExplorer({
               </label>
             </div>
           </div>
-          {hasFilters ? (
-            <div className="mt-3">
-              <Button type="button" size="sm" variant="ghost" onClick={clearFilters}>
+          <div aria-live="polite" className="mt-4 flex flex-wrap items-center gap-2 border-t pt-3">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Active filters</span>
+            {activeFilters.length ? (
+              activeFilters.map((filter) => (
+                <Badge key={filter} variant="secondary" className="max-w-full">
+                  <span className="truncate">{filter}</span>
+                </Badge>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground">None</span>
+            )}
+            {activeFilters.length ? (
+              <Button type="button" size="sm" variant="ghost" onClick={clearFilters} aria-label="Clear filters">
                 <RotateCcw className="h-4 w-4" />
                 Clear filters
               </Button>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </CardContent>
       </Card>
 
@@ -442,7 +478,27 @@ export function SessionExplorer({
                 : ""}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-md border bg-muted/20 p-0.5" aria-label="Row density">
+              <Button
+                type="button"
+                size="sm"
+                variant={rowDensity === "comfortable" ? "secondary" : "ghost"}
+                className="h-7 px-2 text-xs"
+                onClick={() => setRowDensity("comfortable")}
+              >
+                Comfortable
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={rowDensity === "compact" ? "secondary" : "ghost"}
+                className="h-7 px-2 text-xs"
+                onClick={() => setRowDensity("compact")}
+              >
+                Compact
+              </Button>
+            </div>
             <Button asChild variant="outline" size="sm">
               <a href="/api/export?type=sessions">
                 <Download className="h-4 w-4" />
@@ -474,9 +530,10 @@ export function SessionExplorer({
               <DataValue className="mt-1">{filteredSummary.unknown.toLocaleString()}</DataValue>
             </div>
           </div>
-          <div className="table-scroll overflow-x-auto">
-          <Table className="min-w-[78rem]">
-            <TableHeader>
+          {filtered.length ? (
+          <div className="table-scroll max-h-[38rem] overflow-x-auto">
+          <Table className={cn("min-w-[78rem]", tableDensityClass)}>
+            <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
               <TableRow>
                 <TableHead className="w-28">Date</TableHead>
                 <TableHead className="w-28">Tool</TableHead>
@@ -493,8 +550,7 @@ export function SessionExplorer({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length ? (
-                visibleSessions.map((session) => (
+              {visibleSessions.map((session) => (
                   <TableRow key={session.id}>
                     <TableCell>{formatDate(session.startedAt)}</TableCell>
                     <TableCell className="font-medium">{session.tool}</TableCell>
@@ -542,17 +598,22 @@ export function SessionExplorer({
                       <MonoText className="block truncate">{session.sourceFile}</MonoText>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={12} className="py-8 text-center text-sm text-muted-foreground">
-                    No sessions match the current filters.
-                  </TableCell>
-                </TableRow>
-              )}
+                ))}
             </TableBody>
           </Table>
           </div>
+          ) : (
+            <div className="rounded-md border bg-muted/20 px-4 py-8 text-center">
+              <div className="text-sm font-semibold">No matching sessions</div>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                The current filters hide every imported session. Clear them to return to the full local session list.
+              </p>
+              <Button type="button" size="sm" variant="outline" className="mt-4" onClick={clearFilters}>
+                <RotateCcw className="h-4 w-4" />
+                Clear filters and show all sessions
+              </Button>
+            </div>
+          )}
           {filtered.length > SESSION_PAGE_SIZE ? (
             <div className="flex flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-muted-foreground">
