@@ -5,6 +5,7 @@ import { calculateInteractionCost } from "@/src/lib/cost";
 import { stableId } from "@/src/lib/ids";
 import { inferProviderFromModel } from "@/src/lib/provider-inference";
 import { estimateTokensFromText, previewText } from "@/src/lib/token-estimator";
+import { preflightImportSessions } from "./persist-guardrails";
 import { NormalizedInteraction, NormalizedSession } from "./types";
 
 export type ImportSessionResult = {
@@ -212,10 +213,19 @@ export function importSessions(
   sessions: NormalizedSession[],
   options: ImportSessionOptions = {}
 ): ImportSessionResult {
-  const warnings: string[] = [];
+  const warnings: string[] = [...preflightImportSessions(sessions, options).warnings];
   let sessionsImported = 0;
   let interactionsImported = 0;
   let toolCallsImported = 0;
+
+  if (!sessions.length) {
+    return {
+      sessionsImported,
+      interactionsImported,
+      toolCallsImported,
+      warnings
+    };
+  }
 
   const transaction = sqlite.transaction((records: NormalizedSession[], replaceSourceFile?: string) => {
     if (replaceSourceFile) {
@@ -350,7 +360,14 @@ export function importSessions(
     }
   });
 
-  transaction(sessions, options.replaceSourceFile);
+  try {
+    transaction(sessions, options.replaceSourceFile);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Import transaction failed; no partial rows were kept. Check malformed local files or parser output before retrying. ${detail}`
+    );
+  }
 
   return {
     sessionsImported,

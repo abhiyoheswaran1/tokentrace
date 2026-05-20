@@ -371,6 +371,75 @@ describe("Codex CLI adapter", () => {
     }
   });
 
+  it("parses Codex JSON arrays while warning about non-object entries", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-codex-json-array-"));
+    try {
+      const filePath = path.join(tempDir, ".codex", "sessions", "2026", "05", "09", "session.json");
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(
+        filePath,
+        JSON.stringify([
+          {
+            type: "response.completed",
+            payload: {
+              response: {
+                id: "resp-array-1",
+                model: "gpt-5.5",
+                usage: { input_tokens: 12, output_tokens: 34 }
+              }
+            }
+          },
+          "not an object"
+        ])
+      );
+      const stat = await fs.stat(filePath);
+
+      const parsed = await codexCliAdapter.parse(
+        {
+          path: filePath,
+          modifiedTime: stat.mtime,
+          sizeBytes: stat.size
+        },
+        { storeRawMessageContent: false }
+      );
+
+      expect(parsed.warnings).toContain("JSON array entry 2 is not a Codex CLI object.");
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+        modelName: "gpt-5.5",
+        inputTokens: 12,
+        outputTokens: 34
+      });
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("reports valid Codex JSON that has no usable local usage records", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-codex-empty-json-"));
+    try {
+      const filePath = path.join(tempDir, ".codex", "sessions", "2026", "05", "09", "empty.json");
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(filePath, JSON.stringify(["only strings"]));
+      const stat = await fs.stat(filePath);
+
+      const parsed = await codexCliAdapter.parse(
+        {
+          path: filePath,
+          modifiedTime: stat.mtime,
+          sizeBytes: stat.size
+        },
+        { storeRawMessageContent: false }
+      );
+
+      expect(parsed.warnings).toContain("JSON array entry 1 is not a Codex CLI object.");
+      expect(parsed.warnings).toContain("No Codex CLI records found after parsing local JSON.");
+      expect(parsed.errors).toContain("No Codex CLI JSON records were parsed.");
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it("parses Codex token_count events as exact deltas without importing tool-output estimates", async () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "tokentrace-codex-token-count-"));
     try {

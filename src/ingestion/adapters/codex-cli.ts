@@ -71,6 +71,51 @@ async function readCodexJsonlRecords(filePath: string, warnings: string[]) {
   return records;
 }
 
+function pushJsonObjectRecord(value: unknown, records: Record<string, unknown>[], warnings: string[], label: string) {
+  const object = asObject(value);
+  if (!object) {
+    warnings.push(`${label} is not a Codex CLI object.`);
+    return;
+  }
+  records.push(flattenCodexRecord(object));
+}
+
+export function parseCodexTextRecords(text: string, warnings: string[]) {
+  const records: Record<string, unknown>[] = [];
+  const trimmed = text.trim();
+  if (!trimmed) {
+    warnings.push("Codex CLI file is empty.");
+    return records;
+  }
+
+  if (fileLooksLikeJsonl(text) && !trimmed.startsWith("[")) {
+    text.split(/\r?\n/).forEach((line, index) => {
+      const lineText = line.trim();
+      if (!lineText) return;
+      pushJsonObjectRecord(safeJsonParse(lineText), records, warnings, `Line ${index + 1}`);
+    });
+  } else {
+    const parsed = safeJsonParse(text);
+    if (Array.isArray(parsed)) {
+      parsed.forEach((entry, index) => {
+        pushJsonObjectRecord(entry, records, warnings, `JSON array entry ${index + 1}`);
+      });
+    } else {
+      const object = asObject(parsed);
+      if (object) {
+        records.push(flattenCodexRecord(object));
+      } else {
+        warnings.push("Codex CLI file is not JSON, JSONL, or a JSON object/array.");
+      }
+    }
+  }
+
+  if (!records.length) {
+    warnings.push("No Codex CLI records found after parsing local JSON.");
+  }
+  return records;
+}
+
 function tokenCountUsage(record: Record<string, unknown>): CodexUsageTotal | null {
   const payload = asObject(record.payload);
   const info = asObject(payload?.info) ?? asObject(record.info);
@@ -240,21 +285,7 @@ export const codexCliAdapter: IngestionAdapter = {
       records.push(...(await readCodexJsonlRecords(file.path, warnings)));
     } else {
       const text = await readFileText(file.path);
-      if (fileLooksLikeJsonl(text)) {
-        text.split(/\r?\n/).forEach((line, index) => {
-          const trimmed = line.trim();
-          if (!trimmed) return;
-          const object = asObject(safeJsonParse(trimmed));
-          if (!object) {
-            warnings.push(`Line ${index + 1} is not a JSON object.`);
-            return;
-          }
-          records.push(flattenCodexRecord(object));
-        });
-      } else {
-        const object = asObject(safeJsonParse(text));
-        if (object) records.push(flattenCodexRecord(object));
-      }
+      records.push(...parseCodexTextRecords(text, warnings));
     }
 
     const usageRecords = exactTokenCountRecords(records, sessionNameFromFile(file.path));
