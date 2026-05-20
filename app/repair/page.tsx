@@ -13,7 +13,9 @@ import { dateRangeQueryParams, mergeHrefParams, resolveDateRange } from "@/src/l
 import { formatTokens } from "@/src/lib/format";
 import {
   buildUnknownCostRepairWorkbench,
-  type UnknownCostRepairWorkbenchGroup
+  type UnknownCostRepairWorkbench,
+  type UnknownCostRepairWorkbenchGroup,
+  type UnknownCostRepairStatus
 } from "@/src/lib/unknown-cost-repair";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +37,39 @@ function suggestionLabel(group: UnknownCostRepairWorkbenchGroup) {
 function causeLabel(cause: UnknownCostRepairWorkbenchGroup["cause"]) {
   if (cause === "missing pricing") return "missing model rate";
   return cause;
+}
+
+function stateCopy(status: UnknownCostRepairStatus) {
+  if (status === "resolved") return "Resolved: verified locally. Recalculate to confirm this group leaves unknown cost.";
+  if (status === "ignored") return "Ignored: preserved as evidence but removed from active repair focus.";
+  if (status === "needs-parser-review") return "Parser review: source metadata needs inspection before pricing can be trusted.";
+  return "Unresolved: still part of active unknown-cost repair.";
+}
+
+function repairImpactCopy(group: UnknownCostRepairWorkbenchGroup | null) {
+  if (!group) return "No active repair group is selected. Cost coverage is clear or this period has no visible unknown-cost groups.";
+  if (group.cause === "missing pricing") {
+    return "After setting the model rate and recalculating, these interactions can move from unknown cost into priced or estimated cost totals.";
+  }
+  if (group.cause === "missing model") {
+    return "After parser review records a usable model name, TokenTrace can match the interaction to model rates and remove the model gap.";
+  }
+  if (group.cause === "missing token count") {
+    return "After parser review recovers usable token counts, the interaction can be priced instead of staying unknown.";
+  }
+  if (group.cause === "parser review") {
+    return "After parser review confirms the source shape, supported rows can be imported with clearer token and cost confidence.";
+  }
+  return "After the missing metadata is corrected and recalculated, this group should leave unresolved unknown-cost repair.";
+}
+
+function topCause(groups: UnknownCostRepairWorkbenchGroup[]) {
+  const byCause = new Map<UnknownCostRepairWorkbenchGroup["cause"], number>();
+  for (const group of groups) {
+    byCause.set(group.cause, (byCause.get(group.cause) ?? 0) + group.interactions);
+  }
+  const [cause, interactions] = [...byCause.entries()].sort((a, b) => b[1] - a[1])[0] ?? [];
+  return cause ? { cause, interactions } : null;
 }
 
 function SummaryItem({
@@ -101,6 +136,64 @@ function RepairFlowSteps() {
   );
 }
 
+function RepairGuidancePanel({
+  workbench,
+  rangeLinkParams
+}: {
+  workbench: UnknownCostRepairWorkbench;
+  rangeLinkParams: Record<string, string | undefined>;
+}) {
+  const cause = topCause(workbench.groups);
+  const nextRepair =
+    workbench.groups.find((group) => group.state === "unresolved") ??
+    workbench.groups.find((group) => group.state === "needs-parser-review") ??
+    workbench.groups[0] ??
+    null;
+  const nextRepairHref = nextRepair
+    ? nextRepair.pricingHref
+      ? mergeHrefParams(nextRepair.pricingHref, { returnTo: mergeHrefParams(nextRepair.itemHref, rangeLinkParams) })
+      : mergeHrefParams(nextRepair.repairHref, rangeLinkParams)
+    : "/pricing";
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle>Repair decision</CardTitle>
+        <CardDescription>Start with the highest-impact cause, then verify what will change after the repair.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3 md:grid-cols-3">
+        <div className="min-w-0 rounded-md border bg-muted/20 p-3">
+          <FieldLabel>Top cause</FieldLabel>
+          <div className="mt-1 text-sm font-semibold">{cause ? causeLabel(cause.cause) : "No active cause"}</div>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            {cause ? `${cause.interactions.toLocaleString()} visible interactions are blocked by this cause.` : "No unknown-cost groups are visible for this period."}
+          </p>
+        </div>
+        <div className="min-w-0 rounded-md border bg-muted/20 p-3">
+          <FieldLabel>Next best repair</FieldLabel>
+          <div className="mt-1 text-sm font-semibold">{nextRepair ? suggestionLabel(nextRepair) : "No repair needed"}</div>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            {nextRepair ? `${nextRepair.interactions.toLocaleString()} interactions from ${nextRepair.tool} / ${nextRepair.model}.` : "Cost coverage is clear for the selected period."}
+          </p>
+          {nextRepair ? (
+            <Link href={nextRepairHref} className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline">
+              {nextRepair.pricingHref ? "Set model rate" : "Review parser"}
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          ) : null}
+        </div>
+        <div className="min-w-0 rounded-md border bg-muted/20 p-3">
+          <FieldLabel>What changes after repair</FieldLabel>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">{repairImpactCopy(nextRepair)}</p>
+          {nextRepair ? (
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">{stateCopy(nextRepair.state)}</p>
+          ) : null}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function FocusedRepairPanel({
   group,
   focusKey,
@@ -153,6 +246,7 @@ function FocusedRepairPanel({
             {group.state}
           </Badge>
         </div>
+        <p className="text-xs leading-5 text-muted-foreground">{stateCopy(group.state)}</p>
       </CardHeader>
       <CardContent className="p-0">
         <div className="grid border-t sm:grid-cols-3">
@@ -232,6 +326,8 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
 
       <RepairFlowSteps />
 
+      <RepairGuidancePanel workbench={workbench} rangeLinkParams={rangeLinkParams} />
+
       {focusKey ? (
         <FocusedRepairPanel group={focusedGroup} focusKey={focusKey} rangeLinkParams={rangeLinkParams} />
       ) : null}
@@ -306,6 +402,7 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
                           provider={group.provider}
                           cause={group.cause}
                         />
+                        <p className="mt-2 max-w-48 text-[11px] leading-4 text-muted-foreground">{stateCopy(group.state)}</p>
                       </TableCell>
                       <TableCell className="align-top">
                         <Badge variant={causeVariant(group.cause)}>{causeLabel(group.cause)}</Badge>

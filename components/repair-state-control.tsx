@@ -21,6 +21,13 @@ const states: Array<{ value: UnknownCostRepairStatus; label: string }> = [
   { value: "resolved", label: "Resolved" }
 ];
 
+function statusDescription(status: UnknownCostRepairStatus) {
+  if (status === "resolved") return "Resolved means the local fix has been verified.";
+  if (status === "ignored") return "Ignored stays in evidence but leaves active repair focus.";
+  if (status === "needs-parser-review") return "Parser review means source metadata needs inspection.";
+  return "Unresolved means this item still needs a repair decision.";
+}
+
 function statusVariant(status: UnknownCostRepairStatus) {
   if (status === "resolved") return "success";
   if (status === "ignored") return "secondary";
@@ -103,6 +110,9 @@ export function RepairStateControl({
       />
       <div className="h-3 text-[11px] leading-none text-muted-foreground" aria-live="polite">
         {isPending ? "Saving..." : error || message}
+      </div>
+      <div className="text-[11px] leading-4 text-muted-foreground">
+        {statusDescription(status)}
       </div>
     </div>
   );
