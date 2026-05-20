@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 
 describe("Settings scan feedback", () => {
   it("shows scan result metrics and clear follow-up actions after a manual scan", () => {
-    const source = fs.readFileSync(path.join(process.cwd(), "components/settings-panel.tsx"), "utf8");
+    const source = [
+      "components/settings-panel.tsx",
+      "components/settings/scan-section.tsx"
+    ].map((file) => fs.readFileSync(path.join(process.cwd(), file), "utf8")).join("\n");
 
     expect(source).toContain("Scan result");
     expect(source).toContain("Files checked");

@@ -20,7 +20,11 @@ describe("0.12 final polish", () => {
   });
 
   it("adds sticky Settings section navigation and persisted last-scan summary", () => {
-    const source = read("components/settings-panel.tsx");
+    const source = [
+      "components/settings-panel.tsx",
+      "components/settings/section-nav.tsx",
+      "components/settings/scan-section.tsx"
+    ].map(read).join("\n");
 
     expect(source).toContain("function SettingsSectionNav");
     expect(source).toContain("Settings sections");
@@ -32,14 +36,14 @@ describe("0.12 final polish", () => {
     expect(source).toContain("Exports");
     expect(source).toContain("function LastScanResultPanel");
     expect(source).toContain("Last scan result");
-    expect(source).toContain("initialScanHealth.latestRun");
+    expect(source).toContain("health.latestRun");
     expect(source).toContain("Open Scan Health");
     expect(source).toContain("Open repair");
     expect(source).toContain("Set model rate");
   });
 
   it("adds a quiet Overview trust footer near the accounting totals", () => {
-    const source = read("app/page.tsx");
+    const source = `${read("app/page.tsx")}\n${read("components/overview/trust-footer.tsx")}`;
 
     expect(source).toContain("function OverviewTrustFooter");
     expect(source).toContain("Last verified");
@@ -63,7 +67,7 @@ describe("0.12 final polish", () => {
 
   it("uses unambiguous action vocabulary in scan and evidence surfaces", () => {
     const scanNow = read("components/scan-now-button.tsx");
-    const settings = read("components/settings-panel.tsx");
+    const settings = `${read("components/settings-panel.tsx")}\n${read("components/settings/scan-section.tsx")}`;
     const evidence = read("app/evidence/page.tsx");
 
     for (const source of [scanNow, settings, evidence]) {

@@ -8,8 +8,17 @@ function read(relativePath: string) {
 
 describe("scan controls navigation", () => {
   it("sends scan and setup actions directly to the relevant Settings sections", () => {
-    const overview = read("app/page.tsx");
-    const settingsPanel = read("components/settings-panel.tsx");
+    const overview = `${read("app/page.tsx")}\n${read("components/overview/guardrails-panel.tsx")}`;
+    const settingsPanel = [
+      "components/settings-panel.tsx",
+      "components/settings/section-nav.tsx",
+      "components/settings/scan-section.tsx",
+      "components/settings/custom-folders-section.tsx",
+      "components/settings/import-profiles-section.tsx",
+      "components/settings/guardrails-section.tsx",
+      "components/settings/package-trust-section.tsx",
+      "components/settings/exports-section.tsx"
+    ].map(read).join("\n");
     const firstRun = read("src/lib/first-run-status.ts");
     const scanHealth = read("src/lib/scan-health.ts");
     const doctor = read("src/lib/doctor.ts");
