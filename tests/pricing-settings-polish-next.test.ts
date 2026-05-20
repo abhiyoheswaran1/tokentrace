@@ -85,8 +85,10 @@ describe("pricing settings polish", () => {
 
   it("keeps the component wired to the helper workflow and bulk ergonomics", () => {
     const component = read("components/pricing-settings.tsx");
+    const controller = read("components/pricing/use-pricing-settings-controller.ts");
     const pricingUi = [
       component,
+      controller,
       read("components/pricing/model-rates-table.tsx"),
       read("components/pricing/pricing-bulk-panel.tsx"),
       read("components/pricing/pricing-context-card.tsx"),
@@ -94,7 +96,8 @@ describe("pricing settings polish", () => {
     ].join("\n");
     const workflow = read("components/pricing/pricing-workflow.ts");
 
-    expect(component).toContain("@/components/pricing/pricing-workflow");
+    expect(component).toContain("@/components/pricing/use-pricing-settings-controller");
+    expect(controller).toContain("@/components/pricing/pricing-workflow");
     expect(pricingUi).toContain("duplicateRows");
     expect(pricingUi).toContain("CSV import/export");
     expect(pricingUi).toContain("Export visible CSV");
