@@ -10,8 +10,91 @@ import { MonoText } from "@/components/ui/typography";
 import { REPAIR_PAGE_GROUP_LIMIT } from "@/app/repair/repair-page-data";
 import { mergeHrefParams } from "@/src/lib/date-range";
 import { formatTokens } from "@/src/lib/format";
-import type { UnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
+import type { UnknownCostRepairWorkbench, UnknownCostRepairWorkbenchGroup } from "@/src/lib/unknown-cost-repair";
 import { causeLabel, causeVariant, repairActionHref, stateCopy, suggestionLabel } from "./repair-guidance";
+
+function RepairItemsMobileList({
+  groups,
+  focusKey,
+  rangeLinkParams
+}: {
+  groups: UnknownCostRepairWorkbenchGroup[];
+  focusKey: string | undefined;
+  rangeLinkParams: Record<string, string | undefined>;
+}) {
+  return (
+    <div className="grid gap-3 md:hidden">
+      {groups.map((group) => (
+        <div
+          key={group.key}
+          className={`rounded-md border bg-background p-3 ${focusKey === group.key ? "border-primary/50 bg-primary/5" : ""}`}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={causeVariant(group.cause)}>{causeLabel(group.cause)}</Badge>
+                <span className="text-xs text-muted-foreground">{group.interactions.toLocaleString()} interactions</span>
+              </div>
+              <div className="mt-2 break-words text-sm font-medium">{group.model}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {group.provider} / {group.tool}
+              </div>
+            </div>
+            <RepairStateControl
+              repairKey={group.key}
+              initialStatus={group.review.status}
+              initialNotes={group.review.notes}
+              sourceFile={group.sourceFile}
+              model={group.model}
+              provider={group.provider}
+              cause={group.cause}
+            />
+          </div>
+
+          <div className="mt-3 grid gap-2 rounded-md bg-muted/30 p-3 text-xs leading-5">
+            <div>
+              <div className="font-medium text-foreground">Next best</div>
+              <div className="mt-1 text-muted-foreground">{suggestionLabel(group)}</div>
+            </div>
+            <div>
+              <div className="font-medium text-foreground">Expected change</div>
+              <div className="mt-1 text-muted-foreground">{group.impact}</div>
+            </div>
+          </div>
+
+          <div className="mt-3 grid gap-2 text-xs text-muted-foreground">
+            <div>
+              <span className="font-medium text-foreground">Tokens</span>{" "}
+              {formatTokens(group.totalTokens)} total, {formatTokens(group.inputTokens)} in, {formatTokens(group.outputTokens)} out
+            </div>
+            <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} title={group.sourceFile}>
+              <MonoText className="block truncate text-xs underline-offset-4 hover:underline">{group.sourceFile}</MonoText>
+            </Link>
+            <p>{stateCopy(group.state)}</p>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={repairActionHref(group, group.primaryAction, rangeLinkParams)}
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+            >
+              {group.primaryAction.label} <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+            {group.secondaryActions.slice(0, 2).map((action) => (
+              <Link
+                key={`${action.kind}:${action.href}`}
+                href={repairActionHref(group, action, rangeLinkParams)}
+                className="text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
+              >
+                {action.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function RepairItemsTable({
   workbench,
@@ -45,7 +128,7 @@ export function RepairItemsTable({
           <Badge variant="success">priced</Badge>
         )}
       </CardHeader>
-      <CardContent className="table-scroll overflow-x-auto">
+      <CardContent className="space-y-3">
         {hasGroups ? (
           <div className="space-y-3">
             {workbench.hasMoreGroups ? (
@@ -59,93 +142,96 @@ export function RepairItemsTable({
               modelRatesHref={mergeHrefParams("/pricing", rangeLinkParams)}
               scanHealthHref="/diagnostics"
             />
-            <Table className="min-w-[84rem]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>State</TableHead>
-                  <TableHead>Cause</TableHead>
-                  <TableHead className="min-w-56">Model</TableHead>
-                  <TableHead className="min-w-72">Suggestion</TableHead>
-                  <TableHead className="min-w-80">Source</TableHead>
-                  <TableHead>Interactions</TableHead>
-                  <TableHead>Tokens</TableHead>
-                  <TableHead className="min-w-28">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {workbench.groups.map((group) => (
-                  <TableRow key={group.key} className={focusKey === group.key ? "bg-muted/40" : undefined}>
-                    <TableCell className="align-top">
-                      <RepairStateControl
-                        repairKey={group.key}
-                        initialStatus={group.review.status}
-                        initialNotes={group.review.notes}
-                        sourceFile={group.sourceFile}
-                        model={group.model}
-                        provider={group.provider}
-                        cause={group.cause}
-                      />
-                      <p className="mt-2 max-w-48 text-[11px] leading-4 text-muted-foreground">{stateCopy(group.state)}</p>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <Badge variant={causeVariant(group.cause)}>{causeLabel(group.cause)}</Badge>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="font-medium">{group.model}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {group.provider} / {group.tool}
-                      </div>
-                    </TableCell>
-                    <TableCell className="min-w-72 max-w-80 align-top">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        {group.suggestion.suggestedModel ? (
-                          <CheckCircle2 className="h-4 w-4 text-primary" />
-                        ) : (
-                          <CircleDashed className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        {suggestionLabel(group)}
-                      </div>
-                      <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {group.suggestion.confidence} confidence. {group.suggestion.reason}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-96 align-top">
-                      <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} title={group.sourceFile}>
-                        <MonoText className="block truncate text-xs text-muted-foreground underline-offset-4 hover:underline">
-                          {group.sourceFile}
-                        </MonoText>
-                      </Link>
-                    </TableCell>
-                    <TableCell className="align-top">{group.interactions.toLocaleString()}</TableCell>
-                    <TableCell className="min-w-28 align-top">
-                      <div>{formatTokens(group.totalTokens)}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {formatTokens(group.inputTokens)} in, {formatTokens(group.outputTokens)} out
-                      </div>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="flex flex-wrap gap-2">
-                        <Link
-                          href={repairActionHref(group, group.primaryAction, rangeLinkParams)}
-                          className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
-                        >
-                          {group.primaryAction.label} <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-                        {group.secondaryActions.slice(0, 2).map((action) => (
-                          <Link
-                            key={`${action.kind}:${action.href}`}
-                            href={repairActionHref(group, action, rangeLinkParams)}
-                            className="font-medium text-muted-foreground underline-offset-4 hover:underline"
-                          >
-                            {action.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </TableCell>
+            <RepairItemsMobileList groups={workbench.groups} focusKey={focusKey} rangeLinkParams={rangeLinkParams} />
+            <div className="hidden overflow-x-auto md:block">
+              <Table className="min-w-[84rem]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>State</TableHead>
+                    <TableHead>Cause</TableHead>
+                    <TableHead className="min-w-56">Model</TableHead>
+                    <TableHead className="min-w-72">Suggestion</TableHead>
+                    <TableHead className="min-w-80">Source</TableHead>
+                    <TableHead>Interactions</TableHead>
+                    <TableHead>Tokens</TableHead>
+                    <TableHead className="min-w-28">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {workbench.groups.map((group) => (
+                    <TableRow key={group.key} className={focusKey === group.key ? "bg-muted/40" : undefined}>
+                      <TableCell className="align-top">
+                        <RepairStateControl
+                          repairKey={group.key}
+                          initialStatus={group.review.status}
+                          initialNotes={group.review.notes}
+                          sourceFile={group.sourceFile}
+                          model={group.model}
+                          provider={group.provider}
+                          cause={group.cause}
+                        />
+                        <p className="mt-2 max-w-48 text-[11px] leading-4 text-muted-foreground">{stateCopy(group.state)}</p>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <Badge variant={causeVariant(group.cause)}>{causeLabel(group.cause)}</Badge>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <div className="font-medium">{group.model}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {group.provider} / {group.tool}
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-72 max-w-80 align-top">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          {group.suggestion.suggestedModel ? (
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                          ) : (
+                            <CircleDashed className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          {suggestionLabel(group)}
+                        </div>
+                        <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {group.suggestion.confidence} confidence. {group.suggestion.reason}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-96 align-top">
+                        <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} title={group.sourceFile}>
+                          <MonoText className="block truncate text-xs text-muted-foreground underline-offset-4 hover:underline">
+                            {group.sourceFile}
+                          </MonoText>
+                        </Link>
+                      </TableCell>
+                      <TableCell className="align-top">{group.interactions.toLocaleString()}</TableCell>
+                      <TableCell className="min-w-28 align-top">
+                        <div>{formatTokens(group.totalTokens)}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {formatTokens(group.inputTokens)} in, {formatTokens(group.outputTokens)} out
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={repairActionHref(group, group.primaryAction, rangeLinkParams)}
+                            className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+                          >
+                            {group.primaryAction.label} <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
+                          {group.secondaryActions.slice(0, 2).map((action) => (
+                            <Link
+                              key={`${action.kind}:${action.href}`}
+                              href={repairActionHref(group, action, rangeLinkParams)}
+                              className="font-medium text-muted-foreground underline-offset-4 hover:underline"
+                            >
+                              {action.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         ) : (
           <EmptyState
