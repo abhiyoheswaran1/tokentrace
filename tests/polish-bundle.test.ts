@@ -25,7 +25,10 @@ describe("product polish bundle", () => {
     const models = read("app/models/page.tsx");
     const projects = read("app/projects/page.tsx");
     const sessions = read("components/session-explorer.tsx");
-    const repair = read("app/repair/page.tsx");
+    const repair = [
+      read("app/repair/page.tsx"),
+      read("components/repair/repair-items-table.tsx")
+    ].join("\n");
     const evidence = read("app/evidence/page.tsx");
 
     expect(emptyState).toContain("actions");
@@ -41,7 +44,7 @@ describe("product polish bundle", () => {
   });
 
   it("makes repair read as a guided workbench", () => {
-    const repair = read("app/repair/page.tsx");
+    const repair = `${read("app/repair/page.tsx")}\n${read("components/repair/repair-guidance.tsx")}`;
 
     expect(repair).toContain("function RepairFlowSteps");
     expect(repair).toContain("Problem");
@@ -72,9 +75,17 @@ describe("product polish bundle", () => {
   });
 
   it("keeps dense pages usable at small widths", () => {
-    const overview = read("app/page.tsx");
+    const overview = [
+      read("app/page.tsx"),
+      read("components/overview/current-mix-panel.tsx"),
+      read("components/overview/summary-cards.tsx")
+    ].join("\n");
     const guide = read("app/guide/page.tsx");
-    const repair = read("app/repair/page.tsx");
+    const repair = [
+      read("app/repair/page.tsx"),
+      read("components/repair/repair-guidance.tsx"),
+      read("components/repair/repair-items-table.tsx")
+    ].join("\n");
     const evidence = read("app/evidence/page.tsx");
     const sessions = read("components/session-explorer.tsx");
 

@@ -1,8 +1,11 @@
-import type { ImportSessionOptions } from "./persist";
 import type { NormalizedSession } from "./types";
 
 export type ImportPreflightResult = {
   warnings: string[];
+};
+
+export type ImportPreflightOptions = {
+  replaceSourceFile?: string;
 };
 
 function sessionKey(session: NormalizedSession) {
@@ -19,7 +22,7 @@ function uniqueValues(values: string[]) {
 
 export function preflightImportSessions(
   sessions: NormalizedSession[],
-  options: ImportSessionOptions = {}
+  options: ImportPreflightOptions = {}
 ): ImportPreflightResult {
   const warnings: string[] = [];
   if (!sessions.length) {

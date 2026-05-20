@@ -20,8 +20,8 @@ describe("scan controls navigation", () => {
       "components/settings/exports-section.tsx"
     ].map(read).join("\n");
     const firstRun = read("src/lib/first-run-status.ts");
-    const scanHealth = read("src/lib/scan-health.ts");
-    const doctor = read("src/lib/doctor.ts");
+    const scanHealth = `${read("src/lib/scan-health.ts")}\n${read("src/lib/scan-health-rules.ts")}`;
+    const doctor = `${read("src/lib/doctor.ts")}\n${read("src/lib/doctor-recommendations.ts")}`;
     const discovery = read("app/discovery/page.tsx");
     const guide = read("app/guide/page.tsx");
 

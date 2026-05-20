@@ -16,10 +16,15 @@ All notable changes to TokenTrace are documented here.
 - Session Explorer now has sticky dense-table headers, clearer active-filter chips, row-density controls, faster reset actions, and stronger empty states.
 - Session Explorer filtering, summaries, high-cost thresholding, active-filter labels, and saved-view serialization now live in pure helper functions.
 - Repair now highlights the top unknown-cost cause, next best repair, expected impact, and clearer resolved, ignored, and parser-review state copy backed by executable repair actions.
+- Repair page data loading, summary cards, guidance, and repair queue table now live in focused modules so the route stays small.
+- Model Rates now has clearer repair-context copy, edit validation, duplicate provider/model warnings, save-result feedback, and CSV import/export for bulk rate changes.
+- Codex CLI ingestion now handles JSON-array session exports, warns on malformed local records, and persistence now reports empty, duplicate, or mismatched replacement imports before writing.
 - Unknown-cost repair actions are split into a focused helper module for clearer repair causes, next actions, and resolved-state copy.
 - Settings is split into focused scan, import profile, guardrail, package trust, export, storage, and custom-folder sections.
+- Mobile navigation now uses a compact command menu plus priority shortcuts, and first-run setup now leads users through local folders, model rates, scan, Scan Health, and review without cloud or sample-data assumptions.
 - Dashboard tables, page actions, and compact metric cards now behave better at narrow mobile widths.
 - `tokentrace serve` now prints clearer startup progress, help examples, browser-open guidance, and fixed-port conflict recovery steps.
+- CLI smoke checks are split into discovery, JSON/data, runtime watch, and dashboard serve modules so package smoke failures point to the broken surface.
 - Route loading copy now reinforces that TokenTrace is reading local database records without sending telemetry.
 
 ## [0.12.1] - 2026-05-19

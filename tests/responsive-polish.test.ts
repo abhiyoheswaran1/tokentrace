@@ -10,8 +10,14 @@ describe("responsive polish", () => {
   it("keeps dense dashboard surfaces scrollable and page actions wrap on mobile", () => {
     const globals = read("app/globals.css");
     const typography = read("components/ui/typography.tsx");
-    const overview = read("app/page.tsx");
-    const repair = read("app/repair/page.tsx");
+    const overview = [
+      read("app/page.tsx"),
+      read("components/overview/current-mix-panel.tsx")
+    ].join("\n");
+    const repair = [
+      read("app/repair/page.tsx"),
+      read("components/repair/repair-guidance.tsx")
+    ].join("\n");
     const summaryCards = read("components/overview/summary-cards.tsx");
 
     expect(globals).toContain("max-width: 100%");

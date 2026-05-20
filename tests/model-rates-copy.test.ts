@@ -11,9 +11,17 @@ describe("Model rates user-facing copy", () => {
     const sidebar = read("components/sidebar.tsx");
     const modelRatesPage = read("app/pricing/page.tsx");
     const evidencePage = read("app/evidence/page.tsx");
-    const repairPage = read("app/repair/page.tsx");
+    const repairPage = [
+      read("app/repair/page.tsx"),
+      read("components/repair/repair-guidance.tsx"),
+      read("components/repair/repair-items-table.tsx")
+    ].join("\n");
     const guidePage = read("app/guide/page.tsx");
     const sessionsExplorer = read("components/session-explorer.tsx");
+    const pricingSettings = [
+      read("components/pricing-settings.tsx"),
+      read("components/pricing/model-alias-suggestions-table.tsx")
+    ].join("\n");
 
     expect(sidebar).toContain('label: "Model Rates"');
     expect(sidebar).not.toContain('label: "Pricing"');
@@ -26,8 +34,8 @@ describe("Model rates user-facing copy", () => {
     expect(repairPage).toContain("Model Rates");
     expect(repairPage).not.toContain("Configure price");
     expect(sessionsExplorer).toContain("Model rates");
-    expect(read("components/pricing-settings.tsx")).toContain("Set model rate");
-    expect(read("components/pricing-settings.tsx")).toContain("Review parser");
+    expect(pricingSettings).toContain("Set model rate");
+    expect(pricingSettings).toContain("Review parser");
     expect(guidePage).toContain("Repair, Model Rates, Evidence");
   });
 });
