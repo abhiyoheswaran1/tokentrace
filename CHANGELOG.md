@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.14.0] - 2026-05-20
+
 ### Added
 
 - `tokentrace mcp` now starts a local stdio MCP server for capabilities, status, Scan Health, evidence, repair queue, reports, and explicit local scans.
