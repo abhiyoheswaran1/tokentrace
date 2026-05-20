@@ -171,7 +171,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
               Most used tool: {summary.mostUsedTool}. Most used model: {summary.mostUsedModel}.
             </CardDescription>
           </CardHeader>
-          <CardContent className="table-scroll">
+          <CardContent className="table-scroll overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

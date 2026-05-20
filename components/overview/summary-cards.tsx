@@ -122,7 +122,7 @@ export function CostSessionsCard({
           <CostSessionsMetricPane
             label="Cost"
             value={formatCurrency(summary.totalCost)}
-            valueClassName="break-normal whitespace-nowrap text-2xl"
+            valueClassName="break-words text-2xl"
             detailItems={[
               `${formatCurrency(summary.exactCost)} exact`,
               `${formatCurrency(summary.estimatedCost)} estimated`,
