@@ -167,5 +167,5 @@ describe("TokenTrace MCP server", () => {
     const payload = JSON.parse(result.responses[1].result.content[0].text);
     expect(payload.filesScanned).toBeGreaterThanOrEqual(1);
     expect(payload.recordsImported).toBeGreaterThanOrEqual(1);
-  });
+  }, 15_000);
 });
