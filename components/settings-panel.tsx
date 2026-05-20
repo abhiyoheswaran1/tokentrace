@@ -6,6 +6,7 @@ import { CustomFoldersSection } from "@/components/settings/custom-folders-secti
 import { ExportsSection } from "@/components/settings/exports-section";
 import { GuardrailsSection } from "@/components/settings/guardrails-section";
 import { ImportProfilesSection } from "@/components/settings/import-profiles-section";
+import { LazySettingsSection } from "@/components/settings/lazy-settings-section";
 import { PackageTrustSection } from "@/components/settings/package-trust-section";
 import { ScanMemorySection, ScanScheduleSection, ScanSection } from "@/components/settings/scan-section";
 import { SETTINGS_SECTION_IDS, SettingsSectionNav } from "@/components/settings/section-nav";
@@ -241,27 +242,39 @@ export function SettingsPanel({
         setStoreRaw={setStoreRaw}
       />
 
-      <PackageTrustSection />
+      <LazySettingsSection
+        id="package-trust"
+        title="Package Trust"
+        description="Runtime and release guarantees for the installed TokenTrace package."
+      >
+        <PackageTrustSection />
+      </LazySettingsSection>
 
-      <GuardrailsSection
-        monthlyCostLimitUsd={monthlyCostLimitUsd}
-        setMonthlyCostLimitUsd={setMonthlyCostLimitUsd}
-        monthlyTokenLimit={monthlyTokenLimit}
-        setMonthlyTokenLimit={setMonthlyTokenLimit}
-        scopedGuardrails={scopedGuardrails}
-        newGuardrailScope={newGuardrailScope}
-        setNewGuardrailScope={setNewGuardrailScope}
-        newGuardrailName={newGuardrailName}
-        setNewGuardrailName={setNewGuardrailName}
-        newGuardrailCost={newGuardrailCost}
-        setNewGuardrailCost={setNewGuardrailCost}
-        newGuardrailTokens={newGuardrailTokens}
-        setNewGuardrailTokens={setNewGuardrailTokens}
-        newGuardrailThreshold={newGuardrailThreshold}
-        setNewGuardrailThreshold={setNewGuardrailThreshold}
-        addScopedGuardrail={addScopedGuardrail}
-        removeScopedGuardrail={removeScopedGuardrail}
-      />
+      <LazySettingsSection
+        id="usage-guardrails"
+        title="Local Usage Guardrails"
+        description="Optional month-to-date limits for local cost and token awareness."
+      >
+        <GuardrailsSection
+          monthlyCostLimitUsd={monthlyCostLimitUsd}
+          setMonthlyCostLimitUsd={setMonthlyCostLimitUsd}
+          monthlyTokenLimit={monthlyTokenLimit}
+          setMonthlyTokenLimit={setMonthlyTokenLimit}
+          scopedGuardrails={scopedGuardrails}
+          newGuardrailScope={newGuardrailScope}
+          setNewGuardrailScope={setNewGuardrailScope}
+          newGuardrailName={newGuardrailName}
+          setNewGuardrailName={setNewGuardrailName}
+          newGuardrailCost={newGuardrailCost}
+          setNewGuardrailCost={setNewGuardrailCost}
+          newGuardrailTokens={newGuardrailTokens}
+          setNewGuardrailTokens={setNewGuardrailTokens}
+          newGuardrailThreshold={newGuardrailThreshold}
+          setNewGuardrailThreshold={setNewGuardrailThreshold}
+          addScopedGuardrail={addScopedGuardrail}
+          removeScopedGuardrail={removeScopedGuardrail}
+        />
+      </LazySettingsSection>
 
       <ScanMemorySection health={initialScanHealth} />
 
@@ -282,21 +295,27 @@ export function SettingsPanel({
         removeFolder={removeFolder}
       />
 
-      <ImportProfilesSection
-        importProfiles={importProfiles}
-        toggleImportProfile={toggleImportProfile}
-        removeImportProfile={removeImportProfile}
-        newProfileLabel={newProfileLabel}
-        setNewProfileLabel={setNewProfileLabel}
-        newProfileMatchers={newProfileMatchers}
-        setNewProfileMatchers={setNewProfileMatchers}
-        addImportProfile={addImportProfile}
-        previewPath={previewPath}
-        setPreviewPath={setPreviewPath}
-        previewImportProfile={previewImportProfile}
-        previewResult={previewResult}
-        isPending={isPending}
-      />
+      <LazySettingsSection
+        id="import-profiles"
+        title="Import Profiles"
+        description="Safe local log conventions for wrappers and team tools."
+      >
+        <ImportProfilesSection
+          importProfiles={importProfiles}
+          toggleImportProfile={toggleImportProfile}
+          removeImportProfile={removeImportProfile}
+          newProfileLabel={newProfileLabel}
+          setNewProfileLabel={setNewProfileLabel}
+          newProfileMatchers={newProfileMatchers}
+          setNewProfileMatchers={setNewProfileMatchers}
+          addImportProfile={addImportProfile}
+          previewPath={previewPath}
+          setPreviewPath={setPreviewPath}
+          previewImportProfile={previewImportProfile}
+          previewResult={previewResult}
+          isPending={isPending}
+        />
+      </LazySettingsSection>
 
       <ScanSection
         force={force}
@@ -310,7 +329,13 @@ export function SettingsPanel({
         health={initialScanHealth}
       />
 
-      <ExportsSection />
+      <LazySettingsSection
+        id="local-exports"
+        title="Local Exports"
+        description="Privacy-safe operating artifacts for reports, evidence, and agent handoff."
+      >
+        <ExportsSection />
+      </LazySettingsSection>
     </div>
   );
 }
