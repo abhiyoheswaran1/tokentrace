@@ -10,8 +10,10 @@ All notable changes to TokenTrace are documented here.
 - Overview trend aggregation now avoids SQLite localtime bucketing so large local databases load the first dashboard view much faster.
 - Overview now uses a page-specific analytics profile to avoid computing secondary page insights during first load.
 - Slow dashboard analytics queries now surface through internal timing guardrails and doctor output.
+- CLI startup code is split into focused context, help, runtime, serve, and command modules while keeping the executable entrypoint thin.
+- Analytics queries are split into summary, trends, entities, repair, scan-trust, and insight domains to reduce hotspot risk.
 - Session Explorer now has sticky dense-table headers, clearer active-filter chips, row-density controls, faster reset actions, and stronger empty states.
-- Repair now highlights the top unknown-cost cause, next best repair, expected impact, and clearer resolved, ignored, and parser-review state copy.
+- Repair now highlights the top unknown-cost cause, next best repair, expected impact, and clearer resolved, ignored, and parser-review state copy backed by executable repair actions.
 - Settings is split into focused scan, import profile, guardrail, package trust, export, storage, and custom-folder sections.
 - Dashboard tables, page actions, and compact metric cards now behave better at narrow mobile widths.
 - `tokentrace serve` now prints clearer startup progress, help examples, browser-open guidance, and fixed-port conflict recovery steps.

@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 
 describe("Repair action labels", () => {
   it("uses the same action vocabulary as Overview", () => {
-    const source = fs.readFileSync(path.join(process.cwd(), "app/repair/page.tsx"), "utf8");
+    const source = [
+      fs.readFileSync(path.join(process.cwd(), "app/repair/page.tsx"), "utf8"),
+      fs.readFileSync(path.join(process.cwd(), "src/lib/unknown-cost-repair.ts"), "utf8")
+    ].join("\n");
 
     expect(source).toContain("Open repair");
     expect(source).toContain("Set model rate");

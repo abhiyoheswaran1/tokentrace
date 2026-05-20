@@ -26,22 +26,8 @@ import { getUsageGuardrailProgress } from "@/src/lib/usage-guardrails";
 import type {
   AnalyticsData,
   AnalyticsFilters,
-  DebugScanFile,
-  DebugScanRun,
   EvidenceLinkMap,
-  Insight,
-  ModelAliasSuggestion,
-  ModelAnalyticsRow,
-  ProjectAnalyticsRow,
-  ScanTrustData,
-  ScanTrustOptions,
-  SessionRow,
-  SummaryMetrics,
-  ToolComparisonRow,
-  TrendPoint,
-  UnknownCostQueueRow,
-  UsageComparison,
-  UsageComparisonSnapshot
+  ScanTrustOptions
 } from "@/src/lib/analytics-types";
 
 export type {
