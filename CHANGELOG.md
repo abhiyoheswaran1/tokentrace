@@ -6,8 +6,15 @@ All notable changes to TokenTrace are documented here.
 
 ### Changed
 
+- Overview now uses focused data assembly and smaller panel components, with quieter local development overlays.
 - Overview trend aggregation now avoids SQLite localtime bucketing so large local databases load the first dashboard view much faster.
 - Overview now uses a page-specific analytics profile to avoid computing secondary page insights during first load.
+- Slow dashboard analytics queries now surface through internal timing guardrails and doctor output.
+- Session Explorer now has sticky dense-table headers, clearer active-filter chips, row-density controls, faster reset actions, and stronger empty states.
+- Repair now highlights the top unknown-cost cause, next best repair, expected impact, and clearer resolved, ignored, and parser-review state copy.
+- Settings is split into focused scan, import profile, guardrail, package trust, export, storage, and custom-folder sections.
+- Dashboard tables, page actions, and compact metric cards now behave better at narrow mobile widths.
+- `tokentrace serve` now prints clearer startup progress, help examples, browser-open guidance, and fixed-port conflict recovery steps.
 - Route loading copy now reinforces that TokenTrace is reading local database records without sending telemetry.
 
 ## [0.12.1] - 2026-05-19

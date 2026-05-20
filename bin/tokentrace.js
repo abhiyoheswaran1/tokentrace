@@ -58,7 +58,12 @@ Usage:
                           Refresh public model prices
   tokentrace run <cmd>    Run a command and record wrapper diagnostics
   tokentrace reset        Reset local database
-  tokentrace --version    Print version`;
+  tokentrace --version    Print version
+
+Examples:
+  tokentrace serve --port 3210 --no-open
+  tokentrace scan --json
+  tokentrace doctor --json`;
 }
 
 function serveHelp() {
@@ -73,7 +78,9 @@ Options:
   -p, --port <port>          Use a fixed port. Also reads TOKENTRACE_PORT or PORT.
   -H, --hostname <host>      Bind to a fixed host. Defaults to 127.0.0.1.
       --no-open              Do not open a browser after the server starts.
-  -h, --help                 Print serve help`;
+  -h, --help                 Print serve help
+
+If the fixed port is busy, choose another with --port or omit --port for automatic selection.`;
 }
 
 function appDataDir() {
@@ -319,6 +326,39 @@ async function waitForServer(url, child) {
   throw new Error("Timed out waiting for the TokenTrace server to start.");
 }
 
+function startupProgress(step, detail = "") {
+  console.log(detail ? `TokenTrace: ${step} - ${detail}` : `TokenTrace: ${step}`);
+}
+
+function formatServeError(error, options = {}) {
+  const message = error instanceof Error ? error.message : "Failed to start TokenTrace.";
+  const lines = [`TokenTrace serve failed: ${message}`];
+  if (/EADDRINUSE|address already in use|Requested port .* busy|port .*busy/i.test(message)) {
+    const port = options.port == null ? "the configured port" : options.port;
+    const host = options.hostname ? ` on ${options.hostname}` : "";
+    lines.push(`Requested port ${port} is busy${host}.`);
+    lines.push("Try: tokentrace serve --port 3211 --no-open");
+    lines.push("Or omit --port to let TokenTrace choose an available local port.");
+  }
+  if (/Timed out waiting/i.test(message)) {
+    lines.push("The dashboard process started but did not answer health checks within 30 seconds.");
+  }
+  return lines.join("\n");
+}
+
+async function resolveServePort(options) {
+  if (options.port != null) {
+    const availablePort = await getPort({ port: options.port, host: options.hostname });
+    if (availablePort !== options.port) {
+      throw new Error(`Requested port ${options.port} is busy on ${options.hostname}.`);
+    }
+    return { port: options.port, fixed: true };
+  }
+
+  const port = await getPort({ port: portNumbers(3030, 3999), host: options.hostname });
+  return { port, fixed: false };
+}
+
 async function serve(args = []) {
   const options = parseServeOptions(args);
   if (options.help) {
@@ -326,45 +366,62 @@ async function serve(args = []) {
     return;
   }
 
-  await initializeDatabase();
-  const dashboardRoot = await ensureDashboardBuild();
   const hostname = options.hostname;
-  const port = options.port ?? (await getPort({ port: portNumbers(3030, 3999), host: hostname }));
-  const url = `http://${hostname}:${port}`;
-
-  console.log(`Starting TokenTrace at ${url}`);
-  console.log("Press Ctrl+C to stop the server.");
-
-  const child = spawn(
-    process.execPath,
-    [nextBin(), "start", "--hostname", hostname, "--port", String(port)],
-    {
-      cwd: dashboardRoot,
-      env: {
-        ...runtimeEnv(),
-        PORT: String(port),
-        HOSTNAME: hostname
-      },
-      stdio: "inherit"
-    }
-  );
-
-  const stop = () => {
-    if (!child.killed) child.kill("SIGINT");
-  };
-  process.on("SIGINT", stop);
-  process.on("SIGTERM", stop);
+  let port = options.port;
+  let child = null;
 
   try {
+    let resolvedPort = null;
+    if (options.port != null) {
+      resolvedPort = await resolveServePort(options);
+      port = resolvedPort.port;
+    }
+    startupProgress("Preparing local database", appDataDir());
+    await initializeDatabase();
+    startupProgress("Checking dashboard build", "reused after the first run");
+    const dashboardRoot = await ensureDashboardBuild();
+    resolvedPort ??= await resolveServePort(options);
+    port = resolvedPort.port;
+    if (!resolvedPort.fixed && port !== 3030) {
+      startupProgress("Port selected", `3030 was unavailable, using ${port}`);
+    }
+    const url = `http://${hostname}:${port}`;
+
+    startupProgress("Starting dashboard", url);
+    console.log("Press Ctrl+C to stop the server.");
+
+    child = spawn(
+      process.execPath,
+      [nextBin(), "start", "--hostname", hostname, "--port", String(port)],
+      {
+        cwd: dashboardRoot,
+        env: {
+          ...runtimeEnv(),
+          PORT: String(port),
+          HOSTNAME: hostname
+        },
+        stdio: "inherit"
+      }
+    );
+
+    const stop = () => {
+      if (child && !child.killed) child.kill("SIGINT");
+    };
+    process.on("SIGINT", stop);
+    process.on("SIGTERM", stop);
+
     await waitForServer(url, child);
+    startupProgress("Dashboard ready", url);
     if (options.openBrowser) {
       await open(url).catch(() => {
         console.log(`Open this URL in your browser: ${url}`);
       });
+    } else {
+      console.log(`Open this URL in your browser: ${url}`);
     }
   } catch (error) {
-    console.error(error instanceof Error ? error.message : "Failed to start TokenTrace.");
-    stop();
+    console.error(formatServeError(error, { hostname, port }));
+    if (child && !child.killed) child.kill("SIGINT");
     process.exit(1);
   }
 

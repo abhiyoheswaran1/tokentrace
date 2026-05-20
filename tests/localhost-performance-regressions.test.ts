@@ -10,10 +10,12 @@ describe("localhost performance regressions", () => {
   it("does not serialize full scan-file health into the Settings client bundle", () => {
     const settingsPage = read("app/settings/page.tsx");
     const settingsPanel = read("components/settings-panel.tsx");
+    const settingsTypes = read("components/settings/types.ts");
 
     expect(settingsPage).toContain("toSettingsScanHealth(scanTrust.health)");
     expect(settingsPage).toContain('scanFileScope: "latest"');
-    expect(settingsPanel).toContain("type SettingsScanHealth");
+    expect(settingsTypes).toContain("type SettingsScanHealth");
+    expect(settingsPanel).toContain("@/components/settings/types");
     expect(settingsPanel).not.toContain("initialScanHealth: ScanHealth");
   });
 
@@ -21,14 +23,16 @@ describe("localhost performance regressions", () => {
     const overview = read("app/page.tsx");
     const overviewData = read("src/lib/overview-data.ts");
     const analytics = read("src/lib/analytics.ts");
+    const analyticsTypes = read("src/lib/analytics-types.ts");
 
     expect(overview).toContain("void runDueScheduledScan()");
     expect(overview).not.toContain("await runDueScheduledScan()");
     expect(overviewData).toContain("const trust = data.scanTrust");
     expect(overview).not.toContain("const trust = getScanTrustData(range.filters)");
-    expect(analytics).toContain("scanTrust: ScanTrustData");
-    expect(analytics).toContain("scanFileScope");
-    expect(analytics).toContain("sessionDetail");
+    expect(analytics).toContain("@/src/lib/analytics-types");
+    expect(analyticsTypes).toContain("scanTrust: ScanTrustData");
+    expect(analyticsTypes).toContain("scanFileScope");
+    expect(analyticsTypes).toContain("sessionDetail");
     expect(overviewData).toContain('sessionDetail: "summary"');
   });
 
@@ -103,10 +107,11 @@ describe("localhost performance regressions", () => {
     const overview = read("app/page.tsx");
     const overviewData = read("src/lib/overview-data.ts");
     const analytics = read("src/lib/analytics.ts");
+    const analyticsTypes = read("src/lib/analytics-types.ts");
 
     expect(overviewData).toContain('analyticsProfile: "overview"');
     expect(overview).toContain("getOverviewData(range)");
-    expect(analytics).toContain('analyticsProfile?: "full" | "overview"');
+    expect(analyticsTypes).toContain('analyticsProfile?: "full" | "overview"');
     expect(analytics).toContain('const overviewOnly = options.analyticsProfile === "overview"');
     expect(analytics).toContain('const models = overviewOnly ? [] : timeAnalyticsQuery("analytics.models"');
     expect(analytics).toContain('const modelAliasSuggestions = overviewOnly ? [] : timeAnalyticsQuery("analytics.modelAliases"');

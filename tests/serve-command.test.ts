@@ -35,7 +35,21 @@ describe("serve command", () => {
     expect(result.stdout).toContain("Usage:");
     expect(result.stdout).toContain("tokentrace serve --port 3210");
     expect(result.stdout).toContain("--no-open");
+    expect(result.stdout).toContain("If the fixed port is busy");
     expect(result.stderr).toBe("");
+  });
+
+  it("documents startup progress and fixed-port recovery paths", async () => {
+    const source = await fs.readFile(path.join(process.cwd(), "bin", "tokentrace.js"), "utf8");
+
+    expect(source).toContain("function startupProgress");
+    expect(source).toContain("function resolveServePort");
+    expect(source).toContain("function formatServeError");
+    expect(source).toContain("Preparing local database");
+    expect(source).toContain("Checking dashboard build");
+    expect(source).toContain("Dashboard ready");
+    expect(source).toContain("Requested port");
+    expect(source).toContain("Try: tokentrace serve --port");
   });
 });
 

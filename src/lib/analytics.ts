@@ -1,381 +1,69 @@
 import { sqlite } from "@/src/db/client";
 import {
   buildScanHealth,
-  type ScanConfidenceSummary,
-  type ScanHealth
+  type ScanConfidenceSummary
 } from "@/src/lib/scan-health";
 import { modelNameCandidates } from "@/src/lib/model-aliases";
-import { buildLocalRecommendations, type LocalRecommendation } from "@/src/lib/recommendations";
-import { getUsageGuardrailProgress, type UsageGuardrailProgress } from "@/src/lib/usage-guardrails";
-import { buildReviewQueue, type ReviewQueueItem } from "@/src/lib/review-queue";
-import { buildSessionComparisons, type SessionComparisonRow } from "@/src/lib/session-comparison";
-import { buildProjectSignals, type ProjectSignalRow } from "@/src/lib/project-signals";
-import { evidenceHref, type EvidenceMetric } from "@/src/lib/evidence-trail";
-import { buildDataConfidenceScore, type DataConfidenceGrade, type DataConfidenceScore } from "@/src/lib/data-confidence";
+import { buildLocalRecommendations } from "@/src/lib/recommendations";
+import { getUsageGuardrailProgress } from "@/src/lib/usage-guardrails";
+import { buildReviewQueue } from "@/src/lib/review-queue";
+import { buildSessionComparisons } from "@/src/lib/session-comparison";
+import { buildProjectSignals } from "@/src/lib/project-signals";
+import { evidenceHref } from "@/src/lib/evidence-trail";
+import { buildDataConfidenceScore } from "@/src/lib/data-confidence";
 import { timeAnalyticsQuery } from "@/src/lib/analytics-timing";
-
-export type TrendPoint = {
-  date: string;
-  totalTokens: number;
-  inputTokens: number;
-  outputTokens: number;
-  cachedTokens: number;
-  reasoningTokens: number;
-  cost: number;
-};
-
-export type SummaryMetrics = {
-  totalTokens: number;
-  nonCachedTokens: number;
-  inputTokens: number;
-  outputTokens: number;
-  cacheReadTokens: number;
-  cacheWriteTokens: number;
-  cachedTokens: number;
-  reasoningTokens: number;
-  totalCost: number;
-  exactCost: number;
-  estimatedCost: number;
-  unknownCostInteractions: number;
-  sessions: number;
-  interactions: number;
-  mostUsedTool: string;
-  mostUsedModel: string;
-};
-
-export type EvidenceLinkMap = Record<EvidenceMetric, string>;
-
-export type UsageComparisonSnapshot = Pick<
+import {
+  fillMissingTrendDays,
+  number,
+  numberMetadata,
+  parseJson,
+  rows,
+  stringMetadata,
+  timestampJoinCondition,
+  timestampWhere,
+  withQuery
+} from "@/src/lib/analytics-query-helpers";
+import type {
+  AnalyticsData,
+  AnalyticsFilters,
+  DebugScanFile,
+  DebugScanRun,
+  EvidenceLinkMap,
+  Insight,
+  ModelAliasSuggestion,
+  ModelAnalyticsRow,
+  ProjectAnalyticsRow,
+  ScanTrustData,
+  ScanTrustOptions,
+  SessionRow,
   SummaryMetrics,
-  "totalTokens" | "totalCost" | "sessions" | "interactions" | "unknownCostInteractions"
->;
+  ToolComparisonRow,
+  TrendPoint,
+  UnknownCostQueueRow,
+  UsageComparison,
+  UsageComparisonSnapshot
+} from "@/src/lib/analytics-types";
 
-export type UsageComparison = {
-  mode: "selected-period" | "latest-seven-days" | "empty";
-  label: string;
-  current: UsageComparisonSnapshot;
-  previous: UsageComparisonSnapshot;
-  delta: UsageComparisonSnapshot & {
-    totalTokensPercent: number | null;
-    totalCostPercent: number | null;
-    sessionsPercent: number | null;
-    interactionsPercent: number | null;
-    unknownCostInteractionsPercent: number | null;
-  };
-  headline: string;
-  detail: string;
-};
-
-export type ToolComparisonRow = {
-  tool: string;
-  provider: string;
-  totalTokens: number;
-  cost: number;
-  sessions: number;
-  interactions: number;
-  averageTokensPerSession: number;
-  averageTokensPerInteraction: number;
-  outputInputRatio: number;
-  cacheEfficiency: number;
-  mostExpensiveModel: string;
-};
-
-export type ModelAnalyticsRow = {
-  model: string;
-  provider: string;
-  totalTokens: number;
-  inputTokens: number;
-  outputTokens: number;
-  cost: number;
-  interactions: number;
-  averageOutputTokens: number;
-  tokenEfficiency: number;
-  suggestedAlternative: string | null;
-  overuseFlag: string | null;
-};
-
-export type ProjectAnalyticsRow = {
-  id: string;
-  project: string;
-  path: string;
-  totalTokens: number;
-  cost: number;
-  sessions: number;
-  interactions: number;
-  outputInputRatio: number;
-  lastUsedAt: number | null;
-  confidenceScore?: number;
-  confidenceGrade?: DataConfidenceGrade;
-};
-
-export type SessionRow = {
-  id: string;
-  startedAt: number | null;
-  endedAt: number | null;
-  title: string | null;
-  sourceFile: string;
-  tool: string;
-  provider: string;
-  project: string;
-  projectPath: string;
-  models: string;
-  totalTokens: number;
-  inputTokens: number;
-  outputTokens: number;
-  cachedTokens: number;
-  reasoningTokens: number;
-  cost: number | null;
-  costEstimated: boolean;
-  estimatedTokens: boolean;
-  tokenConfidence: string;
-  parser: string | null;
-  parserStatus: string | null;
-  parserConfidence: number | null;
-  parserReason: string | null;
-  sourceHref: string;
-  parserHref: string;
-  pricingHref: string | null;
-  interactionCount: number;
-  durationMs: number | null;
-  confidenceScore?: number;
-  confidenceGrade?: DataConfidenceGrade;
-};
-
-export type Insight = {
-  id: string;
-  severity: "high" | "medium" | "low";
-  problem: string;
-  evidence: string;
-  savingOpportunity: string;
-  recommendation: string;
-};
-
-export type UnknownCostQueueRow = {
-  cause: "missing model" | "missing pricing" | "missing token count" | "other";
-  model: string;
-  provider: string;
-  tool: string;
-  sourceFile: string;
-  interactions: number;
-  sessions: number;
-  totalTokens: number;
-  repairHref: string;
-  sourceHref: string;
-  parserHref: string;
-  pricingHref: string | null;
-};
-
-export type ModelAliasSuggestion = {
-  model: string;
-  provider: string;
-  tool: string;
-  sourceFile: string;
-  interactions: number;
-  totalTokens: number;
-  suggestedModel: string | null;
-  confidence: "high" | "medium" | "low";
-  reason: string;
-  repairHref: string;
-  parserHref: string;
-};
-
-export type DebugScanFile = {
-  id: string;
-  scanRunId: string;
-  path: string;
-  modifiedTime: number | null;
-  sizeBytes: number;
-  fileHash: string | null;
-  parser: string | null;
-  status: string;
-  recordsImported: number;
-  warnings: string[];
-  errors: string[];
-  rawMetadata: Record<string, unknown>;
-  scanStartedAt: number;
-};
-
-export type DebugScanRun = {
-  id: string;
-  startedAt: number;
-  completedAt: number | null;
-  filesScanned: number;
-  recordsImported: number;
-  warnings: string[];
-  errors: string[];
-};
-
-export type ScanTrustData = {
-  scanRuns: DebugScanRun[];
-  scanFiles: DebugScanFile[];
-  confidence: ScanConfidenceSummary;
-  pricedModelCount: number;
-  health: ScanHealth;
-};
-
-export type ScanTrustOptions = {
-  scanFileScope?: "all" | "recent" | "latest" | "none";
-  sessionDetail?: "full" | "summary";
-  analyticsProfile?: "full" | "overview";
-};
-
-export type AnalyticsData = {
-  summary: SummaryMetrics;
-  scanTrust: ScanTrustData;
-  dataConfidence: DataConfidenceScore;
-  evidenceLinks: EvidenceLinkMap;
-  comparison: UsageComparison;
-  trends: TrendPoint[];
-  tools: ToolComparisonRow[];
-  models: ModelAnalyticsRow[];
-  projects: ProjectAnalyticsRow[];
-  sessions: SessionRow[];
-  unknownCosts: UnknownCostQueueRow[];
-  modelAliasSuggestions: ModelAliasSuggestion[];
-  usageGuardrails: UsageGuardrailProgress;
-  reviewQueue: ReviewQueueItem[];
-  sessionComparisons: SessionComparisonRow[];
-  projectSignals: ProjectSignalRow[];
-  recommendations: LocalRecommendation[];
-  insights: Insight[];
-};
-
-export type AnalyticsFilters = {
-  from?: number | null;
-  to?: number | null;
-};
-
-function number(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : 0;
-}
-
-function dateStringFromTimestamp(timestamp: number) {
-  const date = new Date(timestamp);
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0")
-  ].join("-");
-}
-
-function addCalendarDays(value: string, days: number) {
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  date.setDate(date.getDate() + days);
-  return dateStringFromTimestamp(date.getTime());
-}
-
-function emptyTrendPoint(date: string): TrendPoint {
-  return {
-    date,
-    totalTokens: 0,
-    inputTokens: 0,
-    outputTokens: 0,
-    cachedTokens: 0,
-    reasoningTokens: 0,
-    cost: 0
-  };
-}
-
-function trendBounds(points: TrendPoint[], filters: AnalyticsFilters) {
-  const firstDataDate = points[0]?.date;
-  const lastDataDate = points.at(-1)?.date;
-  const fromDate = filters.from != null ? dateStringFromTimestamp(filters.from) : firstDataDate;
-  const toExclusiveDate =
-    filters.to != null
-      ? addCalendarDays(dateStringFromTimestamp(filters.to - 1), 1)
-      : lastDataDate
-        ? addCalendarDays(lastDataDate, 1)
-        : null;
-
-  if (!fromDate || !toExclusiveDate || fromDate >= toExclusiveDate) return null;
-  return { fromDate, toExclusiveDate };
-}
-
-function fillMissingTrendDays(points: TrendPoint[], filters: AnalyticsFilters) {
-  const bounds = trendBounds(points, filters);
-  if (!bounds) return [];
-
-  const byDate = new Map(points.map((point) => [point.date, point]));
-  const filled: TrendPoint[] = [];
-  for (
-    let date = bounds.fromDate;
-    date < bounds.toExclusiveDate;
-    date = addCalendarDays(date, 1)
-  ) {
-    filled.push(byDate.get(date) ?? emptyTrendPoint(date));
-  }
-  return filled;
-}
-
-function parseJson<T>(value: unknown, fallback: T): T {
-  if (Array.isArray(value) || (value && typeof value === "object")) return value as T;
-  if (typeof value !== "string") return fallback;
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function rows<T>(sql: string, ...params: unknown[]) {
-  return sqlite.prepare(sql).all(...params) as T[];
-}
-
-function withQuery(path: string, params: Record<string, string | null | undefined>) {
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value) query.set(key, value);
-  });
-  const serialized = query.toString();
-  return serialized ? `${path}?${serialized}` : path;
-}
-
-function stringMetadata(value: unknown, key: string) {
-  if (!value || typeof value !== "object") return null;
-  const candidate = (value as Record<string, unknown>)[key];
-  return typeof candidate === "string" && candidate.trim() ? candidate : null;
-}
-
-function numberMetadata(value: unknown, key: string) {
-  if (!value || typeof value !== "object") return null;
-  const candidate = (value as Record<string, unknown>)[key];
-  return typeof candidate === "number" && Number.isFinite(candidate) ? candidate : null;
-}
-
-function timestampWhere(filters: AnalyticsFilters = {}, alias = "i", prefix = "WHERE") {
-  const clauses: string[] = [];
-  const params: unknown[] = [];
-  if (filters.from != null) {
-    clauses.push(`${alias}.timestamp >= ?`);
-    params.push(filters.from);
-  }
-  if (filters.to != null) {
-    clauses.push(`${alias}.timestamp < ?`);
-    params.push(filters.to);
-  }
-  return {
-    sql: clauses.length ? `${prefix} ${clauses.join(" AND ")}` : "",
-    params
-  };
-}
-
-function timestampJoinCondition(filters: AnalyticsFilters = {}, alias = "i") {
-  const clauses: string[] = [];
-  const params: unknown[] = [];
-  if (filters.from != null) {
-    clauses.push(`${alias}.timestamp >= ?`);
-    params.push(filters.from);
-  }
-  if (filters.to != null) {
-    clauses.push(`${alias}.timestamp < ?`);
-    params.push(filters.to);
-  }
-  return {
-    sql: clauses.length ? ` AND ${clauses.join(" AND ")}` : "",
-    params
-  };
-}
+export type {
+  AnalyticsData,
+  AnalyticsFilters,
+  DebugScanFile,
+  DebugScanRun,
+  EvidenceLinkMap,
+  Insight,
+  ModelAliasSuggestion,
+  ModelAnalyticsRow,
+  ProjectAnalyticsRow,
+  ScanTrustData,
+  ScanTrustOptions,
+  SessionRow,
+  SummaryMetrics,
+  ToolComparisonRow,
+  TrendPoint,
+  UnknownCostQueueRow,
+  UsageComparison,
+  UsageComparisonSnapshot
+} from "@/src/lib/analytics-types";
 
 function getSummary(filters: AnalyticsFilters = {}): SummaryMetrics {
   const interactionFilter = timestampWhere(filters, "interactions");
