@@ -118,7 +118,7 @@ function RepairFlowSteps() {
         <CardDescription>Move left to right so every unknown-cost item ends with a checked local result.</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto p-0">
-        <div className="grid min-w-[46rem] grid-cols-5 divide-x border-t">
+        <div className="grid divide-y border-t sm:min-w-[46rem] sm:grid-cols-5 sm:divide-x sm:divide-y-0">
           {steps.map(([label, detail], index) => (
             <div key={label} className="p-3">
               <div className="flex items-center gap-2">

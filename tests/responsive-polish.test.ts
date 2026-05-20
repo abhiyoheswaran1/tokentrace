@@ -11,6 +11,7 @@ describe("responsive polish", () => {
     const globals = read("app/globals.css");
     const typography = read("components/ui/typography.tsx");
     const overview = read("app/page.tsx");
+    const repair = read("app/repair/page.tsx");
     const summaryCards = read("components/overview/summary-cards.tsx");
 
     expect(globals).toContain("max-width: 100%");
@@ -18,6 +19,9 @@ describe("responsive polish", () => {
     expect(typography).toContain("flex w-full min-w-0 flex-wrap gap-2");
     expect(typography).toContain("sm:w-auto");
     expect(overview).toContain('className="table-scroll overflow-x-auto"');
+    expect(repair).toContain("sm:min-w-[46rem]");
+    expect(repair).toContain("sm:grid-cols-5");
+    expect(repair).toContain("sm:divide-y-0");
     expect(summaryCards).not.toContain("whitespace-nowrap text-2xl");
   });
 });

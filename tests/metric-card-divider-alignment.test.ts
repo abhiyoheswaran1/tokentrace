@@ -4,9 +4,11 @@ import { describe, expect, it } from "vitest";
 
 describe("Overview metric card divider alignment", () => {
   it("groups cost and sessions into one split card instead of aligning separate cards with fixed slots", () => {
-    const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
+    const page = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
+    const source = fs.readFileSync(path.join(process.cwd(), "components/overview/summary-cards.tsx"), "utf8");
 
     expect(source).toContain("function CostSessionsCard");
+    expect(page).toContain("<CostSessionsCard");
     expect(source).toContain("cost-sessions-card");
     expect(source).toContain("cost-sessions-section");
     expect(source).toContain("Cost & Sessions");
