@@ -6,8 +6,9 @@ describe("Overview layout order", () => {
   it("keeps trends ahead of guardrails and recommendations on the main page", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
     const trendSource = fs.readFileSync(path.join(process.cwd(), "components/charts/trend-section.tsx"), "utf8");
+    const pulseSource = fs.readFileSync(path.join(process.cwd(), "components/overview/usage-pulse-panel.tsx"), "utf8");
 
-    const usagePulse = source.indexOf("<CardTitle>Usage Pulse</CardTitle>");
+    const usagePulse = source.indexOf("<UsagePulsePanel");
     const metricCards = source.indexOf("<TokenAccountingCard");
     const trendSection = source.indexOf("<TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />");
     const tokenTrend = trendSource.indexOf("<CardTitle>Token Trend</CardTitle>");
@@ -19,6 +20,7 @@ describe("Overview layout order", () => {
     const usageByTool = source.indexOf("<CardTitle>Usage By Tool</CardTitle>");
 
     expect(usagePulse).toBeGreaterThan(-1);
+    expect(pulseSource).toContain("<CardTitle>Usage Pulse</CardTitle>");
     expect(reviewStatus).toBeGreaterThan(-1);
     expect(repairItems).toBeGreaterThan(-1);
     expect(metricCards).toBeGreaterThan(usagePulse);
@@ -43,17 +45,19 @@ describe("Overview layout order", () => {
   it("keeps unknown-cost overview actions focused on repair and evidence", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
     const overviewData = fs.readFileSync(path.join(process.cwd(), "src/lib/overview-data.ts"), "utf8");
+    const repairItems = fs.readFileSync(path.join(process.cwd(), "components/overview/top-repair-items-strip.tsx"), "utf8");
+    const summaryCards = fs.readFileSync(path.join(process.cwd(), "components/overview/summary-cards.tsx"), "utf8");
 
     expect(overviewData).toContain("dateRangeQueryParams(range)");
-    expect(source).toContain("mergeHrefParams");
+    expect(repairItems).toContain("mergeHrefParams");
     expect(source).toContain("repairFocusHref");
-    expect(source).toContain("Open repair");
-    expect(source).toContain("View evidence");
+    expect(`${source}\n${repairItems}\n${summaryCards}`).toContain("Open repair");
+    expect(`${source}\n${repairItems}\n${summaryCards}`).toContain("View evidence");
     expect(overviewData).toContain("evidenceLinks[\"unknown-cost\"]");
   });
 
   it("shows trust annotations directly on the Overview summary cards", () => {
-    const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
+    const source = fs.readFileSync(path.join(process.cwd(), "components/overview/summary-cards.tsx"), "utf8");
 
     expect(source).toContain("trustDetail");
     expect(source).toContain("Why this number");
