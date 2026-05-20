@@ -34,20 +34,22 @@ describe("Overview layout order", () => {
 
   it("defaults all-time trend charts to 30 days while scoped periods show the full selected range", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
+    const overviewData = fs.readFileSync(path.join(process.cwd(), "src/lib/overview-data.ts"), "utf8");
 
-    expect(source).toContain('const trendDefaultWindow: TrendWindow = range.key === "all" ? "30d" : "all";');
+    expect(overviewData).toContain('const trendDefaultWindow: TrendWindow = range.key === "all" ? "30d" : "all";');
     expect(source).toContain("<TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />");
   });
 
   it("keeps unknown-cost overview actions focused on repair and evidence", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
+    const overviewData = fs.readFileSync(path.join(process.cwd(), "src/lib/overview-data.ts"), "utf8");
 
-    expect(source).toContain("dateRangeQueryParams(range)");
+    expect(overviewData).toContain("dateRangeQueryParams(range)");
     expect(source).toContain("mergeHrefParams");
     expect(source).toContain("repairFocusHref");
     expect(source).toContain("Open repair");
     expect(source).toContain("View evidence");
-    expect(source).toContain("evidenceLinks[\"unknown-cost\"]");
+    expect(overviewData).toContain("evidenceLinks[\"unknown-cost\"]");
   });
 
   it("shows trust annotations directly on the Overview summary cards", () => {

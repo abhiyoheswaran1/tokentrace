@@ -19,16 +19,17 @@ describe("localhost performance regressions", () => {
 
   it("keeps Overview from blocking render on scheduled scans and duplicate scan-trust reads", () => {
     const overview = read("app/page.tsx");
+    const overviewData = read("src/lib/overview-data.ts");
     const analytics = read("src/lib/analytics.ts");
 
     expect(overview).toContain("void runDueScheduledScan()");
     expect(overview).not.toContain("await runDueScheduledScan()");
-    expect(overview).toContain("const trust = data.scanTrust");
+    expect(overviewData).toContain("const trust = data.scanTrust");
     expect(overview).not.toContain("const trust = getScanTrustData(range.filters)");
     expect(analytics).toContain("scanTrust: ScanTrustData");
     expect(analytics).toContain("scanFileScope");
     expect(analytics).toContain("sessionDetail");
-    expect(overview).toContain('sessionDetail: "summary"');
+    expect(overviewData).toContain('sessionDetail: "summary"');
   });
 
   it("keeps large-database reads on covering indexes instead of raw interaction rows", () => {
@@ -100,14 +101,30 @@ describe("localhost performance regressions", () => {
 
   it("keeps Overview on a page-specific analytics profile", () => {
     const overview = read("app/page.tsx");
+    const overviewData = read("src/lib/overview-data.ts");
     const analytics = read("src/lib/analytics.ts");
 
-    expect(overview).toContain('analyticsProfile: "overview"');
+    expect(overviewData).toContain('analyticsProfile: "overview"');
+    expect(overview).toContain("getOverviewData(range)");
     expect(analytics).toContain('analyticsProfile?: "full" | "overview"');
     expect(analytics).toContain('const overviewOnly = options.analyticsProfile === "overview"');
     expect(analytics).toContain('const models = overviewOnly ? [] : getModelRows(filters);');
     expect(analytics).toContain('const modelAliasSuggestions = overviewOnly ? [] : getModelAliasSuggestions(filters);');
     expect(analytics).toContain('const insights = overviewOnly ? [] : buildInsights({ summary, trends, models, projects, sessions });');
+  });
+
+  it("keeps Overview server data assembly behind a focused helper", () => {
+    const overview = read("app/page.tsx");
+    const overviewData = read("src/lib/overview-data.ts");
+
+    expect(overview).toContain('import { getOverviewData } from "@/src/lib/overview-data";');
+    expect(overview).toContain("const overview = await getOverviewData(range);");
+    expect(overview).not.toContain("buildAccountingInvariants");
+    expect(overview).not.toContain("buildDoctorReport");
+    expect(overview).not.toContain("buildUnknownCostRepairWorkbench");
+    expect(overviewData).toContain("export async function getOverviewData");
+    expect(overviewData).toContain('analyticsProfile: "overview"');
+    expect(overviewData).toContain("repairFocusHref");
   });
 
   it("pins Next output tracing to the app root so worktree lockfiles do not raise dev overlay issues", () => {

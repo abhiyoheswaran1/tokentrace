@@ -11,18 +11,17 @@ import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData, getScanTrustData } from "@/src/lib/analytics";
-import { buildAccountingInvariants, type AccountingInvariantReport } from "@/src/lib/accounting-invariants";
-import { buildDoctorReport, type DoctorReport } from "@/src/lib/doctor";
-import { getDefaultSearchRoots } from "@/src/ingestion/discovery";
-import { buildFirstRunStatus, type FirstRunStatus } from "@/src/lib/first-run-status";
-import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
-import { dateRangeQueryParams, mergeHrefParams, resolveDateRange } from "@/src/lib/date-range";
+import type { AccountingInvariantReport } from "@/src/lib/accounting-invariants";
+import type { DoctorReport } from "@/src/lib/doctor";
+import type { FirstRunStatus } from "@/src/lib/first-run-status";
+import type { UnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
+import { mergeHrefParams, resolveDateRange } from "@/src/lib/date-range";
 import { formatCurrency, formatDate, formatSignedTokens, formatTokens, percent } from "@/src/lib/format";
 import { cn } from "@/src/lib/utils";
 import type { UsageGuardrailMetric } from "@/src/lib/usage-guardrails";
-import { buildScanDiff } from "@/src/lib/scan-diff";
-import { buildPostSessionReview, type PostSessionReview } from "@/src/lib/post-session-review";
+import type { PostSessionReview } from "@/src/lib/post-session-review";
 import { runDueScheduledScan } from "@/src/lib/scheduled-scan";
+import { getOverviewData } from "@/src/lib/overview-data";
 
 export const dynamic = "force-dynamic";
 
@@ -929,7 +928,7 @@ function TopRepairItemsStrip({
   repairHref,
   rangeLinkParams
 }: {
-  groups: ReturnType<typeof buildUnknownCostRepairWorkbench>["groups"];
+  groups: UnknownCostRepairWorkbench["groups"];
   repairHref: string;
   rangeLinkParams: Record<string, string | undefined>;
 }) {
@@ -999,47 +998,22 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   void runDueScheduledScan().catch(() => undefined);
   const params = (await searchParams) ?? {};
   const range = resolveDateRange(params);
-  const trendDefaultWindow: TrendWindow = range.key === "all" ? "30d" : "all";
-  const data = getAnalyticsData(range.filters, {
-    scanFileScope: "recent",
-    sessionDetail: "summary",
-    analyticsProfile: "overview"
-  });
-  const trust = data.scanTrust;
-  const accountingReport = buildAccountingInvariants(range.filters);
-  const postSessionReview = buildPostSessionReview({
-    scanDiff: buildScanDiff(),
-    usageGuardrails: data.usageGuardrails,
-    summary: data.summary,
-    sessions: data.sessions
-  });
-  const rangeLinkParams = dateRangeQueryParams(range);
-  const evidenceLinks = Object.fromEntries(
-    Object.entries(data.evidenceLinks).map(([key, href]) => [key, mergeHrefParams(href, { ...rangeLinkParams, openedFrom: "overview" })])
-  ) as typeof data.evidenceLinks;
-  const roots = await getDefaultSearchRoots();
-  const doctorReport = buildDoctorReport({ ...trust, roots });
-  const repairWorkbench = buildUnknownCostRepairWorkbench(range.filters, { limit: 12 });
-  const nextRepairGroup =
-    repairWorkbench.groups.find((group) => group.review.status !== "ignored" && group.review.status !== "resolved")
-    ?? repairWorkbench.groups[0]
-    ?? null;
-  const repairFocusHref = mergeHrefParams(nextRepairGroup?.itemHref ?? "/repair", rangeLinkParams);
-  const unknownCostEvidenceHref = evidenceLinks["unknown-cost"];
-  const firstRunStatus = buildFirstRunStatus({
-    rootCount: roots.length,
-    pricedModelCount: trust.pricedModelCount,
-    latestScan: doctorReport.latestScan.id
-      ? {
-          filesScanned: doctorReport.latestScan.filesScanned,
-          recordsImported: doctorReport.latestScan.recordsImported,
-          zeroImportExplanation: doctorReport.latestScan.zeroImportExplanation
-        }
-      : null,
-    interactions: trust.confidence.interactions,
-    unknownCostInteractions: trust.confidence.unknownCostInteractions
-  });
-  const { summary } = data;
+  const overview = await getOverviewData(range);
+  const {
+    data,
+    trust,
+    accountingReport,
+    postSessionReview,
+    rangeLinkParams,
+    evidenceLinks,
+    doctorReport,
+    repairWorkbench,
+    repairFocusHref,
+    unknownCostEvidenceHref,
+    firstRunStatus,
+    summary,
+    trendDefaultWindow
+  } = overview;
 
   return (
     <div className="space-y-8">
