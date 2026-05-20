@@ -108,9 +108,9 @@ describe("localhost performance regressions", () => {
     expect(overview).toContain("getOverviewData(range)");
     expect(analytics).toContain('analyticsProfile?: "full" | "overview"');
     expect(analytics).toContain('const overviewOnly = options.analyticsProfile === "overview"');
-    expect(analytics).toContain('const models = overviewOnly ? [] : getModelRows(filters);');
-    expect(analytics).toContain('const modelAliasSuggestions = overviewOnly ? [] : getModelAliasSuggestions(filters);');
-    expect(analytics).toContain('const insights = overviewOnly ? [] : buildInsights({ summary, trends, models, projects, sessions });');
+    expect(analytics).toContain('const models = overviewOnly ? [] : timeAnalyticsQuery("analytics.models"');
+    expect(analytics).toContain('const modelAliasSuggestions = overviewOnly ? [] : timeAnalyticsQuery("analytics.modelAliases"');
+    expect(analytics).toContain('const insights = overviewOnly ? [] : timeAnalyticsQuery("analytics.insights"');
   });
 
   it("keeps Overview server data assembly behind a focused helper", () => {
@@ -125,6 +125,22 @@ describe("localhost performance regressions", () => {
     expect(overviewData).toContain("export async function getOverviewData");
     expect(overviewData).toContain('analyticsProfile: "overview"');
     expect(overviewData).toContain("repairFocusHref");
+  });
+
+  it("surfaces slow analytics page queries through doctor-ready timing guardrails", () => {
+    const analytics = read("src/lib/analytics.ts");
+    const timing = read("src/lib/analytics-timing.ts");
+    const doctor = read("src/lib/doctor.ts");
+    const doctorCli = read("scripts/doctor.ts");
+
+    expect(timing).toContain("DEFAULT_ANALYTICS_QUERY_WARN_MS = 500");
+    expect(timing).toContain("export function timeAnalyticsQuery");
+    expect(timing).toContain("export function getAnalyticsTimingReport");
+    expect(analytics).toContain('timeAnalyticsQuery("analytics.trends"');
+    expect(analytics).toContain('timeAnalyticsQuery("analytics.sessions"');
+    expect(analytics).toContain('timeAnalyticsQuery("analytics.scanTrust"');
+    expect(doctor).toContain("analyticsTiming");
+    expect(doctorCli).toContain("Slow analytics queries");
   });
 
   it("pins Next output tracing to the app root so worktree lockfiles do not raise dev overlay issues", () => {

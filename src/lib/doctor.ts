@@ -13,6 +13,7 @@ import {
 } from "@/src/lib/support-matrix";
 import { buildParserTrustReportForScanFiles, type ParserTrustReport } from "@/src/lib/parser-trust";
 import { buildScanDiff, type ScanDiff } from "@/src/lib/scan-diff";
+import { getAnalyticsTimingReport, type AnalyticsTimingReport } from "@/src/lib/analytics-timing";
 
 export type DoctorRecommendation = {
   id: string;
@@ -68,6 +69,7 @@ export type DoctorReport = {
   };
   parserTrust: ParserTrustReport;
   scanDiff: ScanDiff;
+  analyticsTiming: AnalyticsTimingReport;
   recommendations: DoctorRecommendation[];
 };
 
@@ -351,6 +353,7 @@ export function buildDoctorReport({
     },
     parserTrust,
     scanDiff,
+    analyticsTiming: getAnalyticsTimingReport(),
     recommendations: buildRecommendations({
       health,
       rootCount: roots.length,

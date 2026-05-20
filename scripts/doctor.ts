@@ -37,9 +37,14 @@ function renderText(report: DoctorReport) {
     report.latestScan.zeroImportExplanation ? `Zero import: ${report.latestScan.zeroImportExplanation}` : null,
     report.scanDiff.explanation ? `Scan diff: ${report.scanDiff.explanation}` : null,
     `Scan delta: ${report.scanDiff.delta.filesScanned.toLocaleString()} files, ${report.scanDiff.delta.recordsImported.toLocaleString()} records`,
+    report.analyticsTiming.slowQueries.length ? `Slow analytics queries: ${report.analyticsTiming.slowQueries.length} over ${report.analyticsTiming.thresholdMs}ms` : null,
     "",
     "Recommendations:"
   ].filter((line): line is string => line != null);
+
+  for (const query of report.analyticsTiming.slowQueries.slice(0, 5)) {
+    lines.push(`~ ${query.label}: ${query.durationMs}ms`);
+  }
 
   for (const item of report.recommendations.slice(0, 6)) {
     lines.push(`${severityIcon(item.severity)} ${item.title}`);

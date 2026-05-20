@@ -12,6 +12,7 @@ import { buildSessionComparisons, type SessionComparisonRow } from "@/src/lib/se
 import { buildProjectSignals, type ProjectSignalRow } from "@/src/lib/project-signals";
 import { evidenceHref, type EvidenceMetric } from "@/src/lib/evidence-trail";
 import { buildDataConfidenceScore, type DataConfidenceGrade, type DataConfidenceScore } from "@/src/lib/data-confidence";
+import { timeAnalyticsQuery } from "@/src/lib/analytics-timing";
 
 export type TrendPoint = {
   date: string;
@@ -1229,7 +1230,7 @@ export function getAnalyticsData(
   options: ScanTrustOptions = {}
 ): AnalyticsData {
   const overviewOnly = options.analyticsProfile === "overview";
-  const summary = getSummary(filters);
+  const summary = timeAnalyticsQuery("analytics.summary", () => getSummary(filters));
   const scanTrust = getScanTrustData(filters, options);
   const dataConfidence = buildDataConfidenceScore({
     totalInteractions: scanTrust.confidence.interactions,
@@ -1255,34 +1256,34 @@ export function getAnalyticsData(
     guardrails: evidenceHref("guardrails"),
     "review-queue": evidenceHref("review-queue")
   };
-  const comparison = getUsageComparison(filters);
-  const usageGuardrails = getUsageGuardrailProgress();
-  const trends = getTrends(filters);
-  const tools = getToolComparison(filters);
-  const models = overviewOnly ? [] : getModelRows(filters);
-  const projects = getProjectRows(filters);
-  const sessions = getSessions(filters, options.sessionDetail ?? "full");
-  const unknownCosts = getUnknownCostQueue(filters);
-  const modelAliasSuggestions = overviewOnly ? [] : getModelAliasSuggestions(filters);
-  const sessionComparisons = overviewOnly ? [] : buildSessionComparisons(sessions);
+  const comparison = timeAnalyticsQuery("analytics.comparison", () => getUsageComparison(filters));
+  const usageGuardrails = timeAnalyticsQuery("analytics.guardrails", () => getUsageGuardrailProgress());
+  const trends = timeAnalyticsQuery("analytics.trends", () => getTrends(filters));
+  const tools = timeAnalyticsQuery("analytics.tools", () => getToolComparison(filters));
+  const models = overviewOnly ? [] : timeAnalyticsQuery("analytics.models", () => getModelRows(filters));
+  const projects = timeAnalyticsQuery("analytics.projects", () => getProjectRows(filters));
+  const sessions = timeAnalyticsQuery("analytics.sessions", () => getSessions(filters, options.sessionDetail ?? "full"));
+  const unknownCosts = timeAnalyticsQuery("analytics.unknownCosts", () => getUnknownCostQueue(filters));
+  const modelAliasSuggestions = overviewOnly ? [] : timeAnalyticsQuery("analytics.modelAliases", () => getModelAliasSuggestions(filters));
+  const sessionComparisons = overviewOnly ? [] : timeAnalyticsQuery("analytics.sessionComparisons", () => buildSessionComparisons(sessions));
   const projectSignals = overviewOnly
     ? []
-    : buildProjectSignals({
+    : timeAnalyticsQuery("analytics.projectSignals", () => buildProjectSignals({
       totalTokens: summary.totalTokens,
       projects,
       sessions
-    });
-  const recommendations = buildLocalRecommendations({
+    }));
+  const recommendations = timeAnalyticsQuery("analytics.recommendations", () => buildLocalRecommendations({
     summary,
     tools,
     projects,
     unknownCosts,
     guardrails: usageGuardrails,
     scan: getLatestScanRecommendationStats()
-  });
+  }));
   const reviewQueue = overviewOnly
     ? []
-    : buildReviewQueue({
+    : timeAnalyticsQuery("analytics.reviewQueue", () => buildReviewQueue({
       summary,
       guardrails: usageGuardrails,
       unknownCosts,
@@ -1290,8 +1291,8 @@ export function getAnalyticsData(
       projects,
       models,
       tools
-    });
-  const insights = overviewOnly ? [] : buildInsights({ summary, trends, models, projects, sessions });
+    }));
+  const insights = overviewOnly ? [] : timeAnalyticsQuery("analytics.insights", () => buildInsights({ summary, trends, models, projects, sessions }));
 
   return {
     summary,
@@ -1475,18 +1476,20 @@ export function getScanTrustData(
   filters: AnalyticsFilters = {},
   options: ScanTrustOptions = {}
 ): ScanTrustData {
-  const scanRuns = getScanRunRows(50);
-  const scanFiles = getScanFileRowsForScope(scanRuns, options.scanFileScope ?? "all");
-  const confidence = getScanConfidenceSummary(filters);
-  return {
-    scanRuns,
-    scanFiles,
-    confidence,
-    pricedModelCount: getPricedModelCount(),
-    health: buildScanHealth({
+  return timeAnalyticsQuery("analytics.scanTrust", () => {
+    const scanRuns = getScanRunRows(50);
+    const scanFiles = getScanFileRowsForScope(scanRuns, options.scanFileScope ?? "all");
+    const confidence = getScanConfidenceSummary(filters);
+    return {
       scanRuns,
       scanFiles,
-      confidence
-    })
-  };
+      confidence,
+      pricedModelCount: getPricedModelCount(),
+      health: buildScanHealth({
+        scanRuns,
+        scanFiles,
+        confidence
+      })
+    };
+  });
 }
