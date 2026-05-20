@@ -30,8 +30,7 @@ function causeVariant(cause: UnknownCostRepairWorkbenchGroup["cause"]) {
 
 function suggestionLabel(group: UnknownCostRepairWorkbenchGroup) {
   if (group.suggestion.suggestedModel) return group.suggestion.suggestedModel;
-  if (group.cause === "missing pricing") return "Add model rate";
-  return "Review parser";
+  return group.primaryAction.label;
 }
 
 function causeLabel(cause: UnknownCostRepairWorkbenchGroup["cause"]) {
@@ -48,19 +47,18 @@ function stateCopy(status: UnknownCostRepairStatus) {
 
 function repairImpactCopy(group: UnknownCostRepairWorkbenchGroup | null) {
   if (!group) return "No active repair group is selected. Cost coverage is clear or this period has no visible unknown-cost groups.";
-  if (group.cause === "missing pricing") {
-    return "After setting the model rate and recalculating, these interactions can move from unknown cost into priced or estimated cost totals.";
+  return group.impact;
+}
+
+function repairActionHref(
+  group: UnknownCostRepairWorkbenchGroup,
+  action: UnknownCostRepairWorkbenchGroup["primaryAction"],
+  rangeLinkParams: Record<string, string | undefined>
+) {
+  if (action.kind === "set-model-rate") {
+    return mergeHrefParams(action.href, { returnTo: mergeHrefParams(group.itemHref, rangeLinkParams) });
   }
-  if (group.cause === "missing model") {
-    return "After parser review records a usable model name, TokenTrace can match the interaction to model rates and remove the model gap.";
-  }
-  if (group.cause === "missing token count") {
-    return "After parser review recovers usable token counts, the interaction can be priced instead of staying unknown.";
-  }
-  if (group.cause === "parser review") {
-    return "After parser review confirms the source shape, supported rows can be imported with clearer token and cost confidence.";
-  }
-  return "After the missing metadata is corrected and recalculated, this group should leave unresolved unknown-cost repair.";
+  return mergeHrefParams(action.href, rangeLinkParams);
 }
 
 function topCause(groups: UnknownCostRepairWorkbenchGroup[]) {
@@ -149,11 +147,7 @@ function RepairGuidancePanel({
     workbench.groups.find((group) => group.state === "needs-parser-review") ??
     workbench.groups[0] ??
     null;
-  const nextRepairHref = nextRepair
-    ? nextRepair.pricingHref
-      ? mergeHrefParams(nextRepair.pricingHref, { returnTo: mergeHrefParams(nextRepair.itemHref, rangeLinkParams) })
-      : mergeHrefParams(nextRepair.repairHref, rangeLinkParams)
-    : "/pricing";
+  const nextRepairHref = nextRepair ? repairActionHref(nextRepair, nextRepair.primaryAction, rangeLinkParams) : "/pricing";
 
   return (
     <Card>
@@ -171,13 +165,13 @@ function RepairGuidancePanel({
         </div>
         <div className="min-w-0 rounded-md border bg-muted/20 p-3">
           <FieldLabel>Next best repair</FieldLabel>
-          <div className="mt-1 text-sm font-semibold">{nextRepair ? suggestionLabel(nextRepair) : "No repair needed"}</div>
+          <div className="mt-1 text-sm font-semibold">{nextRepair ? nextRepair.primaryAction.label : "No repair needed"}</div>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
             {nextRepair ? `${nextRepair.interactions.toLocaleString()} interactions from ${nextRepair.tool} / ${nextRepair.model}.` : "Cost coverage is clear for the selected period."}
           </p>
           {nextRepair ? (
             <Link href={nextRepairHref} className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline">
-              {nextRepair.pricingHref ? "Set model rate" : "Review parser"}
+              {nextRepair.primaryAction.label}
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           ) : null}
@@ -186,7 +180,7 @@ function RepairGuidancePanel({
           <FieldLabel>What changes after repair</FieldLabel>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">{repairImpactCopy(nextRepair)}</p>
           {nextRepair ? (
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">{stateCopy(nextRepair.state)}</p>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">{nextRepair.primaryAction.expectedChange}</p>
           ) : null}
         </div>
       </CardContent>
@@ -226,10 +220,7 @@ function FocusedRepairPanel({
     );
   }
 
-  const itemHref = mergeHrefParams(group.itemHref, rangeLinkParams);
-  const repairHref = group.pricingHref
-    ? mergeHrefParams(group.pricingHref, { returnTo: itemHref })
-    : mergeHrefParams(group.repairHref, rangeLinkParams);
+  const repairHref = repairActionHref(group, group.primaryAction, rangeLinkParams);
 
   return (
     <Card>
@@ -259,23 +250,23 @@ function FocusedRepairPanel({
         </div>
         <div className="border-t px-4 py-3">
           <FieldLabel>Suggested next step</FieldLabel>
-          <div className="mt-1 text-sm font-medium">{suggestionLabel(group)}</div>
+          <div className="mt-1 text-sm font-medium">{group.primaryAction.label}</div>
           <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            {group.suggestion.confidence} confidence. {group.suggestion.reason}
+            {group.primaryAction.description} {group.primaryAction.expectedChange}
           </div>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">{group.resolvedStateLabel}</p>
         </div>
         <div className="flex flex-wrap gap-2 border-t px-4 py-3">
           <Button asChild size="sm">
             <Link href={repairHref}>
-            {group.pricingHref ? "Set model rate" : "Review parser"} <ArrowRight className="h-4 w-4" />
+              {group.primaryAction.label} <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)}>View evidence</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={mergeHrefParams(group.parserHref, rangeLinkParams)}>Review parser</Link>
-          </Button>
+          {group.secondaryActions.slice(0, 3).map((action) => (
+            <Button key={`${action.kind}:${action.href}`} asChild variant="outline" size="sm">
+              <Link href={repairActionHref(group, action, rangeLinkParams)}>{action.label}</Link>
+            </Button>
+          ))}
         </div>
       </CardContent>
     </Card>
@@ -441,21 +432,20 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
                       <TableCell className="align-top">
                         <div className="flex flex-wrap gap-2">
                           <Link
-                            href={
-                              group.pricingHref
-                                ? mergeHrefParams(group.pricingHref, { returnTo: mergeHrefParams(group.itemHref, rangeLinkParams) })
-                                : mergeHrefParams(group.repairHref, rangeLinkParams)
-                            }
+                            href={repairActionHref(group, group.primaryAction, rangeLinkParams)}
                             className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
                           >
-                            {group.pricingHref ? "Set model rate" : "Review parser"} <ArrowRight className="h-3.5 w-3.5" />
+                            {group.primaryAction.label} <ArrowRight className="h-3.5 w-3.5" />
                           </Link>
-                          <Link href={mergeHrefParams(group.itemHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                            Open repair
-                          </Link>
-                          <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} className="font-medium text-muted-foreground underline-offset-4 hover:underline">
-                            View evidence
-                          </Link>
+                          {group.secondaryActions.slice(0, 2).map((action) => (
+                            <Link
+                              key={`${action.kind}:${action.href}`}
+                              href={repairActionHref(group, action, rangeLinkParams)}
+                              className="font-medium text-muted-foreground underline-offset-4 hover:underline"
+                            >
+                              {action.label}
+                            </Link>
+                          ))}
                         </div>
                       </TableCell>
                     </TableRow>

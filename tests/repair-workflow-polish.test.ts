@@ -9,13 +9,17 @@ function read(relativePath: string) {
 describe("Repair workflow polish", () => {
   it("keeps unknown-cost repair guidance decisive and state copy explicit", () => {
     const page = read("app/repair/page.tsx");
+    const repairLib = read("src/lib/unknown-cost-repair.ts");
     const stateControl = read("components/repair-state-control.tsx");
 
     expect(page).toContain("function RepairGuidancePanel");
     expect(page).toContain("Top cause");
     expect(page).toContain("Next best repair");
     expect(page).toContain("What changes after repair");
-    expect(page).toContain("After setting the model rate");
+    expect(repairLib).toContain("After setting the model rate");
+    expect(page).toContain("primaryAction");
+    expect(page).toContain("expectedChange");
+    expect(page).toContain("secondaryActions");
     expect(page).toContain("stateCopy");
     expect(stateControl).toContain("statusDescription");
     expect(stateControl).toContain("Resolved means the local fix has been verified.");

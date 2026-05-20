@@ -239,6 +239,18 @@ describe("unknown cost repair state", () => {
         confidence: "high"
       },
       pricingHref: "/pricing?model=claude-sonnet-4-5-20250929",
+      primaryAction: {
+        kind: "set-model-rate",
+        label: "Set model rate",
+        href: "/pricing?model=claude-sonnet-4-5-20250929",
+        expectedChange: "These interactions can move from unknown cost into priced or estimated cost totals."
+      },
+      secondaryActions: expect.arrayContaining([
+        expect.objectContaining({ kind: "view-evidence", href: "/sessions?source=%2Ftmp%2Fclaude%2Fa.jsonl&cost=unknown" }),
+        expect.objectContaining({ kind: "review-parser", href: "/parser-debug?source=%2Ftmp%2Fclaude%2Fa.jsonl" })
+      ]),
+      impact: "After setting the model rate and recalculating, these interactions can move from unknown cost into priced or estimated cost totals.",
+      resolvedStateLabel: "Resolved after local pricing recalculation",
       itemHref: expect.stringMatching(/^\/repair\?key=repair%3Av1%3A/),
       sourceHref: "/sessions?source=%2Ftmp%2Fclaude%2Fa.jsonl&cost=unknown",
       parserHref: "/parser-debug?source=%2Ftmp%2Fclaude%2Fa.jsonl",
@@ -264,6 +276,18 @@ describe("unknown cost repair state", () => {
         confidence: "low"
       },
       itemHref: expect.stringMatching(/^\/repair\?key=repair%3Av1%3A/),
+      primaryAction: {
+        kind: "review-parser",
+        label: "Review parser evidence",
+        href: "/parser-debug?source=%2Ftmp%2Fclaude%2Fb.jsonl",
+        expectedChange: "Parser review can recover a usable model name so pricing can be matched."
+      },
+      secondaryActions: expect.arrayContaining([
+        expect.objectContaining({ kind: "view-evidence", href: "/sessions?source=%2Ftmp%2Fclaude%2Fb.jsonl&cost=unknown" }),
+        expect.objectContaining({ kind: "open-focused-repair" })
+      ]),
+      impact: "After parser review records a usable model name, TokenTrace can match the interaction to model rates and remove the model gap.",
+      resolvedStateLabel: "Resolved after parser evidence is corrected",
       repairHref: "/parser-debug?source=%2Ftmp%2Fclaude%2Fb.jsonl"
     });
   });
