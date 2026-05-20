@@ -10,6 +10,7 @@ Usage:
                           Alias for agent discovery manifest
   tokentrace roadmap --json
                           Print release status handoff
+  tokentrace mcp          Start the local stdio MCP server
   tokentrace scan         Scan local AI CLI usage logs
   tokentrace doctor --json
                           Inspect scan health and repair recommendations

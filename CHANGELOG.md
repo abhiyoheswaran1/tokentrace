@@ -4,6 +4,15 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Added
+
+- `tokentrace mcp` now starts a local stdio MCP server for capabilities, status, Scan Health, evidence, repair queue, reports, and explicit local scans.
+- Added a validated MCP registry manifest for the npm package, with `tokentrace mcp` as the stdio entrypoint and no placeholder secrets.
+
+### Changed
+
+- Agent discovery, package smoke checks, packed-install smoke checks, and package inspection now cover the MCP server surface.
+
 ## [0.13.0] - 2026-05-20
 
 ### Changed

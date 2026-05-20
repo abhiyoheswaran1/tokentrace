@@ -18,6 +18,16 @@ tokentrace capabilities --json
 
 The manifest is read-only and follows `docs/agent-discovery.schema.json`.
 
+MCP-capable clients can start TokenTrace over stdio:
+
+```bash
+tokentrace mcp
+```
+
+The MCP server does not scan on startup. Its `run_scan` tool requires
+`confirmLocalScan=true` before reading local usage files or writing the local
+database.
+
 When the local dashboard is running, the same manifest is available at
 `/api/agent` and `/api/capabilities`.
 
@@ -32,6 +42,7 @@ Roadmap status is available through `tokentrace roadmap --json` and
 - `tokentrace repair --json`: inspect unknown-cost repair work.
 - `tokentrace digest --json`: summarize local usage.
 - `tokentrace roadmap --json`: inspect the current release handoff, action recipes, evidence paths, and release status.
+- `tokentrace mcp`: start the local stdio MCP server.
 - `tokentrace statusline setup claude`: print Claude Code status-line setup.
 - `tokentrace watch --session --compact`: terminal sidecar fallback for Codex.
 

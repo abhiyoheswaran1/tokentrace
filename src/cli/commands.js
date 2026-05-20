@@ -21,6 +21,14 @@ async function roadmap(context, args) {
   await runNodeScript(context, "roadmap", args, { env: process.env });
 }
 
+async function mcp(context, args) {
+  if (args.length) {
+    console.error("Usage: tokentrace mcp");
+    process.exit(1);
+  }
+  await runNodeScript(context, "mcp", [], { env: process.env });
+}
+
 async function doctor(context, args) {
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "doctor", args);
@@ -212,6 +220,10 @@ export async function runCliCommand(context, rawArgs = process.argv.slice(2)) {
   }
   if (command === "roadmap") {
     await roadmap(context, args);
+    return;
+  }
+  if (command === "mcp") {
+    await mcp(context, args);
     return;
   }
   if (command === "scan") {

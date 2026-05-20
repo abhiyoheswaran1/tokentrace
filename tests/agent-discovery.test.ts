@@ -22,7 +22,8 @@ describe("agent discovery manifest", () => {
     });
     expect(manifest.discoveryCommands).toEqual([
       ["tokentrace", "agent", "--json"],
-      ["tokentrace", "capabilities", "--json"]
+      ["tokentrace", "capabilities", "--json"],
+      ["tokentrace", "mcp"]
     ]);
     expect(manifest.apiEndpoints).toEqual([
       {
@@ -49,6 +50,7 @@ describe("agent discovery manifest", () => {
         "repair",
         "digest",
         "roadmap",
+        "mcp",
         "status",
         "claude-statusline",
         "watch"
@@ -68,6 +70,12 @@ describe("agent discovery manifest", () => {
       command: ["tokentrace", "roadmap", "--json"],
       mutatesLocalState: false,
       output: "json"
+    });
+    expect(manifest.commands.find((command) => command.id === "mcp")).toMatchObject({
+      command: ["tokentrace", "mcp"],
+      mutatesLocalState: false,
+      startsLongRunningProcess: true,
+      output: "terminal"
     });
     expect(manifest.integrations.claudeCode.statusLineSetupCommand).toEqual([
       "tokentrace",
@@ -127,8 +135,10 @@ describe("agent discovery manifest", () => {
     );
     expect(agentGuide).toContain("tokentrace agent --json");
     expect(agentGuide).toContain("tokentrace capabilities --json");
+    expect(agentGuide).toContain("tokentrace mcp");
     expect(agentGuide).toContain("tokentrace reset");
     expect(llmsText).toContain("tokentrace agent --json");
+    expect(llmsText).toContain("tokentrace mcp");
     expect(llmsText).toContain("Local-first");
   });
 });

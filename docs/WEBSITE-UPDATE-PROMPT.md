@@ -18,6 +18,10 @@ Supporting copy:
 
 > Product polish and performance: faster first dashboard loads, clearer repair guidance, mobile card layouts for Repair and Model Rates, denser Session Explorer filtering, lazy Settings sections, stronger first-run setup, clearer CLI startup, and automated browser guardrails for console errors, blank charts, and mobile overflow.
 
+0.14.0 release message:
+
+> MCP-ready local analytics: TokenTrace now ships `tokentrace mcp`, a local stdio MCP server for capabilities, status, Scan Health, evidence, repair queue, reports, and explicit local scans with `confirmLocalScan=true`.
+
 ## Screenshots
 
 Use the latest refreshed screenshots from this repo:
@@ -38,7 +42,8 @@ Use the latest refreshed screenshots from this repo:
 7. Repair workflow: top cause, next best repair, what changes after repair, resolved/ignored/parser-review states, and before/after repair deltas.
 8. Mobile workflow polish: compact navigation plus card layouts for narrow Repair and Model Rates views.
 9. Agent-ready entry points: `tokentrace agent --json`, `tokentrace capabilities --json`, `/api/agent`, and `tokentrace roadmap --json`.
-10. Privacy: local files stay local; model-rate refresh fetches public rate data only.
+10. MCP entry point: `tokentrace mcp` for local stdio clients, with no scan on startup and explicit scan confirmation.
+11. Privacy: local files stay local; model-rate refresh fetches public rate data only.
 
 ## Copy Rules
 

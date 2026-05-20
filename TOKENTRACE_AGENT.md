@@ -19,6 +19,16 @@ tokentrace capabilities --json
 
 The manifest follows the schema in `docs/agent-discovery.schema.json`.
 
+MCP-capable clients can use the local stdio server:
+
+```bash
+tokentrace mcp
+```
+
+The MCP server does not scan on startup. Its `run_scan` tool requires
+`confirmLocalScan=true` before reading local usage files or writing the local
+database.
+
 If the local dashboard is already running, the same manifest is available from:
 
 ```bash
@@ -67,6 +77,7 @@ curl http://127.0.0.1:3030/api/roadmap
 - Do not call processed tokens current context size. Use `ctx` for live context-window pressure.
 - Treat database paths, source file paths, prompts, and raw transcript settings as local sensitive data.
 - Discovery is read-only: it does not scan files, initialize the dashboard database, start a server, or make a network request.
+- MCP startup is read-only; use `run_scan` only when the human expects a local scan.
 
 ## Integrations
 

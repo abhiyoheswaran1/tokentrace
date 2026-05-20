@@ -27,6 +27,7 @@
     "components",
     "docs/agent-discovery.schema.json",
     "docs/assets",
+    "server.json",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "SECURITY.md",

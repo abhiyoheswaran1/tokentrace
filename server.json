@@ -1,0 +1,29 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.abhiyoheswaran1/tokentrace",
+  "title": "TokenTrace",
+  "description": "Local-first AI CLI usage analytics for agents.",
+  "websiteUrl": "https://www.abhiyoheswaran.com/apps/tokentrace",
+  "repository": {
+    "url": "https://github.com/abhiyoheswaran1/tokentrace",
+    "source": "github"
+  },
+  "version": "0.13.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "tokentrace",
+      "version": "0.13.0",
+      "runtimeHint": "npx",
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

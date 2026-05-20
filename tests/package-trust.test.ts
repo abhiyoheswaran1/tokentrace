@@ -71,6 +71,7 @@ describe("package trust policy", () => {
         "bin",
         "TOKENTRACE_AGENT.md",
         "llms.txt",
+        "server.json",
         "docs/agent-discovery.schema.json"
       ])
     );
@@ -82,6 +83,7 @@ describe("package trust policy", () => {
     expect(inspectScript).toContain("requiredPackageFiles");
     expect(inspectScript).toContain("TOKENTRACE_AGENT.md");
     expect(inspectScript).toContain("docs/agent-discovery.schema.json");
+    expect(inspectScript).toContain("server.json");
     expect(inspectScript).toContain("bin/tokentrace.js");
     expect(inspectScript).toContain("executable");
   });
@@ -103,6 +105,7 @@ describe("package trust policy", () => {
     expect(smokeScript).toContain("agent");
     expect(smokeScript).toContain("capabilities");
     expect(smokeScript).toContain("roadmap");
+    expect(smokeScript).toContain("mcp");
     expect(smokeScript).toContain("schemaVersion");
     expect(smokeScript).toContain("releaseAllowed");
   });

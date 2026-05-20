@@ -24,6 +24,19 @@ export function jsonCommand(context, args) {
   return JSON.parse(output);
 }
 
+function mcpSmoke(context) {
+  const input = [
+    { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } },
+    { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} }
+  ].map((message) => JSON.stringify(message)).join("\n") + "\n";
+  const output = run(context, ["mcp"], { input, timeout: 30_000 });
+  const responses = output.split("\n").filter(Boolean).map((line) => JSON.parse(line));
+  const toolNames = responses[1]?.result?.tools?.map((tool) => tool.name) ?? [];
+  if (!toolNames.includes("get_capabilities") || !toolNames.includes("run_scan")) {
+    throw new Error("MCP tools/list is missing expected TokenTrace tools.");
+  }
+}
+
 export function expectFailure(context, args, expectedStderr) {
   const result = spawnSync(process.execPath, [context.bin, ...args], {
     cwd: context.root,
@@ -61,6 +74,8 @@ export async function smokeCliDiscovery(context) {
     if (roadmap.version !== "0.12.0" || roadmap.release?.releaseAllowed !== true || roadmap.handoff?.schemaVersion !== "tokentrace.roadmap.v2") {
       throw new Error("Roadmap JSON is missing 0.12.0 release-ready handoff status.");
     }
+
+    mcpSmoke(context);
   } catch (error) {
     throw new Error(`CLI discovery smoke failed: ${error instanceof Error ? error.message : String(error)}`);
   }

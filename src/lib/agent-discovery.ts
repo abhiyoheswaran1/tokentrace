@@ -194,6 +194,25 @@ const commands: AgentDiscoveryCommand[] = [
     ]
   },
   {
+    id: "mcp",
+    title: "Start local MCP server",
+    command: ["tokentrace", "mcp"],
+    description: "Expose TokenTrace's local-first JSON workflows as a stdio Model Context Protocol server.",
+    output: "terminal",
+    mutatesLocalState: false,
+    startsLongRunningProcess: true,
+    requiresNetwork: false,
+    safeForAutomation: false,
+    useWhen: "An MCP-capable agent or client wants structured access to TokenTrace status, doctor, evidence, repair, report, and explicit scan tools.",
+    followUps: [
+      ["tokentrace", "agent", "--json"]
+    ],
+    notes: [
+      "The MCP server itself does not scan files on startup.",
+      "The run_scan MCP tool requires confirmLocalScan=true before reading local usage files and writing the local database."
+    ]
+  },
+  {
     id: "status",
     title: "Print local live usage status",
     command: ["tokentrace", "status", "--json"],
@@ -290,7 +309,8 @@ export function buildAgentDiscoveryManifest(options: AgentDiscoveryOptions = {})
     },
     discoveryCommands: [
       ["tokentrace", "agent", "--json"],
-      ["tokentrace", "capabilities", "--json"]
+      ["tokentrace", "capabilities", "--json"],
+      ["tokentrace", "mcp"]
     ],
     apiEndpoints: [
       {

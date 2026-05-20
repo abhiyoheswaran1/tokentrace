@@ -41,6 +41,7 @@ tokentrace capabilities --json
                         # Alias for agent discovery manifest
 tokentrace roadmap --json
                         # Print release status handoff
+tokentrace mcp          # Start the local stdio MCP server
 tokentrace scan         # Scan local AI CLI usage logs
 tokentrace doctor --json
                         # Inspect scan health and repair recommendations
@@ -105,6 +106,19 @@ or npm package contents before invoking commands:
 - [TOKENTRACE_AGENT.md](TOKENTRACE_AGENT.md)
 - [llms.txt](llms.txt)
 - [docs/agent-discovery.schema.json](docs/agent-discovery.schema.json)
+
+MCP-capable clients can start the local stdio server after installing or using
+the npm package:
+
+```bash
+tokentrace mcp
+```
+
+The MCP server exposes the same local-first surfaces as tools: capabilities,
+status, Scan Health, evidence, repair queue, reports, and an explicit scan tool.
+It does not scan files on startup, and its scan tool requires
+`confirmLocalScan=true` before reading local usage files or writing the local
+database.
 
 When the local dashboard is already running, agents can fetch the same manifest
 over localhost:

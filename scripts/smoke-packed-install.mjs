@@ -23,6 +23,7 @@ function run(command, args, options = {}) {
       ...options.env
     },
     encoding: "utf8",
+    input: options.input,
     timeout: options.timeout ?? 120_000
   });
 
@@ -50,6 +51,7 @@ const requiredPackageFiles = [
   "TOKENTRACE_AGENT.md",
   "llms.txt",
   "docs/agent-discovery.schema.json",
+  "server.json",
   "bin/tokentrace.js"
 ];
 
@@ -108,6 +110,17 @@ function assertDiscoverySmoke(bin, cwd, env) {
   const roadmap = runJson(bin, ["roadmap", "--json"], { cwd, env });
   if (roadmap.version !== "0.12.0" || roadmap.release?.releaseAllowed !== true) {
     throw new Error("Packed tokentrace roadmap --json is missing the 0.12.0 release-ready status.");
+  }
+
+  const mcpInput = [
+    { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } },
+    { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} }
+  ].map((message) => JSON.stringify(message)).join("\n") + "\n";
+  const mcpOutput = run(bin, ["mcp"], { cwd, env, input: mcpInput, timeout: 30_000 });
+  const mcpResponses = mcpOutput.split("\n").filter(Boolean).map((line) => JSON.parse(line));
+  const mcpTools = mcpResponses[1]?.result?.tools?.map((tool) => tool.name) ?? [];
+  if (!mcpTools.includes("get_capabilities") || !mcpTools.includes("run_scan")) {
+    throw new Error("Packed tokentrace mcp did not expose expected MCP tools.");
   }
 }
 
@@ -223,7 +236,7 @@ try {
     }
 
     const help = run(bin, ["--help"], { cwd: tempRoot });
-    if (!help.includes("tokentrace scan") || !help.includes("tokentrace statusline claude")) {
+    if (!help.includes("tokentrace scan") || !help.includes("tokentrace mcp") || !help.includes("tokentrace statusline claude")) {
       throw new Error("Packed tokentrace --help is missing expected commands.");
     }
 
