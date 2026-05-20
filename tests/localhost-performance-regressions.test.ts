@@ -109,4 +109,21 @@ describe("localhost performance regressions", () => {
     expect(analytics).toContain('const modelAliasSuggestions = overviewOnly ? [] : getModelAliasSuggestions(filters);');
     expect(analytics).toContain('const insights = overviewOnly ? [] : buildInsights({ summary, trends, models, projects, sessions });');
   });
+
+  it("pins Next output tracing to the app root so worktree lockfiles do not raise dev overlay issues", () => {
+    const nextConfig = read("next.config.mjs");
+
+    expect(nextConfig).toContain("fileURLToPath(import.meta.url)");
+    expect(nextConfig).toContain("const projectRoot");
+    expect(nextConfig).toContain("outputFileTracingRoot: projectRoot");
+  });
+
+  it("keeps server bundle readability config out of the dev overlay issue badge", () => {
+    const nextConfig = read("next.config.mjs");
+
+    expect(nextConfig).toContain("const productionExperimentalConfig");
+    expect(nextConfig).toContain('process.env.NODE_ENV === "production"');
+    expect(nextConfig).toContain("experimental: productionExperimentalConfig");
+    expect(nextConfig).toContain("serverMinification: false");
+  });
 });
