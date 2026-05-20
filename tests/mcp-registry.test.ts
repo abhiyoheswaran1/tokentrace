@@ -12,6 +12,7 @@ describe("MCP registry manifest", () => {
     const packageJson = readJson("package.json");
 
     expect(manifest.name).toBe("io.github.abhiyoheswaran1/tokentrace");
+    expect(packageJson.mcpName).toBe("io.github.abhiyoheswaran1/tokentrace");
     expect(manifest.title).toBe("TokenTrace");
     expect(manifest.version).toBe(packageJson.version);
     expect(manifest.packages).toHaveLength(1);

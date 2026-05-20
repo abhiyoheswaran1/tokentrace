@@ -4,6 +4,12 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.14.1] - 2026-05-20
+
+### Fixed
+
+- Added the required npm `mcpName` package metadata so the MCP registry can verify the TokenTrace npm package.
+
 ## [0.14.0] - 2026-05-20
 
 ### Added

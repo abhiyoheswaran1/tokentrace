@@ -66,6 +66,7 @@ describe("package trust policy", () => {
 
   it("publishes agent discovery docs, schema, and CLI bin entry", () => {
     expect(packageJson.bin).toEqual({ tokentrace: "bin/tokentrace.js" });
+    expect(packageJson.mcpName).toBe("io.github.abhiyoheswaran1/tokentrace");
     expect(packageJson.files).toEqual(
       expect.arrayContaining([
         "bin",

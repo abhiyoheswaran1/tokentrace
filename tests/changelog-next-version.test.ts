@@ -4,19 +4,13 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.14.0 MCP server release", () => {
+  it("documents the 0.14.1 MCP registry metadata release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.14.0");
-    expect(changelog).toContain("## [0.14.0] - 2026-05-20");
+    expect(packageJson.version).toBe("0.14.1");
+    expect(changelog).toContain("## [0.14.1] - 2026-05-20");
     expect(changelog).toContain(
-      "`tokentrace mcp` now starts a local stdio MCP server for capabilities, status, Scan Health, evidence, repair queue, reports, and explicit local scans."
-    );
-    expect(changelog).toContain(
-      "Added a validated MCP registry manifest for the npm package, with `tokentrace mcp` as the stdio entrypoint and no placeholder secrets."
-    );
-    expect(changelog).toContain(
-      "Agent discovery, package smoke checks, packed-install smoke checks, and package inspection now cover the MCP server surface."
+      "Added the required npm `mcpName` package metadata so the MCP registry can verify the TokenTrace npm package."
     );
   });
 
