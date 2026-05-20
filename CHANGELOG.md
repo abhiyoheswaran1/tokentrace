@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.13.0] - 2026-05-20
+
 ### Changed
 
 - Overview now uses focused data assembly and smaller panel components, with quieter local development overlays.

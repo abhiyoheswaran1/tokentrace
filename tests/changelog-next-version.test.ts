@@ -4,16 +4,19 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.12.1 public documentation hardening release", () => {
+  it("documents the 0.13.0 product polish release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.12.1");
-    expect(changelog).toContain("## [0.12.1] - 2026-05-19");
+    expect(packageJson.version).toBe("0.13.0");
+    expect(changelog).toContain("## [0.13.0] - 2026-05-20");
     expect(changelog).toContain(
-      "Public docs, CLI help, package runtime output, and agent-readable release status now describe shipped TokenTrace behavior only."
+      "Overview trend aggregation now avoids SQLite localtime bucketing so large local databases load the first dashboard view much faster."
     );
     expect(changelog).toContain(
-      "Future-version roadmap labels no longer appear in public package surfaces."
+      "Repair and Model Rates now use mobile card layouts on narrow screens instead of forcing wide table workflows."
+    );
+    expect(changelog).toContain(
+      "Added `npm run browser:guard` to fail browser smoke runs on console errors, page errors, Next dev overlay issues, blank charts, and severe mobile overflow."
     );
   });
 
