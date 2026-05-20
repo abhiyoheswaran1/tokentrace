@@ -16,24 +16,23 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataValue, FieldLabel, MonoText } from "@/components/ui/typography";
 import { cn } from "@/src/lib/utils";
+import {
+  SESSION_PAGE_SIZE,
+  filterSessions,
+  getActiveSessionFilters,
+  getCurrentSessionFilters,
+  getHighCostThreshold,
+  getPaginationWindow,
+  getSessionFilterOptions,
+  hasSessionFilters,
+  summarizeSessions,
+  type CostFilter,
+  type ExactFilter,
+  type RowDensity,
+  type SessionExplorerFilterState
+} from "@/components/session-explorer/filtering";
 
-type ExactFilter = "all" | "exact" | "estimated";
-type CostFilter = "all" | "priced" | "unknown";
-type RowDensity = "comfortable" | "compact";
-const SESSION_PAGE_SIZE = 50;
-
-export function getPaginationWindow(total: number, page: number, pageSize = SESSION_PAGE_SIZE) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const currentPage = Math.min(Math.max(1, page), totalPages);
-  const start = (currentPage - 1) * pageSize;
-  const end = Math.min(total, start + pageSize);
-  return {
-    totalPages,
-    currentPage,
-    start,
-    end
-  };
-}
+export { getPaginationWindow } from "@/components/session-explorer/filtering";
 
 function confidenceVariant(grade: string) {
   if (grade === "high") return "success";
@@ -88,127 +87,28 @@ export function SessionExplorer({
   const [page, setPage] = useState(1);
   const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
 
-  const tools = useMemo(() => Array.from(new Set(sessions.map((session) => session.tool))).sort(), [sessions]);
-  const models = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          sessions.flatMap((session) =>
-            session.models
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean)
-          )
-        )
-      ).sort(),
-    [sessions]
+  const { tools, models, projects } = useMemo(() => getSessionFilterOptions(sessions), [sessions]);
+  const highCostThreshold = useMemo(() => getHighCostThreshold(sessions), [sessions]);
+  const filterState = useMemo<SessionExplorerFilterState>(
+    () => ({ query, tool, model, project, exact, cost, from, to, highCost, hasCache }),
+    [cost, exact, from, hasCache, highCost, model, project, query, to, tool]
   );
-  const projects = useMemo(
-    () => Array.from(new Set(sessions.map((session) => session.project))).sort(),
-    [sessions]
+  const filtered = useMemo(
+    () => filterSessions(sessions, filterState, highCostThreshold),
+    [filterState, highCostThreshold, sessions]
   );
-  const highCostThreshold = useMemo(() => {
-    const costs = sessions
-      .map((session) => session.cost ?? 0)
-      .filter((cost) => cost > 0)
-      .sort((a, b) => a - b);
-    return costs.length ? costs[Math.floor(costs.length * 0.85)] : 0;
-  }, [sessions]);
-
-  const filtered = useMemo(() => {
-    const fromMs = from ? new Date(`${from}T00:00:00`).getTime() : null;
-    const toMs = to ? new Date(`${to}T23:59:59`).getTime() : null;
-    const normalizedQuery = query.toLowerCase();
-
-    return sessions.filter((session) => {
-      if (tool !== "all" && session.tool !== tool) return false;
-      if (model !== "all" && !session.models.split(",").map((item) => item.trim()).includes(model)) return false;
-      if (project !== "all" && session.project !== project) return false;
-      if (exact === "exact" && session.estimatedTokens) return false;
-      if (exact === "estimated" && !session.estimatedTokens) return false;
-      if (cost === "priced" && session.cost == null) return false;
-      if (cost === "unknown" && session.cost != null) return false;
-      if (fromMs && (!session.startedAt || session.startedAt < fromMs)) return false;
-      if (toMs && (!session.startedAt || session.startedAt > toMs)) return false;
-      if (highCost && (session.cost ?? 0) < highCostThreshold) return false;
-      if (hasCache && session.cachedTokens <= 0) return false;
-      if (!normalizedQuery) return true;
-      return [
-        session.title,
-        session.sourceFile,
-        session.tool,
-        session.project,
-        session.models,
-        session.parser,
-        session.parserStatus
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery);
-    });
-  }, [cost, exact, from, hasCache, highCost, highCostThreshold, model, project, query, sessions, to, tool]);
-  const filteredSummary = useMemo(
-    () =>
-      filtered.reduce(
-        (summary, session) => {
-          summary.tokens += session.totalTokens;
-          summary.cost += session.cost ?? 0;
-          summary.exact += session.tokenConfidence === "exact" ? 1 : 0;
-          summary.estimated += session.estimatedTokens ? 1 : 0;
-          summary.unknown += session.tokenConfidence === "unknown" ? 1 : 0;
-          return summary;
-        },
-        { tokens: 0, cost: 0, exact: 0, estimated: 0, unknown: 0 }
-      ),
-    [filtered]
-  );
-  const hasFilters =
-    query ||
-    tool !== "all" ||
-    model !== "all" ||
-    project !== "all" ||
-    exact !== "all" ||
-    cost !== "all" ||
-    from ||
-    to ||
-    highCost ||
-    hasCache;
+  const filteredSummary = useMemo(() => summarizeSessions(filtered), [filtered]);
+  const hasFilters = useMemo(() => hasSessionFilters(filterState), [filterState]);
   const hasEvidenceContext = Boolean(initialProject || initialTool || initialModel || initialSource || initialCost || initialCache);
   const pagination = getPaginationWindow(filtered.length, page);
   const visibleSessions = filtered.slice(pagination.start, pagination.end);
   const tableDensityClass = rowDensity === "compact" ? "[&_td]:py-2 [&_th]:h-9" : "[&_td]:py-3 [&_th]:h-10";
-  const activeFilters = useMemo(() => {
-    const filters: string[] = [];
-    if (query) filters.push(`Search: ${query}`);
-    if (tool !== "all") filters.push(`Tool: ${tool}`);
-    if (model !== "all") filters.push(`Model: ${model}`);
-    if (project !== "all") filters.push(`Project: ${project}`);
-    if (exact !== "all") filters.push(`Tokens: ${exact}`);
-    if (cost !== "all") filters.push(`Cost: ${cost}`);
-    if (from) filters.push(`From: ${from}`);
-    if (to) filters.push(`To: ${to}`);
-    if (highCost) filters.push("High-cost");
-    if (hasCache) filters.push("Has cache tokens");
-    return filters;
-  }, [cost, exact, from, hasCache, highCost, model, project, query, to, tool]);
-  const currentFilters = useMemo(() => {
-    const filters: Record<string, string | boolean> = {};
-    if (query) filters.query = query;
-    if (tool !== "all") filters.tool = tool;
-    if (model !== "all") filters.model = model;
-    if (project !== "all") filters.project = project;
-    if (exact !== "all") filters.exact = exact;
-    if (cost !== "all") filters.cost = cost;
-    if (from) filters.from = from;
-    if (to) filters.to = to;
-    if (highCost) filters.highCost = true;
-    if (hasCache) filters.cache = true;
-    return filters;
-  }, [cost, exact, from, hasCache, highCost, model, project, query, to, tool]);
+  const activeFilters = useMemo(() => getActiveSessionFilters(filterState), [filterState]);
+  const currentFilters = useMemo(() => getCurrentSessionFilters(filterState), [filterState]);
 
   useEffect(() => {
     setPage(1);
-  }, [cost, exact, from, hasCache, highCost, model, project, query, to, tool]);
+  }, [filterState]);
 
   function clearFilters() {
     setQuery("");

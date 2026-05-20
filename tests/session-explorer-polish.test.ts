@@ -9,8 +9,9 @@ function read(relativePath: string) {
 describe("Session Explorer polish", () => {
   it("keeps dense session review controls ergonomic", () => {
     const source = read("components/session-explorer.tsx");
+    const filtering = read("components/session-explorer/filtering.ts");
 
-    expect(source).toContain('type RowDensity = "comfortable" | "compact"');
+    expect(filtering).toContain('type RowDensity = "comfortable" | "compact"');
     expect(source).toContain("const activeFilters = useMemo");
     expect(source).toContain('aria-live="polite"');
     expect(source).toContain('aria-label="Clear filters"');
