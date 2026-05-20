@@ -45,7 +45,10 @@ describe("localhost performance regressions", () => {
       read("src/lib/analytics/repair.ts"),
       read("src/lib/analytics/scan-trust.ts")
     ].join("\n");
-    const evidence = read("src/lib/evidence-trail.ts");
+    const evidence = [
+      read("src/lib/evidence-trail.ts"),
+      read("src/lib/evidence/query.ts")
+    ].join("\n");
 
     expect(migrations).toContain("interactions_analytics_cover_idx");
     expect(migrations).toContain("interactions_session_analytics_idx");
@@ -84,7 +87,11 @@ describe("localhost performance regressions", () => {
     const repairPage = read("app/repair/page.tsx");
     const repairData = read("app/repair/repair-page-data.ts");
     const repairTable = read("components/repair/repair-items-table.tsx");
-    const repairLib = read("src/lib/unknown-cost-repair.ts");
+    const repairLib = [
+      read("src/lib/unknown-cost-repair.ts"),
+      read("src/lib/unknown-cost-repair/types.ts"),
+      read("src/lib/unknown-cost-repair/workbench.ts")
+    ].join("\n");
     const repairUi = `${repairPage}\n${repairData}\n${repairTable}`;
 
     expect(repairData).toContain("REPAIR_PAGE_GROUP_LIMIT");

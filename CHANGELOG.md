@@ -26,6 +26,11 @@ All notable changes to TokenTrace are documented here.
 - `tokentrace serve` now prints clearer startup progress, help examples, browser-open guidance, and fixed-port conflict recovery steps.
 - CLI smoke checks are split into discovery, JSON/data, runtime watch, and dashboard serve modules so package smoke failures point to the broken surface.
 - Route loading copy now reinforces that TokenTrace is reading local database records without sending telemetry.
+- Repair and Model Rates now use mobile card layouts on narrow screens instead of forcing wide table workflows.
+- Unknown-cost repair, scan ingestion, Evidence Trail, and Pricing Settings internals are split into smaller focused modules to reduce hotspot risk and make future repair work safer.
+- Pricing saves, model-rate refreshes, and scans now report a repair delta showing unknown-cost before/after counts, resolved groups, and the top remaining blocked cause.
+- Settings now defers dense package trust, guardrail, import profile, and export sections while preserving section anchors.
+- Added `npm run browser:guard` to fail browser smoke runs on console errors, page errors, Next dev overlay issues, blank charts, and severe mobile overflow.
 
 ## [0.12.1] - 2026-05-19
 

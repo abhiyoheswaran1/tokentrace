@@ -112,6 +112,7 @@
     "typescript": "^5.7.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/react-dom": "^19.0.2",
     "esbuild": "^0.28.0",

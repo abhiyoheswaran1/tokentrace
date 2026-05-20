@@ -19,11 +19,15 @@ describe("mobile table alternatives", () => {
 
   it("keeps Model Rates editable with compact mobile cards while preserving the desktop table", () => {
     const source = read("components/pricing/model-rates-table.tsx");
+    const aliasSuggestions = read("components/pricing/model-alias-suggestions-table.tsx");
 
     expect(source).toContain("function ModelRateMobileCards");
     expect(source).toContain('className="grid gap-3 md:hidden"');
     expect(source).toContain('className="hidden overflow-x-auto md:block"');
     expect(source).toContain("Provider/model");
     expect(source).toContain("Token rates");
+    expect(aliasSuggestions).toContain("function ModelAliasSuggestionMobileCards");
+    expect(aliasSuggestions).toContain('className="grid gap-3 md:hidden"');
+    expect(aliasSuggestions).toContain('className="hidden overflow-x-auto md:block"');
   });
 });

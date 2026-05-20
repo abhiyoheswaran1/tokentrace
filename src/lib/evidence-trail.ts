@@ -1,13 +1,8 @@
 import type { AnalyticsFilters } from "@/src/lib/analytics";
-import {
-  evidenceHref,
-  parseEvidenceMetric,
-  type EvidenceMetric
-} from "@/src/lib/evidence/metrics";
+import type { EvidenceMetric } from "@/src/lib/evidence/metrics";
 import {
   mapEvidenceTrail,
-  type EvidenceTrail,
-  type EvidenceTrailSession
+  type EvidenceTrail
 } from "@/src/lib/evidence/mapping";
 import { fetchEvidenceTrailRows } from "@/src/lib/evidence/query";
 

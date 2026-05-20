@@ -1,8 +1,6 @@
 import { parseCauseFromKey, parseModelFromKey, parseRepairKey } from "@/src/lib/unknown-cost-repair/keys";
 import {
   bulkUpdateUnknownCostRepairsWithResolver,
-  getUnknownCostReview,
-  listUnknownCostRepairs,
   markUnknownCostRepairIgnoredWithResolver,
   markUnknownCostRepairResolvedWithResolver,
   saveUnknownCostReviewWithResolver,
@@ -13,7 +11,7 @@ import type {
   UnknownCostRepairStatus,
   UnknownCostReviewState
 } from "@/src/lib/unknown-cost-repair/types";
-import { buildUnknownCostRepairWorkbench, findWorkbenchGroupByKey } from "@/src/lib/unknown-cost-repair/workbench";
+import { findWorkbenchGroupByKey } from "@/src/lib/unknown-cost-repair/workbench";
 
 export type {
   UnknownCostRepairAction,

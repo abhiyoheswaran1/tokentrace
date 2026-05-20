@@ -2,14 +2,20 @@
 
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 
 const baseUrl = process.env.BROWSER_GUARD_BASE_URL ?? process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const routes = ["/", "/repair", "/pricing", "/sessions", "/settings"];
-const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "tokentrace-browser-guard-"));
+const tempDir = fs.mkdtempSync(path.join(process.cwd(), ".browser-guard-"));
 const specPath = path.join(tempDir, "browser-issue-guard.spec.mjs");
+const configPath = path.join(tempDir, "playwright.config.mjs");
+const playwrightBin = path.join(
+  process.cwd(),
+  "node_modules",
+  ".bin",
+  process.platform === "win32" ? "playwright.cmd" : "playwright"
+);
 
 const spec = `
 import { test, expect } from "@playwright/test";
@@ -133,10 +139,22 @@ for (const route of routes) {
 `;
 
 fs.writeFileSync(specPath, spec);
+fs.writeFileSync(
+  configPath,
+  `export default {
+  testDir: ${JSON.stringify(tempDir)},
+  testMatch: "browser-issue-guard.spec.mjs",
+  timeout: 30000,
+  use: {
+    headless: true
+  }
+};
+`
+);
 
 const result = spawnSync(
-  "npx",
-  ["--yes", "playwright@latest", "test", specPath, "--reporter=line"],
+  playwrightBin,
+  ["test", "--config", configPath, "--reporter=line"],
   {
     cwd: process.cwd(),
     env: {
