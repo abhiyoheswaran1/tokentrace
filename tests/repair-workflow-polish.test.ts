@@ -9,18 +9,21 @@ function read(relativePath: string) {
 describe("Repair workflow polish", () => {
   it("keeps unknown-cost repair guidance decisive and state copy explicit", () => {
     const page = read("app/repair/page.tsx");
+    const guidance = read("components/repair/repair-guidance.tsx");
+    const itemsTable = read("components/repair/repair-items-table.tsx");
+    const repairUi = `${page}\n${guidance}\n${itemsTable}`;
     const repairActions = read("src/lib/repair-actions.ts");
     const stateControl = read("components/repair-state-control.tsx");
 
-    expect(page).toContain("function RepairGuidancePanel");
-    expect(page).toContain("Top cause");
-    expect(page).toContain("Next best repair");
-    expect(page).toContain("What changes after repair");
+    expect(guidance).toContain("function RepairGuidancePanel");
+    expect(repairUi).toContain("Top cause");
+    expect(repairUi).toContain("Next best repair");
+    expect(repairUi).toContain("What changes after repair");
     expect(repairActions).toContain("After setting the model rate");
-    expect(page).toContain("primaryAction");
-    expect(page).toContain("expectedChange");
-    expect(page).toContain("secondaryActions");
-    expect(page).toContain("stateCopy");
+    expect(repairUi).toContain("primaryAction");
+    expect(repairUi).toContain("expectedChange");
+    expect(repairUi).toContain("secondaryActions");
+    expect(repairUi).toContain("stateCopy");
     expect(stateControl).toContain("statusDescription");
     expect(stateControl).toContain("Resolved means the local fix has been verified.");
     expect(stateControl).toContain("Ignored stays in evidence but leaves active repair focus.");

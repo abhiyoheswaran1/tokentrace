@@ -82,11 +82,14 @@ describe("localhost performance regressions", () => {
 
   it("keeps the Repair page from rendering the entire unknown-cost queue on first load", () => {
     const repairPage = read("app/repair/page.tsx");
+    const repairData = read("app/repair/repair-page-data.ts");
+    const repairTable = read("components/repair/repair-items-table.tsx");
     const repairLib = read("src/lib/unknown-cost-repair.ts");
+    const repairUi = `${repairPage}\n${repairData}\n${repairTable}`;
 
-    expect(repairPage).toContain("REPAIR_PAGE_GROUP_LIMIT");
-    expect(repairPage).toContain("visible repair groups");
-    expect(repairPage).not.toContain("keys={workbench.groups.map((group) => group.key)}");
+    expect(repairData).toContain("REPAIR_PAGE_GROUP_LIMIT");
+    expect(repairTable).toContain("visible repair groups");
+    expect(repairUi).not.toContain("keys={workbench.groups.map((group) => group.key)}");
     expect(repairLib).toContain("type UnknownCostRepairWorkbenchOptions");
     expect(repairLib).toContain("hasMoreGroups");
   });
