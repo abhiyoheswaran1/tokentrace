@@ -51,6 +51,16 @@ export function buildFirstRunStatus({
       action: "Configure roots"
     },
     {
+      id: "pricing",
+      label: "Seed model rates",
+      state: pricedModelCount > 0 ? "pass" : "warn",
+      detail: pricedModelCount > 0
+        ? `${pricedModelCount.toLocaleString()} rated models are available before cost review.`
+        : "Seed bundled rates or add a model rate before trusting cost totals.",
+      href: "/pricing",
+      action: "Open Model Rates"
+    },
+    {
       id: "scan",
       label: "Run a local scan",
       state: latestScan && latestScan.filesScanned > 0 ? "pass" : latestScan ? "warn" : "pending",
@@ -62,7 +72,7 @@ export function buildFirstRunStatus({
     },
     {
       id: "health",
-      label: "Review data health",
+      label: "Open Scan Health",
       state: interactions > 0 && unknownCostInteractions === 0 ? "pass" : latestScan ? "warn" : "pending",
       detail: interactions > 0
         ? unknownCostInteractions > 0
@@ -71,14 +81,6 @@ export function buildFirstRunStatus({
         : "Scan Health explains ignored files, parser warnings, and model-rate coverage.",
       href: "/diagnostics",
       action: "Open Scan Health"
-    },
-    {
-      id: "status-line",
-      label: "Install Claude Code status line",
-      state: interactions > 0 ? "pass" : "pending",
-      detail: "Use the Guide setup command when you want live ctx, cost, processed, and cache labels in Claude Code.",
-      href: "/guide",
-      action: "Open Guide"
     },
     {
       id: "daily-review",
@@ -142,9 +144,20 @@ export function buildFirstRunStatus({
   if (rootCount === 0) {
     return {
       title: "Add a readable CLI folder",
-      description: "TokenTrace needs at least one local CLI usage folder before it can scan.",
+      description: "TokenTrace stays local-first: set folders on this machine, seed model rates, then scan. No telemetry is sent.",
       tone: "warning",
       primaryAction: { label: "Configure scan roots", href: "/settings#custom-folders" },
+      checks,
+      setupSteps
+    };
+  }
+
+  if (pricedModelCount === 0) {
+    return {
+      title: "Seed local model rates",
+      description: "Add bundled or custom model rates before treating local cost totals as complete. No telemetry is sent.",
+      tone: "warning",
+      primaryAction: { label: "Open Model Rates", href: "/pricing" },
       checks,
       setupSteps
     };
@@ -153,7 +166,7 @@ export function buildFirstRunStatus({
   if (!latestScan) {
     return {
       title: "Run the first local scan",
-      description: "TokenTrace has model rates and roots ready, but no scan history yet.",
+      description: "TokenTrace has local folders and model rates ready, but no scan history yet.",
       tone: "default",
       primaryAction: { label: "Open scan settings", href: "/settings#scan-controls" },
       checks,

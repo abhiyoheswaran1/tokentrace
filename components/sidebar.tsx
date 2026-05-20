@@ -8,9 +8,11 @@ import {
   Bot,
   BookOpen,
   Bug,
+  ChevronDown,
   ClipboardList,
   FolderGit2,
   Gauge,
+  Menu,
   Search,
   Settings,
   SlidersHorizontal,
@@ -41,6 +43,10 @@ const primaryNavItems = [
 const supportNavItems = [
   { href: "/guide", label: "Guide", icon: BookOpen }
 ];
+
+const priorityMobileItems = primaryNavItems.filter((item) =>
+  ["/", "/sessions", "/repair", "/diagnostics", "/settings"].includes(item.href)
+);
 
 function NavLink({
   item,
@@ -80,6 +86,32 @@ function NavLink({
     >
       <Icon className="h-4 w-4" />
       {item.label}
+    </Link>
+  );
+}
+
+function MobileIconLink({
+  item,
+  isActive = false
+}: {
+  item: (typeof primaryNavItems)[number];
+  isActive?: boolean;
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      aria-current={isActive ? "page" : undefined}
+      aria-label={item.label}
+      title={item.label}
+      className={cn(
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-md border transition-colors",
+        isActive
+          ? "border-primary/30 bg-primary/10 text-primary shadow-sm"
+          : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
+      <Icon className="h-4 w-4" />
     </Link>
   );
 }
@@ -140,21 +172,50 @@ export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string 
 export function MobileNav() {
   const mobileNavItems = [...primaryNavItems, ...supportNavItems];
   const pathname = usePathname() ?? "/";
+  const activeMobileItem =
+    mobileNavItems.find((item) => isActiveRoute(pathname, item.href)) ?? primaryNavItems[0];
+  const ActiveIcon = activeMobileItem.icon;
 
   return (
-    <nav aria-label="Mobile navigation" className="flex gap-2 overflow-x-auto border-b bg-card px-4 py-2 md:hidden">
-      {mobileNavItems.map((item) => {
-        const isSupport = item.href === "/guide";
-        return (
-          <NavLink
-            key={item.href}
-            item={item}
-            variant={isSupport ? "support" : "default"}
-            isActive={isActiveRoute(pathname, item.href)}
-            mobile
-          />
-        );
-      })}
+    <nav aria-label="Mobile navigation" className="relative border-b bg-card px-3 py-2 md:hidden">
+      <div className="flex items-center gap-2">
+        <details className="group min-w-0 flex-1">
+          <summary
+            aria-label="Command menu"
+            className="flex h-10 cursor-pointer list-none items-center gap-2 rounded-md border bg-card px-3 text-sm font-medium [&::-webkit-details-marker]:hidden"
+          >
+            <Menu className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <ActiveIcon className="h-4 w-4 text-primary" aria-hidden="true" />
+            <span className="min-w-0 flex-1 truncate">{activeMobileItem.label}</span>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="absolute left-3 right-3 top-14 z-50 max-h-[70vh] overflow-y-auto rounded-md border bg-card p-2 shadow-lg">
+            <div className="grid grid-cols-2 gap-1">
+              {mobileNavItems.map((item) => {
+                const isSupport = item.href === "/guide";
+                return (
+                  <NavLink
+                    key={item.href}
+                    item={item}
+                    variant={isSupport ? "support" : "default"}
+                    isActive={isActiveRoute(pathname, item.href)}
+                    mobile
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </details>
+        <div className="flex shrink-0 gap-1" aria-label="Priority mobile shortcuts">
+          {priorityMobileItems.map((item) => (
+            <MobileIconLink
+              key={item.href}
+              item={item}
+              isActive={isActiveRoute(pathname, item.href)}
+            />
+          ))}
+        </div>
+      </div>
     </nav>
   );
 }

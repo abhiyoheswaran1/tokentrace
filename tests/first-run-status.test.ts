@@ -16,14 +16,14 @@ describe("first-run status", () => {
     expect(status.checks.find((check) => check.id === "roots")).toMatchObject({ state: "warn" });
     expect(status.setupSteps.map((step) => step.id)).toEqual([
       "roots",
+      "pricing",
       "scan",
       "health",
-      "status-line",
       "daily-review"
     ]);
-    expect(status.setupSteps.find((step) => step.id === "status-line")).toMatchObject({
-      label: "Install Claude Code status line",
-      href: "/guide"
+    expect(status.setupSteps.find((step) => step.id === "pricing")).toMatchObject({
+      label: "Seed model rates",
+      href: "/pricing"
     });
   });
 

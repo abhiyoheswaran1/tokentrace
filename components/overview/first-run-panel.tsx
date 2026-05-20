@@ -37,7 +37,7 @@ export function FirstRunPanel({ status }: { status: FirstRunStatus }) {
         <div className="mt-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-semibold leading-tight">Guided setup</h2>
-            <span className="text-xs text-muted-foreground">Five local steps to first useful evidence.</span>
+            <span className="text-xs text-muted-foreground">Five local steps to first useful evidence. No telemetry is sent.</span>
           </div>
           <ol className="mt-3 grid overflow-hidden rounded-md border bg-card md:grid-cols-5">
             {status.setupSteps.map((step, index) => (
