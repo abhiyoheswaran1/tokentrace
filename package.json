@@ -26,6 +26,7 @@
     "public",
     "app",
     "components",
+    "docs/agent-adoption.md",
     "docs/agent-discovery.schema.json",
     "docs/assets",
     "server.json",

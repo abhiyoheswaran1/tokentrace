@@ -39,6 +39,10 @@ function runMcp(messages: unknown[], env: Partial<NodeJS.ProcessEnv> = {}) {
   };
 }
 
+function parseToolPayload(response: { result: { content: Array<{ text: string }> } }) {
+  return JSON.parse(response.result.content[0].text);
+}
+
 describe("TokenTrace MCP server", () => {
   it("lists local-first tools without initializing app data", async () => {
     const blockedHome = path.join(await tempDir(), "not-a-directory");
@@ -72,6 +76,7 @@ describe("TokenTrace MCP server", () => {
     expect(result.responses[0].result.serverInfo.name).toBe("tokentrace");
     expect(result.responses[0].result.capabilities.tools).toEqual({});
     expect(result.responses[1].result.tools.map((tool: { name: string }) => tool.name)).toEqual([
+      "get_agent_guide",
       "get_capabilities",
       "get_status",
       "run_doctor",
@@ -82,7 +87,55 @@ describe("TokenTrace MCP server", () => {
     ]);
   });
 
-  it("returns agent capabilities through an MCP tool call", async () => {
+  it("returns an agent guide with MCP registry install snippets and copy-paste repo instructions", async () => {
+    const blockedHome = path.join(await tempDir(), "not-a-directory");
+    await fs.writeFile(blockedHome, "blocked");
+
+    const result = runMcp(
+      [
+        { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } },
+        {
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: { name: "get_agent_guide", arguments: {} }
+        }
+      ],
+      {
+        TOKENTRACE_HOME: blockedHome,
+        TOKENTRACE_DB: path.join(blockedHome, "tokentrace.db"),
+        DATABASE_URL: `file:${path.join(blockedHome, "tokentrace.db")}`
+      }
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const payload = parseToolPayload(result.responses[1]);
+    expect(payload.summary).toContain("recommended TokenTrace MCP operating loop");
+    expect(payload.confidence).toBe("high");
+    expect(payload.requiresHumanConfirmation).toBe(false);
+    expect(payload.nextActions).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("get_status"),
+        expect.stringContaining("run_doctor"),
+        expect.stringContaining("get_evidence")
+      ])
+    );
+    expect(payload.data.registryName).toBe("io.github.abhiyoheswaran1/tokentrace");
+    expect(payload.data.npmCommand).toEqual(["npx", "tokentrace", "mcp"]);
+    expect(payload.data.agentsMdBlock).toContain("Before reporting AI token, cost, model, or session usage");
+    expect(payload.data.workflow.map((step: { tool: string }) => step.tool)).toEqual([
+      "get_capabilities",
+      "get_status",
+      "run_doctor",
+      "get_evidence",
+      "get_repair_queue",
+      "get_report",
+      "run_scan"
+    ]);
+  });
+
+  it("returns agent capabilities through an enveloped MCP tool call", async () => {
     const blockedHome = path.join(await tempDir(), "not-a-directory");
     await fs.writeFile(blockedHome, "blocked");
 
@@ -105,10 +158,20 @@ describe("TokenTrace MCP server", () => {
 
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
-    const payload = JSON.parse(result.responses[1].result.content[0].text);
-    expect(payload.schemaVersion).toBe(1);
-    expect(payload.product.name).toBe("TokenTrace");
-    expect(payload.privacy.localFirst).toBe(true);
+    const payload = parseToolPayload(result.responses[1]);
+    expect(payload.summary).toContain("agent discovery manifest");
+    expect(payload.confidence).toBe("high");
+    expect(payload.nextActions).toEqual(expect.arrayContaining([expect.stringContaining("run_doctor")]));
+    expect(payload.warnings).toEqual([]);
+    expect(payload.evidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ command: ["tokentrace", "agent", "--json"] })
+      ])
+    );
+    expect(payload.requiresHumanConfirmation).toBe(false);
+    expect(payload.data.schemaVersion).toBe(1);
+    expect(payload.data.product.name).toBe("TokenTrace");
+    expect(payload.data.privacy.localFirst).toBe(true);
   });
 
   it("requires an explicit acknowledgement before scanning local files", async () => {
@@ -133,7 +196,12 @@ describe("TokenTrace MCP server", () => {
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.responses[1].result.isError).toBe(true);
-    expect(result.responses[1].result.content[0].text).toContain("confirmLocalScan");
+    const payload = parseToolPayload(result.responses[1]);
+    expect(payload.summary).toContain("confirmLocalScan");
+    expect(payload.requiresHumanConfirmation).toBe(true);
+    expect(payload.warnings).toEqual(
+      expect.arrayContaining([expect.stringContaining("local file reads and local database writes")])
+    );
   });
 
   it("runs a local fixture scan only after explicit acknowledgement", async () => {
@@ -164,8 +232,39 @@ describe("TokenTrace MCP server", () => {
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.responses[1].result.isError).toBeUndefined();
-    const payload = JSON.parse(result.responses[1].result.content[0].text);
-    expect(payload.filesScanned).toBeGreaterThanOrEqual(1);
-    expect(payload.recordsImported).toBeGreaterThanOrEqual(1);
+    const payload = parseToolPayload(result.responses[1]);
+    expect(payload.summary).toContain("Local scan completed");
+    expect(payload.requiresHumanConfirmation).toBe(false);
+    expect(payload.data.filesScanned).toBeGreaterThanOrEqual(1);
+    expect(payload.data.recordsImported).toBeGreaterThanOrEqual(1);
   }, 15_000);
+
+  it("self-tests the MCP server without initializing app data or scanning files", async () => {
+    const blockedHome = path.join(await tempDir(), "not-a-directory");
+    await fs.writeFile(blockedHome, "blocked");
+
+    const result = spawnSync(process.execPath, ["bin/tokentrace.js", "mcp", "selftest", "--json"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      timeout: 10_000,
+      env: {
+        ...process.env,
+        TOKENTRACE_HOME: blockedHome,
+        TOKENTRACE_DB: path.join(blockedHome, "tokentrace.db"),
+        DATABASE_URL: `file:${path.join(blockedHome, "tokentrace.db")}`
+      }
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const payload = JSON.parse(result.stdout);
+    expect(payload.ok).toBe(true);
+    expect(payload.checks.map((check: { id: string }) => check.id)).toEqual([
+      "initialize",
+      "tools-list",
+      "agent-guide",
+      "scan-confirmation-refusal"
+    ]);
+    expect(payload.mutatedLocalState).toBe(false);
+  });
 });

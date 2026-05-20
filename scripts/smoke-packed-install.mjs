@@ -50,6 +50,7 @@ function parsePackOutput(stdout) {
 const requiredPackageFiles = [
   "TOKENTRACE_AGENT.md",
   "llms.txt",
+  "docs/agent-adoption.md",
   "docs/agent-discovery.schema.json",
   "server.json",
   "bin/tokentrace.js"
@@ -119,8 +120,13 @@ function assertDiscoverySmoke(bin, cwd, env) {
   const mcpOutput = run(bin, ["mcp"], { cwd, env, input: mcpInput, timeout: 30_000 });
   const mcpResponses = mcpOutput.split("\n").filter(Boolean).map((line) => JSON.parse(line));
   const mcpTools = mcpResponses[1]?.result?.tools?.map((tool) => tool.name) ?? [];
-  if (!mcpTools.includes("get_capabilities") || !mcpTools.includes("run_scan")) {
+  if (!mcpTools.includes("get_agent_guide") || !mcpTools.includes("get_capabilities") || !mcpTools.includes("run_scan")) {
     throw new Error("Packed tokentrace mcp did not expose expected MCP tools.");
+  }
+
+  const selftest = runJson(bin, ["mcp", "selftest", "--json"], { cwd, env });
+  if (selftest.ok !== true || !selftest.tools?.includes("get_agent_guide")) {
+    throw new Error("Packed tokentrace mcp selftest did not verify the agent guide tool.");
   }
 }
 

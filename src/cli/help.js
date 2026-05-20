@@ -11,6 +11,8 @@ Usage:
   tokentrace roadmap --json
                           Print release status handoff
   tokentrace mcp          Start the local stdio MCP server
+  tokentrace mcp selftest --json
+                          Verify the local MCP entrypoint without scanning files
   tokentrace scan         Scan local AI CLI usage logs
   tokentrace doctor --json
                           Inspect scan health and repair recommendations

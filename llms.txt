@@ -24,6 +24,18 @@ MCP-capable clients can start TokenTrace over stdio:
 tokentrace mcp
 ```
 
+Registry name: `io.github.abhiyoheswaran1/tokentrace`.
+
+Call `get_agent_guide` first in MCP clients. It returns the recommended
+TokenTrace operating loop, install snippets, copy-paste AGENTS.md guidance, and
+local-first guardrails.
+
+Self-test without scanning files:
+
+```bash
+tokentrace mcp selftest --json
+```
+
 The MCP server does not scan on startup. Its `run_scan` tool requires
 `confirmLocalScan=true` before reading local usage files or writing the local
 database.
@@ -43,6 +55,7 @@ Roadmap status is available through `tokentrace roadmap --json` and
 - `tokentrace digest --json`: summarize local usage.
 - `tokentrace roadmap --json`: inspect the current release handoff, action recipes, evidence paths, and release status.
 - `tokentrace mcp`: start the local stdio MCP server.
+- `tokentrace mcp selftest --json`: verify MCP startup, tool listing, agent guide, and scan-confirmation refusal.
 - `tokentrace statusline setup claude`: print Claude Code status-line setup.
 - `tokentrace watch --session --compact`: terminal sidecar fallback for Codex.
 

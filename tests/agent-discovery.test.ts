@@ -111,6 +111,7 @@ describe("agent discovery manifest", () => {
     const packageJson = readJson("package.json");
     const agentGuide = fs.readFileSync(path.join(process.cwd(), "TOKENTRACE_AGENT.md"), "utf8");
     const llmsText = fs.readFileSync(path.join(process.cwd(), "llms.txt"), "utf8");
+    const adoptionGuide = fs.readFileSync(path.join(process.cwd(), "docs/agent-adoption.md"), "utf8");
 
     expect(manifest.schema).toBe(schema.$id);
     expect(schema.required).toEqual(
@@ -130,15 +131,21 @@ describe("agent discovery manifest", () => {
       expect.arrayContaining([
         "TOKENTRACE_AGENT.md",
         "llms.txt",
+        "docs/agent-adoption.md",
         "docs/agent-discovery.schema.json"
       ])
     );
     expect(agentGuide).toContain("tokentrace agent --json");
     expect(agentGuide).toContain("tokentrace capabilities --json");
     expect(agentGuide).toContain("tokentrace mcp");
+    expect(agentGuide).toContain("get_agent_guide");
     expect(agentGuide).toContain("tokentrace reset");
     expect(llmsText).toContain("tokentrace agent --json");
     expect(llmsText).toContain("tokentrace mcp");
+    expect(llmsText).toContain("get_agent_guide");
     expect(llmsText).toContain("Local-first");
+    expect(adoptionGuide).toContain("io.github.abhiyoheswaran1/tokentrace");
+    expect(adoptionGuide).toContain("Before reporting AI token, cost, model, or session usage");
+    expect(adoptionGuide).toContain("get_evidence");
   });
 });

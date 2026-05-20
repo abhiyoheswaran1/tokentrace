@@ -25,6 +25,21 @@ MCP-capable clients can use the local stdio server:
 tokentrace mcp
 ```
 
+MCP registry name:
+
+```text
+io.github.abhiyoheswaran1/tokentrace
+```
+
+Agents should call `get_agent_guide` first. It returns the recommended workflow,
+install snippets, copy-paste `AGENTS.md` guidance, and local-first guardrails.
+
+Verify the MCP entrypoint without scanning files:
+
+```bash
+tokentrace mcp selftest --json
+```
+
 The MCP server does not scan on startup. Its `run_scan` tool requires
 `confirmLocalScan=true` before reading local usage files or writing the local
 database.
@@ -53,19 +68,25 @@ curl http://127.0.0.1:3030/api/roadmap
    tokentrace agent --json
    ```
 
-2. Refresh local data when the human expects current usage:
+2. In MCP clients, ask for the operating loop:
+
+   ```text
+   get_agent_guide
+   ```
+
+3. Refresh local data when the human expects current usage:
 
    ```bash
    tokentrace scan --json
    ```
 
-3. Check trust before making claims:
+4. Check trust before making claims:
 
    ```bash
    tokentrace doctor --json
    ```
 
-4. Explain totals with evidence:
+5. Explain totals with evidence:
 
    ```bash
    tokentrace evidence --json

@@ -67,6 +67,7 @@ for (const entry of blockedPackageEntries) {
 const requiredPackageFiles = [
   "TOKENTRACE_AGENT.md",
   "llms.txt",
+  "docs/agent-adoption.md",
   "docs/agent-discovery.schema.json",
   "server.json",
   expectedBin
@@ -137,7 +138,7 @@ console.log("- no npm install lifecycle scripts");
 console.log("- Next.js dependency floor is pinned to the patched range");
 console.log("- Drizzle ORM and PostCSS floors are pinned to patched ranges");
 console.log("- generated Next.js build output is excluded from the package");
-console.log("- agent discovery docs, MCP registry manifest, schema, and executable CLI bin are included");
+console.log("- agent discovery docs, MCP adoption guide, registry manifest, schema, and executable CLI bin are included");
 for (const note of notes) {
   console.log(`- ${note}`);
 }

@@ -23,7 +23,12 @@ async function roadmap(context, args) {
 
 async function mcp(context, args) {
   if (args.length) {
+    if (args[0] === "selftest" && (args.length === 1 || (args.length === 2 && args[1] === "--json"))) {
+      await runNodeScript(context, "mcp", args, { env: process.env });
+      return;
+    }
     console.error("Usage: tokentrace mcp");
+    console.error("   or: tokentrace mcp selftest --json");
     process.exit(1);
   }
   await runNodeScript(context, "mcp", [], { env: process.env });

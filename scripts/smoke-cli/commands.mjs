@@ -32,8 +32,13 @@ function mcpSmoke(context) {
   const output = run(context, ["mcp"], { input, timeout: 30_000 });
   const responses = output.split("\n").filter(Boolean).map((line) => JSON.parse(line));
   const toolNames = responses[1]?.result?.tools?.map((tool) => tool.name) ?? [];
-  if (!toolNames.includes("get_capabilities") || !toolNames.includes("run_scan")) {
+  if (!toolNames.includes("get_agent_guide") || !toolNames.includes("get_capabilities") || !toolNames.includes("run_scan")) {
     throw new Error("MCP tools/list is missing expected TokenTrace tools.");
+  }
+
+  const selftest = jsonCommand(context, ["mcp", "selftest", "--json"]);
+  if (selftest.ok !== true || !selftest.tools?.includes("get_agent_guide")) {
+    throw new Error("MCP selftest did not verify the agent guide tool.");
   }
 }
 

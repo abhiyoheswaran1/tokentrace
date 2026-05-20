@@ -22,6 +22,10 @@ Supporting copy:
 
 > MCP-ready local analytics: TokenTrace now ships `tokentrace mcp`, a local stdio MCP server for capabilities, status, Scan Health, evidence, repair queue, reports, and explicit local scans with `confirmLocalScan=true`.
 
+0.14.1+ agent adoption message:
+
+> Agent-ready MCP adoption: TokenTrace is published as `io.github.abhiyoheswaran1/tokentrace`, exposes `get_agent_guide` as the first MCP call, returns agent-decisive response metadata, and includes `tokentrace mcp selftest --json` for local validation without scanning files.
+
 ## Screenshots
 
 Use the latest refreshed screenshots from this repo:
@@ -41,8 +45,8 @@ Use the latest refreshed screenshots from this repo:
 6. Scan Health: explain files checked, parser warnings, ignored support files, cost coverage, scheduling, and package IOC checks.
 7. Repair workflow: top cause, next best repair, what changes after repair, resolved/ignored/parser-review states, and before/after repair deltas.
 8. Mobile workflow polish: compact navigation plus card layouts for narrow Repair and Model Rates views.
-9. Agent-ready entry points: `tokentrace agent --json`, `tokentrace capabilities --json`, `/api/agent`, and `tokentrace roadmap --json`.
-10. MCP entry point: `tokentrace mcp` for local stdio clients, with no scan on startup and explicit scan confirmation.
+9. Agent-ready entry points: `tokentrace agent --json`, `tokentrace capabilities --json`, `/api/agent`, `tokentrace roadmap --json`, and `docs/agent-adoption.md`.
+10. MCP entry point: registry name `io.github.abhiyoheswaran1/tokentrace`, `tokentrace mcp` for local stdio clients, `get_agent_guide` as the first tool call, `tokentrace mcp selftest --json`, no scan on startup, and explicit scan confirmation.
 11. Privacy: local files stay local; model-rate refresh fetches public rate data only.
 
 ## Copy Rules

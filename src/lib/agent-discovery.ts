@@ -203,11 +203,13 @@ const commands: AgentDiscoveryCommand[] = [
     startsLongRunningProcess: true,
     requiresNetwork: false,
     safeForAutomation: false,
-    useWhen: "An MCP-capable agent or client wants structured access to TokenTrace status, doctor, evidence, repair, report, and explicit scan tools.",
+    useWhen: "An MCP-capable agent or client wants structured access to TokenTrace guidance, status, doctor, evidence, repair, report, and explicit scan tools.",
     followUps: [
+      ["tokentrace", "mcp", "selftest", "--json"],
       ["tokentrace", "agent", "--json"]
     ],
     notes: [
+      "Agents should call get_agent_guide first after connecting through MCP.",
       "The MCP server itself does not scan files on startup.",
       "The run_scan MCP tool requires confirmLocalScan=true before reading local usage files and writing the local database."
     ]

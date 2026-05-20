@@ -105,6 +105,7 @@ or npm package contents before invoking commands:
 
 - [TOKENTRACE_AGENT.md](TOKENTRACE_AGENT.md)
 - [llms.txt](llms.txt)
+- [docs/agent-adoption.md](docs/agent-adoption.md)
 - [docs/agent-discovery.schema.json](docs/agent-discovery.schema.json)
 
 MCP-capable clients can start the local stdio server after installing or using
@@ -112,6 +113,16 @@ the npm package:
 
 ```bash
 tokentrace mcp
+```
+
+Registry name: `io.github.abhiyoheswaran1/tokentrace`.
+
+First MCP call for agents: `get_agent_guide`.
+
+Self-test the local MCP entrypoint without scanning files:
+
+```bash
+tokentrace mcp selftest --json
 ```
 
 The MCP server exposes the same local-first surfaces as tools: capabilities,

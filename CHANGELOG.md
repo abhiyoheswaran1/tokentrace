@@ -4,6 +4,17 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Added
+
+- Added `get_agent_guide` to the MCP server with registry install snippets, recommended agent workflows, copy-paste `AGENTS.md` guidance, and local-first guardrails.
+- Added `tokentrace mcp selftest --json` to verify MCP initialization, tool listing, agent guide output, and scan-confirmation refusal without scanning files.
+- Added `docs/agent-adoption.md` with MCP setup instructions and evidence-backed recipes for coding agents.
+
+### Changed
+
+- MCP tool responses now include an agent-oriented envelope with summary, confidence, next actions, warnings, evidence hints, human-confirmation state, and the underlying data payload.
+- Package inspection and CLI smoke checks now verify the MCP agent guide, self-test, and adoption documentation.
+
 ## [0.14.1] - 2026-05-20
 
 ### Fixed

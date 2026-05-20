@@ -1,8 +1,30 @@
 import { createInterface } from "node:readline";
-import { handleMcpMessage, jsonRpcError } from "@/src/lib/mcp-server";
+import { handleMcpMessage, jsonRpcError, runMcpSelfTest } from "@/src/lib/mcp-server";
 
 function write(message: unknown) {
   process.stdout.write(`${JSON.stringify(message)}\n`);
+}
+
+const args = process.argv.slice(2);
+
+if (args[0] === "selftest") {
+  if (args.length > 2 || (args[1] && args[1] !== "--json")) {
+    console.error("Usage: tokentrace mcp selftest --json");
+    process.exit(1);
+  }
+  const result = await runMcpSelfTest();
+  if (args.includes("--json")) {
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  } else {
+    process.stdout.write(result.ok ? "TokenTrace MCP self-test passed.\n" : "TokenTrace MCP self-test failed.\n");
+  }
+  process.exit(result.ok ? 0 : 1);
+}
+
+if (args.length) {
+  console.error("Usage: tokentrace mcp");
+  console.error("   or: tokentrace mcp selftest --json");
+  process.exit(1);
 }
 
 async function handleLine(line: string) {
