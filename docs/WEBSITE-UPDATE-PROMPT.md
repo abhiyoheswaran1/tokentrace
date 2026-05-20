@@ -14,13 +14,13 @@ Supporting copy:
 
 > TokenTrace scans local AI CLI artifacts, normalizes token usage, estimates missing counts when necessary, and shows cost, model, project, session, parser, and repair evidence in a local dashboard. No cloud account, no telemetry, no proxying.
 
-0.12.0 release message:
+0.13.0 release message:
 
-> Local Sources & Trust: native structured-log, Cursor export, and SQLite-history ingestion; privacy-safe Evidence Packs; scan scheduling; scoped guardrails; Import Profile preview; saved reports; and clearer scan-to-evidence workflows.
+> Product polish and performance: faster first dashboard loads, clearer repair guidance, mobile card layouts for Repair and Model Rates, denser Session Explorer filtering, lazy Settings sections, stronger first-run setup, clearer CLI startup, and automated browser guardrails for console errors, blank charts, and mobile overflow.
 
 ## Screenshots
 
-Use the refreshed screenshots from this repo:
+Use the latest refreshed screenshots from this repo:
 
 - `docs/assets/overview-0.12.0.png`
 - `docs/assets/evidence-0.12.0.png`
@@ -31,12 +31,14 @@ Use the refreshed screenshots from this repo:
 
 1. Hero: TokenTrace, local-first AI CLI usage analytics, `npx tokentrace`.
 2. Evidence-first overview: pulse, token accounting, model rates, and trend charts.
-3. Local Sources & Trust: structured usage logs, Cursor-style chat exports, SQLite histories, source coverage, and Data Confidence.
-4. Evidence Packs: JSON and Markdown exports with totals, confidence drivers, parser notes, model-rate state, and no raw prompts by default.
-5. Scan Health: explain files checked, parser warnings, ignored support files, cost coverage, scheduling, and package IOC checks.
-6. Repair workflow: Problem, Evidence, Fix, Recalculate, Verified.
-7. Agent-ready entry points: `tokentrace agent --json`, `tokentrace capabilities --json`, `/api/agent`, and `tokentrace roadmap --json`.
-8. Privacy: local files stay local; model-rate refresh fetches public rate data only.
+3. Faster overview: trend aggregation avoids slow localtime bucketing, and overview data loading focuses on the first screen.
+4. Local Sources & Trust: structured usage logs, Cursor-style chat exports, SQLite histories, source coverage, and Data Confidence.
+5. Evidence Packs: JSON and Markdown exports with totals, confidence drivers, parser notes, model-rate state, and no raw prompts by default.
+6. Scan Health: explain files checked, parser warnings, ignored support files, cost coverage, scheduling, and package IOC checks.
+7. Repair workflow: top cause, next best repair, what changes after repair, resolved/ignored/parser-review states, and before/after repair deltas.
+8. Mobile workflow polish: compact navigation plus card layouts for narrow Repair and Model Rates views.
+9. Agent-ready entry points: `tokentrace agent --json`, `tokentrace capabilities --json`, `/api/agent`, and `tokentrace roadmap --json`.
+10. Privacy: local files stay local; model-rate refresh fetches public rate data only.
 
 ## Copy Rules
 
