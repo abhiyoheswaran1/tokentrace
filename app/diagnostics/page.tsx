@@ -59,7 +59,7 @@ export default async function DiagnosticsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Scan Health"
-        description="Shows whether local usage was imported, which files need review, and whether model-rate coverage is usable."
+        description="Scan Health report showing whether local usage was imported, which files need review, and whether model-rate coverage is usable."
       />
 
       <TrustChecklist data={data} rootCount={roots.length} />
