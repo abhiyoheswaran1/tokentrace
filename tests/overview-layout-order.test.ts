@@ -7,6 +7,8 @@ describe("Overview layout order", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
     const trendSource = fs.readFileSync(path.join(process.cwd(), "components/charts/trend-section.tsx"), "utf8");
     const pulseSource = fs.readFileSync(path.join(process.cwd(), "components/overview/usage-pulse-panel.tsx"), "utf8");
+    const recommendationsSource = fs.readFileSync(path.join(process.cwd(), "components/overview/recommendations-card.tsx"), "utf8");
+    const currentMixSource = fs.readFileSync(path.join(process.cwd(), "components/overview/current-mix-panel.tsx"), "utf8");
 
     const usagePulse = source.indexOf("<UsagePulsePanel");
     const metricCards = source.indexOf("<TokenAccountingCard");
@@ -16,11 +18,13 @@ describe("Overview layout order", () => {
     const reviewStatus = source.indexOf("<OverviewReviewStatusStrip");
     const repairItems = source.indexOf("<TopRepairItemsStrip");
     const guardrails = source.indexOf("<UsageGuardrailsPanel progress={data.usageGuardrails} />");
-    const nextActions = source.indexOf("Recommended Next Actions");
-    const usageByTool = source.indexOf("<CardTitle>Usage By Tool</CardTitle>");
+    const nextActions = source.indexOf("<OverviewRecommendationsCard");
+    const usageByTool = source.indexOf("<OverviewCurrentMixPanel");
 
     expect(usagePulse).toBeGreaterThan(-1);
     expect(pulseSource).toContain("<CardTitle>Usage Pulse</CardTitle>");
+    expect(recommendationsSource).toContain("Recommended Next Actions");
+    expect(currentMixSource).toContain("<CardTitle>Usage By Tool</CardTitle>");
     expect(reviewStatus).toBeGreaterThan(-1);
     expect(repairItems).toBeGreaterThan(-1);
     expect(metricCards).toBeGreaterThan(usagePulse);

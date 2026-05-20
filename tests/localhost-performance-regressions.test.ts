@@ -116,7 +116,7 @@ describe("localhost performance regressions", () => {
     const analyticsTypes = read("src/lib/analytics-types.ts");
 
     expect(overviewData).toContain('analyticsProfile: "overview"');
-    expect(overview).toContain("getOverviewData(range)");
+    expect(overview).toContain("getOverviewPageData(range)");
     expect(analyticsTypes).toContain('analyticsProfile?: "full" | "overview"');
     expect(analytics).toContain('const overviewOnly = options.analyticsProfile === "overview"');
     expect(analytics).toContain('const models = overviewOnly ? [] : timeAnalyticsQuery("analytics.models"');
@@ -130,12 +130,13 @@ describe("localhost performance regressions", () => {
     const overview = read("app/page.tsx");
     const overviewData = read("src/lib/overview-data.ts");
 
-    expect(overview).toContain('import { getOverviewData } from "@/src/lib/overview-data";');
-    expect(overview).toContain("const overview = await getOverviewData(range);");
+    expect(overview).toContain('import { getOverviewPageData } from "@/src/lib/overview-data";');
+    expect(overview).toContain("const overview = await getOverviewPageData(range);");
     expect(overview).not.toContain("buildAccountingInvariants");
     expect(overview).not.toContain("buildDoctorReport");
     expect(overview).not.toContain("buildUnknownCostRepairWorkbench");
     expect(overviewData).toContain("export async function getOverviewData");
+    expect(overviewData).toContain("export async function getOverviewPageData");
     expect(overviewData).toContain('analyticsProfile: "overview"');
     expect(overviewData).toContain("repairFocusHref");
   });

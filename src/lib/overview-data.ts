@@ -87,3 +87,7 @@ export async function getOverviewData(range: ResolvedDateRange): Promise<Overvie
     trendDefaultWindow
   };
 }
+
+export async function getOverviewPageData(range: ResolvedDateRange): Promise<OverviewData> {
+  return getOverviewData(range);
+}
