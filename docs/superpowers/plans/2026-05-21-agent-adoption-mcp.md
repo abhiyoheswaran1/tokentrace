@@ -8,6 +8,8 @@
 
 **Tech Stack:** TypeScript MCP handler, Node CLI wrapper, Vitest, Markdown docs, existing npm package trust scripts.
 
+**Status:** Completed and shipped in TokenTrace 0.14.2.
+
 ---
 
 ### Task 1: MCP Guide and Response Contract
@@ -16,10 +18,10 @@
 - Modify: `src/lib/mcp-server.ts`
 - Modify: `tests/mcp-server.test.ts`
 
-- [ ] Write failing tests that require `get_agent_guide`, response envelopes, and explicit scan-confirmation metadata.
-- [ ] Run `npx vitest run tests/mcp-server.test.ts` and confirm failure for missing tool/metadata.
-- [ ] Add `get_agent_guide`, `toolEnvelope()`, and envelope metadata around current command payloads.
-- [ ] Run `npx vitest run tests/mcp-server.test.ts` and confirm pass.
+- [x] Write failing tests that require `get_agent_guide`, response envelopes, and explicit scan-confirmation metadata.
+- [x] Run `npx vitest run tests/mcp-server.test.ts` and confirm failure for missing tool/metadata.
+- [x] Add `get_agent_guide`, `toolEnvelope()`, and envelope metadata around current command payloads.
+- [x] Run `npx vitest run tests/mcp-server.test.ts` and confirm pass.
 
 ### Task 2: CLI MCP Self-Test
 
@@ -29,10 +31,10 @@
 - Modify: `src/cli/help.js`
 - Modify: `tests/mcp-server.test.ts`
 
-- [ ] Write failing tests for `tokentrace mcp selftest --json`.
-- [ ] Run the MCP test and confirm failure because the subcommand is not implemented.
-- [ ] Implement `runMcpSelfTest()` in-process and route `mcp selftest --json` through the CLI.
-- [ ] Run the MCP test and confirm pass.
+- [x] Write failing tests for `tokentrace mcp selftest --json`.
+- [x] Run the MCP test and confirm failure because the subcommand is not implemented.
+- [x] Implement `runMcpSelfTest()` in-process and route `mcp selftest --json` through the CLI.
+- [x] Run the MCP test and confirm pass.
 
 ### Task 3: Agent Adoption Documentation
 
@@ -48,18 +50,18 @@
 - Modify: `tests/agent-discovery.test.ts`
 - Modify: `tests/package-trust.test.ts`
 
-- [ ] Write failing tests that require the adoption doc in package files and agent docs.
-- [ ] Run targeted docs/package tests and confirm failure.
-- [ ] Add the adoption doc, link it from existing docs, include it in package files, and extend package inspection.
-- [ ] Run targeted docs/package tests and confirm pass.
+- [x] Write failing tests that require the adoption doc in package files and agent docs.
+- [x] Run targeted docs/package tests and confirm failure.
+- [x] Add the adoption doc, link it from existing docs, include it in package files, and extend package inspection.
+- [x] Run targeted docs/package tests and confirm pass.
 
 ### Task 4: Verification
 
 **Files:**
 - No new files.
 
-- [ ] Run `npx vitest run tests/mcp-server.test.ts tests/agent-discovery.test.ts tests/package-trust.test.ts`.
-- [ ] Run `npm run smoke:cli`.
-- [ ] Run `npm run package:inspect`.
-- [ ] Run `npm run projscan:doctor`.
-- [ ] If the dev server is active or docs links affect dashboard rendering, run `npm run browser:guard`.
+- [x] Run `npx vitest run tests/mcp-server.test.ts tests/agent-discovery.test.ts tests/package-trust.test.ts`.
+- [x] Run `npm run smoke:cli`.
+- [x] Run `npm run package:inspect`.
+- [x] Run `npm run projscan:doctor`.
+- [x] If the dev server is active or docs links affect dashboard rendering, run `npm run browser:guard`.

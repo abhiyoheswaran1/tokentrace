@@ -12,6 +12,12 @@ Isolated test home: `/private/tmp/tokentrace-stabilization.iSDqig`
 Status: complete. One adoption blocker was found and fixed during dogfood:
 database-backed command help now prints before touching local runtime state.
 
+Post-release status: the stabilization/adoption work shipped in TokenTrace
+0.14.2. npm and GitHub release publishing completed successfully. MCP registry
+metadata validates for 0.14.2, but the registry publish step is pending a
+refreshed `mcp-publisher login github` session because the local registry JWT
+expired.
+
 ## Dogfood
 
 | Check | Result | Notes |
@@ -28,6 +34,11 @@ database-backed command help now prints before touching local runtime state.
 
 ## Fresh Install And Package Runtime
 
+These checks were run before the final 0.14.2 release bump, so the temporary
+tarball and installed binary versions below are 0.14.1. The 0.14.2 release
+package, npm publication, and browser verification are recorded in the next
+section.
+
 | Check | Result | Notes |
 | --- | --- | --- |
 | npm pack payload | Pass | `npm pack --json` built `tokentrace-0.14.1.tgz` with 297 entries and the compiled CLI runtime. |
@@ -37,6 +48,18 @@ database-backed command help now prints before touching local runtime state.
 | packed agent discovery | Pass | Packed `tokentrace agent --json` returned the discovery manifest with MCP and agent guardrails. |
 | packed fixture scan | Pass | Packed CLI scanned its bundled generic JSONL fixture and imported 2 records with 0 warnings/errors. |
 | packed MCP self-test | Pass | Packed `tokentrace mcp selftest --json` passed initialize, tools/list, guide, and scan-confirmation refusal checks. |
+
+## 0.14.2 Release Verification
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| release commit | Pass | `1f7b20d Release 0.14.2` bumped `package.json`, `package-lock.json`, `server.json`, and changelog release metadata without product code changes. |
+| release tag | Pass | `v0.14.2` was pushed to GitHub. |
+| GitHub release | Pass | GitHub published `TokenTrace 0.14.2` at `https://github.com/abhiyoheswaran1/tokentrace/releases/tag/v0.14.2`. |
+| npm release | Pass | `npm view tokentrace version` returned `0.14.2`, and `npm view tokentrace dist-tags --json` returned `latest: 0.14.2`. |
+| MCP registry manifest | Valid, publish pending | `/Users/abhyoh/bin/mcp-publisher validate` passed for `server.json` at version `0.14.2`; `/Users/abhyoh/bin/mcp-publisher publish` returned 401 because the local registry JWT was expired. |
+| local dashboard | Pass | Restarted `next dev --port 3000`; `curl -I http://localhost:3000` returned HTTP 200. |
+| browser guard | Pass | `npm run browser:guard` passed 10/10 after the 0.14.2 release. |
 
 ## MCP Client Compatibility
 
@@ -53,7 +76,7 @@ database-backed command help now prints before touching local runtime state.
 | Check | Result | Notes |
 | --- | --- | --- |
 | Local website source found | Pass | No local checkout existed under `/Users/abhyoh/Documents/Brand/Apps`, but the private `abhiyoheswaran1/abhiyoheswaran.com` repo was found via GitHub and cloned to `/private/tmp/abhiyoheswaran.com-tokentrace-update`. |
-| Website update prompt current | Pass | `docs/WEBSITE-UPDATE-PROMPT.md` already included 0.14.0/0.14.1 MCP registry, `get_agent_guide`, and self-test copy. |
+| Website update prompt current | Pass | `docs/WEBSITE-UPDATE-PROMPT.md` now includes the 0.14.2 MCP adoption, self-test, and data-backed CLI help stabilization message. |
 | Live public page current before source update | No | `https://www.abhiyoheswaran.com/apps/tokentrace` still showed `0.13.0` and did not include MCP registry, `get_agent_guide`, or `tokentrace mcp selftest --json`. |
 | Website source update | Pass | Pushed `abhiyoheswaran1/abhiyoheswaran.com@361fe41` with TokenTrace MCP adoption copy and app-card copy updates. Website repo `npm test` passed 7/7 and `npm run build` built 20 pages. |
 | Live public page current after source push | Pending deploy | Recheck immediately after push still showed the old `0.13.0` page, so the source is updated but the public deployment had not refreshed yet. |
