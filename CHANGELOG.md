@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.14.2] - 2026-05-21
+
 ### Added
 
 - Added `get_agent_guide` to the MCP server with registry install snippets, recommended agent workflows, copy-paste `AGENTS.md` guidance, and local-first guardrails.

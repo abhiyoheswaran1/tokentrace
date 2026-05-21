@@ -8,12 +8,12 @@
     "url": "https://github.com/abhiyoheswaran1/tokentrace",
     "source": "github"
   },
-  "version": "0.14.1",
+  "version": "0.14.2",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "tokentrace",
-      "version": "0.14.1",
+      "version": "0.14.2",
       "runtimeHint": "npx",
       "packageArguments": [
         {

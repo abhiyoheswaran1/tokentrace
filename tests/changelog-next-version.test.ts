@@ -4,10 +4,14 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.14.1 MCP registry metadata release", () => {
+  it("documents the 0.14.2 MCP adoption hardening release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.14.1");
+    expect(packageJson.version).toBe("0.14.2");
+    expect(changelog).toContain("## [0.14.2] - 2026-05-21");
+    expect(changelog).toContain("Added `get_agent_guide` to the MCP server");
+    expect(changelog).toContain("Added `tokentrace mcp selftest --json`");
+    expect(changelog).toContain("Data-backed CLI command help now prints before touching local runtime state");
     expect(changelog).toContain("## [0.14.1] - 2026-05-20");
     expect(changelog).toContain(
       "Added the required npm `mcpName` package metadata so the MCP registry can verify the TokenTrace npm package."
