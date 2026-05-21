@@ -15,6 +15,10 @@ All notable changes to TokenTrace are documented here.
 - MCP tool responses now include an agent-oriented envelope with summary, confidence, next actions, warnings, evidence hints, human-confirmation state, and the underlying data payload.
 - Package inspection and CLI smoke checks now verify the MCP agent guide, self-test, and adoption documentation.
 
+### Fixed
+
+- Data-backed CLI command help now prints before touching local runtime state, so `tokentrace scan --help`, `doctor --help`, `evidence --help`, `repair --help`, and related commands stay safe on broken or fresh local databases.
+
 ## [0.14.1] - 2026-05-20
 
 ### Fixed

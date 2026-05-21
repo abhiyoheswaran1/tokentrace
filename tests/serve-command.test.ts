@@ -54,6 +54,40 @@ describe("serve command", () => {
 });
 
 describe("scan command", () => {
+  it("prints command help before touching runtime directories", async () => {
+    const invalidHomeParent = await tempHome();
+    const invalidHome = path.join(invalidHomeParent, "not-a-directory");
+    await fs.writeFile(invalidHome, "this path should never be used for --help");
+
+    for (const [command, expectedUsage] of [
+      ["scan", "Usage: tokentrace scan"],
+      ["doctor", "Usage: tokentrace doctor"],
+      ["evidence", "Usage: tokentrace evidence"],
+      ["digest", "Usage: tokentrace digest"],
+      ["report", "Usage: tokentrace report"],
+      ["review", "Usage: tokentrace review"],
+      ["insights", "Usage: tokentrace insights"],
+      ["repair", "Usage: tokentrace repair"],
+      ["status", "tokentrace status [--json]"],
+      ["watch", "tokentrace watch"]
+    ]) {
+      const result = spawnSync(process.execPath, ["bin/tokentrace.js", command, "--help"], {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          TOKENTRACE_HOME: invalidHome,
+          TOKENTRACE_DB: path.join(invalidHome, "tokentrace.db"),
+          DATABASE_URL: `file:${path.join(invalidHome, "tokentrace.db")}`
+        }
+      });
+
+      expect(result.status, `${command} --help`).toBe(0);
+      expect(result.stdout, `${command} --help`).toContain(expectedUsage);
+      expect(result.stderr, `${command} --help`).toBe("");
+    }
+  }, 15_000);
+
   it("rejects unknown options instead of treating them as folders", () => {
     expect(() => parseScanArgs(["--forcee"])).toThrow("Unknown option: --forcee");
     expect(scanUsage()).toContain("Usage:");

@@ -1,8 +1,7 @@
 import {
-  buildEvidenceTrail,
   parseEvidenceMetric,
   type EvidenceMetric
-} from "@/src/lib/evidence-trail";
+} from "@/src/lib/evidence/metrics";
 
 const args = process.argv.slice(2);
 
@@ -67,6 +66,7 @@ function parseArgs(argv: string[]) {
 }
 
 const options = parseArgs(args);
+const { buildEvidenceTrail } = await import("@/src/lib/evidence-trail");
 const trail = buildEvidenceTrail({ metric: options.metric });
 
 if (options.json) {

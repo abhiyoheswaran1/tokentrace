@@ -1,6 +1,6 @@
-import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
-
 const args = process.argv.slice(2);
+
+export {};
 
 function usage() {
   return "Usage: tokentrace repair --json";
@@ -34,6 +34,7 @@ function parseArgs(argv: string[]) {
 }
 
 const options = parseArgs(args);
+const { buildUnknownCostRepairWorkbench } = await import("@/src/lib/unknown-cost-repair");
 const workbench = buildUnknownCostRepairWorkbench();
 
 if (options.json) {

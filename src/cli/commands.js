@@ -8,7 +8,18 @@ import { help } from "./help.js";
 import { initializeDatabase, runNodeScript } from "./runtime.js";
 import { serve } from "./serve.js";
 
+function isHelpRequest(args) {
+  return args.includes("--help") || args.includes("-h");
+}
+
+async function printScriptHelp(context, scriptName, args) {
+  if (!isHelpRequest(args)) return false;
+  await runNodeScript(context, scriptName, args, { env: process.env });
+  return true;
+}
+
 async function scan(context, args) {
+  if (await printScriptHelp(context, "scan", args)) return;
   await initializeDatabase(context, { quiet: true });
   await runNodeScript(context, "scan", args);
 }
@@ -35,46 +46,55 @@ async function mcp(context, args) {
 }
 
 async function doctor(context, args) {
+  if (await printScriptHelp(context, "doctor", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "doctor", args);
 }
 
 async function evidence(context, args) {
+  if (await printScriptHelp(context, "evidence", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "evidence", args);
 }
 
 async function digest(context, args) {
+  if (await printScriptHelp(context, "digest", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "digest", args);
 }
 
 async function report(context, args) {
+  if (await printScriptHelp(context, "report", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "report", args);
 }
 
 async function review(context, args) {
+  if (await printScriptHelp(context, "review", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "review", args);
 }
 
 async function insights(context, args) {
+  if (await printScriptHelp(context, "insights", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "insights", args);
 }
 
 async function repair(context, args) {
+  if (await printScriptHelp(context, "repair", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "repair", args);
 }
 
 async function refreshPrices(context, args) {
+  if (await printScriptHelp(context, "pricing-refresh", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "pricing-refresh", args.length ? args : ["--json"]);
 }
 
 async function status(context, args) {
+  if (await printScriptHelp(context, "status", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "status", args);
 }
@@ -95,6 +115,7 @@ async function statusLine(context, args) {
 }
 
 async function watch(context, args) {
+  if (await printScriptHelp(context, "status", ["watch", ...args])) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "status", ["watch", ...args]);
 }
