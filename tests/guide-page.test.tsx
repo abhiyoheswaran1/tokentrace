@@ -58,6 +58,13 @@ describe("Guide page", () => {
     expect(html).not.toContain('href="/settings">Scan now');
     expect(text).toContain("Agent discovery");
     expect(text).toContain("Agent quickstart");
+    expect(text).toContain("MCP for agents");
+    expect(text).toContain("io.github.abhiyoheswaran1/tokentrace");
+    expect(text).toContain("tokentrace mcp");
+    expect(text).toContain("get_agent_guide");
+    expect(text).toContain("tokentrace mcp selftest --json");
+    expect(text).toContain("confirmLocalScan=true");
+    expect(text).toContain("docs/agent-adoption.md");
     expect(text).toContain("Mutates local state");
     expect(text).toContain("tokentrace agent --json");
     expect(text).toContain("tokentrace capabilities --json");

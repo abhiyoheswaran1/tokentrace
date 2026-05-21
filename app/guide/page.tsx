@@ -148,6 +148,14 @@ const roadmapSteps = [
   ["Dashboard API", "/api/roadmap", "Fetch the same roadmap status from a running local dashboard."]
 ];
 
+const mcpAgentEntries = [
+  ["Registry", "io.github.abhiyoheswaran1/tokentrace", "Use this name when an MCP client discovers TokenTrace from the registry."],
+  ["Start", "tokentrace mcp", "Start the local stdio MCP server. Startup is read-only and does not scan files."],
+  ["First tool", "get_agent_guide", "Return the recommended operating loop, install snippets, and AGENTS.md copy block."],
+  ["Self-test", "tokentrace mcp selftest --json", "Verify MCP initialization, tool listing, guide output, and scan refusal."],
+  ["Scan rule", "confirmLocalScan=true", "Only pass this to run_scan when the human expects a local filesystem scan."]
+];
+
 const workflows = [
   {
     problem: "No records imported",
@@ -504,6 +512,27 @@ export default function GuidePage() {
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   Run <MonoText>npm run release:check</MonoText> only when the maintainer asks for release preparation.
                 </p>
+              </div>
+            </div>
+            <div className="border-t p-4">
+              <div className="flex items-center gap-2">
+                <LockKeyhole className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold leading-tight">MCP for agents</h3>
+              </div>
+              <p className="mt-2 max-w-[72ch] text-sm leading-6 text-muted-foreground">
+                MCP clients should connect locally, call <MonoText>get_agent_guide</MonoText> first, and use evidence before reporting
+                token, cost, model, or session numbers. The full copy-paste workflow lives in <MonoText>docs/agent-adoption.md</MonoText>.
+              </p>
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                {mcpAgentEntries.map(([label, value, detail]) => (
+                  <div key={label} className="rounded-md border bg-muted/30 p-3">
+                    <FieldLabel>{label}</FieldLabel>
+                    <div className="mt-2 min-h-10 break-words text-sm font-medium leading-5">
+                      <MonoText>{value}</MonoText>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">{detail}</p>
+                  </div>
+                ))}
               </div>
             </div>
             <div className="border-t p-4">
