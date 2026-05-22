@@ -244,8 +244,6 @@ The CLI sets `TOKENTRACE_DB` and `DATABASE_URL` automatically. You can override 
 TOKENTRACE_HOME=/custom/path tokentrace
 ```
 
-If `npm install -g tokentrace` prints a `prebuild-install` deprecation warning, it is from the native SQLite dependency chain used by `better-sqlite3`. The install should continue normally, and TokenTrace still runs locally.
-
 ## Where TokenTrace Looks
 
 Default discovery checks these locations when present:
@@ -477,6 +475,28 @@ The ingestion system is intentionally pluggable:
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, parser guidelines, pricing update notes, and the release policy.
+
+## Troubleshooting
+
+### `prebuild-install` deprecation warning during install
+
+```
+npm warn deprecated prebuild-install@7.1.3: No longer maintained...
+```
+
+This is a transitive dependency of `better-sqlite3` (the native SQLite driver TokenTrace uses to store local data). The warning is harmless — the install completes normally and TokenTrace runs as expected. It will go away once `better-sqlite3` upstream migrates to a different prebuilt binary loader; there is nothing to fix on the TokenTrace side.
+
+### Native build errors on `better-sqlite3`
+
+If the prebuilt binary cannot be downloaded (offline machine, restrictive proxy, unsupported Node ABI), `better-sqlite3` will try to compile from source and may fail. Workarounds:
+
+- Ensure Node.js is a supported LTS (TokenTrace requires `>= 20.0.0`; Node 20 or 22 LTS is recommended).
+- Install build tools: Xcode Command Line Tools on macOS, `build-essential` and `python3` on Linux, or the "Desktop development with C++" workload on Windows.
+- Retry the install with network access to `github.com` so the prebuilt binary can be fetched.
+
+### `EBADENGINE` warnings
+
+These appear when your local Node version is older than the `engines` field of a transitive dependency. They are warnings, not errors. Upgrading to the latest Node LTS resolves them.
 
 ## Known Limitations
 

@@ -97,7 +97,7 @@ describe("statusline CLI safety", () => {
         model: { display_name: "Claude" },
         cost: { total_cost_usd: 0.01 }
       }),
-      timeout: 5000,
+      timeout: 25_000,
       env: {
         ...process.env,
         TOKENTRACE_HOME: blockedHome,

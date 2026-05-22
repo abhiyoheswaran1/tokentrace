@@ -51,7 +51,7 @@ describe("package trust policy", () => {
 
   it("declares patched dependency floors for production audit findings", () => {
     expect(packageJson.dependencies["drizzle-orm"]).toBe("^0.45.2");
-    expect(packageJson.overrides?.postcss).toBe("^8.5.14");
+    expect(packageJson.overrides?.postcss).toBe("^8.5.15");
     expect(packageJson.dependencies).not.toHaveProperty("date-fns");
   });
 

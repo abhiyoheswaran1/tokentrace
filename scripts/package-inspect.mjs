@@ -48,8 +48,8 @@ if (packageJson.dependencies?.["drizzle-orm"] !== "^0.45.2") {
   fail("Keep the published drizzle-orm dependency floor at ^0.45.2 or newer.");
 }
 
-if (packageJson.overrides?.postcss !== "^8.5.14") {
-  fail("Keep the PostCSS override at ^8.5.14 or newer.");
+if (packageJson.overrides?.postcss !== "^8.5.15") {
+  fail("Keep the PostCSS override at ^8.5.15 or newer.");
 }
 
 const blockedPackageEntries = [

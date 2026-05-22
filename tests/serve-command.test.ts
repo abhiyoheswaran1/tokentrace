@@ -86,7 +86,7 @@ describe("scan command", () => {
       expect(result.stdout, `${command} --help`).toContain(expectedUsage);
       expect(result.stderr, `${command} --help`).toBe("");
     }
-  }, 15_000);
+  }, 60_000);
 
   it("rejects unknown options instead of treating them as folders", () => {
     expect(() => parseScanArgs(["--forcee"])).toThrow("Unknown option: --forcee");

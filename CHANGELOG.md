@@ -4,6 +4,26 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.15.0] - 2026-05-22
+
+### Changed
+
+- Bumped minimum Node.js to 20.0.0 (Node 18 LTS reached end of life on 2025-04-30). This is a breaking change for users still on Node 18.
+- Upgraded `better-sqlite3` from 11 to 12 (latest major).
+- Upgraded `lucide-react` from 0.468 to 1.16 (first stable major release).
+- Upgraded `open` from 10 to 11 (now requires Node 20+, aligns with engines bump).
+- Bumped minor/patch versions for `tsx`, `postcss`, `autoprefixer`, `@types/react`, `@types/node`.
+
+### Fixed
+
+- `sqlite-history` adapter now uses SQLite identifier quoting (`""`) instead of `JSON.stringify()` when interpolating user table names into raw queries. Previously, a table name containing a quote could have caused a SQL parse error during read-only ingestion.
+- Made `eslint-plugin-react-hooks` an explicit devDependency so lint setup no longer relies on accidental dependency hoisting from `eslint-config-next`.
+- Raised global Vitest `testTimeout`/`hookTimeout` to 30s and bumped per-test/spawn timeouts in CLI subprocess tests (`mcp-server`, `serve-command`, `statusline-cli`) so they are no longer flaky under macOS process-spawn latency.
+
+### Documentation
+
+- Added a Troubleshooting section to the README covering the `prebuild-install` deprecation warning from `better-sqlite3`, native build errors, and `EBADENGINE` warnings.
+
 ## [0.14.2] - 2026-05-21
 
 ### Added

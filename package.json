@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.14.2",
+  "version": "0.15.0",
   "mcpName": "io.github.abhiyoheswaran1/tokentrace",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {
@@ -74,10 +74,10 @@
     "prepack": "npm run build:runtime"
   },
   "overrides": {
-    "postcss": "^8.5.14"
+    "postcss": "^8.5.15"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=20.0.0"
   },
   "keywords": [
     "tokens",
@@ -94,24 +94,24 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@types/node": "^22.10.5",
-    "@types/react": "^19.0.4",
     "@radix-ui/react-slot": "^1.1.1",
-    "better-sqlite3": "^11.7.0",
+    "@types/node": "^22.19.19",
+    "@types/react": "^19.2.15",
+    "autoprefixer": "^10.5.0",
+    "better-sqlite3": "^12.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "get-port": "^7.2.0",
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^1.16.0",
     "next": "^15.5.18",
-    "open": "^10.1.0",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.5.14",
+    "open": "^11.0.0",
+    "postcss": "^8.5.15",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.0",
-    "tailwindcss": "^3.4.17",
     "tailwind-merge": "^2.6.0",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2"
   },
   "devDependencies": {
@@ -119,9 +119,10 @@
     "@types/better-sqlite3": "^7.6.12",
     "@types/react-dom": "^19.0.2",
     "esbuild": "^0.28.0",
-    "eslint": "^9.17.0",
+    "eslint": "^9.39.4",
     "eslint-config-next": "^15.1.4",
-    "tsx": "^4.21.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "tsx": "^4.22.3",
     "vitest": "^3.2.4"
   }
 }

@@ -24,6 +24,10 @@ function openReadonly(filePath: string) {
   return new Database(filePath, { readonly: true, fileMustExist: true });
 }
 
+function quoteIdent(name: string) {
+  return `"${name.replace(/"/g, '""')}"`;
+}
+
 function candidateTables(db: Database.Database) {
   const tables = db
     .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
@@ -34,7 +38,7 @@ function candidateTables(db: Database.Database) {
 }
 
 function columnsFor(db: Database.Database, tableName: string) {
-  const columns = db.prepare(`PRAGMA table_info(${JSON.stringify(tableName)})`).all() as Array<{ name: string }>;
+  const columns = db.prepare(`PRAGMA table_info(${quoteIdent(tableName)})`).all() as Array<{ name: string }>;
   return new Set(columns.map((column) => column.name.toLowerCase()));
 }
 
@@ -52,7 +56,7 @@ function hasUsageShape(columns: Set<string>) {
 }
 
 function tableRows(db: Database.Database, tableName: string) {
-  return db.prepare(`SELECT * FROM ${JSON.stringify(tableName)} LIMIT 50000`).all() as UsageRow[];
+  return db.prepare(`SELECT * FROM ${quoteIdent(tableName)} LIMIT 50000`).all() as UsageRow[];
 }
 
 function providerId(value: string | null) {

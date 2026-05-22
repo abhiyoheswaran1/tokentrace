@@ -22,7 +22,7 @@ function runMcp(messages: unknown[], env: Partial<NodeJS.ProcessEnv> = {}) {
     cwd: process.cwd(),
     encoding: "utf8",
     input,
-    timeout: 10_000,
+    timeout: 25_000,
     env: {
       ...process.env,
       ...env
@@ -237,7 +237,7 @@ describe("TokenTrace MCP server", () => {
     expect(payload.requiresHumanConfirmation).toBe(false);
     expect(payload.data.filesScanned).toBeGreaterThanOrEqual(1);
     expect(payload.data.recordsImported).toBeGreaterThanOrEqual(1);
-  }, 15_000);
+  }, 30_000);
 
   it("self-tests the MCP server without initializing app data or scanning files", async () => {
     const blockedHome = path.join(await tempDir(), "not-a-directory");
@@ -246,7 +246,7 @@ describe("TokenTrace MCP server", () => {
     const result = spawnSync(process.execPath, ["bin/tokentrace.js", "mcp", "selftest", "--json"], {
       cwd: process.cwd(),
       encoding: "utf8",
-      timeout: 10_000,
+      timeout: 25_000,
       env: {
         ...process.env,
         TOKENTRACE_HOME: blockedHome,
