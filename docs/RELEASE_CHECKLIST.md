@@ -81,10 +81,15 @@ Use this only when the maintainer explicitly asks to release.
    ```
 
 7. Push the tag. The GitHub Actions `Publish Package` workflow verifies the tag,
-   publishes to npm with Trusted Publishing and provenance, then creates or
-   updates the GitHub Release using the complete matching `CHANGELOG.md`
-   section. Do not replace it with generated notes or a link-only changelog.
-8. Confirm the GitHub Actions `Publish Package` workflow succeeds.
+   publishes to npm with Trusted Publishing and provenance, authenticates to the
+   MCP registry via GitHub OIDC and publishes the matching `server.json`, then
+   creates or updates the GitHub Release using the complete matching
+   `CHANGELOG.md` section. Do not replace the release notes with generated text
+   or a link-only changelog.
+8. Confirm the GitHub Actions `Publish Package` workflow succeeds. The MCP
+   registry step uses `mcp-publisher login github-oidc`; if the registry rejects
+   the OIDC claim, fall back to a local `mcp-publisher login github` plus
+   `mcp-publisher publish` from the verified release commit.
 9. Verify npm:
 
    ```bash
@@ -93,3 +98,11 @@ Use this only when the maintainer explicitly asks to release.
 
 If automation fails, fix the workflow or package issue before attempting a
 manual npm publish from the verified release commit.
+
+10. Verify the MCP registry entry:
+
+    ```bash
+    curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=tokentrace" | jq '.servers[] | select(.name == "io.github.abhiyoheswaran1/tokentrace") | .version'
+    ```
+
+    The returned version should match the tag.

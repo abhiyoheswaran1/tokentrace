@@ -26,6 +26,10 @@ Supporting copy:
 
 > Agent-ready MCP adoption: TokenTrace is published as `io.github.abhiyoheswaran1/tokentrace`, exposes `get_agent_guide` as the first MCP call, returns agent-decisive response metadata, includes `tokentrace mcp selftest --json` for local validation without scanning files, and keeps data-backed CLI help safe on fresh or broken local databases.
 
+0.15.0 platform & dependency hardening message:
+
+> Platform and dependency hardening: TokenTrace now requires Node.js 20+ (Node 18 reached end of life), ships on a refreshed dependency stack (`better-sqlite3` v12, `lucide-react` v1, `open` v11), uses proper SQLite identifier quoting when reading user history databases, ships an explicit `eslint-plugin-react-hooks` so a clean install never breaks lint, and stabilizes CLI subprocess tests so flaky timeouts no longer block releases.
+
 ## Screenshots
 
 Use the latest refreshed screenshots from this repo:
