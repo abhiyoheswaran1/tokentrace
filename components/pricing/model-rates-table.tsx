@@ -40,7 +40,7 @@ function ModelRateMobileCards({
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="text-xs font-medium uppercase text-muted-foreground">Provider/model</div>
-                <div className="mt-1 break-words text-sm font-medium">{row.model || "Unnamed model"}</div>
+                <div className="mt-1 wrap-break-word text-sm font-medium">{row.model || "Unnamed model"}</div>
                 <div className="mt-1 text-xs text-muted-foreground">{(row.providerName ?? row.provider) || row.providerId || "No provider"}</div>
               </div>
               {duplicate ? <Badge variant="warning">duplicate rate</Badge> : null}

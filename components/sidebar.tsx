@@ -64,7 +64,7 @@ function NavLink({
     ? cn(
         "flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors",
         isActive
-          ? "border-primary/30 bg-primary/10 font-medium text-primary shadow-sm"
+          ? "border-primary/30 bg-primary/10 font-medium text-primary shadow-xs"
           : variant === "support"
             ? "bg-muted/50 font-medium text-foreground"
             : "text-muted-foreground"
@@ -107,7 +107,7 @@ function MobileIconLink({
       className={cn(
         "flex h-10 w-10 shrink-0 items-center justify-center rounded-md border transition-colors",
         isActive
-          ? "border-primary/30 bg-primary/10 text-primary shadow-sm"
+          ? "border-primary/30 bg-primary/10 text-primary shadow-xs"
           : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
       )}
     >

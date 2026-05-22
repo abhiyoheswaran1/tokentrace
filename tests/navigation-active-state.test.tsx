@@ -26,6 +26,6 @@ describe("active navigation state", () => {
 
     expect(html).toContain('href="/sessions"');
     expect(html).toContain('aria-current="page"');
-    expect(html).toContain("shadow-sm");
+    expect(html).toContain("shadow-xs");
   });
 });

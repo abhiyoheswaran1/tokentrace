@@ -193,7 +193,7 @@ export function ScanHealthSummary({ health }: { health: ScanHealth }) {
             </div>
             <ul className="space-y-1 text-xs leading-relaxed text-muted-foreground">
               {health.latestNoteGroups.map((group) => (
-                <li key={`${group.severity}-${group.message}`} className="break-words">
+                <li key={`${group.severity}-${group.message}`} className="wrap-break-word">
                   <span className="font-medium text-foreground">{group.message}</span>
                   <span className="ml-2 text-muted-foreground">
                     {plural(group.count, "file")}

@@ -45,7 +45,7 @@ export default async function SessionsPage({
             </CardDescription>
           </CardHeader>
           <CardContent className="table-scroll overflow-x-auto">
-            <Table className="min-w-[54rem]">
+            <Table className="min-w-216">
               <TableHeader>
                 <TableRow>
                   <TableHead>Priority</TableHead>

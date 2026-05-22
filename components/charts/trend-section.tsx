@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { TrendPoint } from "@/src/lib/analytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,10 +23,12 @@ export function TrendSection({
 }) {
   const [period, setPeriod] = useState<TrendBucket>("daily");
   const [trendWindow, setTrendWindow] = useState<TrendWindow>(defaultWindow);
+  const [prevDefaultWindow, setPrevDefaultWindow] = useState<TrendWindow>(defaultWindow);
 
-  useEffect(() => {
+  if (defaultWindow !== prevDefaultWindow) {
+    setPrevDefaultWindow(defaultWindow);
     setTrendWindow(defaultWindow);
-  }, [defaultWindow]);
+  }
 
   return (
     <section className="space-y-3">

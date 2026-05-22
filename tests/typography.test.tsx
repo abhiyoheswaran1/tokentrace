@@ -14,6 +14,6 @@ describe("PageHeader", () => {
 
     expect(html).toContain("w-full max-w-full");
     expect(html).toContain("max-w-full");
-    expect(html).toContain("break-words");
+    expect(html).toContain("wrap-break-word");
   });
 });

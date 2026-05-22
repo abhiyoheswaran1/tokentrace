@@ -19,7 +19,7 @@ function ModelAliasSuggestionMobileCards({
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="text-xs font-medium uppercase text-muted-foreground">Observed model</div>
-              <div className="mt-1 break-words text-sm font-semibold">{suggestion.model}</div>
+              <div className="mt-1 wrap-break-word text-sm font-semibold">{suggestion.model}</div>
             </div>
             <Badge variant={suggestion.confidence === "high" ? "success" : suggestion.confidence === "medium" ? "warning" : "secondary"}>
               {suggestion.confidence}

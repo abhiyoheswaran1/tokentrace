@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { BookmarkPlus, Download, Filter, RotateCcw, Trash2 } from "lucide-react";
 import type { SessionRow } from "@/src/lib/analytics";
@@ -93,6 +93,11 @@ export function SessionExplorer({
     () => ({ query, tool, model, project, exact, cost, from, to, highCost, hasCache }),
     [cost, exact, from, hasCache, highCost, model, project, query, to, tool]
   );
+  const [prevFilterState, setPrevFilterState] = useState(filterState);
+  if (filterState !== prevFilterState) {
+    setPrevFilterState(filterState);
+    setPage(1);
+  }
   const filtered = useMemo(
     () => filterSessions(sessions, filterState, highCostThreshold),
     [filterState, highCostThreshold, sessions]
@@ -105,10 +110,6 @@ export function SessionExplorer({
   const tableDensityClass = rowDensity === "compact" ? "[&_td]:py-2 [&_th]:h-9" : "[&_td]:py-3 [&_th]:h-10";
   const activeFilters = useMemo(() => getActiveSessionFilters(filterState), [filterState]);
   const currentFilters = useMemo(() => getCurrentSessionFilters(filterState), [filterState]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [filterState]);
 
   function clearFilters() {
     setQuery("");
@@ -431,9 +432,9 @@ export function SessionExplorer({
             </div>
           </div>
           {filtered.length ? (
-          <div className="table-scroll max-h-[38rem] overflow-x-auto">
-          <Table className={cn("min-w-[78rem]", tableDensityClass)}>
-            <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
+          <div className="table-scroll max-h-152 overflow-x-auto">
+          <Table className={cn("min-w-312", tableDensityClass)}>
+            <TableHeader className="sticky top-0 z-10 bg-background shadow-xs">
               <TableRow>
                 <TableHead className="w-28">Date</TableHead>
                 <TableHead className="w-28">Tool</TableHead>

@@ -33,7 +33,7 @@ describe("package trust policy", () => {
   });
 
   it("declares a patched Next.js dependency floor", () => {
-    expect(packageJson.dependencies.next).toBe("^15.5.18");
+    expect(packageJson.dependencies.next).toBe("^16.2.6");
   });
 
   it("points package metadata and README links to the product page and creator site", () => {

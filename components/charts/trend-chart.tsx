@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import type { TrendPoint } from "@/src/lib/analytics";
 import { formatCurrency, formatShortDate, formatTokens } from "@/src/lib/format";
@@ -41,7 +41,7 @@ function ChartSkeleton() {
     <div className="grid h-full grid-cols-[2.5rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_1.5rem]" aria-label="Chart loading">
       <div className="row-span-1 border-r border-border/70" />
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e7ded3_1px,transparent_1px),linear-gradient(to_bottom,#e7ded3_1px,transparent_1px)] bg-[size:25%_33%] opacity-80" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e7ded3_1px,transparent_1px),linear-gradient(to_bottom,#e7ded3_1px,transparent_1px)] bg-size-[25%_33%] opacity-80" />
         <div className="absolute bottom-[18%] left-[8%] h-[38%] w-[84%] rounded-t-full border-t-4 border-primary/25" />
         <div className="absolute bottom-[12%] left-[8%] h-2 w-[84%] rounded-full bg-muted" />
       </div>
@@ -137,11 +137,13 @@ export function TrendChart({
 }) {
   const [internalPeriod, setInternalPeriod] = useState<TrendBucket>("daily");
   const [internalTrendWindow, setInternalTrendWindow] = useState<TrendWindow>(defaultWindow);
+  const [prevDefaultWindow, setPrevDefaultWindow] = useState<TrendWindow>(defaultWindow);
   const { ref: chartRef, size } = useChartSize<HTMLDivElement>();
 
-  useEffect(() => {
+  if (defaultWindow !== prevDefaultWindow) {
+    setPrevDefaultWindow(defaultWindow);
     if (!controlledTrendWindow) setInternalTrendWindow(defaultWindow);
-  }, [controlledTrendWindow, defaultWindow]);
+  }
 
   const period = controlledPeriod ?? internalPeriod;
   const trendWindow = controlledTrendWindow ?? internalTrendWindow;
@@ -217,7 +219,7 @@ export function TrendChart({
                   ? formatCurrency(Number(value))
                   : `${formatTokens(Number(value))} tokens`
               }
-              labelFormatter={formatShortDate}
+              labelFormatter={(label) => formatShortDate(label as string | number | null | undefined)}
             />
             <Area
               type="monotone"

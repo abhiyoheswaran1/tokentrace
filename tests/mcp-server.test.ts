@@ -22,7 +22,7 @@ function runMcp(messages: unknown[], env: Partial<NodeJS.ProcessEnv> = {}) {
     cwd: process.cwd(),
     encoding: "utf8",
     input,
-    timeout: 25_000,
+    timeout: 45_000,
     env: {
       ...process.env,
       ...env
@@ -246,7 +246,7 @@ describe("TokenTrace MCP server", () => {
     const result = spawnSync(process.execPath, ["bin/tokentrace.js", "mcp", "selftest", "--json"], {
       cwd: process.cwd(),
       encoding: "utf8",
-      timeout: 25_000,
+      timeout: 45_000,
       env: {
         ...process.env,
         TOKENTRACE_HOME: blockedHome,

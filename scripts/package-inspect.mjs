@@ -40,8 +40,8 @@ try {
   );
 }
 
-if (packageJson.dependencies?.next !== "^15.5.18") {
-  fail("Keep the published Next.js dependency floor at ^15.5.18 or newer.");
+if (packageJson.dependencies?.next !== "^16.2.6") {
+  fail("Keep the published Next.js dependency floor at ^16.2.6 or newer.");
 }
 
 if (packageJson.dependencies?.["drizzle-orm"] !== "^0.45.2") {

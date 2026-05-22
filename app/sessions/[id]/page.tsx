@@ -211,7 +211,7 @@ export default async function SessionTimelinePage({
           <CardDescription>Interaction rows are expanded with model changes, spikes, cache activity, unknown cost, and tool calls.</CardDescription>
         </CardHeader>
         <CardContent className="table-scroll">
-          <Table className="min-w-[78rem]">
+          <Table className="min-w-312">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-36">Time</TableHead>

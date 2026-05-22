@@ -35,7 +35,7 @@ function RepairItemsMobileList({
                 <Badge variant={causeVariant(group.cause)}>{causeLabel(group.cause)}</Badge>
                 <span className="text-xs text-muted-foreground">{group.interactions.toLocaleString()} interactions</span>
               </div>
-              <div className="mt-2 break-words text-sm font-medium">{group.model}</div>
+              <div className="mt-2 wrap-break-word text-sm font-medium">{group.model}</div>
               <div className="mt-1 text-xs text-muted-foreground">
                 {group.provider} / {group.tool}
               </div>
@@ -144,7 +144,7 @@ export function RepairItemsTable({
             />
             <RepairItemsMobileList groups={workbench.groups} focusKey={focusKey} rangeLinkParams={rangeLinkParams} />
             <div className="hidden overflow-x-auto md:block">
-              <Table className="min-w-[84rem]">
+              <Table className="min-w-336">
                 <TableHeader>
                   <TableRow>
                     <TableHead>State</TableHead>

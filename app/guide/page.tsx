@@ -421,7 +421,7 @@ export default function GuidePage() {
                   </div>
                 </div>
                 <div className="table-scroll">
-                  <Table className="min-w-[42rem]">
+                  <Table className="min-w-2xl">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Label</TableHead>
@@ -527,7 +527,7 @@ export default function GuidePage() {
                 {mcpAgentEntries.map(([label, value, detail]) => (
                   <div key={label} className="rounded-md border bg-muted/30 p-3">
                     <FieldLabel>{label}</FieldLabel>
-                    <div className="mt-2 min-h-10 break-words text-sm font-medium leading-5">
+                    <div className="mt-2 min-h-10 wrap-break-word text-sm font-medium leading-5">
                       <MonoText>{value}</MonoText>
                     </div>
                     <p className="mt-2 text-xs leading-5 text-muted-foreground">{detail}</p>
@@ -538,7 +538,7 @@ export default function GuidePage() {
             <div className="border-t p-4">
               <h3 className="text-sm font-semibold leading-tight">Agent quickstart</h3>
               <div className="table-scroll mt-3">
-                <Table className="min-w-[46rem]">
+                <Table className="min-w-184">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Step</TableHead>
@@ -570,7 +570,7 @@ export default function GuidePage() {
                 Use <MonoText>tokentrace roadmap --json</MonoText> or <MonoText>/api/roadmap</MonoText> for implementation status and release gates.
               </p>
               <div className="table-scroll mt-3">
-                <Table className="min-w-[44rem]">
+                <Table className="min-w-176">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Surface</TableHead>

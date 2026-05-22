@@ -22,7 +22,7 @@ export function SettingsSectionNav() {
   return (
     <nav
       aria-label="Settings sections"
-      className="sticky top-2 z-20 rounded-lg border bg-background/95 p-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      className="sticky top-2 z-20 rounded-lg border bg-background/95 p-2 shadow-xs backdrop-blur-sm supports-backdrop-filter:bg-background/80"
     >
       <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
         <div className="sticky left-0 shrink-0 bg-background/95 pr-2 text-xs font-semibold text-foreground">
@@ -33,7 +33,7 @@ export function SettingsSectionNav() {
             key={section.id}
             href={`#${section.id}`}
             title={section.detail}
-            className="inline-flex h-8 shrink-0 items-center rounded-md border bg-card px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="inline-flex h-8 shrink-0 items-center rounded-md border bg-card px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {section.label}
           </a>

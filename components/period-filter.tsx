@@ -71,7 +71,7 @@ export function PeriodFilter({
   const statusLabel = range.key === "custom" ? "Custom range" : range.label;
 
   return (
-    <div className="min-w-0 max-w-full rounded-lg bg-card p-3 outline outline-1 outline-border sm:p-4">
+    <div className="min-w-0 max-w-full rounded-lg bg-card p-3 outline-solid outline-1 outline-border sm:p-4">
       <form className="max-w-full" action={basePath}>
         <input type="hidden" name="range" value="custom" />
         {Object.entries(preserveParams).map(([key, value]) =>

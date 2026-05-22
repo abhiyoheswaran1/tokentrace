@@ -92,14 +92,14 @@ export default async function ParserDebugPage({
                     <TableCell>{file.parser ?? "None"}</TableCell>
                     <TableCell><Badge variant={file.errors.length ? "destructive" : file.parser ? "success" : "secondary"}>{file.status}</Badge></TableCell>
                     <TableCell>{file.rawMetadata.confidence == null ? "Unknown" : Number(file.rawMetadata.confidence).toFixed(2)}</TableCell>
-                    <TableCell className="max-w-xs whitespace-normal break-words">
+                    <TableCell className="max-w-xs whitespace-normal wrap-break-word">
                       <MonoText className="text-muted-foreground">
                         {JSON.stringify(file.rawMetadata.tokenConfidence ?? { unknown: 0 })}
                       </MonoText>
                     </TableCell>
                     <TableCell>{file.recordsImported.toLocaleString()}</TableCell>
-                    <TableCell className="max-w-sm whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">{file.warnings.join("; ") || "None"}</TableCell>
-                    <TableCell className="max-w-sm whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">{file.errors.join("; ") || "None"}</TableCell>
+                    <TableCell className="max-w-sm whitespace-normal wrap-break-word text-xs leading-relaxed text-muted-foreground">{file.warnings.join("; ") || "None"}</TableCell>
+                    <TableCell className="max-w-sm whitespace-normal wrap-break-word text-xs leading-relaxed text-muted-foreground">{file.errors.join("; ") || "None"}</TableCell>
                     <TableCell className="max-w-md break-all" title={file.path}>
                       <MonoText>{file.path}</MonoText>
                     </TableCell>

@@ -110,7 +110,7 @@ export function PricingSettings({
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <Label>Formula</Label>
           <pre className="overflow-x-auto rounded-md bg-muted/40 p-3 whitespace-pre-wrap">
-            <MonoText className="break-words">
+            <MonoText className="wrap-break-word">
               input * inputPrice + output * outputPrice + cacheRead * cacheReadPrice + cacheWrite * cacheWritePrice
             </MonoText>
           </pre>

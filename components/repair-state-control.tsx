@@ -84,7 +84,7 @@ export function RepairStateControl({
       <Badge variant={statusVariant(status)}>{status}</Badge>
       <select
         aria-label="Repair state"
-        className="h-8 w-full rounded-md border bg-card px-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-8 w-full rounded-md border bg-card px-2 text-xs font-medium focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         value={status}
         disabled={isPending}
         onChange={(event) => {
@@ -100,7 +100,7 @@ export function RepairStateControl({
       </select>
       <input
         aria-label="Repair note"
-        className="h-8 w-full rounded-md border bg-card px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-8 w-full rounded-md border bg-card px-2 text-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         value={notes}
         maxLength={500}
         disabled={isPending}

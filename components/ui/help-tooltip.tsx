@@ -19,7 +19,7 @@ export function HelpTooltip({
         type="button"
         aria-label={`${label} details`}
         aria-describedby={id}
-        className="inline-flex h-5 w-5 items-center justify-center rounded-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="inline-flex h-5 w-5 items-center justify-center rounded-xs text-muted-foreground outline-hidden transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <Info className="h-3.5 w-3.5" aria-hidden="true" />
       </button>

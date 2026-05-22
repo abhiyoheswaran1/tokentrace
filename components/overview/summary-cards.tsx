@@ -36,7 +36,7 @@ function CostSessionsMetricPane({
   return (
     <section
       className={cn(
-        "cost-sessions-section grid min-w-0 grid-rows-[auto_auto_auto_auto_1fr_auto] p-4 md:row-span-6 md:[grid-template-rows:subgrid]",
+        "cost-sessions-section grid min-w-0 grid-rows-[auto_auto_auto_auto_1fr_auto] p-4 md:row-span-6 md:grid-rows-subgrid",
         className
       )}
     >
@@ -48,7 +48,7 @@ function CostSessionsMetricPane({
       </div>
 
       <div className="mt-3">
-        <DataValue size="lg" className={cn("break-words leading-none", valueClassName)}>{value}</DataValue>
+        <DataValue size="lg" className={cn("wrap-break-word leading-none", valueClassName)}>{value}</DataValue>
       </div>
 
       <div className="mt-3 flex flex-wrap items-start gap-x-2 gap-y-1 text-xs leading-snug text-muted-foreground">
@@ -118,11 +118,11 @@ export function CostSessionsCard({
         <CardDescription>Model-rate trust and imported activity in one place.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col p-0">
-        <div className="grid flex-1 border-t md:grid-cols-2 md:[grid-template-rows:auto_auto_auto_auto_1fr_auto]">
+        <div className="grid flex-1 border-t md:grid-cols-2 md:grid-rows-[auto_auto_auto_auto_1fr_auto]">
           <CostSessionsMetricPane
             label="Cost"
             value={formatCurrency(summary.totalCost)}
-            valueClassName="break-words text-2xl"
+            valueClassName="wrap-break-word text-2xl"
             detailItems={[
               `${formatCurrency(summary.exactCost)} exact`,
               `${formatCurrency(summary.estimatedCost)} estimated`,
@@ -176,7 +176,7 @@ function TokenAccountingSlice({
   return (
     <div className="min-w-0 border-t p-3 first:border-t-0 md:border-l md:border-t-0 md:first:border-l-0">
       <FieldLabel>{label}</FieldLabel>
-      <DataValue className="mt-1 break-words leading-none" size="md">{value}</DataValue>
+      <DataValue className="mt-1 wrap-break-word leading-none" size="md">{value}</DataValue>
       <p className="mt-2 text-xs leading-5 text-muted-foreground">{detail}</p>
     </div>
   );
@@ -220,7 +220,7 @@ export function TokenAccountingCard({
         </span>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col">
-        <DataValue size="lg" className="break-words text-3xl leading-none">{formatTokens(summary.totalTokens)}</DataValue>
+        <DataValue size="lg" className="wrap-break-word text-3xl leading-none">{formatTokens(summary.totalTokens)}</DataValue>
         <div className="mt-1 text-sm font-medium text-foreground">processed tokens</div>
         <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-snug text-muted-foreground">
           {[

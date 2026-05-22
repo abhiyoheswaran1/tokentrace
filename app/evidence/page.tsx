@@ -111,7 +111,7 @@ function EvidenceMetricTabs({
           key={item.metric}
           href={mergeHrefParams(`/evidence?metric=${item.metric}`, rangeLinkParams)}
           className={cn(
-            "inline-flex h-8 items-center rounded-md border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "inline-flex h-8 items-center rounded-md border px-3 text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             current === item.metric
               ? "border-primary bg-primary text-primary-foreground"
               : "border-border bg-card text-foreground hover:bg-muted"
@@ -141,7 +141,7 @@ function EvidenceDrilldownStrip({
           key={action.label}
           href={action.href}
           className={cn(
-            "group min-w-0 p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "group min-w-0 p-3 transition-colors hover:bg-muted/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             index > 0 ? "border-t border-border md:border-l md:border-t-0" : ""
           )}
         >
@@ -204,7 +204,7 @@ function EvidenceContextPanel({
             <Link
               key={action.label}
               href={action.href}
-              className="group rounded-md border bg-card p-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="group rounded-md border bg-card p-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                 {action.label}

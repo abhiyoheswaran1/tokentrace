@@ -70,7 +70,7 @@ export default function DiscoveryPage() {
             <CardDescription>Latest 500 discovered files. Ignored files are retained so support-file noise stays visible without becoming usage.</CardDescription>
           </CardHeader>
           <CardContent className="table-scroll">
-            <Table className="min-w-[64rem]">
+            <Table className="min-w-5xl">
               <TableHeader>
                 <TableRow>
                   <TableHead>File</TableHead>
@@ -91,7 +91,7 @@ export default function DiscoveryPage() {
                     <TableCell>{file.sizeBytes.toLocaleString()} bytes</TableCell>
                     <TableCell>{formatDate(file.modifiedTime)}</TableCell>
                     <TableCell>{file.parser ?? "None"}</TableCell>
-                    <TableCell className="max-w-sm whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">
+                    <TableCell className="max-w-sm whitespace-normal wrap-break-word text-xs leading-relaxed text-muted-foreground">
                       {String(file.rawMetadata.ignoreReason ?? file.rawMetadata.reason ?? file.errors[0] ?? file.warnings[0] ?? "None")}
                     </TableCell>
                   </TableRow>

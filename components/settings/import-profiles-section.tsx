@@ -59,7 +59,7 @@ export function ImportProfilesSection({
               </div>
               <div className="mt-2 flex flex-wrap gap-1">
                 {profile.matchers.map((matcher) => (
-                  <code key={matcher} className="rounded bg-muted px-1.5 py-0.5 text-xs">{matcher}</code>
+                  <code key={matcher} className="rounded-sm bg-muted px-1.5 py-0.5 text-xs">{matcher}</code>
                 ))}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -126,7 +126,7 @@ export function ImportProfilesSection({
                 <FieldLabel>Matchers</FieldLabel>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {previewResult.recommendedMatchers.map((matcher) => (
-                    <code key={matcher} className="rounded bg-muted px-1.5 py-0.5 text-xs">{matcher}</code>
+                    <code key={matcher} className="rounded-sm bg-muted px-1.5 py-0.5 text-xs">{matcher}</code>
                   ))}
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -59,7 +59,7 @@ describe("scan command", () => {
     const invalidHome = path.join(invalidHomeParent, "not-a-directory");
     await fs.writeFile(invalidHome, "this path should never be used for --help");
 
-    for (const [command, expectedUsage] of [
+    const commands: Array<[string, string]> = [
       ["scan", "Usage: tokentrace scan"],
       ["doctor", "Usage: tokentrace doctor"],
       ["evidence", "Usage: tokentrace evidence"],
@@ -70,21 +70,38 @@ describe("scan command", () => {
       ["repair", "Usage: tokentrace repair"],
       ["status", "tokentrace status [--json]"],
       ["watch", "tokentrace watch"]
-    ]) {
-      const result = spawnSync(process.execPath, ["bin/tokentrace.js", command, "--help"], {
-        cwd: process.cwd(),
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          TOKENTRACE_HOME: invalidHome,
-          TOKENTRACE_DB: path.join(invalidHome, "tokentrace.db"),
-          DATABASE_URL: `file:${path.join(invalidHome, "tokentrace.db")}`
-        }
-      });
+    ];
 
-      expect(result.status, `${command} --help`).toBe(0);
-      expect(result.stdout, `${command} --help`).toContain(expectedUsage);
-      expect(result.stderr, `${command} --help`).toBe("");
+    const env = {
+      ...process.env,
+      TOKENTRACE_HOME: invalidHome,
+      TOKENTRACE_DB: path.join(invalidHome, "tokentrace.db"),
+      DATABASE_URL: `file:${path.join(invalidHome, "tokentrace.db")}`
+    };
+
+    const results = await Promise.all(
+      commands.map(([command, expectedUsage]) =>
+        new Promise<{ command: string; expectedUsage: string; status: number | null; stdout: string; stderr: string }>(
+          (resolve, reject) => {
+            const child = spawn(process.execPath, ["bin/tokentrace.js", command, "--help"], {
+              cwd: process.cwd(),
+              env
+            });
+            let stdout = "";
+            let stderr = "";
+            child.stdout.setEncoding("utf8").on("data", (chunk) => (stdout += chunk));
+            child.stderr.setEncoding("utf8").on("data", (chunk) => (stderr += chunk));
+            child.on("error", reject);
+            child.on("close", (status) => resolve({ command, expectedUsage, status, stdout, stderr }));
+          }
+        )
+      )
+    );
+
+    for (const { command, expectedUsage, status, stdout, stderr } of results) {
+      expect(status, `${command} --help`).toBe(0);
+      expect(stdout, `${command} --help`).toContain(expectedUsage);
+      expect(stderr, `${command} --help`).toBe("");
     }
   }, 60_000);
 

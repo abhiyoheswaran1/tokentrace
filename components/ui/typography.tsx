@@ -16,7 +16,7 @@ export function PageHeader({
     <div className={cn("flex w-full max-w-full flex-col justify-between gap-4 sm:flex-row sm:items-end", className)}>
       <div className="min-w-0 max-w-full">
         <h1 className="text-2xl font-semibold leading-tight tracking-normal text-foreground">{title}</h1>
-        <p className="mt-1 max-w-full break-words text-sm leading-6 text-muted-foreground sm:max-w-[65ch]">{description}</p>
+        <p className="mt-1 max-w-full wrap-break-word text-sm leading-6 text-muted-foreground sm:max-w-[65ch]">{description}</p>
       </div>
       {actions ? <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto sm:shrink-0 sm:justify-end">{actions}</div> : null}
     </div>

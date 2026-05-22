@@ -41,7 +41,7 @@ function OverviewReviewStatusTile({
     <Link
       href={href}
       className={cn(
-        "group flex min-w-0 gap-3 p-3 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "group flex min-w-0 gap-3 p-3 transition-colors hover:bg-muted/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         className
       )}
     >

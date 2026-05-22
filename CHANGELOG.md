@@ -4,6 +4,29 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.15.1] - 2026-05-22
+
+### Changed
+
+- Upgraded Next.js from 15 to 16 (and `eslint-config-next` to 16). Lint config now uses `eslint-config-next`'s native flat config; the `FlatCompat`/`@eslint/eslintrc` bridge is no longer needed.
+- Upgraded Tailwind CSS from 3 to 4 via `@tailwindcss/upgrade`. Tailwind config moved from `tailwind.config.ts` into `@theme` directives in `app/globals.css`; `postcss.config.mjs` now uses `@tailwindcss/postcss`; `autoprefixer` is removed (built into Tailwind 4).
+- Upgraded `tailwind-merge` from 2 to 3 (gated on Tailwind 4).
+- Upgraded Recharts from 2 to 3.
+- Upgraded Vitest from 3 to 4 (added `@vitejs/plugin-react` so React/JSX is parsed by Vite instead of Rolldown's parser).
+- Upgraded TypeScript from 5 to 6. Removed the deprecated `baseUrl` from `tsconfig.json` (path mapping still works under `moduleResolution: "bundler"`).
+- Bumped minimum Node.js engine to `>=20.9.0` (required by Next 16).
+
+### Fixed
+
+- Replaced three `useEffect` -> `setState` synchronization patterns with the React-recommended previous-value comparison (in `components/charts/trend-chart.tsx`, `components/charts/trend-section.tsx`, `components/session-explorer.tsx`) to satisfy the new `react-hooks/set-state-in-effect` rule and avoid cascading renders.
+- Reverted the Tailwind 4 codemod's accidental rename of the `"outline"` button/badge `variant` name to `"outline-solid"` (it is an internal variant label, not a Tailwind class).
+- Wrapped Recharts `Tooltip.labelFormatter` to match the new v3 signature.
+- Parallelized 10-spawn CLI subprocess test in `tests/serve-command.test.ts` so it no longer times out under parallel test contention; raised global Vitest timeouts and `spawnSync` timeouts in remaining CLI subprocess tests to match.
+
+### Deferred
+
+- ESLint 9 -> 10: blocked on `eslint-plugin-react` (peer-pinned by `eslint-config-next`); the latest 7.37.5 caps its eslint peer at `^9.7`. Staying on ESLint 9.39.4.
+
 ## [0.15.0] - 2026-05-22
 
 ### Changed

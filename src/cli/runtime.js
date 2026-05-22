@@ -31,7 +31,6 @@ function copyDashboardSource(context, targetRoot) {
     "next.config.mjs",
     "package.json",
     "postcss.config.mjs",
-    "tailwind.config.ts",
     "tsconfig.json"
   ];
 
@@ -63,7 +62,7 @@ function copyDashboardSource(context, targetRoot) {
 
 function runNextBuild(context, cwd) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [context.nextBin(), "build"], {
+    const child = spawn(process.execPath, [context.nextBin(), "build", "--webpack"], {
       cwd,
       env: context.runtimeEnv(),
       stdio: "inherit"

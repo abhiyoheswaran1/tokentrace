@@ -114,10 +114,10 @@ export function ScanNowButton({
         {isPending ? "Scanning..." : label}
       </Button>
       {status ? (
-        <div role="status" aria-live="polite" className={cn("max-w-[26rem] text-xs leading-5", statusClassName)}>
+        <div role="status" aria-live="polite" className={cn("max-w-104 text-xs leading-5", statusClassName)}>
           <p className={scanStatusClassName(status.tone)}>{status.message}</p>
           {status.result ? (
-            <div className="mt-2 rounded-md border bg-card p-2 text-left text-muted-foreground shadow-sm">
+            <div className="mt-2 rounded-md border bg-card p-2 text-left text-muted-foreground shadow-xs">
               <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                 <span>{status.result.filesScanned.toLocaleString()} files checked</span>
                 <span>{status.result.recordsImported.toLocaleString()} records imported</span>

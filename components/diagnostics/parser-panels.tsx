@@ -19,7 +19,7 @@ export function ParserTrustPanel({ report }: { report: DoctorReport["parserTrust
       </CardHeader>
       <CardContent className="table-scroll">
         {report.parsers.length ? (
-          <Table className="min-w-[72rem]">
+          <Table className="min-w-6xl">
             <TableHeader>
               <TableRow>
                 <TableHead>Parser</TableHead>
@@ -249,7 +249,7 @@ export function SourceCoveragePanel({ scanFiles }: { scanFiles: ReturnType<typeo
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{entry.description}</p>
               <div className="mt-2 flex flex-wrap gap-1">
                 {entry.matchers.map((matcher) => (
-                  <code key={matcher} className="rounded bg-muted px-1.5 py-0.5 text-xs">{matcher}</code>
+                  <code key={matcher} className="rounded-sm bg-muted px-1.5 py-0.5 text-xs">{matcher}</code>
                 ))}
               </div>
             </div>
