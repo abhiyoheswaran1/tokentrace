@@ -4,16 +4,14 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.15.1 platform upgrade bundle release", () => {
+  it("documents the 0.15.2 period filter hotfix release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.15.1");
+    expect(packageJson.version).toBe("0.15.2");
+    expect(changelog).toContain("## [0.15.2] - 2026-05-23");
+    expect(changelog).toContain("Period filter presets");
     expect(changelog).toContain("## [0.15.1] - 2026-05-22");
     expect(changelog).toContain("Upgraded Next.js from 15 to 16");
-    expect(changelog).toContain("Upgraded Tailwind CSS from 3 to 4");
-    expect(changelog).toContain("Upgraded Recharts from 2 to 3");
-    expect(changelog).toContain("Upgraded Vitest from 3 to 4");
-    expect(changelog).toContain("Upgraded TypeScript from 5 to 6");
     expect(changelog).toContain("## [0.15.0] - 2026-05-22");
     expect(changelog).toContain("## [0.14.2] - 2026-05-21");
     expect(changelog).toContain("## [0.14.1] - 2026-05-20");

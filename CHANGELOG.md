@@ -4,6 +4,12 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.15.2] - 2026-05-23
+
+### Fixed
+
+- Period filter presets (Today / 7d / 30d / 60d / 90d / Month / All time) now navigate correctly when clicked on the production webpack build. Previously the preset `<Link>` elements were rendered inside the custom-date `<form>`, and under Next.js 16 + React 19 the form was eating Link clicks, leaving the URL and rendered data unchanged. The preset links are now siblings of the form rather than children.
+
 ## [0.15.1] - 2026-05-22
 
 ### Changed

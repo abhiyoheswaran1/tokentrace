@@ -45,4 +45,26 @@ describe("PeriodFilter", () => {
     expect(html).toContain("pointer-events-none absolute right-3");
     expect(html).not.toContain("min-w-[720px]");
   });
+
+  it("renders preset links outside the custom-range form so Next.js Link clicks navigate", () => {
+    const range = resolveDateRange(undefined, new Date(2026, 4, 9, 12));
+
+    const html = renderToStaticMarkup(<PeriodFilter range={range} />);
+
+    // The preset anchor for "Month" must appear in the document BEFORE the opening <form> tag.
+    // If it ever falls back inside the form, React 19 / Next 16 will suppress the Link click.
+    const formStart = html.indexOf("<form");
+    const monthLinkStart = html.indexOf('href="/?range=month"');
+    expect(formStart).toBeGreaterThan(-1);
+    expect(monthLinkStart).toBeGreaterThan(-1);
+    expect(monthLinkStart).toBeLessThan(formStart);
+
+    // Only the custom date inputs and Apply button live inside the form.
+    const formClose = html.indexOf("</form>");
+    const innerForm = html.slice(formStart, formClose);
+    expect(innerForm).not.toContain('href="/?range=month"');
+    expect(innerForm).toContain('name="from"');
+    expect(innerForm).toContain('name="to"');
+    expect(innerForm).toContain('type="submit"');
+  });
 });
