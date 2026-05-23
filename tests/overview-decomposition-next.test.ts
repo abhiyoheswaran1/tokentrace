@@ -13,7 +13,7 @@ describe("Overview next decomposition", () => {
 
     expect(page.trimEnd().split("\n").length).toBeLessThan(170);
     expect(page).toContain("getOverviewPageData");
-    expect(overviewData).toContain("export async function getOverviewPageData");
+    expect(overviewData).toMatch(/export const getOverviewPageData = cache\(/);
     expect(page).toContain("@/components/overview/recommendations-card");
     expect(page).toContain("@/components/overview/current-mix-panel");
 

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { TrendWindow } from "@/components/charts/trend-chart";
 import { buildAccountingInvariants, type AccountingInvariantReport } from "@/src/lib/accounting-invariants";
 import { getAnalyticsData, type AnalyticsData } from "@/src/lib/analytics";
@@ -98,6 +99,6 @@ export async function getOverviewData(range: ResolvedDateRange): Promise<Overvie
   };
 }
 
-export async function getOverviewPageData(range: ResolvedDateRange): Promise<OverviewData> {
+export const getOverviewPageData = cache(async (range: ResolvedDateRange): Promise<OverviewData> => {
   return getOverviewData(range);
-}
+});

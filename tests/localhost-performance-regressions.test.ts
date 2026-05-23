@@ -146,7 +146,7 @@ describe("localhost performance regressions", () => {
     expect(overview).not.toContain("buildDoctorReport");
     expect(overview).not.toContain("buildUnknownCostRepairWorkbench");
     expect(overviewData).toContain("export async function getOverviewData");
-    expect(overviewData).toContain("export async function getOverviewPageData");
+    expect(overviewData).toMatch(/export const getOverviewPageData = cache\(/);
     expect(overviewData).toContain('analyticsProfile: "overview"');
     expect(overviewData).toContain("repairFocusHref");
   });
