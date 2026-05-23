@@ -108,6 +108,8 @@ export function buildSourceCatalog() {
   };
 }
 
+const entriesById = new Map(entries.map((entry) => [entry.id, entry]));
+
 function metadataTier(row: SourceCoverageInput): SourceCatalogTier | null {
   const catalog = row.rawMetadata.sourceCatalog;
   if (catalog && typeof catalog === "object") {
@@ -118,8 +120,7 @@ function metadataTier(row: SourceCoverageInput): SourceCatalogTier | null {
   if (profile && typeof profile === "object" && (profile as Record<string, unknown>).builtIn === false) {
     return "profile-assisted";
   }
-  const entry = entries.find((item) => item.id === row.parser);
-  return entry?.tier ?? null;
+  return row.parser ? entriesById.get(row.parser)?.tier ?? null : null;
 }
 
 export function summarizeSourceCoverage(rows: SourceCoverageInput[]): SourceCoverageSummary {
@@ -144,5 +145,6 @@ export function summarizeSourceCoverage(rows: SourceCoverageInput[]): SourceCove
 }
 
 export function sourceCatalogEntryForParser(parser: string | null): SourceCatalogEntry | null {
-  return entries.find((entry) => entry.id === parser) ?? null;
+  if (!parser) return null;
+  return entriesById.get(parser) ?? null;
 }

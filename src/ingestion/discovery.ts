@@ -57,11 +57,8 @@ export async function getDefaultSearchRoots(customFolders: string[] = []) {
   ];
 
   const unique = Array.from(new Set(candidates.map((candidate) => path.resolve(candidate))));
-  const present: string[] = [];
-  for (const candidate of unique) {
-    if (await exists(candidate)) present.push(candidate);
-  }
-  return present;
+  const presence = await Promise.all(unique.map(async (candidate) => ({ candidate, present: await exists(candidate) })));
+  return presence.filter((entry) => entry.present).map((entry) => entry.candidate);
 }
 
 type DiscoveryBuckets = {

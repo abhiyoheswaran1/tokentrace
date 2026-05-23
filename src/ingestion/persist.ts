@@ -103,9 +103,16 @@ function ensureModel(providerId: string, modelName: string | null | undefined) {
   };
 }
 
+const projectRootCache = new Map<string, string>();
+
 function findProjectRoot(startFile: string) {
-  let current = fs.statSync(startFile).isDirectory() ? startFile : path.dirname(startFile);
-  const home = process.env.HOME ?? path.parse(current).root;
+  const startDir = fs.statSync(startFile).isDirectory() ? startFile : path.dirname(startFile);
+  const cached = projectRootCache.get(startDir);
+  if (cached) return cached;
+
+  const home = process.env.HOME ?? path.parse(startDir).root;
+  const fallback = path.dirname(startFile);
+  let current = startDir;
 
   while (current !== path.dirname(current)) {
     if (
@@ -114,13 +121,15 @@ function findProjectRoot(startFile: string) {
       fs.existsSync(path.join(current, "pyproject.toml")) ||
       fs.existsSync(path.join(current, "Cargo.toml"))
     ) {
+      projectRootCache.set(startDir, current);
       return current;
     }
     if (current === home) break;
     current = path.dirname(current);
   }
 
-  return path.dirname(startFile);
+  projectRootCache.set(startDir, fallback);
+  return fallback;
 }
 
 function ensureProject(session: NormalizedSession) {
