@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.17.0] - 2026-05-23
+
 ### Performance
 
 - **Runtime SQLite pragmas tuned for analytics.** `src/db/client.ts` now

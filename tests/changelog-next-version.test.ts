@@ -4,10 +4,17 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.16.0 parser overrides + saved reports + agent handoff release", () => {
+  it("documents the 0.17.0 performance bundle release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.16.0");
+    expect(packageJson.version).toBe("0.17.0");
+    expect(changelog).toContain("## [0.17.0] - 2026-05-23");
+    expect(changelog).toContain("Runtime SQLite pragmas tuned for analytics");
+    expect(changelog).toContain("Prepared-statement cache");
+    expect(changelog).toContain("Streaming overview with two `<Suspense>` boundaries");
+    expect(changelog).toContain("tokentrace doctor --timings");
+    expect(changelog).toContain("Scan ingestion throughput");
+    expect(changelog).toContain("Next bundle optimizations");
     expect(changelog).toContain("## [0.16.0] - 2026-05-23");
     expect(changelog).toContain("Parser overrides");
     expect(changelog).toContain("Saved reports");
