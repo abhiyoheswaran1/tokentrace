@@ -1,4 +1,4 @@
-import { RankBarChart } from "@/components/charts/rank-bar-chart";
+import { RankBarChart } from "@/components/charts/rank-bar-chart-lazy";
 import { EmptyState } from "@/components/empty-state";
 import { ScanNowButton } from "@/components/scan-now-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

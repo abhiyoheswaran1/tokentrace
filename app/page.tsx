@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { TrendSection } from "@/components/charts/trend-section";
+import { TrendSection } from "@/components/charts/trend-section-lazy";
 import { OverviewCurrentMixPanel } from "@/components/overview/current-mix-panel";
 import { DataConfidenceStrip } from "@/components/overview/data-confidence-strip";
 import { FirstRunPanel } from "@/components/overview/first-run-panel";

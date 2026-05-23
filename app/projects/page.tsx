@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RankBarChart } from "@/components/charts/rank-bar-chart";
+import { RankBarChart } from "@/components/charts/rank-bar-chart-lazy";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { EmptyState } from "@/components/empty-state";
 import { ScanNowButton } from "@/components/scan-now-button";

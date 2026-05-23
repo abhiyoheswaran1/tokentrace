@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/empty-state";
 import { ScanNowButton } from "@/components/scan-now-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RankBarChart } from "@/components/charts/rank-bar-chart";
+import { RankBarChart } from "@/components/charts/rank-bar-chart-lazy";
 import { PageHeader } from "@/components/ui/typography";
 import { getAnalyticsData } from "@/src/lib/analytics";
 import { formatCurrency, formatTokens } from "@/src/lib/format";
