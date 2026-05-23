@@ -28,74 +28,157 @@ export type OverviewData = {
   trendDefaultWindow: TrendWindow;
 };
 
-export async function getOverviewData(range: ResolvedDateRange): Promise<OverviewData> {
-  const trendDefaultWindow: TrendWindow = range.key === "all" ? "30d" : "all";
+export type OverviewPrimaryData = {
+  data: AnalyticsData;
+  trust: AnalyticsData["scanTrust"];
+  rangeLinkParams: Record<string, string | undefined>;
+  evidenceLinks: AnalyticsData["evidenceLinks"];
+  firstRunStatus: FirstRunStatus;
+  summary: AnalyticsData["summary"];
+  trendDefaultWindow: TrendWindow;
+  unknownCostEvidenceHref: string;
+};
 
-  const [data, accountingReport, scanDiff, roots, repairWorkbench] = await Promise.all([
-    Promise.resolve().then(() =>
-      getAnalyticsData(range.filters, {
-        scanFileScope: "recent",
-        sessionDetail: "summary",
-        analyticsProfile: "overview"
-      })
-    ),
-    Promise.resolve().then(() => buildAccountingInvariants(range.filters)),
-    Promise.resolve().then(() => buildScanDiff()),
-    getDefaultSearchRoots(),
-    Promise.resolve().then(() => buildUnknownCostRepairWorkbench(range.filters, { limit: 12 }))
-  ]);
+export type OverviewRepairData = {
+  accountingReport: AccountingInvariantReport;
+  postSessionReview: PostSessionReview;
+  doctorReport: DoctorReport;
+  repairWorkbench: UnknownCostRepairWorkbench;
+  nextRepairGroup: UnknownCostRepairWorkbench["groups"][number] | null;
+  repairFocusHref: string;
+  evidenceLinks: AnalyticsData["evidenceLinks"];
+  summary: AnalyticsData["summary"];
+  trust: AnalyticsData["scanTrust"];
+  rangeLinkParams: Record<string, string | undefined>;
+};
 
-  const trust = data.scanTrust;
-  const postSessionReview = buildPostSessionReview({
-    scanDiff,
-    usageGuardrails: data.usageGuardrails,
-    summary: data.summary,
-    sessions: data.sessions
-  });
-  const rangeLinkParams = dateRangeQueryParams(range);
-  const evidenceLinks = Object.fromEntries(
-    Object.entries(data.evidenceLinks).map(([key, href]) => [
+const getAnalyticsForOverview = cache((range: ResolvedDateRange) =>
+  getAnalyticsData(range.filters, {
+    scanFileScope: "recent",
+    sessionDetail: "summary",
+    analyticsProfile: "overview"
+  })
+);
+
+const getSearchRoots = cache(() => getDefaultSearchRoots());
+
+function decorateEvidenceLinks(
+  evidenceLinks: AnalyticsData["evidenceLinks"],
+  rangeLinkParams: Record<string, string | undefined>
+): AnalyticsData["evidenceLinks"] {
+  return Object.fromEntries(
+    Object.entries(evidenceLinks).map(([key, href]) => [
       key,
       mergeHrefParams(href, { ...rangeLinkParams, openedFrom: "overview" })
     ])
   ) as AnalyticsData["evidenceLinks"];
-  const doctorReport = buildDoctorReport({ ...trust, roots });
-  const nextRepairGroup =
-    repairWorkbench.groups.find(
-      (group) => group.review.status !== "ignored" && group.review.status !== "resolved"
-    ) ?? repairWorkbench.groups[0] ?? null;
-  const repairFocusHref = mergeHrefParams(nextRepairGroup?.itemHref ?? "/repair", rangeLinkParams);
-  const unknownCostEvidenceHref = evidenceLinks["unknown-cost"];
+}
+
+export const getOverviewPrimaryData = cache(
+  async (range: ResolvedDateRange): Promise<OverviewPrimaryData> => {
+    const trendDefaultWindow: TrendWindow = range.key === "all" ? "30d" : "all";
+    const [data, roots] = await Promise.all([
+      Promise.resolve().then(() => getAnalyticsForOverview(range)),
+      getSearchRoots()
+    ]);
+    const trust = data.scanTrust;
+    const rangeLinkParams = dateRangeQueryParams(range);
+    const evidenceLinks = decorateEvidenceLinks(data.evidenceLinks, rangeLinkParams);
+    const firstRunStatus = buildFirstRunStatus({
+      rootCount: roots.length,
+      pricedModelCount: trust.pricedModelCount,
+      latestScan: null,
+      interactions: trust.confidence.interactions,
+      unknownCostInteractions: trust.confidence.unknownCostInteractions
+    });
+    return {
+      data,
+      trust,
+      rangeLinkParams,
+      evidenceLinks,
+      firstRunStatus,
+      summary: data.summary,
+      trendDefaultWindow,
+      unknownCostEvidenceHref: evidenceLinks["unknown-cost"]
+    };
+  }
+);
+
+export const getOverviewRepairData = cache(
+  async (range: ResolvedDateRange): Promise<OverviewRepairData> => {
+    const [data, accountingReport, scanDiff, roots, repairWorkbench] = await Promise.all([
+      Promise.resolve().then(() => getAnalyticsForOverview(range)),
+      Promise.resolve().then(() => buildAccountingInvariants(range.filters)),
+      Promise.resolve().then(() => buildScanDiff()),
+      getSearchRoots(),
+      Promise.resolve().then(() => buildUnknownCostRepairWorkbench(range.filters, { limit: 12 }))
+    ]);
+    const trust = data.scanTrust;
+    const rangeLinkParams = dateRangeQueryParams(range);
+    const evidenceLinks = decorateEvidenceLinks(data.evidenceLinks, rangeLinkParams);
+    const doctorReport = buildDoctorReport({ ...trust, roots });
+    const postSessionReview = buildPostSessionReview({
+      scanDiff,
+      usageGuardrails: data.usageGuardrails,
+      summary: data.summary,
+      sessions: data.sessions
+    });
+    const nextRepairGroup =
+      repairWorkbench.groups.find(
+        (group) => group.review.status !== "ignored" && group.review.status !== "resolved"
+      ) ?? repairWorkbench.groups[0] ?? null;
+    const repairFocusHref = mergeHrefParams(nextRepairGroup?.itemHref ?? "/repair", rangeLinkParams);
+    return {
+      accountingReport,
+      postSessionReview,
+      doctorReport,
+      repairWorkbench,
+      nextRepairGroup,
+      repairFocusHref,
+      evidenceLinks,
+      summary: data.summary,
+      trust,
+      rangeLinkParams
+    };
+  }
+);
+
+export async function getOverviewData(range: ResolvedDateRange): Promise<OverviewData> {
+  const [primary, repair] = await Promise.all([
+    getOverviewPrimaryData(range),
+    getOverviewRepairData(range)
+  ]);
+  const roots = await getSearchRoots();
   const firstRunStatus = buildFirstRunStatus({
     rootCount: roots.length,
-    pricedModelCount: trust.pricedModelCount,
-    latestScan: doctorReport.latestScan.id
+    pricedModelCount: primary.trust.pricedModelCount,
+    latestScan: repair.doctorReport.latestScan.id
       ? {
-          filesScanned: doctorReport.latestScan.filesScanned,
-          recordsImported: doctorReport.latestScan.recordsImported,
-          zeroImportExplanation: doctorReport.latestScan.zeroImportExplanation
+          filesScanned: repair.doctorReport.latestScan.filesScanned,
+          recordsImported: repair.doctorReport.latestScan.recordsImported,
+          zeroImportExplanation: repair.doctorReport.latestScan.zeroImportExplanation
         }
       : null,
-    interactions: trust.confidence.interactions,
-    unknownCostInteractions: trust.confidence.unknownCostInteractions
+    interactions: primary.trust.confidence.interactions,
+    unknownCostInteractions: primary.trust.confidence.unknownCostInteractions
   });
 
   return {
-    data,
-    trust,
-    accountingReport,
-    postSessionReview,
-    rangeLinkParams,
-    evidenceLinks,
+    data: primary.data,
+    trust: primary.trust,
+    accountingReport: repair.accountingReport,
+    postSessionReview: repair.postSessionReview,
+    rangeLinkParams: primary.rangeLinkParams,
+    evidenceLinks: primary.evidenceLinks,
     roots,
-    doctorReport,
-    repairWorkbench,
-    nextRepairGroup,
-    repairFocusHref,
-    unknownCostEvidenceHref,
+    doctorReport: repair.doctorReport,
+    repairWorkbench: repair.repairWorkbench,
+    nextRepairGroup: repair.nextRepairGroup,
+    repairFocusHref: repair.repairFocusHref,
+    unknownCostEvidenceHref: primary.unknownCostEvidenceHref,
     firstRunStatus,
-    summary: data.summary,
-    trendDefaultWindow
+    summary: primary.summary,
+    trendDefaultWindow: primary.trendDefaultWindow
   };
 }
 

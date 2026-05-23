@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { TrendSection } from "@/components/charts/trend-section-lazy";
@@ -7,6 +8,10 @@ import { FirstRunPanel } from "@/components/overview/first-run-panel";
 import { UsageGuardrailsPanel } from "@/components/overview/guardrails-panel";
 import { OverviewRecommendationsCard } from "@/components/overview/recommendations-card";
 import { OverviewReviewStatusStrip } from "@/components/overview/review-status-strip";
+import {
+  OverviewPrimarySkeleton,
+  OverviewRepairSkeleton
+} from "@/components/overview/section-skeletons";
 import { CostSessionsCard, TokenAccountingCard } from "@/components/overview/summary-cards";
 import { TopRepairItemsStrip } from "@/components/overview/top-repair-items-strip";
 import { OverviewTrustFooter } from "@/components/overview/trust-footer";
@@ -14,9 +19,9 @@ import { UsagePulsePanel } from "@/components/overview/usage-pulse-panel";
 import { PeriodFilter } from "@/components/period-filter";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/typography";
-import { resolveDateRange } from "@/src/lib/date-range";
+import { mergeHrefParams, type ResolvedDateRange, resolveDateRange } from "@/src/lib/date-range";
 import { runDueScheduledScan } from "@/src/lib/scheduled-scan";
-import { getOverviewPageData } from "@/src/lib/overview-data";
+import { getOverviewPrimaryData, getOverviewRepairData } from "@/src/lib/overview-data";
 
 export const dynamic = "force-dynamic";
 
@@ -24,26 +29,99 @@ type OverviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+async function OverviewPrimarySection({ range }: { range: ResolvedDateRange }) {
+  const {
+    data,
+    trust,
+    evidenceLinks,
+    firstRunStatus,
+    summary,
+    trendDefaultWindow,
+    unknownCostEvidenceHref,
+    rangeLinkParams
+  } = await getOverviewPrimaryData(range);
+  const repairFocusHref = mergeHrefParams("/repair", rangeLinkParams);
+
+  return (
+    <div className="space-y-8">
+      {summary.interactions === 0 ? <FirstRunPanel status={firstRunStatus} /> : null}
+      <UsagePulsePanel comparison={data.comparison} />
+      <DataConfidenceStrip confidence={data.dataConfidence} />
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+        <TokenAccountingCard
+          summary={summary}
+          processedHref={evidenceLinks["processed-tokens"]}
+          freshHref={evidenceLinks["non-cache-tokens"]}
+          cacheHref={evidenceLinks["cached-tokens"]}
+        />
+        <CostSessionsCard
+          summary={summary}
+          costHref={summary.unknownCostInteractions > 0 ? repairFocusHref : evidenceLinks["estimated-cost"]}
+          costActionLabel={summary.unknownCostInteractions > 0 ? "Open repair" : "View evidence"}
+          unknownCostEvidenceHref={summary.unknownCostInteractions > 0 ? unknownCostEvidenceHref : undefined}
+          sessionsHref={evidenceLinks.sessions}
+        />
+      </div>
+      <OverviewTrustFooter health={trust.health} pricedModelCount={trust.pricedModelCount} />
+      <TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />
+      <UsageGuardrailsPanel progress={data.usageGuardrails} />
+      <OverviewRecommendationsCard recommendations={data.recommendations} />
+      <OverviewCurrentMixPanel
+        tools={data.tools}
+        mostUsedTool={summary.mostUsedTool}
+        mostUsedModel={summary.mostUsedModel}
+      />
+    </div>
+  );
+}
+
+async function OverviewRepairSection({ range }: { range: ResolvedDateRange }) {
+  const {
+    accountingReport,
+    postSessionReview,
+    doctorReport,
+    repairWorkbench,
+    repairFocusHref,
+    evidenceLinks,
+    summary,
+    trust,
+    rangeLinkParams
+  } = await getOverviewRepairData(range);
+
+  if (summary.interactions === 0 && repairWorkbench.groups.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-8">
+      {summary.interactions > 0 ? (
+        <OverviewReviewStatusStrip
+          report={doctorReport}
+          confidence={trust.confidence}
+          accountingReport={accountingReport}
+          review={postSessionReview}
+          selectedInteractions={summary.interactions}
+          selectedCachedTokens={summary.cachedTokens}
+          repairHref={repairFocusHref}
+          processedTokensHref={evidenceLinks["processed-tokens"]}
+          cachedEvidenceHref={evidenceLinks["cached-tokens"]}
+        />
+      ) : null}
+      {repairWorkbench.groups.length ? (
+        <TopRepairItemsStrip
+          groups={repairWorkbench.groups}
+          repairHref={repairFocusHref}
+          rangeLinkParams={rangeLinkParams}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 export default async function OverviewPage({ searchParams }: OverviewPageProps) {
   void runDueScheduledScan().catch(() => undefined);
   const params = (await searchParams) ?? {};
   const range = resolveDateRange(params);
-  const overview = await getOverviewPageData(range);
-  const {
-    data,
-    trust,
-    accountingReport,
-    postSessionReview,
-    rangeLinkParams,
-    evidenceLinks,
-    doctorReport,
-    repairWorkbench,
-    repairFocusHref,
-    unknownCostEvidenceHref,
-    firstRunStatus,
-    summary,
-    trendDefaultWindow
-  } = overview;
 
   return (
     <div className="space-y-8">
@@ -61,66 +139,13 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
 
       <PeriodFilter range={range} />
 
-      {summary.interactions === 0 ? (
-        <FirstRunPanel status={firstRunStatus} />
-      ) : null}
+      <Suspense fallback={<OverviewPrimarySkeleton />}>
+        <OverviewPrimarySection range={range} />
+      </Suspense>
 
-      <UsagePulsePanel comparison={data.comparison} />
-
-      <DataConfidenceStrip confidence={data.dataConfidence} />
-
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <TokenAccountingCard
-          summary={summary}
-          processedHref={evidenceLinks["processed-tokens"]}
-          freshHref={evidenceLinks["non-cache-tokens"]}
-          cacheHref={evidenceLinks["cached-tokens"]}
-        />
-        <CostSessionsCard
-          summary={summary}
-          costHref={summary.unknownCostInteractions > 0 ? repairFocusHref : evidenceLinks["estimated-cost"]}
-          costActionLabel={summary.unknownCostInteractions > 0 ? "Open repair" : "View evidence"}
-          unknownCostEvidenceHref={summary.unknownCostInteractions > 0 ? unknownCostEvidenceHref : undefined}
-          sessionsHref={evidenceLinks.sessions}
-        />
-      </div>
-
-      <OverviewTrustFooter health={trust.health} pricedModelCount={trust.pricedModelCount} />
-
-      <TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />
-
-      {summary.interactions > 0 ? (
-        <OverviewReviewStatusStrip
-          report={doctorReport}
-          confidence={trust.confidence}
-          accountingReport={accountingReport}
-          review={postSessionReview}
-          selectedInteractions={summary.interactions}
-          selectedCachedTokens={summary.cachedTokens}
-          repairHref={repairFocusHref}
-          processedTokensHref={evidenceLinks["processed-tokens"]}
-          cachedEvidenceHref={evidenceLinks["cached-tokens"]}
-        />
-      ) : null}
-
-      {repairWorkbench.groups.length ? (
-        <TopRepairItemsStrip
-          groups={repairWorkbench.groups}
-          repairHref={repairFocusHref}
-          rangeLinkParams={rangeLinkParams}
-        />
-      ) : null}
-
-      <UsageGuardrailsPanel progress={data.usageGuardrails} />
-
-      <OverviewRecommendationsCard recommendations={data.recommendations} />
-
-      <OverviewCurrentMixPanel
-        tools={data.tools}
-        mostUsedTool={summary.mostUsedTool}
-        mostUsedModel={summary.mostUsedModel}
-      />
-
+      <Suspense fallback={<OverviewRepairSkeleton />}>
+        <OverviewRepairSection range={range} />
+      </Suspense>
     </div>
   );
 }

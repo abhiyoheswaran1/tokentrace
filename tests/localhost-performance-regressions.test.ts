@@ -126,7 +126,8 @@ describe("localhost performance regressions", () => {
     const analyticsTypes = read("src/lib/analytics-types.ts");
 
     expect(overviewData).toContain('analyticsProfile: "overview"');
-    expect(overview).toContain("getOverviewPageData(range)");
+    expect(overview).toMatch(/getOverviewPrimaryData\(range\)/);
+    expect(overview).toMatch(/getOverviewRepairData\(range\)/);
     expect(analyticsTypes).toContain('analyticsProfile?: "full" | "overview"');
     expect(analytics).toContain('const overviewOnly = options.analyticsProfile === "overview"');
     expect(analytics).toContain('const models = overviewOnly ? [] : timeAnalyticsQuery("analytics.models"');
@@ -136,17 +137,21 @@ describe("localhost performance regressions", () => {
     expect(analytics).toContain('timeAnalyticsQuery("analytics.insights"');
   });
 
-  it("keeps Overview server data assembly behind a focused helper", () => {
+  it("keeps Overview server data assembly behind focused, cache-wrapped helpers", () => {
     const overview = read("app/page.tsx");
     const overviewData = read("src/lib/overview-data.ts");
 
-    expect(overview).toContain('import { getOverviewPageData } from "@/src/lib/overview-data";');
-    expect(overview).toContain("const overview = await getOverviewPageData(range);");
+    expect(overview).toContain(
+      'import { getOverviewPrimaryData, getOverviewRepairData } from "@/src/lib/overview-data";'
+    );
+    expect(overview).toContain("Suspense");
     expect(overview).not.toContain("buildAccountingInvariants");
     expect(overview).not.toContain("buildDoctorReport");
     expect(overview).not.toContain("buildUnknownCostRepairWorkbench");
-    expect(overviewData).toContain("export async function getOverviewData");
+    expect(overviewData).toMatch(/export const getOverviewPrimaryData = cache\(/);
+    expect(overviewData).toMatch(/export const getOverviewRepairData = cache\(/);
     expect(overviewData).toMatch(/export const getOverviewPageData = cache\(/);
+    expect(overviewData).toContain("export async function getOverviewData");
     expect(overviewData).toContain('analyticsProfile: "overview"');
     expect(overviewData).toContain("repairFocusHref");
   });

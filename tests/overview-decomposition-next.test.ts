@@ -12,8 +12,11 @@ describe("Overview next decomposition", () => {
     const overviewData = read("src/lib/overview-data.ts");
 
     expect(page.trimEnd().split("\n").length).toBeLessThan(170);
-    expect(page).toContain("getOverviewPageData");
+    expect(page).toContain("getOverviewPrimaryData");
+    expect(page).toContain("getOverviewRepairData");
     expect(overviewData).toMatch(/export const getOverviewPageData = cache\(/);
+    expect(overviewData).toMatch(/export const getOverviewPrimaryData = cache\(/);
+    expect(overviewData).toMatch(/export const getOverviewRepairData = cache\(/);
     expect(page).toContain("@/components/overview/recommendations-card");
     expect(page).toContain("@/components/overview/current-mix-panel");
 

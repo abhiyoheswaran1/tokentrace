@@ -31,11 +31,15 @@ describe("Overview layout order", () => {
     expect(trendSection).toBeGreaterThan(metricCards);
     expect(tokenTrend).toBeGreaterThan(-1);
     expect(costTrend).toBeGreaterThan(tokenTrend);
-    expect(reviewStatus).toBeGreaterThan(trendSection);
-    expect(repairItems).toBeGreaterThan(reviewStatus);
-    expect(guardrails).toBeGreaterThan(repairItems);
+    // After 0.17.0 Suspense split, the page renders the Primary
+    // (analytics-driven) section first and then streams in the Repair
+    // (decision-support) section, so guardrails / recommendations / mix
+    // live in Primary and review-status / repair-items live in Repair.
+    expect(guardrails).toBeGreaterThan(trendSection);
     expect(nextActions).toBeGreaterThan(guardrails);
     expect(usageByTool).toBeGreaterThan(nextActions);
+    expect(reviewStatus).toBeGreaterThan(usageByTool);
+    expect(repairItems).toBeGreaterThan(reviewStatus);
   });
 
   it("defaults all-time trend charts to 30 days while scoped periods show the full selected range", () => {
