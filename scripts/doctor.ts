@@ -1,20 +1,25 @@
-import { jsonReportUsage, parseJsonReportArgs, type JsonReportCliOptions } from "@/src/lib/report-cli";
+import { doctorUsage, parseDoctorArgs, type DoctorCliOptions } from "@/src/lib/doctor-cli";
 import type { DoctorReport } from "@/src/lib/doctor";
+import type { AnalyticsTimingReport } from "@/src/lib/analytics-timing";
 
 const args = process.argv.slice(2);
-let options: JsonReportCliOptions;
+let options: DoctorCliOptions;
 
 try {
-  options = parseJsonReportArgs(args);
+  options = parseDoctorArgs(args);
 } catch (error) {
   console.error(error instanceof Error ? error.message : "Invalid doctor arguments.");
-  console.error(jsonReportUsage("doctor"));
+  console.error(doctorUsage());
   process.exit(1);
 }
 
 if (options.help) {
-  console.log(jsonReportUsage("doctor"));
+  console.log(doctorUsage());
   process.exit(0);
+}
+
+if (options.timings) {
+  process.env.TOKENTRACE_ANALYTICS_TIMING = "1";
 }
 
 function severityIcon(severity: string) {
@@ -55,11 +60,26 @@ function renderText(report: DoctorReport) {
   return lines.join("\n");
 }
 
-const [{ getScanTrustData }, { buildDoctorReport }, { getDefaultSearchRoots }] = await Promise.all([
-  import("@/src/lib/analytics"),
-  import("@/src/lib/doctor"),
-  import("@/src/ingestion/discovery")
-]);
+function renderTimings(report: AnalyticsTimingReport) {
+  const lines = [
+    "Analytics timings",
+    `  enabled: ${report.enabled ? "yes" : "no"}`,
+    `  threshold: ${report.thresholdMs}ms`,
+    `  slow queries: ${report.slowQueries.length}`
+  ];
+  for (const sample of report.slowQueries) {
+    lines.push(`  - ${sample.label}: ${sample.durationMs}ms (recorded ${sample.recordedAt})`);
+  }
+  return lines.join("\n");
+}
+
+const [{ getScanTrustData }, { buildDoctorReport }, { getDefaultSearchRoots }, { getAnalyticsTimingReport }] =
+  await Promise.all([
+    import("@/src/lib/analytics"),
+    import("@/src/lib/doctor"),
+    import("@/src/ingestion/discovery"),
+    import("@/src/lib/analytics-timing")
+  ]);
 const trustData = getScanTrustData();
 const roots = await getDefaultSearchRoots();
 const report = buildDoctorReport({
@@ -67,7 +87,14 @@ const report = buildDoctorReport({
   roots
 });
 
-if (options.json) {
+if (options.timings) {
+  const timingReport = getAnalyticsTimingReport();
+  if (options.json) {
+    console.log(JSON.stringify(timingReport, null, 2));
+  } else {
+    console.log(renderTimings(timingReport));
+  }
+} else if (options.json) {
   console.log(JSON.stringify(report, null, 2));
 } else {
   console.log(renderText(report));
