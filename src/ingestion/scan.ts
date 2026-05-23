@@ -1,12 +1,12 @@
 import path from "node:path";
-import { sqlite } from "@/src/db/client";
+import { prepareCached } from "@/src/db/prepared";
 import { getAppSettings } from "@/src/db/settings";
 import { stableId } from "@/src/lib/ids";
 import { importProfileForAdapter } from "@/src/lib/import-profiles";
 import { buildUnknownCostRepairWorkbench } from "@/src/lib/unknown-cost-repair";
 import { snapshotRepairWorkbench } from "@/src/lib/repair-delta";
 import { sourceCatalogEntryForParser } from "@/src/lib/source-catalog";
-import { hashFile, selectAdapter } from "./scan-adapters";
+import { hashFileWithCache, selectAdapter } from "./scan-adapters";
 import { discoverFilesWithIgnored, expandHome, getDefaultSearchRoots } from "./discovery";
 import { importSessions } from "./persist";
 import {
@@ -56,11 +56,9 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
     );
   }
 
-  sqlite
-    .prepare(
-      "INSERT INTO scan_runs (id, started_at, warnings, errors) VALUES (?, ?, '[]', '[]')"
-    )
-    .run(scanRunId, startedAt.getTime());
+  prepareCached(
+    "INSERT INTO scan_runs (id, started_at, warnings, errors) VALUES (?, ?, '[]', '[]')"
+  ).run(scanRunId, startedAt.getTime());
 
   for (const ignored of discovery.ignored) {
     filesScanned += 1;
@@ -85,7 +83,7 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
     const errors: string[] = [];
 
     try {
-      file = await hashFile(candidate);
+      file = await hashFileWithCache(candidate);
       const adapterChoice = await selectAdapter(file);
       warnings.push(...adapterChoice.warnings);
 

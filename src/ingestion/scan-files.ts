@@ -1,4 +1,4 @@
-import { sqlite } from "@/src/db/client";
+import { prepareCached } from "@/src/db/prepared";
 import { stableId } from "@/src/lib/ids";
 import type { FileCandidate, IngestionAdapter } from "@/src/ingestion/types";
 
@@ -30,15 +30,28 @@ export function metadataParserVersion(value: unknown) {
 
 export function hasImportedFile(file: FileCandidate, adapter: IngestionAdapter) {
   if (!file.hash) return false;
-  const rows = sqlite
-    .prepare(
-      `SELECT raw_metadata AS rawMetadata
+  const rows = prepareCached(
+    `SELECT raw_metadata AS rawMetadata
        FROM scan_files
        WHERE path = ? AND file_hash = ? AND status = 'imported' AND parser = ?`
-    )
-    .all(file.path, file.hash, adapter.id) as Array<{ rawMetadata: string | null }>;
+  ).all(file.path, file.hash, adapter.id) as Array<{ rawMetadata: string | null }>;
   const currentVersion = adapter.version ?? 1;
   return rows.some((row) => metadataParserVersion(row.rawMetadata) >= currentVersion);
+}
+
+export function getCachedFileHash(
+  filePath: string,
+  sizeBytes: number,
+  modifiedTime: number
+): string | null {
+  const row = prepareCached(
+    `SELECT file_hash AS fileHash
+       FROM scan_files
+       WHERE path = ? AND size_bytes = ? AND modified_time = ? AND file_hash IS NOT NULL
+       ORDER BY rowid DESC
+       LIMIT 1`
+  ).get(filePath, sizeBytes, modifiedTime) as { fileHash: string | null } | undefined;
+  return row?.fileHash ?? null;
 }
 
 export function insertScanFile(args: {
@@ -58,27 +71,25 @@ export function insertScanFile(args: {
     args.status,
     args.parser
   ]);
-  sqlite
-    .prepare(
-      `INSERT INTO scan_files
+  prepareCached(
+    `INSERT INTO scan_files
        (id, scan_run_id, path, modified_time, size_bytes, file_hash, parser, status,
         records_imported, warnings, errors, raw_metadata)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
-      id,
-      args.scanRunId,
-      args.file.path,
-      args.file.modifiedTime?.getTime() ?? null,
-      args.file.sizeBytes,
-      args.file.hash ?? null,
-      args.parser,
-      args.status,
-      args.recordsImported,
-      json(args.warnings),
-      json(args.errors),
-      json(args.rawMetadata ?? {})
-    );
+  ).run(
+    id,
+    args.scanRunId,
+    args.file.path,
+    args.file.modifiedTime?.getTime() ?? null,
+    args.file.sizeBytes,
+    args.file.hash ?? null,
+    args.parser,
+    args.status,
+    args.recordsImported,
+    json(args.warnings),
+    json(args.errors),
+    json(args.rawMetadata ?? {})
+  );
 }
 
 export function appendFileMessages(target: string, warnings: string[], errors: string[], allWarnings: string[], allErrors: string[]) {

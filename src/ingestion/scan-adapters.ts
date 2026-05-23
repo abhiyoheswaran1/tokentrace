@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import { hashContent } from "@/src/lib/ids";
 import { adapters } from "@/src/ingestion/adapters";
+import { getCachedFileHash } from "@/src/ingestion/scan-files";
 import { getParserOverride } from "@/src/lib/parser-overrides";
 import type { FileCandidate, IngestionAdapter } from "@/src/ingestion/types";
 
@@ -17,6 +18,16 @@ export async function hashFile(file: FileCandidate): Promise<FileCandidate> {
     ...file,
     hash: hashContent(content)
   };
+}
+
+export async function hashFileWithCache(file: FileCandidate): Promise<FileCandidate> {
+  if (file.modifiedTime && typeof file.sizeBytes === "number" && file.sizeBytes >= 0) {
+    const cached = getCachedFileHash(file.path, file.sizeBytes, file.modifiedTime.getTime());
+    if (cached) {
+      return { ...file, hash: cached };
+    }
+  }
+  return hashFile(file);
 }
 
 export async function selectAdapter(file: FileCandidate): Promise<AdapterSelection> {
