@@ -4,7 +4,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { MonoText, PageHeader } from "@/components/ui/typography";
 import { EmptyState } from "@/components/empty-state";
 import { ScanNowButton } from "@/components/scan-now-button";
+import { ParserOverridesPanel } from "@/components/parser-debug/parser-overrides-panel";
 import { getScanTrustData } from "@/src/lib/analytics";
+import { adapters } from "@/src/ingestion/adapters";
+import { listParserOverrides } from "@/src/lib/parser-overrides";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +19,11 @@ export default async function ParserDebugPage({
   const params = await searchParams;
   const selectedSource = params?.source;
   const { scanFiles, health } = getScanTrustData();
+  const initialOverrides = listParserOverrides();
+  const parserOptions = adapters.map((adapter) => ({
+    id: adapter.id,
+    displayName: adapter.displayName
+  }));
   const visibleScanFiles = selectedSource
     ? scanFiles.filter((file) => file.path === selectedSource)
     : scanFiles.slice(0, 500);
@@ -29,6 +37,8 @@ export default async function ParserDebugPage({
         title="Parsers"
         description="Inspect adapter selection, parser confidence, extracted tokens, warnings, and failures."
       />
+
+      <ParserOverridesPanel initialOverrides={initialOverrides} parsers={parserOptions} />
 
       <div className="rounded-md border bg-card p-3">
         <div className="text-sm font-medium">Latest parser mix</div>

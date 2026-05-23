@@ -30,6 +30,18 @@ Supporting copy:
 
 > Platform and dependency hardening: TokenTrace now requires Node.js 20+ (Node 18 reached end of life), ships on a refreshed dependency stack (`better-sqlite3` v12, `lucide-react` v1, `open` v11), uses proper SQLite identifier quoting when reading user history databases, ships an explicit `eslint-plugin-react-hooks` so a clean install never breaks lint, and stabilizes CLI subprocess tests so flaky timeouts no longer block releases.
 
+0.15.1 platform upgrade bundle message:
+
+> Platform upgrade bundle: TokenTrace 0.15.1 upgrades the full toolchain to Next.js 16, Tailwind CSS 4 (CSS-first `@theme` configuration), Recharts 3, Vitest 4, TypeScript 6, `tailwind-merge` 3, and the native flat ESLint config from `eslint-config-next` 16. Minimum Node.js is now 20.9.0. No user-facing behavior change; the dashboard renders the same with a faster, leaner build.
+
+0.15.2 period filter hotfix message:
+
+> Period filter hotfix: clicking any preset period (Today, 7 days, 30 days, 60 days, 90 days, This month, All time) on the production dashboard now navigates and filters correctly. The bug came from the preset links being rendered inside the custom-date form; Next.js 16 with React 19 was eating Link clicks inside enclosing forms. The preset links are now siblings of the form. Upgrade with `npm install -g tokentrace@latest` to pick up the fix.
+
+0.16.0 parser overrides + saved reports + agent handoff message:
+
+> 0.16.0 ships three local-first feature areas in one release. **Parser overrides**: force a specific parser for a file or exclude it from scans, from the dashboard or `tokentrace repair set-parser`; ingestion honors the override on the next scan, and a read-only preview endpoint shows what an alternate parser would extract before you commit. **Saved reports**: store reusable report templates locally on `/reports` and replay them with `tokentrace report --saved "<name>" --format json|markdown|html`. The standalone HTML export is XSS-safe and archivable. **Agent handoff**: the new `tokentrace agent --handoff` envelope (schema `tokentrace.handoff.v1`) and matching MCP tool `get_handoff` summarize local state and suggest next actions so multi-agent workflows can pass context cleanly. Every agent action is recorded to a bounded local log (last 500, redacts token-shaped strings, best-effort).
+
 ## Screenshots
 
 Use the latest refreshed screenshots from this repo:

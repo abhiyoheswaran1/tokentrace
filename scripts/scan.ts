@@ -17,6 +17,7 @@ if (options.help) {
 }
 
 const { runScan } = await import("@/src/ingestion/scan");
+const { safeRecordAgentAction } = await import("@/src/lib/agent-actions");
 
 const result = await runScan({
   force: options.force,
@@ -35,6 +36,18 @@ const summary = {
   warnings: result.warnings.length,
   errors: result.errors.length
 };
+
+safeRecordAgentAction({
+  surface: "cli",
+  command: "scan",
+  outcome: result.errors.length ? "error" : "ok",
+  summary: `imported ${result.recordsImported} records from ${result.filesScanned} files (${result.warnings.length} warnings, ${result.errors.length} errors)`,
+  payload: {
+    scanRunId: result.scanRunId,
+    force: options.force,
+    folders: options.folders.length || undefined
+  }
+});
 
 if (options.json) {
   console.log(JSON.stringify(summary, null, 2));

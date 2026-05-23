@@ -67,7 +67,7 @@ describe("scan command", () => {
       ["report", "Usage: tokentrace report"],
       ["review", "Usage: tokentrace review"],
       ["insights", "Usage: tokentrace insights"],
-      ["repair", "Usage: tokentrace repair"],
+      ["repair", "tokentrace repair"],
       ["status", "tokentrace status [--json]"],
       ["watch", "tokentrace watch"]
     ];

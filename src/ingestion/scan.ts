@@ -89,6 +89,22 @@ export async function runScan(options: RunScanOptions = {}): Promise<RunScanResu
       const adapterChoice = await selectAdapter(file);
       warnings.push(...adapterChoice.warnings);
 
+      if (adapterChoice.excluded) {
+        const reason = adapterChoice.excludeReason ?? "Skipped by user override";
+        warnings.push(reason);
+        insertScanFile({
+          scanRunId,
+          file,
+          parser: null,
+          status: "skipped_excluded",
+          recordsImported: 0,
+          warnings,
+          errors: []
+        });
+        appendFileMessages(candidate.path, warnings, errors, allWarnings, allErrors);
+        continue;
+      }
+
       if (!adapterChoice.selected) {
         errors.push("No parser detected a compatible format.");
         insertScanFile({

@@ -4,6 +4,49 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.16.0] - 2026-05-23
+
+### Added
+
+- **Parser overrides.** Force a specific parser for a file or exclude it from
+  future scans without editing source code. Override is honored by the next
+  scan via `selectAdapter`. New surfaces:
+  - Dashboard: `Parser overrides` panel on `/parser-debug` (list, add, clear).
+  - REST: `GET / POST / DELETE /api/parser-overrides`.
+  - REST: `POST /api/parser-debug/preview` returns predicted parse output for
+    an alternate parser without writing to the local database.
+  - CLI: `tokentrace repair set-parser <path> --parser <id> [--note "..."]`,
+    `--exclude` variant, and `clear-parser <path>` (all support `--json`).
+  - File paths are normalized to absolute form so scan-resolved paths match
+    user-supplied overrides, regardless of relative vs absolute input.
+- **Saved reports.** Persisted local report templates that can be replayed
+  from the dashboard or the CLI. New surfaces:
+  - Dashboard: `/reports` page with create / list / delete.
+  - REST: `GET / POST /api/saved-reports`, `GET / DELETE /api/saved-reports/[id]`.
+  - CLI: `tokentrace report --saved "<name>" --format json|markdown|html`
+    and `tokentrace report --list-saved [--json]`.
+  - Standalone HTML report format escapes every user-supplied filter value
+    so opening or archiving the file is safe.
+  - Param keys are validated against an allow-list before persistence.
+- **Agent handoff.** Structured envelope plus action log for multi-agent
+  workflows.
+  - CLI: `tokentrace agent --handoff [--json]` returns the
+    `tokentrace.handoff.v1` envelope (scan state, repair queue, confidence,
+    recent actions, suggested next actions). Pure read.
+  - CLI: `tokentrace agent --actions [--limit N] [--json]` reads the local
+    agent action log.
+  - MCP: new `get_handoff` tool returns the same envelope; added to the
+    recommended workflow in `get_agent_guide`.
+  - Action log is bounded to the last 500 entries (configurable via
+    `TOKENTRACE_AGENT_ACTION_LOG_MAX`), token-shaped strings are redacted
+    before write, and the writer is best-effort so logging never breaks the
+    CLI command it observes. `tokentrace scan` now writes a row on completion.
+
+### Internal
+
+- Three new local SQLite tables: `file_parser_overrides`, `saved_reports`,
+  `agent_actions`. All additive migrations.
+
 ## [0.15.2] - 2026-05-23
 
 ### Fixed

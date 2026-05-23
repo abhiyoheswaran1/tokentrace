@@ -215,6 +215,25 @@ async function callTool(params: ToolCallParams) {
         requiresHumanConfirmation: false
       });
     }
+    if (params.name === "get_handoff") {
+      const envelope = commandJson(["agent", "--handoff", "--json"]);
+      return toolResult(envelope, {
+        summary: "Returned the tokentrace.handoff.v1 envelope for the next agent.",
+        confidence: "high",
+        nextActions: [
+          "Read suggestedNextActions for the recommended local commands.",
+          "Call get_evidence before quoting any numeric claim from the envelope."
+        ],
+        warnings: [],
+        evidence: [
+          {
+            label: "Agent handoff envelope",
+            command: ["tokentrace", "agent", "--handoff", "--json"]
+          }
+        ],
+        requiresHumanConfirmation: false
+      });
+    }
     if (params.name === "get_report") {
       const format = stringArg(args, "format") ?? "markdown";
       const since = stringArg(args, "since");

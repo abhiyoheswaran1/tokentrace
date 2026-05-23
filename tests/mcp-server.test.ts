@@ -82,6 +82,7 @@ describe("TokenTrace MCP server", () => {
       "run_doctor",
       "get_evidence",
       "get_repair_queue",
+      "get_handoff",
       "get_report",
       "run_scan"
     ]);
@@ -130,6 +131,7 @@ describe("TokenTrace MCP server", () => {
       "run_doctor",
       "get_evidence",
       "get_repair_queue",
+      "get_handoff",
       "get_report",
       "run_scan"
     ]);

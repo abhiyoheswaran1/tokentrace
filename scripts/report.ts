@@ -1,6 +1,55 @@
 import { markdownReportUsage, parseMarkdownReportArgs, type MarkdownReportCliOptions } from "@/src/lib/report-cli";
 
 const args = process.argv.slice(2);
+
+if (args.includes("--list-saved")) {
+  const { listSavedReports } = await import("@/src/lib/saved-reports-store");
+  const reports = listSavedReports();
+  if (args.includes("--json")) {
+    console.log(JSON.stringify({ reports }, null, 2));
+  } else {
+    if (!reports.length) {
+      console.log("No saved reports yet. Create one from the /reports page or POST /api/saved-reports.");
+    } else {
+      for (const report of reports) {
+        console.log(
+          `- ${report.name} (${report.viewType}, format=${report.format}, last run: ${
+            report.lastRunAt ?? "never"
+          })`
+        );
+      }
+    }
+  }
+  process.exit(0);
+}
+
+const savedIndex = args.findIndex((arg) => arg === "--saved");
+if (savedIndex !== -1) {
+  const name = args[savedIndex + 1];
+  if (!name || name.startsWith("--")) {
+    console.error("--saved requires a report name");
+    process.exit(1);
+  }
+  const formatIndex = args.findIndex((arg) => arg === "--format");
+  const formatValue = formatIndex !== -1 ? args[formatIndex + 1] : "markdown";
+  if (!formatValue || formatValue.startsWith("--")) {
+    console.error("--format requires a value (json|markdown|html)");
+    process.exit(1);
+  }
+  if (formatValue !== "json" && formatValue !== "markdown" && formatValue !== "html") {
+    console.error(`Unsupported format: ${formatValue}`);
+    process.exit(1);
+  }
+  const { runSavedReportByName } = await import("@/src/lib/saved-report-runner");
+  try {
+    console.log(runSavedReportByName(name, { format: formatValue }));
+    process.exit(0);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+}
+
 let options: MarkdownReportCliOptions;
 
 try {

@@ -160,6 +160,41 @@ CREATE TABLE IF NOT EXISTS saved_views (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
 CREATE INDEX IF NOT EXISTS saved_views_updated_idx ON saved_views(updated_at);
+
+CREATE TABLE IF NOT EXISTS file_parser_overrides (
+  path TEXT PRIMARY KEY,
+  parser_id TEXT,
+  excluded INTEGER NOT NULL DEFAULT 0,
+  note TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  CHECK (excluded IN (0, 1)),
+  CHECK ((excluded = 1 AND parser_id IS NULL) OR (excluded = 0 AND parser_id IS NOT NULL))
+);
+CREATE INDEX IF NOT EXISTS file_parser_overrides_updated_idx ON file_parser_overrides(updated_at);
+
+CREATE TABLE IF NOT EXISTS saved_reports (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  name_lower TEXT NOT NULL UNIQUE,
+  view_type TEXT NOT NULL,
+  params TEXT NOT NULL DEFAULT '{}',
+  format TEXT NOT NULL DEFAULT 'markdown',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  last_run_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS saved_reports_updated_idx ON saved_reports(created_at);
+
+CREATE TABLE IF NOT EXISTS agent_actions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  surface TEXT NOT NULL,
+  command TEXT NOT NULL,
+  outcome TEXT NOT NULL,
+  summary TEXT NOT NULL DEFAULT '',
+  payload TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS agent_actions_ts_idx ON agent_actions(ts);
 `;
 
 export function applyMigrations(sqlite: Database.Database) {

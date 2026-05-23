@@ -42,6 +42,11 @@ export function agentGuide() {
         requiresHumanConfirmation: false
       },
       {
+        tool: "get_handoff",
+        purpose: "Get a structured tokentrace.handoff.v1 envelope summarizing local state for the next agent.",
+        requiresHumanConfirmation: false
+      },
+      {
         tool: "get_report",
         purpose: "Produce a deterministic local report for summaries, check-ins, and handoffs.",
         requiresHumanConfirmation: false

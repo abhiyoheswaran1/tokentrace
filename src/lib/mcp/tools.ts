@@ -61,6 +61,13 @@ export const mcpTools = [
     inputSchema: toolInputSchema()
   },
   {
+    name: "get_handoff",
+    title: "Get agent handoff envelope",
+    description:
+      "Return the schema-versioned tokentrace.handoff.v1 envelope summarizing local scan state, repair queue, confidence, recent agent actions, and suggested next actions. Pure read; no scan.",
+    inputSchema: toolInputSchema()
+  },
+  {
     name: "get_report",
     title: "Get local usage report",
     description: "Return a deterministic local report as markdown or JSON.",

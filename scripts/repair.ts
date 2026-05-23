@@ -2,24 +2,42 @@ const args = process.argv.slice(2);
 
 export {};
 
-function usage() {
-  return "Usage: tokentrace repair --json";
-}
+const HELP = [
+  "Usage:",
+  "  tokentrace repair [--json]",
+  "  tokentrace repair set-parser <path> --parser <id> [--note \"...\"] [--json]",
+  "  tokentrace repair set-parser <path> --exclude [--note \"...\"] [--json]",
+  "  tokentrace repair clear-parser <path> [--json]"
+].join("\n");
 
 function fail(message: string): never {
   console.error(message);
-  console.error(usage());
+  console.error(HELP);
   process.exit(1);
+}
+
+if (args[0] === "--help" || args[0] === "-h") {
+  console.log(HELP);
+  process.exit(0);
+}
+
+if (args[0] === "set-parser" || args[0] === "clear-parser") {
+  const { parseParserOverrideArgs, runParserOverrideAction } = await import(
+    "@/src/lib/parser-overrides-cli"
+  );
+  try {
+    const action = parseParserOverrideArgs(args);
+    console.log(runParserOverrideAction(action));
+    process.exit(0);
+  } catch (error) {
+    fail(error instanceof Error ? error.message : String(error));
+  }
 }
 
 function parseArgs(argv: string[]) {
   let json = false;
 
   for (const arg of argv) {
-    if (arg === "--help" || arg === "-h") {
-      console.log(usage());
-      process.exit(0);
-    }
     if (arg === "--json") {
       json = true;
       continue;
