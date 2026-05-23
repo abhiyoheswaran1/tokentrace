@@ -23,6 +23,11 @@ const dbPath = process.env.TOKENTRACE_DB ?? databaseUrlPath(process.env.DATABASE
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 export const sqlite = new Database(dbPath);
+sqlite.pragma("journal_mode = WAL");
+sqlite.pragma("synchronous = NORMAL");
+sqlite.pragma("temp_store = MEMORY");
+sqlite.pragma("cache_size = -65536");
+sqlite.pragma("mmap_size = 268435456");
 sqlite.pragma("busy_timeout = 10000");
 sqlite.pragma("foreign_keys = ON");
 registerSqliteFunctions(sqlite);
