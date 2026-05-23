@@ -13,10 +13,10 @@ All notable changes to TokenTrace are documented here.
   were set on the runtime connection.
 - **Prepared-statement cache.** `src/db/prepared.ts` adds a tiny
   `prepareCached(sql)` helper keyed by SQL string. The hot analytics,
-  unknown-cost-repair, and scheduled-scan helpers now skip the
-  parse-and-plan cost on repeat queries.
-- **Overview page parallelization.** The five independent sub-queries
-  in `getOverviewData` (analytics, accounting invariants, scan diff,
+  unknown-cost-repair, scheduled-scan, and ingestion helpers now skip
+  the parse-and-plan cost on repeat queries.
+- **Overview page parallelization.** The independent sub-queries in
+  `getOverviewData` (analytics, accounting invariants, scan diff,
   default search roots, repair workbench) now run through `Promise.all`,
   so the async filesystem walk overlaps with the serialized SQLite
   reads.
@@ -28,6 +28,37 @@ All notable changes to TokenTrace are documented here.
   tools, and models routes, splitting the ~80KB Recharts bundle out of
   the initial JS payload. `ChartSkeleton` keeps the chart slot from
   collapsing during client hydration.
+- **Streaming overview with two `<Suspense>` boundaries.** The overview
+  page now splits into two cache-wrapped fetchers — `getOverviewPrimaryData`
+  (analytics-driven: pulse, summary, trend, trust, guardrails,
+  recommendations, mix) and `getOverviewRepairData` (workbench-driven:
+  review status, repair items). Each renders inside its own `<Suspense>`
+  so the page shell and period filter paint immediately, the primary
+  analytics block streams in next, and the repair lane streams in
+  independently when the workbench query resolves.
+- **`tokentrace doctor --timings`.** New flag force-enables analytics
+  timing capture and emits the analytics timing report (slow queries,
+  threshold, sample list). Combine with `--json` for machine-readable
+  output. Useful for before/after measurement of performance changes
+  since `TOKENTRACE_ANALYTICS_TIMING` is off by default in production.
+- **Scan ingestion throughput.** Adds a (path, size, mtime)-keyed
+  file-hash cache so rescans of unchanged files skip the `fs.readFile`
+  + SHA-256 step entirely. The hot scan-side `INSERT INTO scan_files`,
+  `INSERT INTO scan_runs`, and `hasImportedFile` lookups also route
+  through `prepareCached`.
+- **Next bundle optimizations.** Enables `optimizePackageImports` for
+  `lucide-react` (~37 import sites) and `recharts` so Next 16 transforms
+  named imports into per-symbol imports and prunes unused-symbol weight
+  from the client bundle. Adds an opt-in `@next/bundle-analyzer`
+  integration gated on `ANALYZE=true` for follow-up audits.
+- **Hot-path bug-hunt fixes.** `source-catalog.summarizeSourceCoverage`
+  was O(rows × entries); now uses a pre-built Map for O(1) parser tier
+  lookups. `ingestion/discovery.getDefaultSearchRoots` parallelizes its
+  `fs.access` checks via `Promise.all` instead of awaiting them
+  sequentially. `ingestion/persist.findProjectRoot` memoizes the
+  resolved project root by start directory, eliminating duplicate
+  filesystem walks when many imported sessions share the same source
+  directory.
 
 ## [0.16.0] - 2026-05-23
 
