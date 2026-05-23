@@ -4,6 +4,31 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Performance
+
+- **Runtime SQLite pragmas tuned for analytics.** `src/db/client.ts` now
+  re-applies `journal_mode=WAL` on the live connection and sets
+  `synchronous=NORMAL`, `temp_store=MEMORY`, `cache_size=64MB`, and
+  `mmap_size=256MB`. Previously only `busy_timeout` and `foreign_keys`
+  were set on the runtime connection.
+- **Prepared-statement cache.** `src/db/prepared.ts` adds a tiny
+  `prepareCached(sql)` helper keyed by SQL string. The hot analytics,
+  unknown-cost-repair, and scheduled-scan helpers now skip the
+  parse-and-plan cost on repeat queries.
+- **Overview page parallelization.** The five independent sub-queries
+  in `getOverviewData` (analytics, accounting invariants, scan diff,
+  default search roots, repair workbench) now run through `Promise.all`,
+  so the async filesystem walk overlaps with the serialized SQLite
+  reads.
+- **Render-scoped overview memo.** `getOverviewPageData` is wrapped in
+  `React.cache` so any future composition that calls it twice within a
+  single server render tree pays the cost once.
+- **Lazy-loaded Recharts.** `TrendSection` and `RankBarChart` are now
+  loaded via `next/dynamic({ ssr: false })` on the overview, projects,
+  tools, and models routes, splitting the ~80KB Recharts bundle out of
+  the initial JS payload. `ChartSkeleton` keeps the chart slot from
+  collapsing during client hydration.
+
 ## [0.16.0] - 2026-05-23
 
 ### Added
