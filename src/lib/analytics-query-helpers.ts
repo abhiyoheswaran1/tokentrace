@@ -1,4 +1,4 @@
-import { sqlite } from "@/src/db/client";
+import { prepareCached } from "@/src/db/prepared";
 import type { AnalyticsFilters, TrendPoint } from "@/src/lib/analytics-types";
 
 export function number(value: unknown) {
@@ -75,7 +75,7 @@ export function parseJson<T>(value: unknown, fallback: T): T {
 }
 
 export function rows<T>(sql: string, ...params: unknown[]) {
-  return sqlite.prepare(sql).all(...params) as T[];
+  return prepareCached(sql).all(...params) as T[];
 }
 
 export function withQuery(path: string, params: Record<string, string | null | undefined>) {
