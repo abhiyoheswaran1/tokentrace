@@ -29,30 +29,40 @@ export type OverviewData = {
 
 export async function getOverviewData(range: ResolvedDateRange): Promise<OverviewData> {
   const trendDefaultWindow: TrendWindow = range.key === "all" ? "30d" : "all";
-  const data = getAnalyticsData(range.filters, {
-    scanFileScope: "recent",
-    sessionDetail: "summary",
-    analyticsProfile: "overview"
-  });
+
+  const [data, accountingReport, scanDiff, roots, repairWorkbench] = await Promise.all([
+    Promise.resolve().then(() =>
+      getAnalyticsData(range.filters, {
+        scanFileScope: "recent",
+        sessionDetail: "summary",
+        analyticsProfile: "overview"
+      })
+    ),
+    Promise.resolve().then(() => buildAccountingInvariants(range.filters)),
+    Promise.resolve().then(() => buildScanDiff()),
+    getDefaultSearchRoots(),
+    Promise.resolve().then(() => buildUnknownCostRepairWorkbench(range.filters, { limit: 12 }))
+  ]);
+
   const trust = data.scanTrust;
-  const accountingReport = buildAccountingInvariants(range.filters);
   const postSessionReview = buildPostSessionReview({
-    scanDiff: buildScanDiff(),
+    scanDiff,
     usageGuardrails: data.usageGuardrails,
     summary: data.summary,
     sessions: data.sessions
   });
   const rangeLinkParams = dateRangeQueryParams(range);
   const evidenceLinks = Object.fromEntries(
-    Object.entries(data.evidenceLinks).map(([key, href]) => [key, mergeHrefParams(href, { ...rangeLinkParams, openedFrom: "overview" })])
+    Object.entries(data.evidenceLinks).map(([key, href]) => [
+      key,
+      mergeHrefParams(href, { ...rangeLinkParams, openedFrom: "overview" })
+    ])
   ) as AnalyticsData["evidenceLinks"];
-  const roots = await getDefaultSearchRoots();
   const doctorReport = buildDoctorReport({ ...trust, roots });
-  const repairWorkbench = buildUnknownCostRepairWorkbench(range.filters, { limit: 12 });
   const nextRepairGroup =
-    repairWorkbench.groups.find((group) => group.review.status !== "ignored" && group.review.status !== "resolved")
-    ?? repairWorkbench.groups[0]
-    ?? null;
+    repairWorkbench.groups.find(
+      (group) => group.review.status !== "ignored" && group.review.status !== "resolved"
+    ) ?? repairWorkbench.groups[0] ?? null;
   const repairFocusHref = mergeHrefParams(nextRepairGroup?.itemHref ?? "/repair", rangeLinkParams);
   const unknownCostEvidenceHref = evidenceLinks["unknown-cost"];
   const firstRunStatus = buildFirstRunStatus({
