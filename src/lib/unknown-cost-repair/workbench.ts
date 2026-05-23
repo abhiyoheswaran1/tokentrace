@@ -1,4 +1,4 @@
-import { sqlite } from "@/src/db/client";
+import { prepareCached } from "@/src/db/prepared";
 import type { AnalyticsFilters } from "@/src/lib/analytics";
 import {
   primaryRepairAction,
@@ -20,7 +20,7 @@ function number(value: unknown) {
 }
 
 function rows<T>(sql: string, ...params: unknown[]) {
-  return sqlite.prepare(sql).all(...params) as T[];
+  return prepareCached(sql).all(...params) as T[];
 }
 
 function interactionDateFilter(filters: AnalyticsFilters = {}, alias = "i") {

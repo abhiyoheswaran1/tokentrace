@@ -1,9 +1,9 @@
-import { sqlite } from "@/src/db/client";
+import { prepareCached } from "@/src/db/prepared";
 import { modelNameCandidates } from "@/src/lib/model-aliases";
 import type { UnknownCostRepairSuggestion, UnknownCostRepairWorkbenchGroup } from "@/src/lib/unknown-cost-repair/types";
 
 function rows<T>(sql: string, ...params: unknown[]) {
-  return sqlite.prepare(sql).all(...params) as T[];
+  return prepareCached(sql).all(...params) as T[];
 }
 
 export function buildPricedModelLookup() {
