@@ -1,12 +1,12 @@
-import { sqlite } from "@/src/db/client";
+import { prepareCached } from "@/src/db/prepared";
 import { getAppSettings, saveAppSettings } from "@/src/db/settings";
 import { runScan } from "@/src/ingestion/scan";
 import { isScanDue, summarizeScheduledScanResult } from "@/src/lib/scan-schedule";
 
 function latestScanDate() {
-  const row = sqlite
-    .prepare("SELECT COALESCE(completed_at, started_at) AS scanAt FROM scan_runs ORDER BY started_at DESC LIMIT 1")
-    .get() as { scanAt: number | null } | undefined;
+  const row = prepareCached(
+    "SELECT COALESCE(completed_at, started_at) AS scanAt FROM scan_runs ORDER BY started_at DESC LIMIT 1"
+  ).get() as { scanAt: number | null } | undefined;
   return row?.scanAt ? new Date(row.scanAt) : null;
 }
 
