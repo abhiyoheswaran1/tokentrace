@@ -1,3 +1,4 @@
+import type { AutoClassification } from "@/src/lib/unknown-cost-repair/auto-classify";
 import type { UnknownCostRepairAction, UnknownCostRepairCause } from "@/src/lib/repair-actions";
 
 export type UnknownCostRepairStatus = "unresolved" | "ignored" | "resolved" | "needs-parser-review";
@@ -50,6 +51,7 @@ export type UnknownCostRepairWorkbenchGroup = {
   secondaryActions: UnknownCostRepairAction[];
   impact: string;
   resolvedStateLabel: string;
+  classification: AutoClassification;
 };
 
 export type UnknownCostRepairWorkbench = {

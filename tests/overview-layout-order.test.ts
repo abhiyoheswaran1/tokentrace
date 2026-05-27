@@ -12,7 +12,7 @@ describe("Overview layout order", () => {
 
     const usagePulse = source.indexOf("<UsagePulsePanel");
     const metricCards = source.indexOf("<TokenAccountingCard");
-    const trendSection = source.indexOf("<TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />");
+    const trendSection = source.indexOf("<TrendSection");
     const tokenTrend = trendSource.indexOf("<CardTitle>Token Trend</CardTitle>");
     const costTrend = trendSource.indexOf("<CardTitle>Cost Trend</CardTitle>");
     const reviewStatus = source.indexOf("<OverviewReviewStatusStrip");
@@ -47,7 +47,7 @@ describe("Overview layout order", () => {
     const overviewData = fs.readFileSync(path.join(process.cwd(), "src/lib/overview-data.ts"), "utf8");
 
     expect(overviewData).toContain('const trendDefaultWindow: TrendWindow = range.key === "all" ? "30d" : "all";');
-    expect(source).toContain("<TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />");
+    expect(source).toMatch(/<TrendSection[\s\S]*?data=\{data\.trends\}[\s\S]*?defaultWindow=\{trendDefaultWindow\}/);
   });
 
   it("keeps unknown-cost overview actions focused on repair and evidence", () => {

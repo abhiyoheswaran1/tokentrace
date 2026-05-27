@@ -4,6 +4,56 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Local intelligence
+
+- **Anomaly detection (`tokentrace anomalies`).** A new modified-z-score (MAD)
+  detector scores the daily token and cost trend against a trailing window
+  (default 14 days) and surfaces deviations as `notable`, `high`, or `severe`.
+  Pure-stats; spends zero AI tokens. New CLI flags: `--window=N` (3..60),
+  `--metric=tokens|cost|all`, `--json`.
+- **Structured query (`tokentrace query`).** A new deterministic
+  parameterized aggregation that lets agents ask precise local questions
+  without TokenTrace performing any NL parsing. Group by
+  `model|project|tool|session|day`, aggregate
+  `cost|totalTokens|interactions`, with optional preset/from/to range,
+  exact-match `model|project|tool` filters, and `--top` clamped to 200.
+  Routes through `prepareCached` for the warm-statement path.
+- **Auto-classifier (`tokentrace repair auto-classify`).** Each unknown-cost
+  workbench group now carries a deterministic `classification` field
+  produced by three rules in confidence order: `exact-model` (0.95),
+  `family-fragment` (0.70, normalized via `modelNameCandidates`), and
+  `parser-source` (0.45, same source file as priced examples). The CLI
+  supports `--apply --min-confidence=N` (floor 0.85) which writes each
+  qualifying exact-model or family-fragment suggestion to a new
+  `model_aliases` table and backfills cost for the matching unknown-cost
+  interactions; `--dry-run` previews without writing. parser-source
+  matches are skipped from `--apply` because they have no
+  (provider, observed-model) pair to persist.
+- **Persistent model aliases.** A new `model_aliases` table maps
+  `(provider_id, observed_model)` to a priced model. The cost
+  recalculation pass now LEFT JOINs the alias table so aliased costs
+  survive every re-seed, with metadata noting the rule and confidence.
+- **Interactive Query page (`/query`).** A new dashboard route exposes the
+  structured-query surface with a server-rendered form (group-by, metric,
+  range preset / from / to, model/project/tool filters, top N). Results
+  render as a deterministic table. Same SQL path as the CLI and MCP tool.
+- **Anomaly drill-down + chart markers.** Each anomaly date in the
+  overview Anomalies panel is now a link to `/?range=custom&from=DATE&to=DATE`
+  so clicking filters the entire overview to that day. The Trend chart
+  also renders colored Recharts `ReferenceDot` markers on flagged days
+  (red severe, amber high, gray notable) when the bucket is daily.
+- **"Auto-classify" column in Repair Items.** The repair workbench table
+  now shows the suggested priced model, classification rule, and
+  confidence percentage alongside the existing legacy suggestion.
+- **New MCP tools.** `get_anomalies`, `query_usage`, and
+  `get_classifications` are wired into `src/lib/mcp/tools.ts` with full
+  input schemas and `src/lib/mcp-server.ts` handlers that translate
+  structured arguments into CLI flags. Each handler is read-only and
+  spends zero AI tokens.
+- **Agent discovery catalog.** `tokentrace agent --json` now exposes
+  `anomalies`, `query`, and `auto-classify` commands so MCP-capable
+  agents can discover the new local-intelligence surface.
+
 ## [0.17.0] - 2026-05-23
 
 ### Performance

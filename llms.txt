@@ -52,6 +52,9 @@ Roadmap status is available through `tokentrace roadmap --json` and
 - `tokentrace doctor --json`: inspect scan health, parser trust, support status, and repair recommendations.
 - `tokentrace evidence --json`: trace aggregate numbers back to local sources.
 - `tokentrace repair --json`: inspect unknown-cost repair work.
+- `tokentrace repair auto-classify --json`: deterministic classification suggestions for unknown-cost groups (zero AI tokens spent).
+- `tokentrace anomalies --json`: modified-z-score (MAD) anomaly detection on the daily token and cost trend.
+- `tokentrace query --group-by <g> --metric <m> --json`: structured local aggregation by model, project, tool, session, or day.
 - `tokentrace digest --json`: summarize local usage.
 - `tokentrace roadmap --json`: inspect the current release handoff, action recipes, evidence paths, and release status.
 - `tokentrace mcp`: start the local stdio MCP server.

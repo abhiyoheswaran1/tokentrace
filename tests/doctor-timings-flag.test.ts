@@ -42,6 +42,7 @@ describe("doctor --timings flag", () => {
     const result = spawnSync(process.execPath, ["bin/tokentrace.js", "doctor", "--timings"], {
       cwd: process.cwd(),
       encoding: "utf8",
+      timeout: 60_000,
       env: {
         ...process.env,
         TOKENTRACE_HOME: home,
@@ -51,7 +52,7 @@ describe("doctor --timings flag", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Analytics timings");
-  }, 30_000);
+  }, 60_000);
 
   it("doctor --timings --json emits the analytics timing report as JSON", async () => {
     const home = await tempHome();

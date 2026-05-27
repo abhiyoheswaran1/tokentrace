@@ -5,7 +5,13 @@ import { useState } from "react";
 import type { TrendPoint } from "@/src/lib/analytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendChart, TrendControls, type TrendBucket, type TrendWindow } from "@/components/charts/trend-chart";
+import {
+  TrendChart,
+  TrendControls,
+  type TrendAnomalyMarker,
+  type TrendBucket,
+  type TrendWindow
+} from "@/components/charts/trend-chart";
 
 function trendWindowLabel(window: TrendWindow) {
   if (window === "30d") return "Showing latest 30 days";
@@ -16,10 +22,14 @@ function trendWindowLabel(window: TrendWindow) {
 
 export function TrendSection({
   data,
-  defaultWindow
+  defaultWindow,
+  tokenMarkers,
+  costMarkers
 }: {
   data: TrendPoint[];
   defaultWindow: TrendWindow;
+  tokenMarkers?: TrendAnomalyMarker[];
+  costMarkers?: TrendAnomalyMarker[];
 }) {
   const [period, setPeriod] = useState<TrendBucket>("daily");
   const [trendWindow, setTrendWindow] = useState<TrendWindow>(defaultWindow);
@@ -65,6 +75,7 @@ export function TrendSection({
               period={period}
               trendWindow={trendWindow}
               showControls={false}
+              markers={tokenMarkers}
             />
           </CardContent>
         </Card>
@@ -81,6 +92,7 @@ export function TrendSection({
               period={period}
               trendWindow={trendWindow}
               showControls={false}
+              markers={costMarkers}
             />
           </CardContent>
         </Card>

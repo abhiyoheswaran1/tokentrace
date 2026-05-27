@@ -92,6 +92,35 @@ curl http://127.0.0.1:3030/api/roadmap
    tokentrace evidence --json
    ```
 
+## Local Intelligence (zero AI tokens)
+
+TokenTrace ships deterministic, local-only analytical surfaces that spend
+no AI tokens. The agent on the calling side handles any natural-language
+parsing; TokenTrace executes pure SQL and statistics.
+
+Spot unusual local usage days via a modified-z-score (MAD) detector:
+
+```bash
+tokentrace anomalies --json [--window=N] [--metric=tokens|cost|all]
+```
+
+Run a structured aggregation by model, project, tool, session, or day:
+
+```bash
+tokentrace query --group-by model --metric cost --range 7d --json
+tokentrace query --group-by day --metric totalTokens --from 2026-05-01 --to 2026-05-15 --json
+```
+
+Get deterministic classification suggestions for the unknown-cost queue:
+
+```bash
+tokentrace repair auto-classify --json [--min-confidence=N]
+```
+
+The matching MCP tools are `get_anomalies`, `query_usage`, and
+`get_classifications`. All three are read-only and require no
+`confirmLocalScan` acknowledgement.
+
 ## Guardrails
 
 - Do not run `tokentrace reset` unless the human explicitly asks to clear imported local data.

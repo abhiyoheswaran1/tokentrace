@@ -6,6 +6,11 @@ import {
   resolvedStateLabel,
   secondaryRepairActions
 } from "@/src/lib/repair-actions";
+import {
+  buildClassificationLookups,
+  classifyGroup,
+  type ClassificationLookups
+} from "@/src/lib/unknown-cost-repair/auto-classify";
 import { legacyRepairKey, repairItemHref, repairKey, withQuery } from "@/src/lib/unknown-cost-repair/keys";
 import { emptyReview, listUnknownCostRepairs } from "@/src/lib/unknown-cost-repair/reviews";
 import { aliasSuggestion, buildPricedModelLookup } from "@/src/lib/unknown-cost-repair/suggestions";
@@ -112,7 +117,10 @@ function queryUnknownCostRows(filters: AnalyticsFilters) {
   );
 }
 
-function buildUnknownCostRepairGroups(filters: AnalyticsFilters): UnknownCostRepairWorkbenchGroup[] {
+function buildUnknownCostRepairGroups(
+  filters: AnalyticsFilters,
+  classificationLookups: ClassificationLookups
+): UnknownCostRepairWorkbenchGroup[] {
   const { pricedByProvider, displayByProviderModel } = buildPricedModelLookup();
   const reviewRows = listUnknownCostRepairs();
   const reviewsByKey = new Map(reviewRows.map((review) => [review.key, review]));
@@ -182,7 +190,16 @@ function buildUnknownCostRepairGroups(filters: AnalyticsFilters): UnknownCostRep
       primaryAction,
       secondaryActions: secondaryRepairActions(actionContext, primaryAction),
       impact: repairImpact(cause),
-      resolvedStateLabel: resolvedStateLabel(cause)
+      resolvedStateLabel: resolvedStateLabel(cause),
+      classification: classifyGroup(
+        {
+          cause,
+          providerId: row.providerId,
+          model: row.model,
+          sourceFile: row.sourceFile
+        },
+        classificationLookups
+      )
     };
   });
 }
@@ -231,7 +248,8 @@ export function buildUnknownCostRepairWorkbench(
   filters: AnalyticsFilters = {},
   options: UnknownCostRepairWorkbenchOptions = {}
 ): UnknownCostRepairWorkbench {
-  const allGroups = buildUnknownCostRepairGroups(filters);
+  const classificationLookups = buildClassificationLookups();
+  const allGroups = buildUnknownCostRepairGroups(filters, classificationLookups);
   const groups = applyWorkbenchLimit(allGroups, options);
 
   return {

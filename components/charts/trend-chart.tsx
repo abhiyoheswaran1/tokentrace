@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useMemo, useState } from "react";
-import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ReferenceDot, Tooltip, XAxis, YAxis } from "recharts";
 import type { TrendPoint } from "@/src/lib/analytics";
 import { formatCurrency, formatShortDate, formatTokens } from "@/src/lib/format";
 import { Button } from "@/components/ui/button";
@@ -118,6 +118,18 @@ function bucketFor(date: string, period: TrendBucket) {
   return date;
 }
 
+export type TrendAnomalyMarker = {
+  date: string;
+  value: number;
+  severity: "notable" | "high" | "severe";
+};
+
+function severityColor(severity: TrendAnomalyMarker["severity"]) {
+  if (severity === "severe") return "#dc2626";
+  if (severity === "high") return "#f59e0b";
+  return "#a3a3a3";
+}
+
 export function TrendChart({
   data,
   metric,
@@ -125,7 +137,8 @@ export function TrendChart({
   defaultWindow = "60d",
   period: controlledPeriod,
   trendWindow: controlledTrendWindow,
-  showControls = true
+  showControls = true,
+  markers
 }: {
   data: TrendPoint[];
   metric: "totalTokens" | "cost";
@@ -134,6 +147,7 @@ export function TrendChart({
   period?: TrendBucket;
   trendWindow?: TrendWindow;
   showControls?: boolean;
+  markers?: TrendAnomalyMarker[];
 }) {
   const [internalPeriod, setInternalPeriod] = useState<TrendBucket>("daily");
   const [internalTrendWindow, setInternalTrendWindow] = useState<TrendWindow>(defaultWindow);
@@ -228,6 +242,24 @@ export function TrendChart({
               fill={`url(#trend-${metric})`}
               strokeWidth={2}
             />
+            {period === "daily" && markers
+              ? markers
+                  .filter((marker) =>
+                    chartData.some((point) => point.date === marker.date)
+                  )
+                  .map((marker) => (
+                    <ReferenceDot
+                      key={`${marker.date}:${metric}`}
+                      x={marker.date}
+                      y={marker.value}
+                      r={5}
+                      fill={severityColor(marker.severity)}
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                      ifOverflow="extendDomain"
+                    />
+                  ))
+              : null}
           </AreaChart>
         ) : (
           <ChartSkeleton />

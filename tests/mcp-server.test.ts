@@ -84,9 +84,104 @@ describe("TokenTrace MCP server", () => {
       "get_repair_queue",
       "get_handoff",
       "get_report",
-      "run_scan"
+      "run_scan",
+      "get_anomalies",
+      "query_usage",
+      "get_classifications"
     ]);
   });
+
+  it("returns deterministic classification suggestions through an enveloped MCP tool call", async () => {
+    const home = await tempDir();
+    const result = runMcp(
+      [
+        { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } },
+        {
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: { name: "get_classifications", arguments: { minConfidence: 0.5 } }
+        }
+      ],
+      {
+        TOKENTRACE_HOME: home,
+        TOKENTRACE_DB: path.join(home, "tokentrace.db"),
+        DATABASE_URL: `file:${path.join(home, "tokentrace.db")}`
+      }
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const payload = parseToolPayload(result.responses[1]);
+    expect(payload.summary).toContain("classification suggestions");
+    expect(payload.confidence).toBe("high");
+    expect(payload.data).toHaveProperty("suggestions");
+    expect(payload.data).toHaveProperty("summary");
+    expect(payload.data.minConfidence).toBe(0.5);
+  }, 30_000);
+
+  it("runs query_usage with structured args through an enveloped MCP tool call", async () => {
+    const home = await tempDir();
+    const result = runMcp(
+      [
+        { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } },
+        {
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: {
+            name: "query_usage",
+            arguments: { groupBy: "model", metric: "cost", topN: 5 }
+          }
+        }
+      ],
+      {
+        TOKENTRACE_HOME: home,
+        TOKENTRACE_DB: path.join(home, "tokentrace.db"),
+        DATABASE_URL: `file:${path.join(home, "tokentrace.db")}`
+      }
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const payload = parseToolPayload(result.responses[1]);
+    expect(payload.summary).toContain("structured local usage query");
+    expect(payload.confidence).toBe("high");
+    expect(payload.data.groupBy).toBe("model");
+    expect(payload.data.metric).toBe("cost");
+    expect(Array.isArray(payload.data.rows)).toBe(true);
+    expect(payload.data.topN).toBe(5);
+  }, 30_000);
+
+  it("returns the local anomaly report through an enveloped MCP tool call", async () => {
+    const home = await tempDir();
+    const result = runMcp(
+      [
+        { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } },
+        {
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: { name: "get_anomalies", arguments: {} }
+        }
+      ],
+      {
+        TOKENTRACE_HOME: home,
+        TOKENTRACE_DB: path.join(home, "tokentrace.db"),
+        DATABASE_URL: `file:${path.join(home, "tokentrace.db")}`
+      }
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const payload = parseToolPayload(result.responses[1]);
+    expect(payload.summary).toContain("anomaly");
+    expect(payload.confidence).toBe("high");
+    expect(payload.requiresHumanConfirmation).toBe(false);
+    expect(payload.data).toHaveProperty("anomalies");
+    expect(payload.data).toHaveProperty("summary");
+    expect(payload.data.summary).toHaveProperty("total");
+  }, 30_000);
 
   it("returns an agent guide with MCP registry install snippets and copy-paste repo instructions", async () => {
     const blockedHome = path.join(await tempDir(), "not-a-directory");

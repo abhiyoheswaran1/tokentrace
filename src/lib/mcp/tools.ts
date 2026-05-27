@@ -106,5 +106,83 @@ export const mcpTools = [
       },
       ["confirmLocalScan"]
     )
+  },
+  {
+    name: "get_anomalies",
+    title: "Get local usage anomalies",
+    description:
+      "Return modified-z-score (MAD) anomalies for the local daily token and cost trend. Pure-stats detector; spends zero AI tokens.",
+    inputSchema: toolInputSchema({
+      window: {
+        type: "integer",
+        minimum: 3,
+        maximum: 60,
+        description: "Trailing window size in days (default 14)."
+      },
+      metric: {
+        type: "string",
+        enum: ["tokens", "cost", "all"],
+        description: "Filter anomalies to a specific metric. Defaults to 'all'."
+      }
+    })
+  },
+  {
+    name: "query_usage",
+    title: "Run a structured local usage query",
+    description:
+      "Run a deterministic, parameterized query over the local TokenTrace database. The caller supplies structured arguments; TokenTrace executes the SQL. No NL parsing happens server-side, so zero AI tokens are spent.",
+    inputSchema: toolInputSchema(
+      {
+        groupBy: {
+          type: "string",
+          enum: ["model", "project", "tool", "session", "day"],
+          description: "Grouping dimension."
+        },
+        metric: {
+          type: "string",
+          enum: ["cost", "totalTokens", "interactions"],
+          description: "Metric to aggregate per group."
+        },
+        range: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            preset: {
+              type: "string",
+              enum: ["today", "7d", "30d", "60d", "90d", "all"],
+              description: "Preset window. Mutually exclusive with from/to."
+            },
+            from: { type: "string", description: "ISO date inclusive lower bound." },
+            to: { type: "string", description: "ISO date exclusive upper bound." }
+          }
+        },
+        filters: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            model: { type: "string" },
+            project: { type: "string" },
+            tool: { type: "string" }
+          }
+        },
+        topN: { type: "integer", minimum: 1, maximum: 200, description: "Default 20." },
+        sort: { type: "string", enum: ["asc", "desc"], description: "Default 'desc'." }
+      },
+      ["groupBy", "metric"]
+    )
+  },
+  {
+    name: "get_classifications",
+    title: "Get unknown-cost auto-classifications",
+    description:
+      "Return the local unknown-cost repair queue with deterministic classification suggestions (exact-model, family-fragment, or parser-source). Read-only; spends zero AI tokens.",
+    inputSchema: toolInputSchema({
+      minConfidence: {
+        type: "number",
+        minimum: 0,
+        maximum: 1,
+        description: "Filter to suggestions with confidence >= this value (default 0)."
+      }
+    })
   }
 ];

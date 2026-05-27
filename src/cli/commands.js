@@ -87,6 +87,18 @@ async function repair(context, args) {
   await runNodeScript(context, "repair", args);
 }
 
+async function anomalies(context, args) {
+  if (await printScriptHelp(context, "anomalies", args)) return;
+  await initializeDatabase(context, { quiet: true, refreshPrices: false });
+  await runNodeScript(context, "anomalies", args);
+}
+
+async function query(context, args) {
+  if (await printScriptHelp(context, "query", args)) return;
+  await initializeDatabase(context, { quiet: true, refreshPrices: false });
+  await runNodeScript(context, "query", args);
+}
+
 async function refreshPrices(context, args) {
   if (await printScriptHelp(context, "pricing-refresh", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
@@ -282,6 +294,14 @@ export async function runCliCommand(context, rawArgs = process.argv.slice(2)) {
   }
   if (command === "repair") {
     await repair(context, args);
+    return;
+  }
+  if (command === "anomalies") {
+    await anomalies(context, args);
+    return;
+  }
+  if (command === "query") {
+    await query(context, args);
     return;
   }
   if (command === "status") {

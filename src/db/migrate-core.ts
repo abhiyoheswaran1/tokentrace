@@ -195,6 +195,22 @@ CREATE TABLE IF NOT EXISTS agent_actions (
   payload TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS agent_actions_ts_idx ON agent_actions(ts);
+
+CREATE TABLE IF NOT EXISTS model_aliases (
+  id TEXT PRIMARY KEY,
+  provider_id TEXT NOT NULL,
+  observed_model TEXT NOT NULL,
+  priced_model_id TEXT NOT NULL REFERENCES models(id) ON DELETE CASCADE,
+  confidence REAL NOT NULL,
+  rule TEXT NOT NULL,
+  notes TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS model_aliases_provider_observed_idx
+  ON model_aliases(provider_id, observed_model);
+CREATE INDEX IF NOT EXISTS model_aliases_priced_model_idx
+  ON model_aliases(priced_model_id);
 `;
 
 export function applyMigrations(sqlite: Database.Database) {

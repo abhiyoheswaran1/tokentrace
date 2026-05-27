@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, CircleDashed } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleDashed, Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { RepairBulkActions } from "@/components/repair-bulk-actions";
 import { RepairStateControl } from "@/components/repair-state-control";
@@ -12,6 +12,47 @@ import { mergeHrefParams } from "@/src/lib/date-range";
 import { formatTokens } from "@/src/lib/format";
 import type { UnknownCostRepairWorkbench, UnknownCostRepairWorkbenchGroup } from "@/src/lib/unknown-cost-repair";
 import { causeLabel, causeVariant, repairActionHref, stateCopy, suggestionLabel } from "./repair-guidance";
+
+function classificationRuleLabel(rule: UnknownCostRepairWorkbenchGroup["classification"]["rule"]) {
+  if (rule === "exact-model") return "exact model";
+  if (rule === "family-fragment") return "family fragment";
+  if (rule === "parser-source") return "parser/source";
+  return "no match";
+}
+
+function classificationVariant(
+  rule: UnknownCostRepairWorkbenchGroup["classification"]["rule"]
+): "success" | "secondary" | "outline" {
+  if (rule === "exact-model") return "success";
+  if (rule === "family-fragment") return "secondary";
+  if (rule === "parser-source") return "outline";
+  return "outline";
+}
+
+function ClassificationCell({ classification }: { classification: UnknownCostRepairWorkbenchGroup["classification"] }) {
+  if (classification.rule === "none") {
+    return (
+      <div className="text-xs text-muted-foreground">No deterministic match. Review parser evidence.</div>
+    );
+  }
+  return (
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium">
+        <Sparkles className="h-3.5 w-3.5 text-primary" />
+        <span className="truncate">{classification.suggestedModel}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+        <Badge variant={classificationVariant(classification.rule)} className="text-[10px]">
+          {classificationRuleLabel(classification.rule)}
+        </Badge>
+        <span>{Math.round(classification.confidence * 100)}% confidence</span>
+        {classification.evidence.matchedRows > 0 ? (
+          <span>· {classification.evidence.matchedRows.toLocaleString()} priced rows</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 function RepairItemsMobileList({
   groups,
@@ -55,6 +96,12 @@ function RepairItemsMobileList({
             <div>
               <div className="font-medium text-foreground">Next best</div>
               <div className="mt-1 text-muted-foreground">{suggestionLabel(group)}</div>
+            </div>
+            <div>
+              <div className="font-medium text-foreground">Auto-classify</div>
+              <div className="mt-1">
+                <ClassificationCell classification={group.classification} />
+              </div>
             </div>
             <div>
               <div className="font-medium text-foreground">Expected change</div>
@@ -151,6 +198,7 @@ export function RepairItemsTable({
                     <TableHead>Cause</TableHead>
                     <TableHead className="min-w-56">Model</TableHead>
                     <TableHead className="min-w-72">Suggestion</TableHead>
+                    <TableHead className="min-w-56">Auto-classify</TableHead>
                     <TableHead className="min-w-80">Source</TableHead>
                     <TableHead>Interactions</TableHead>
                     <TableHead>Tokens</TableHead>
@@ -193,6 +241,9 @@ export function RepairItemsTable({
                         <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
                           {group.suggestion.confidence} confidence. {group.suggestion.reason}
                         </div>
+                      </TableCell>
+                      <TableCell className="min-w-56 align-top">
+                        <ClassificationCell classification={group.classification} />
                       </TableCell>
                       <TableCell className="max-w-96 align-top">
                         <Link href={mergeHrefParams(group.sourceHref, rangeLinkParams)} title={group.sourceFile}>

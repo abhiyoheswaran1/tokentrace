@@ -2,6 +2,9 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { TrendSection } from "@/components/charts/trend-section-lazy";
+import type { TrendAnomalyMarker } from "@/components/charts/trend-chart";
+import { OverviewAnomaliesPanel } from "@/components/overview/anomalies-panel";
+import { detectAnomalies } from "@/src/lib/anomaly-detection";
 import { OverviewCurrentMixPanel } from "@/components/overview/current-mix-panel";
 import { DataConfidenceStrip } from "@/components/overview/data-confidence-strip";
 import { FirstRunPanel } from "@/components/overview/first-run-panel";
@@ -41,6 +44,13 @@ async function OverviewPrimarySection({ range }: { range: ResolvedDateRange }) {
     rangeLinkParams
   } = await getOverviewPrimaryData(range);
   const repairFocusHref = mergeHrefParams("/repair", rangeLinkParams);
+  const anomalyReport = detectAnomalies(data.trends);
+  const tokenMarkers: TrendAnomalyMarker[] = anomalyReport.anomalies
+    .filter((entry) => entry.metric === "tokens")
+    .map((entry) => ({ date: entry.date, value: entry.value, severity: entry.severity }));
+  const costMarkers: TrendAnomalyMarker[] = anomalyReport.anomalies
+    .filter((entry) => entry.metric === "cost")
+    .map((entry) => ({ date: entry.date, value: entry.value, severity: entry.severity }));
 
   return (
     <div className="space-y-8">
@@ -63,7 +73,13 @@ async function OverviewPrimarySection({ range }: { range: ResolvedDateRange }) {
         />
       </div>
       <OverviewTrustFooter health={trust.health} pricedModelCount={trust.pricedModelCount} />
-      <TrendSection data={data.trends} defaultWindow={trendDefaultWindow} />
+      <TrendSection
+        data={data.trends}
+        defaultWindow={trendDefaultWindow}
+        tokenMarkers={tokenMarkers}
+        costMarkers={costMarkers}
+      />
+      <OverviewAnomaliesPanel trends={data.trends} />
       <UsageGuardrailsPanel progress={data.usageGuardrails} />
       <OverviewRecommendationsCard recommendations={data.recommendations} />
       <OverviewCurrentMixPanel

@@ -53,9 +53,41 @@ describe("agent discovery manifest", () => {
         "mcp",
         "status",
         "claude-statusline",
-        "watch"
+        "watch",
+        "anomalies",
+        "query",
+        "auto-classify"
       ])
     );
+
+    // 0.18.0 local-intelligence surface: each new command must satisfy the
+    // existing per-command schema (all required fields present, no extras),
+    // and the read-only / zero-network defaults must hold.
+    const requiredCommandFields = [
+      "id",
+      "title",
+      "command",
+      "description",
+      "output",
+      "mutatesLocalState",
+      "startsLongRunningProcess",
+      "requiresNetwork",
+      "safeForAutomation",
+      "useWhen",
+      "followUps"
+    ] as const;
+    for (const id of ["anomalies", "query", "auto-classify"]) {
+      const command = manifest.commands.find((entry) => entry.id === id);
+      expect(command, `${id} missing from manifest.commands`).toBeDefined();
+      for (const field of requiredCommandFields) {
+        expect(command, `${id} missing ${field}`).toHaveProperty(field);
+      }
+      expect(command?.mutatesLocalState).toBe(false);
+      expect(command?.requiresNetwork).toBe(false);
+      expect(command?.safeForAutomation).toBe(true);
+      expect(command?.output).toBe("json");
+      expect(command?.command[0]).toBe("tokentrace");
+    }
     expect(manifest.commands.find((command) => command.id === "scan")).toMatchObject({
       command: ["tokentrace", "scan", "--json"],
       mutatesLocalState: true,

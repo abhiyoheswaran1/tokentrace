@@ -32,6 +32,15 @@ type InteractionPriceRow = {
   cached_input_token_price: number | null;
   cache_write_token_price: number | null;
   currency: string | null;
+  alias_priced_model_id: string | null;
+  alias_priced_model_name: string | null;
+  alias_input_token_price: number | null;
+  alias_output_token_price: number | null;
+  alias_cached_input_token_price: number | null;
+  alias_cache_write_token_price: number | null;
+  alias_currency: string | null;
+  alias_rule: string | null;
+  alias_confidence: number | null;
 };
 
 export type CostRecalculationResult = {
@@ -159,9 +168,20 @@ export function recalculateInteractionCosts(): CostRecalculationResult {
         m.output_token_price,
         m.cached_input_token_price,
         m.cache_write_token_price,
-        m.currency
+        m.currency,
+        aliased.id AS alias_priced_model_id,
+        aliased.name AS alias_priced_model_name,
+        aliased.input_token_price AS alias_input_token_price,
+        aliased.output_token_price AS alias_output_token_price,
+        aliased.cached_input_token_price AS alias_cached_input_token_price,
+        aliased.cache_write_token_price AS alias_cache_write_token_price,
+        aliased.currency AS alias_currency,
+        ma.rule AS alias_rule,
+        ma.confidence AS alias_confidence
        FROM interactions i
-       LEFT JOIN models m ON m.id = i.model_id`
+       LEFT JOIN models m ON m.id = i.model_id
+       LEFT JOIN model_aliases ma ON ma.provider_id = m.provider_id AND ma.observed_model = m.name
+       LEFT JOIN models aliased ON aliased.id = ma.priced_model_id`
     )
     .all() as InteractionPriceRow[];
 
@@ -194,6 +214,32 @@ export function recalculateInteractionCosts(): CostRecalculationResult {
         continue;
       }
 
+      const directPrice = interaction.model_id
+        ? {
+            inputTokenPrice: interaction.input_token_price,
+            outputTokenPrice: interaction.output_token_price,
+            cachedInputTokenPrice: interaction.cached_input_token_price,
+            cacheWriteTokenPrice: interaction.cache_write_token_price,
+            currency: interaction.currency ?? "USD"
+          }
+        : null;
+      const directHasPricing =
+        directPrice != null &&
+        directPrice.inputTokenPrice != null &&
+        directPrice.outputTokenPrice != null;
+      const aliasPrice =
+        !directHasPricing && interaction.alias_priced_model_id
+          ? {
+              inputTokenPrice: interaction.alias_input_token_price,
+              outputTokenPrice: interaction.alias_output_token_price,
+              cachedInputTokenPrice: interaction.alias_cached_input_token_price,
+              cacheWriteTokenPrice: interaction.alias_cache_write_token_price,
+              currency: interaction.alias_currency ?? "USD"
+            }
+          : null;
+      const resolvedPrice = aliasPrice ?? directPrice;
+      const resolvedViaAlias = aliasPrice != null;
+
       const cost = calculateInteractionCost(
         {
           inputTokens: interaction.input_tokens,
@@ -203,27 +249,29 @@ export function recalculateInteractionCosts(): CostRecalculationResult {
           reasoningTokens: interaction.reasoning_tokens,
           estimatedTokens: Boolean(interaction.estimated_tokens)
         },
-        interaction.model_id
-          ? {
-              inputTokenPrice: interaction.input_token_price,
-              outputTokenPrice: interaction.output_token_price,
-              cachedInputTokenPrice: interaction.cached_input_token_price,
-              cacheWriteTokenPrice: interaction.cache_write_token_price,
-              currency: interaction.currency ?? "USD"
-            }
-          : null
+        resolvedPrice
       );
 
       if (cost.status === "unknown") unknownCostInteractions += 1;
       const metadata = {
         ...existingMetadata,
         costStatus: cost.status,
-        costExplanation: cost.explanation,
-        costRecalculatedAt: new Date().toISOString()
+        costExplanation: resolvedViaAlias
+          ? `Cost resolved via model alias (${interaction.alias_rule ?? "unknown rule"}, confidence ${interaction.alias_confidence ?? 0}) to priced model ${interaction.alias_priced_model_name}.`
+          : cost.explanation,
+        costRecalculatedAt: new Date().toISOString(),
+        ...(resolvedViaAlias
+          ? {
+              costSource: "model-alias",
+              aliasedPricedModel: interaction.alias_priced_model_name,
+              aliasRule: interaction.alias_rule,
+              aliasConfidence: interaction.alias_confidence
+            }
+          : {})
       };
       interactionsUpdated += update.run(
         cost.amount,
-        cost.status === "estimated" ? 1 : 0,
+        cost.status === "estimated" || resolvedViaAlias ? 1 : 0,
         JSON.stringify(metadata),
         interaction.id
       ).changes;

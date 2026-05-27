@@ -298,6 +298,54 @@ const commands: AgentDiscoveryCommand[] = [
     notes: [
       "Usage logs, prompts, file paths, and analytics are not sent with the price refresh request."
     ]
+  },
+  {
+    id: "anomalies",
+    title: "Detect local usage anomalies",
+    command: ["tokentrace", "anomalies", "--json"],
+    description: "Return modified-z-score (MAD) anomalies for the local daily token and cost trend. Deterministic, zero AI tokens spent.",
+    output: "json",
+    mutatesLocalState: false,
+    startsLongRunningProcess: false,
+    requiresNetwork: false,
+    safeForAutomation: true,
+    useWhen: "The agent or human wants to surface unusual local usage days without spending any AI tokens.",
+    followUps: [
+      ["tokentrace", "evidence", "--json"],
+      ["tokentrace", "report", "--markdown", "--since", "yesterday"]
+    ]
+  },
+  {
+    id: "query",
+    title: "Run a structured local usage query",
+    command: ["tokentrace", "query", "--group-by", "model", "--metric", "cost", "--json"],
+    description: "Run a deterministic parameterized SQL aggregation over the local TokenTrace database. The agent supplies structured arguments; TokenTrace does not perform any natural-language parsing.",
+    output: "json",
+    mutatesLocalState: false,
+    startsLongRunningProcess: false,
+    requiresNetwork: false,
+    safeForAutomation: true,
+    useWhen: "The agent needs a focused aggregation by model, project, tool, session, or day without round-tripping through evidence.",
+    followUps: [
+      ["tokentrace", "query", "--group-by", "day", "--metric", "totalTokens", "--range", "7d", "--json"],
+      ["tokentrace", "evidence", "--json"]
+    ]
+  },
+  {
+    id: "auto-classify",
+    title: "Suggest unknown-cost classifications",
+    command: ["tokentrace", "repair", "auto-classify", "--json"],
+    description: "Return deterministic classification suggestions (exact-model, family-fragment, parser-source) for the local unknown-cost queue. Suggestions are advisory; zero AI tokens spent.",
+    output: "json",
+    mutatesLocalState: false,
+    startsLongRunningProcess: false,
+    requiresNetwork: false,
+    safeForAutomation: true,
+    useWhen: "The agent sees an unknown-cost queue and wants programmatic hints before recommending a manual fix.",
+    followUps: [
+      ["tokentrace", "repair", "--json"],
+      ["tokentrace", "evidence", "--json", "--metric=unknown-cost"]
+    ]
   }
 ];
 

@@ -76,6 +76,43 @@ function stringArg(args: Record<string, unknown>, key: string) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function queryUsageArgs(args: Record<string, unknown>) {
+  const cliArgs: string[] = ["query"];
+  const groupBy = stringArg(args, "groupBy");
+  const metric = stringArg(args, "metric");
+  if (!groupBy) throw new Error("query_usage requires a groupBy argument.");
+  if (!metric) throw new Error("query_usage requires a metric argument.");
+  cliArgs.push("--group-by", groupBy, "--metric", metric);
+
+  const range = args.range && typeof args.range === "object" ? (args.range as Record<string, unknown>) : null;
+  if (range) {
+    const preset = stringArg(range, "preset");
+    const from = stringArg(range, "from");
+    const to = stringArg(range, "to");
+    if (preset) cliArgs.push("--range", preset);
+    if (from) cliArgs.push("--from", from);
+    if (to) cliArgs.push("--to", to);
+  }
+
+  const filters = args.filters && typeof args.filters === "object" ? (args.filters as Record<string, unknown>) : null;
+  if (filters) {
+    const model = stringArg(filters, "model");
+    const project = stringArg(filters, "project");
+    const tool = stringArg(filters, "tool");
+    if (model) cliArgs.push("--model", model);
+    if (project) cliArgs.push("--project", project);
+    if (tool) cliArgs.push("--tool", tool);
+  }
+
+  if (typeof args.topN === "number" && Number.isInteger(args.topN)) {
+    cliArgs.push(`--top=${args.topN}`);
+  }
+  const sort = stringArg(args, "sort");
+  if (sort) cliArgs.push(`--sort=${sort}`);
+  cliArgs.push("--json");
+  return cliArgs;
+}
+
 function scanArgs(args: Record<string, unknown>) {
   if (args.confirmLocalScan !== true) {
     throw new HumanConfirmationError(
@@ -270,6 +307,71 @@ async function callTool(params: ToolCallParams) {
           {
             label: "Local scan JSON",
             command: ["tokentrace", "scan", "--json"]
+          }
+        ],
+        requiresHumanConfirmation: false
+      });
+    }
+    if (params.name === "get_anomalies") {
+      const cliArgs = ["anomalies", "--json"];
+      if (typeof args.window === "number" && Number.isInteger(args.window)) {
+        cliArgs.push(`--window=${args.window}`);
+      }
+      const metric = stringArg(args, "metric");
+      if (metric) cliArgs.push(`--metric=${metric}`);
+      return toolResult(commandJson(cliArgs), {
+        summary: "Returned the local daily-trend anomaly report (modified-z-score, MAD detector). Zero AI tokens spent.",
+        confidence: "high",
+        nextActions: [
+          "Inspect anomalies[] for severity, metric, and date.",
+          "Call get_evidence before reporting any underlying cost or token totals."
+        ],
+        warnings: [],
+        evidence: [
+          {
+            label: "Local anomaly report",
+            command: ["tokentrace", "anomalies", "--json"]
+          }
+        ],
+        requiresHumanConfirmation: false
+      });
+    }
+    if (params.name === "query_usage") {
+      const cliArgs = queryUsageArgs(args);
+      return toolResult(commandJson(cliArgs), {
+        summary: "Returned a structured local usage query result. No natural-language parsing happened server-side.",
+        confidence: "high",
+        nextActions: [
+          "Use rows[] for deterministic group-by aggregations.",
+          "Call get_evidence before quoting individual numbers."
+        ],
+        warnings: [],
+        evidence: [
+          {
+            label: "Structured local query",
+            command: ["tokentrace", ...cliArgs]
+          }
+        ],
+        requiresHumanConfirmation: false
+      });
+    }
+    if (params.name === "get_classifications") {
+      const cliArgs = ["repair", "auto-classify", "--json"];
+      if (typeof args.minConfidence === "number" && Number.isFinite(args.minConfidence)) {
+        cliArgs.push(`--min-confidence=${args.minConfidence}`);
+      }
+      return toolResult(commandJson(cliArgs), {
+        summary: "Returned local unknown-cost groups with deterministic classification suggestions.",
+        confidence: "high",
+        nextActions: [
+          "Inspect each group's classification field for suggestedModel and confidence.",
+          "Call `tokentrace repair auto-classify --apply --min-confidence=0.9` only after a human approves the suggestions."
+        ],
+        warnings: ["Suggestions are advisory; --apply writes to the local parser-override store."],
+        evidence: [
+          {
+            label: "Local classification suggestions",
+            command: ["tokentrace", "repair", "auto-classify", "--json"]
           }
         ],
         requiresHumanConfirmation: false
