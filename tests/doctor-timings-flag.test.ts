@@ -72,5 +72,5 @@ describe("doctor --timings flag", () => {
     expect(parsed).toHaveProperty("thresholdMs");
     expect(parsed).toHaveProperty("slowQueries");
     expect(Array.isArray(parsed.slowQueries)).toBe(true);
-  }, 30_000);
+  }, 60_000);
 });

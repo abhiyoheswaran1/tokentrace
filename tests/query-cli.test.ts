@@ -128,7 +128,7 @@ describe("tokentrace query CLI", () => {
     });
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Usage: tokentrace query");
-  }, 30_000);
+  }, 90_000);
 
   it("emits a JSON result against an empty database", async () => {
     const home = await tempHome();

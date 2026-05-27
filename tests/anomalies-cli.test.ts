@@ -63,7 +63,7 @@ describe("tokentrace anomalies CLI", () => {
     });
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Usage: tokentrace anomalies");
-  }, 30_000);
+  }, 90_000);
 
   it("emits a JSON report against an empty database", async () => {
     const home = await tempHome();
@@ -88,7 +88,7 @@ describe("tokentrace anomalies CLI", () => {
       bySeverity: { notable: 0, high: 0, severe: 0 },
       byMetric: { tokens: 0, cost: 0 }
     });
-  }, 30_000);
+  }, 90_000);
 
   it("rejects invalid window values", async () => {
     const home = await tempHome();

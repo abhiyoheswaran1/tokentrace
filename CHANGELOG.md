@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.18.0] - 2026-05-28
+
 ### Local intelligence
 
 - **Anomaly detection (`tokentrace anomalies`).** A new modified-z-score (MAD)

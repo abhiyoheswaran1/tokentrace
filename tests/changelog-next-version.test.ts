@@ -4,10 +4,16 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.17.0 performance bundle release", () => {
+  it("documents the 0.18.0 local intelligence bundle release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.17.0");
+    expect(packageJson.version).toBe("0.18.0");
+    expect(changelog).toContain("## [0.18.0] - 2026-05-28");
+    expect(changelog).toContain("Anomaly detection");
+    expect(changelog).toContain("Structured query");
+    expect(changelog).toContain("Auto-classifier");
+    expect(changelog).toContain("Persistent model aliases");
+    expect(changelog).toContain("Interactive Query page");
     expect(changelog).toContain("## [0.17.0] - 2026-05-23");
     expect(changelog).toContain("Runtime SQLite pragmas tuned for analytics");
     expect(changelog).toContain("Prepared-statement cache");

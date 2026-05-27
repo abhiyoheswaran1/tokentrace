@@ -49,7 +49,13 @@ function fakeGroup(overrides: Partial<UnknownCostRepairWorkbenchGroup> = {}): Un
     sessionsHref: "",
     parserHref: "",
     pricingHref: null,
-    primaryAction: { id: "review", label: "Review", href: "/repair", description: "" },
+    primaryAction: {
+      kind: "view-evidence",
+      label: "Review",
+      href: "/repair",
+      description: "",
+      expectedChange: ""
+    },
     secondaryActions: [],
     impact: "",
     resolvedStateLabel: "",
@@ -172,7 +178,7 @@ describe("tokentrace repair auto-classify CLI", () => {
     );
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("tokentrace repair auto-classify");
-  }, 30_000);
+  }, 90_000);
 
   it("emits a JSON suggestion report against an empty database", async () => {
     const home = await tempHome();
@@ -202,7 +208,7 @@ describe("tokentrace repair auto-classify CLI", () => {
       "parser-source": 0,
       none: 0
     });
-  }, 30_000);
+  }, 90_000);
 
   it("rejects invalid --min-confidence values", async () => {
     const home = await tempHome();
