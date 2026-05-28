@@ -108,5 +108,5 @@ describe("tokentrace anomalies CLI detects a planted spike", () => {
     expect(spike, "expected the planted spike on 2026-05-15 to be detected").toBeDefined();
     expect(spike.severity).toBe("severe");
     expect(spike.value).toBe(1000);
-  }, 90_000);
+  });
 });

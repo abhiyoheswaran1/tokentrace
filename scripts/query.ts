@@ -17,7 +17,18 @@ if (parsed.help) {
 }
 
 const { runStructuredQuery } = await import("@/src/lib/structured-query");
-const result = runStructuredQuery(parsed.args);
+
+let result: ReturnType<typeof runStructuredQuery>;
+try {
+  // Range/argument validation (e.g. from >= to, preset + from/to together)
+  // lives in runStructuredQuery, so surface those the same clean way as parse
+  // errors instead of letting a raw stack trace escape.
+  result = runStructuredQuery(parsed.args);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : "Invalid query.");
+  console.error(structuredQueryUsage());
+  process.exit(1);
+}
 
 if (parsed.json) {
   console.log(JSON.stringify(result, null, 2));

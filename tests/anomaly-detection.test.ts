@@ -109,6 +109,10 @@ describe("detectAnomalies", () => {
     );
     expect(tokenAnomaly).toBeDefined();
     expect(tokenAnomaly?.severity).toBe("severe");
+    // The flat-run z-score must be a finite number so it survives JSON
+    // serialization (Infinity would serialize to null and drop the signal).
+    expect(Number.isFinite(tokenAnomaly?.zScore)).toBe(true);
+    expect(JSON.parse(JSON.stringify(tokenAnomaly)).zScore).toBe(tokenAnomaly?.zScore);
   });
 
   it("requires the trailing window to have enough observations", () => {

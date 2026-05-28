@@ -10,7 +10,24 @@ function latestScanDate() {
   return row?.scanAt ? new Date(row.scanAt) : null;
 }
 
-export async function runDueScheduledScan(now = new Date()) {
+type ScheduledScanOutcome = Awaited<ReturnType<typeof runScheduledScan>>;
+
+// The dashboard fires runDueScheduledScan() on every overview page load. Two
+// overlapping loads (a second tab, a quick refresh, prefetch) would otherwise
+// both pass the due-check and both call runScan(), producing duplicate scan
+// runs and wasted work. The Next.js server is a single process, so a
+// module-scoped promise guard coalesces concurrent callers into one scan.
+let inFlightScheduledScan: Promise<ScheduledScanOutcome> | null = null;
+
+export function runDueScheduledScan(now = new Date()): Promise<ScheduledScanOutcome> {
+  if (inFlightScheduledScan) return inFlightScheduledScan;
+  inFlightScheduledScan = runScheduledScan(now).finally(() => {
+    inFlightScheduledScan = null;
+  });
+  return inFlightScheduledScan;
+}
+
+async function runScheduledScan(now: Date) {
   const settings = getAppSettings();
   if (!isScanDue(settings.scanSchedule, latestScanDate(), now)) {
     return {

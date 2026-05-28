@@ -52,7 +52,7 @@ describe("doctor --timings flag", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Analytics timings");
-  }, 60_000);
+  });
 
   it("doctor --timings --json emits the analytics timing report as JSON", async () => {
     const home = await tempHome();
@@ -72,5 +72,5 @@ describe("doctor --timings flag", () => {
     expect(parsed).toHaveProperty("thresholdMs");
     expect(parsed).toHaveProperty("slowQueries");
     expect(Array.isArray(parsed.slowQueries)).toBe(true);
-  }, 60_000);
+  });
 });

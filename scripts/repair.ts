@@ -49,10 +49,11 @@ if (args[0] === "auto-classify") {
   const result = buildAutoClassifyResult(workbench, { minConfidence: options.minConfidence });
 
   if (options.apply) {
-    const [{ upsertAlias }, { backfillAlias }, { prepareCached }] = await Promise.all([
+    const [{ upsertAlias }, { backfillAlias }, { prepareCached }, { sqlite }] = await Promise.all([
       import("@/src/lib/model-aliases/store"),
       import("@/src/lib/model-aliases/backfill"),
-      import("@/src/db/prepared")
+      import("@/src/db/prepared"),
+      import("@/src/db/client")
     ]);
 
     const outcome: NonNullable<typeof result.applied> = {
@@ -79,18 +80,18 @@ if (args[0] === "auto-classify") {
       return row ?? null;
     };
 
-    for (const suggestion of result.suggestions) {
+    const processSuggestion = (suggestion: (typeof result.suggestions)[number]) => {
       const c = suggestion.classification;
       if (c.rule === "none" || !c.suggestedModel) {
         outcome.skipped.push({ key: suggestion.key, reason: "No suggested model." });
-        continue;
+        return;
       }
       if (c.rule === "parser-source") {
         outcome.skipped.push({
           key: suggestion.key,
           reason: "parser-source suggestions have no (provider, observed-model) pair; fix the parser instead."
         });
-        continue;
+        return;
       }
       const resolved = resolvePricedModelId(
         c.suggestedProvider ?? suggestion.provider,
@@ -101,7 +102,7 @@ if (args[0] === "auto-classify") {
           key: suggestion.key,
           reason: `Could not resolve priced model "${c.suggestedModel}" under provider "${suggestion.provider}".`
         });
-        continue;
+        return;
       }
 
       if (!options.dryRun) {
@@ -136,6 +137,18 @@ if (args[0] === "auto-classify") {
         affectedInteractions: backfill.affectedInteractions,
         addedCost: backfill.totalCost
       });
+    };
+
+    if (options.dryRun) {
+      for (const suggestion of result.suggestions) processSuggestion(suggestion);
+    } else {
+      // Apply the whole batch atomically: every alias + cost backfill commits
+      // together, or none does, so a failure partway can't leave the local
+      // database half-applied with inaccurate reported counts.
+      const applyBatch = sqlite.transaction(() => {
+        for (const suggestion of result.suggestions) processSuggestion(suggestion);
+      });
+      applyBatch();
     }
 
     result.applied = outcome;

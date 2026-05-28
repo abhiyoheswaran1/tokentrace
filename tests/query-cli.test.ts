@@ -103,6 +103,15 @@ describe("parseStructuredQueryArgs", () => {
     ).toThrow("Invalid --top");
   });
 
+  it("rejects empty --flag= values cleanly", () => {
+    expect(() =>
+      parseStructuredQueryArgs(["--group-by=", "--metric", "cost"])
+    ).toThrow("Missing value for --group-by");
+    expect(() =>
+      parseStructuredQueryArgs(["--group-by", "model", "--metric", "cost", "--from="])
+    ).toThrow("Missing value for --from");
+  });
+
   it("requires --group-by and --metric outside of --help", () => {
     expect(() => parseStructuredQueryArgs([])).toThrow("--group-by is required");
     expect(() => parseStructuredQueryArgs(["--group-by", "model"])).toThrow("--metric is required");
@@ -128,7 +137,7 @@ describe("tokentrace query CLI", () => {
     });
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Usage: tokentrace query");
-  }, 90_000);
+  });
 
   it("emits a JSON result against an empty database", async () => {
     const home = await tempHome();
@@ -161,7 +170,7 @@ describe("tokentrace query CLI", () => {
     expect(parsed.metric).toBe("cost");
     expect(parsed).toHaveProperty("rows");
     expect(parsed).toHaveProperty("totalGroups");
-  }, 60_000);
+  });
 
   it("rejects missing required flags", async () => {
     const home = await tempHome();
@@ -176,5 +185,37 @@ describe("tokentrace query CLI", () => {
     });
     expect(result.status).not.toBe(0);
     expect((result.stderr + result.stdout)).toContain("--group-by is required");
-  }, 60_000);
+  });
+
+  it("surfaces range validation errors cleanly instead of a raw stack trace", async () => {
+    const home = await tempHome();
+    const result = spawnSync(
+      process.execPath,
+      [
+        "bin/tokentrace.js",
+        "query",
+        "--group-by",
+        "model",
+        "--metric",
+        "cost",
+        "--from",
+        "2026-05-10",
+        "--to",
+        "2026-05-01",
+        "--json"
+      ],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          TOKENTRACE_HOME: home,
+          TOKENTRACE_DB: path.join(home, "tokentrace.db")
+        }
+      }
+    );
+    expect(result.status).not.toBe(0);
+    expect(result.stderr + result.stdout).toContain("range.from must be before range.to");
+    expect(result.stderr + result.stdout).not.toContain("at runStructuredQuery");
+  });
 });

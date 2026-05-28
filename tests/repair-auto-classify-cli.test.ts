@@ -178,7 +178,7 @@ describe("tokentrace repair auto-classify CLI", () => {
     );
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("tokentrace repair auto-classify");
-  }, 90_000);
+  });
 
   it("emits a JSON suggestion report against an empty database", async () => {
     const home = await tempHome();
@@ -208,7 +208,7 @@ describe("tokentrace repair auto-classify CLI", () => {
       "parser-source": 0,
       none: 0
     });
-  }, 90_000);
+  });
 
   it("rejects invalid --min-confidence values", async () => {
     const home = await tempHome();
@@ -227,5 +227,5 @@ describe("tokentrace repair auto-classify CLI", () => {
     );
     expect(result.status).not.toBe(0);
     expect((result.stderr + result.stdout)).toContain("Invalid --min-confidence");
-  }, 60_000);
+  });
 });

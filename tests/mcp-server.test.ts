@@ -118,7 +118,7 @@ describe("TokenTrace MCP server", () => {
     expect(payload.data).toHaveProperty("suggestions");
     expect(payload.data).toHaveProperty("summary");
     expect(payload.data.minConfidence).toBe(0.5);
-  }, 120_000);
+  });
 
   it("runs query_usage with structured args through an enveloped MCP tool call", async () => {
     const home = await tempDir();
@@ -151,7 +151,7 @@ describe("TokenTrace MCP server", () => {
     expect(payload.data.metric).toBe("cost");
     expect(Array.isArray(payload.data.rows)).toBe(true);
     expect(payload.data.topN).toBe(5);
-  }, 120_000);
+  });
 
   it("returns the local anomaly report through an enveloped MCP tool call", async () => {
     const home = await tempDir();
@@ -181,7 +181,7 @@ describe("TokenTrace MCP server", () => {
     expect(payload.data).toHaveProperty("anomalies");
     expect(payload.data).toHaveProperty("summary");
     expect(payload.data.summary).toHaveProperty("total");
-  }, 120_000);
+  });
 
   it("returns an agent guide with MCP registry install snippets and copy-paste repo instructions", async () => {
     const blockedHome = path.join(await tempDir(), "not-a-directory");
@@ -334,7 +334,7 @@ describe("TokenTrace MCP server", () => {
     expect(payload.requiresHumanConfirmation).toBe(false);
     expect(payload.data.filesScanned).toBeGreaterThanOrEqual(1);
     expect(payload.data.recordsImported).toBeGreaterThanOrEqual(1);
-  }, 120_000);
+  });
 
   it("self-tests the MCP server without initializing app data or scanning files", async () => {
     const blockedHome = path.join(await tempDir(), "not-a-directory");

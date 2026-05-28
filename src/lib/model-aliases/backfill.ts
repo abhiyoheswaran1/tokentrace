@@ -1,3 +1,4 @@
+import { sqlite } from "@/src/db/client";
 import { prepareCached } from "@/src/db/prepared";
 import { calculateInteractionCost, type PriceConfig } from "@/src/lib/cost";
 
@@ -115,9 +116,14 @@ export function backfillAlias(
     const stmt = prepareCached(
       "UPDATE interactions SET cost = ?, cost_estimated = 1 WHERE id = ?"
     );
-    for (const update of updates) {
-      stmt.run(update.cost, update.id);
-    }
+    // Atomic: either every matched interaction is backfilled or none are, so a
+    // mid-loop failure can't leave the cost column half-updated.
+    const writeAll = sqlite.transaction((rows: Array<{ id: string; cost: number }>) => {
+      for (const update of rows) {
+        stmt.run(update.cost, update.id);
+      }
+    });
+    writeAll(updates);
   }
 
   return {

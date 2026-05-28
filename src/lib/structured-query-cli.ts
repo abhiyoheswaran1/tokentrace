@@ -47,7 +47,11 @@ const PRESET: readonly StructuredQueryRangePreset[] = ["today", "7d", "30d", "60
 
 function valueOf(arg: string, next: string | undefined): { value: string; consumedNext: boolean } {
   const eq = arg.indexOf("=");
-  if (eq >= 0) return { value: arg.slice(eq + 1), consumedNext: false };
+  if (eq >= 0) {
+    const value = arg.slice(eq + 1);
+    if (!value) throw new Error(`Missing value for ${arg.slice(0, eq)}`);
+    return { value, consumedNext: false };
+  }
   if (next == null || next.startsWith("-")) {
     throw new Error(`Missing value for ${arg}`);
   }

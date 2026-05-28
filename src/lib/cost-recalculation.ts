@@ -238,7 +238,6 @@ export function recalculateInteractionCosts(): CostRecalculationResult {
             }
           : null;
       const resolvedPrice = aliasPrice ?? directPrice;
-      const resolvedViaAlias = aliasPrice != null;
 
       const cost = calculateInteractionCost(
         {
@@ -251,6 +250,11 @@ export function recalculateInteractionCosts(): CostRecalculationResult {
         },
         resolvedPrice
       );
+
+      // Only treat the row as alias-resolved if the alias actually produced a
+      // cost. An alias pointing at a model that itself lacks complete pricing
+      // must not be labelled as estimated/alias-sourced with a null amount.
+      const resolvedViaAlias = aliasPrice != null && cost.amount != null;
 
       if (cost.status === "unknown") unknownCostInteractions += 1;
       const metadata = {

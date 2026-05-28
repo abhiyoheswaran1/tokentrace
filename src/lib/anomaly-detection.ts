@@ -42,6 +42,12 @@ const DEFAULT_THRESHOLDS: AnomalyThresholds = { notable: 3, high: 4.5, severe: 6
 // Makes MAD a consistent estimator of stddev under normality.
 const MAD_TO_STDDEV = 0.6745;
 
+// When the trailing window has zero spread (mad === 0) a true modified z-score
+// is undefined/infinite. We still flag a large jump as severe, but report a
+// finite sentinel z-score so the value round-trips through JSON (JSON.stringify
+// serializes Infinity as null, which would silently drop the signal).
+const FLAT_RUN_Z = 999;
+
 function median(values: number[]): number {
   if (values.length === 0) return 0;
   const sorted = values.slice().sort((a, b) => a - b);
@@ -81,7 +87,7 @@ function scoreValue(value: number, window: number[], thresholds: AnomalyThreshol
     }
     const flatRunLength = window.filter((entry) => entry === baseline).length;
     if (value > 2 * baseline && flatRunLength >= 3) {
-      return { severity: "severe", baseline, zScore: Number.POSITIVE_INFINITY };
+      return { severity: "severe", baseline, zScore: FLAT_RUN_Z };
     }
     return { severity: null, baseline, zScore: 0 };
   }

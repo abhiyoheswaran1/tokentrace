@@ -157,7 +157,7 @@ describe("tokentrace repair auto-classify --apply", () => {
     } finally {
       verifyDb.close();
     }
-  }, 90_000);
+  });
 
   it("commit writes aliases and backfills cost; second run is idempotent", async () => {
     const home = await tempHome();
@@ -237,5 +237,5 @@ describe("tokentrace repair auto-classify --apply", () => {
     expect(second.status, second.stderr).toBe(0);
     const secondParsed = JSON.parse(second.stdout);
     expect(secondParsed.applied.interactionsBackfilled).toBe(0);
-  }, 120_000);
+  });
 });
