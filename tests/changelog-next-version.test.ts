@@ -7,7 +7,10 @@ describe("next release scope", () => {
   it("documents the 0.18.0 local intelligence bundle release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.18.0");
+    expect(packageJson.version).toBe("0.18.1");
+    expect(changelog).toContain("## [0.18.1] - 2026-05-28");
+    expect(changelog).toContain("Scheduled scans now coalesce concurrent runs");
+    expect(changelog).toContain("is now atomic");
     expect(changelog).toContain("## [0.18.0] - 2026-05-28");
     expect(changelog).toContain("Anomaly detection");
     expect(changelog).toContain("Structured query");

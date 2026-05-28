@@ -4,6 +4,41 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.18.1] - 2026-05-28
+
+### Fixed
+
+- **Scheduled scans now coalesce concurrent runs.** `runDueScheduledScan`
+  fires on every overview page load; two overlapping loads (a second tab, a
+  quick refresh, a prefetch) previously both passed the due-check and both
+  called `runScan`, producing duplicate scan runs. A module-scoped in-flight
+  promise guard now coalesces concurrent callers into a single scan within
+  the server process.
+- **`tokentrace repair auto-classify --apply` is now atomic.** The alias
+  writes and cost backfills for a batch run inside a single SQLite
+  transaction, and `backfillAlias` wraps its per-row updates in a transaction
+  too, so a failure partway can no longer leave the local database
+  half-applied with inaccurate reported counts.
+- **`tokentrace query` surfaces range errors cleanly.** Range validation
+  (e.g. `--from` after `--to`, or a preset combined with explicit dates) now
+  prints the validation message plus usage and exits non-zero, instead of
+  letting a raw stack trace escape.
+- **Anomaly z-scores survive JSON.** The flat-window (`mad === 0`) severe
+  branch reported `Infinity`, which `JSON.stringify` turned into `null` and
+  silently dropped the signal. It now reports a finite sentinel z-score.
+- **Stricter query CLI parsing.** Empty `--flag=` values are rejected with a
+  clear "Missing value" message rather than flowing through as empty strings.
+
+### Internal
+
+- **Test suite no longer flakes under parallel load.** CLI/MCP integration
+  tests spawn `bin/tokentrace.js`, which itself spawns `db-migrate` and
+  `db-seed`, fanning out to ~3x the core count in node processes. The Vitest
+  fork pool is now capped at roughly half the available cores with one
+  generous global timeout, removing the scattered per-test timeout overrides.
+- Removed the dead `tailwind.config.ts` left over from the Tailwind 4
+  (CSS-first) migration.
+
 ## [0.18.0] - 2026-05-28
 
 ### Local intelligence
