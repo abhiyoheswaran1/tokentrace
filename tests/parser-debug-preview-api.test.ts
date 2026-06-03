@@ -90,4 +90,22 @@ describe("POST /api/parser-debug/preview", () => {
     const body = await response.json();
     expect(body.error).toMatch(/file/i);
   });
+
+  it("refuses to read files outside the allowed import roots", async () => {
+    const { POST } = await loadPreviewRoute();
+
+    const response = await POST(request({ path: "/etc/hosts", parserId: "generic-json" }));
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.error).toMatch(/outside the allowed/i);
+  });
+
+  it("rejects a relative path before touching the filesystem", async () => {
+    const { POST } = await loadPreviewRoute();
+
+    const response = await POST(request({ path: "../../etc/hosts", parserId: "generic-json" }));
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toMatch(/absolute/i);
+  });
 });

@@ -4,6 +4,34 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Security
+
+- **The local dashboard now enforces a request perimeter.** All `/api/*` routes
+  go through `middleware.ts`, which rejects requests whose `Host` is not a
+  loopback name (defeating DNS-rebinding that would otherwise let a malicious
+  web page read your local data as "same-origin") and blocks cross-site
+  state-changing requests (defeating CSRF that could silently re-point the
+  scanner, change settings, or wipe imported data). Non-browser clients (CLI,
+  curl) are unaffected.
+- **File-preview endpoints are now contained.** `/api/parser-debug/preview` and
+  `/api/import-profile-preview` previously read any caller-supplied path. They
+  now resolve symlinks and only read files under your home directory, the OS
+  temp directory, or explicitly configured import folders, returning `403` for
+  anything else. This removes an arbitrary-file-read surface.
+- **`tokentrace serve` refuses non-loopback binds by default.** Binding to
+  `0.0.0.0` or a LAN address (via `--hostname` or `TOKENTRACE_HOSTNAME`) now
+  errors with guidance, since the dashboard is unauthenticated. Set
+  `TOKENTRACE_ALLOW_REMOTE=1` to override deliberately.
+- **Security response headers added.** The dashboard now sends a strict
+  same-origin `Content-Security-Policy`, `X-Frame-Options: DENY`,
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and a
+  restrictive `Permissions-Policy` (anti-clickjacking and anti-sniffing).
+
+### Internal
+
+- Removed `typescript.ignoreBuildErrors` from `next.config.mjs` so type errors
+  fail the build instead of shipping silently.
+
 ## [0.18.1] - 2026-05-28
 
 ### Fixed

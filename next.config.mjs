@@ -16,17 +16,44 @@ const productionExperimentalConfig =
     ? { ...baseExperimental, serverMinification: false }
     : baseExperimental;
 
+// Defense-in-depth response headers for the local dashboard. The CSP keeps all
+// resource loads same-origin (no third-party script/connect surface), and the
+// frame protections block clickjacking of the unauthenticated UI. 'unsafe-inline'
+// is required because Next.js injects inline bootstrap/hydration scripts and
+// styles; everything else is locked to 'self'.
+const securityHeaders = [
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "no-referrer" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'"
+    ].join("; ")
+  }
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ["localhost", "127.0.0.1"],
   devIndicators: false,
   experimental: productionExperimentalConfig,
-  typescript: {
-    ignoreBuildErrors: true
-  },
   serverExternalPackages: ["better-sqlite3"],
   outputFileTracingRoot: projectRoot,
-  typedRoutes: false
+  typedRoutes: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  }
 };
 
 // Bundle analyzer — install @next/bundle-analyzer as an optional devDep

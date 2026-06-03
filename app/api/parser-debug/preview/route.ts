@@ -1,7 +1,9 @@
 import fs from "node:fs/promises";
 import { NextResponse } from "next/server";
+import { getAppSettings } from "@/src/db/settings";
 import { adapters } from "@/src/ingestion/adapters";
 import type { FileCandidate, NormalizedInteraction } from "@/src/ingestion/types";
+import { PathAccessError, pathAccessStatus, resolveReadablePath } from "@/src/lib/path-access";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +20,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Request body must be JSON." }, { status: 400 });
   }
 
-  const filePath = typeof body.path === "string" ? body.path.trim() : "";
+  const requestedPath = typeof body.path === "string" ? body.path.trim() : "";
   const parserId = typeof body.parserId === "string" ? body.parserId.trim() : "";
 
-  if (!filePath) {
+  if (!requestedPath) {
     return NextResponse.json({ error: "path is required" }, { status: 400 });
   }
   if (!parserId) {
@@ -36,11 +38,23 @@ export async function POST(request: Request) {
     );
   }
 
+  let filePath: string;
+  try {
+    filePath = await resolveReadablePath(requestedPath, {
+      extraRoots: getAppSettings().customFolders
+    });
+  } catch (error) {
+    if (error instanceof PathAccessError) {
+      return NextResponse.json({ error: error.message }, { status: pathAccessStatus(error.code) });
+    }
+    return NextResponse.json({ error: `file not found: ${requestedPath}` }, { status: 404 });
+  }
+
   let stat;
   try {
     stat = await fs.stat(filePath);
   } catch {
-    return NextResponse.json({ error: `file not found: ${filePath}` }, { status: 404 });
+    return NextResponse.json({ error: `file not found: ${requestedPath}` }, { status: 404 });
   }
 
   const candidate: FileCandidate = {
