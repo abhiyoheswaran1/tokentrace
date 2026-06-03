@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.19.0] - 2026-06-04
+
 ### Security
 
 - **The local dashboard now enforces a request perimeter.** All `/api/*` routes
@@ -26,11 +28,6 @@ All notable changes to TokenTrace are documented here.
   same-origin `Content-Security-Policy`, `X-Frame-Options: DENY`,
   `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and a
   restrictive `Permissions-Policy` (anti-clickjacking and anti-sniffing).
-
-### Internal
-
-- Removed `typescript.ignoreBuildErrors` from `next.config.mjs` so type errors
-  fail the build instead of shipping silently.
 
 ## [0.18.1] - 2026-05-28
 

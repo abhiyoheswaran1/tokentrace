@@ -4,10 +4,14 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.18.0 local intelligence bundle release", () => {
+  it("documents the 0.19.0 dashboard security hardening release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.18.1");
+    expect(packageJson.version).toBe("0.19.0");
+    expect(changelog).toContain("## [0.19.0] - 2026-06-04");
+    expect(changelog).toContain("The local dashboard now enforces a request perimeter");
+    expect(changelog).toContain("File-preview endpoints are now contained");
+    expect(changelog).toContain("refuses non-loopback binds by default");
     expect(changelog).toContain("## [0.18.1] - 2026-05-28");
     expect(changelog).toContain("Scheduled scans now coalesce concurrent runs");
     expect(changelog).toContain("is now atomic");
@@ -57,7 +61,7 @@ describe("next release scope", () => {
       "0.16.0 Parser Studio",
       "0.17.0 Reports",
       "0.18.0 Agent Handoff",
-      "0.19.0",
+      "0.20.0",
       "rolled-up release themes",
       "next planned release"
     ];

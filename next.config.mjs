@@ -48,6 +48,16 @@ const nextConfig = {
   allowedDevOrigins: ["localhost", "127.0.0.1"],
   devIndicators: false,
   experimental: productionExperimentalConfig,
+  // The published package ships source and runs `next build` on the end user's
+  // machine at first `tokentrace serve`. Production installs omit devDependencies
+  // such as @types/better-sqlite3, so Next's build-time type check cannot pass
+  // there. Type safety is enforced in development and CI via `npm run verify`
+  // (`tsc --noEmit`); this only disables the redundant check during the
+  // user-machine build. Do not remove without making the user-side build
+  // type-check-free another way.
+  typescript: {
+    ignoreBuildErrors: true
+  },
   serverExternalPackages: ["better-sqlite3"],
   outputFileTracingRoot: projectRoot,
   typedRoutes: false,
