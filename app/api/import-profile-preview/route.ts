@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { getAppSettings } from "@/src/db/settings";
 import { readJsonObject } from "@/src/lib/api-json";
 import { buildImportProfilePreview } from "@/src/lib/import-profile-preview";
+import { PathAccessError, pathAccessStatus, resolveReadablePath } from "@/src/lib/path-access";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +13,22 @@ export async function POST(request: Request) {
   if (typeof filePath !== "string" || !filePath.trim()) {
     return NextResponse.json({ error: "filePath is required." }, { status: 400 });
   }
+
+  let resolvedPath: string;
+  try {
+    resolvedPath = await resolveReadablePath(filePath, {
+      extraRoots: getAppSettings().customFolders
+    });
+  } catch (error) {
+    if (error instanceof PathAccessError) {
+      return NextResponse.json({ error: error.message }, { status: pathAccessStatus(error.code) });
+    }
+    return NextResponse.json({ error: "Preview failed." }, { status: 400 });
+  }
+
   try {
     const preview = await buildImportProfilePreview({
-      filePath: filePath.trim(),
+      filePath: resolvedPath,
       storeRawMessageContent: parsed.body.storeRawMessageContent === true
     });
     return NextResponse.json(preview);

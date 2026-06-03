@@ -16,6 +16,28 @@ export function parsePort(value) {
   return port;
 }
 
+const LOOPBACK_HOSTNAMES = new Set(["127.0.0.1", "::1", "[::1]", "localhost"]);
+
+export function isLoopbackHostname(hostname) {
+  return LOOPBACK_HOSTNAMES.has(String(hostname ?? "").trim().toLowerCase());
+}
+
+/**
+ * The dashboard ships no authentication, so binding it to anything other than
+ * loopback exposes local AI usage data and the file-preview endpoints to the
+ * network. Refuse non-loopback binds unless the operator explicitly opts in.
+ */
+export function assertHostnameAllowed(hostname, env = process.env) {
+  if (isLoopbackHostname(hostname)) return;
+  if (env.TOKENTRACE_ALLOW_REMOTE === "1") return;
+  throw new Error(
+    `Refusing to bind TokenTrace to non-loopback host "${hostname}". ` +
+      "The dashboard has no authentication, so this would expose your local AI usage data " +
+      "and file-preview endpoints to the network. " +
+      "Re-run with --hostname 127.0.0.1, or set TOKENTRACE_ALLOW_REMOTE=1 to override (not recommended)."
+  );
+}
+
 export function parseServeOptions(args, env = process.env) {
   const options = {
     help: false,
@@ -119,6 +141,7 @@ export async function serve(context, args = []) {
   let child = null;
 
   try {
+    assertHostnameAllowed(hostname);
     let resolvedPort = null;
     if (options.port != null) {
       resolvedPort = await resolveServePort(options);
