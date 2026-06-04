@@ -4,6 +4,17 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.19.1] - 2026-06-04
+
+### Fixed
+
+- **Leaner npm package.** The published tarball no longer includes a set of
+  non-product brand assets (~350 KB of images) that had been parked in the
+  `public/` directory and were unintentionally swept into the package by the
+  `files` allowlist. They are now excluded from the tarball and ignored by git.
+  No functional change — installs are simply smaller and contain only product
+  files.
+
 ## [0.19.0] - 2026-06-04
 
 ### Security

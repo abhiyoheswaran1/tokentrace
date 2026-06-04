@@ -4,10 +4,12 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.19.0 dashboard security hardening release", () => {
+  it("documents the 0.19.1 packaging fix release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.19.0");
+    expect(packageJson.version).toBe("0.19.1");
+    expect(changelog).toContain("## [0.19.1] - 2026-06-04");
+    expect(changelog).toContain("Leaner npm package");
     expect(changelog).toContain("## [0.19.0] - 2026-06-04");
     expect(changelog).toContain("The local dashboard now enforces a request perimeter");
     expect(changelog).toContain("File-preview endpoints are now contained");

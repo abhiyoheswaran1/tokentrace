@@ -19,6 +19,20 @@ These instructions apply to coding agents working in this repository.
 - Read `docs/RELEASE_CHECKLIST.md` before any release work.
 - Final public release gates include `npm run release:check`, packed-install smoke when needed, ProjScan doctor, changelog section extraction, tag/version matching, GitHub Trusted Publishing, and npm verification.
 
+## Maintenance Pass
+
+TokenTrace is in maintenance mode: feature-complete, iterate from feedback. New features are pull-based (wait for real usage signals); health is push-based (run proactively). A maintenance pass is read-only triage — it reports and proposes, it does not bump versions or release. Run it periodically or when asked for a "health check".
+
+Steps:
+
+- **Test/type/lint gate:** `npm run verify` must be fully green (vitest + `tsc --noEmit` + eslint). Treat any failure as a regression to fix before other work.
+- **Dependency drift:** `npm outdated`. Patch/minor bumps within the current major are low-risk; batch and verify them. Hold major bumps (e.g. eslint 10, `@vitejs/plugin-react` 6, `@types/node` 25, `eslint-plugin-react-hooks` 7) for a deliberate, separately-tested upgrade — never fold a major into a routine pass.
+- **Security:** `npm audit --audit-level=moderate` (expect 0 vulnerabilities) and `npm run security:ioc`. For release-grade checks use `npm run security:package`.
+- **Provider/ecosystem drift (highest-value signal for a cost tool):** check `pricing/default-model-prices.json` freshness and refresh with `npm run pricing:refresh` when models, tokenizers, or provider pricing have changed upstream. This is "feedback from reality," not from users — act on it without waiting for a complaint.
+- **Package surface:** `npm pack --dry-run` and confirm the tarball contains only intended files. Nothing untracked-in-git should reach npm. The `files` array includes `public/`, so anything dropped into `public/` ships — keep non-product assets (brand kits, screenshots, scratch files) out of it or `.gitignore` them.
+- **ProjScan:** `npm run projscan:doctor` for code-intelligence and release-readiness signal.
+- **Report, don't release:** summarize findings and propose fixes. Apply only low-risk, verified maintenance (patch bumps, lockfile, packaging hygiene) under the Release Discipline rules above; leave version bumps and publishing to an explicit maintainer request.
+
 ## TokenTrace Product Guardrails
 
 - Keep TokenTrace local-first: no telemetry, cloud sync, proxies, packet capture, browser extensions, or desktop app scraping.

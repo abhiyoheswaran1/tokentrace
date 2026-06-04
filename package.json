@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "mcpName": "io.github.abhiyoheswaran1/tokentrace",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {
@@ -24,6 +24,7 @@
     "TOKENTRACE_AGENT.md",
     "llms.txt",
     "public",
+    "!public/Baseframe-Labs-brand-assets",
     "app",
     "components",
     "docs/agent-adoption.md",

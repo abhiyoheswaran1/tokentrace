@@ -36,3 +36,6 @@ pnpm-debug.log*
 
 *.tgz
 .DS_Store
+
+# Non-product website/brand assets parked in public/ — must not be tracked or published
+public/Baseframe-Labs-brand-assets/
