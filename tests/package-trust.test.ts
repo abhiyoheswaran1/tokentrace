@@ -39,12 +39,12 @@ describe("package trust policy", () => {
   it("points package metadata and README links to the product page and creator site", () => {
     const readme = readFileSync(join(process.cwd(), "README.md"), "utf8");
 
-    expect(packageJson.homepage).toBe("https://www.abhiyoheswaran.com/apps/tokentrace");
+    expect(packageJson.homepage).toBe("https://www.baseframelabs.com/apps/tokentrace");
     expect(packageJson.author).toMatchObject({
       name: "Abhi Yoheswaran",
       url: "https://www.abhiyoheswaran.com"
     });
-    expect(readme).toContain("[Website](https://www.abhiyoheswaran.com/apps/tokentrace)");
+    expect(readme).toContain("[Website](https://www.baseframelabs.com/apps/tokentrace)");
     expect(readme).toContain("[Source](https://github.com/abhiyoheswaran1/tokentrace)");
     expect(readme).toContain("Open source by [Abhi Yoheswaran](https://www.abhiyoheswaran.com).");
   });

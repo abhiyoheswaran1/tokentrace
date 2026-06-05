@@ -1,6 +1,6 @@
 # TokenTrace Website Update Prompt
 
-Use this to update `https://www.abhiyoheswaran.com/apps/tokentrace` so the website matches the current app and README.
+Use this to update `https://www.baseframelabs.com/apps/tokentrace` so the website matches the current app and README.
 
 ## Positioning
 

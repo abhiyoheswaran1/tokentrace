@@ -102,7 +102,7 @@ describe("product polish bundle", () => {
     const websitePrompt = read("docs/WEBSITE-UPDATE-PROMPT.md");
 
     expect(readme).toContain("Local-first AI CLI usage analytics");
-    expect(readme).toContain("https://www.abhiyoheswaran.com/apps/tokentrace");
+    expect(readme).toContain("https://www.baseframelabs.com/apps/tokentrace");
     expect(websitePrompt).toContain("local-first AI CLI usage analytics");
     expect(websitePrompt).toContain("overview-0.12.0.png");
     expect(websitePrompt).toContain("scan-health-0.12.0.png");

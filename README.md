@@ -8,7 +8,7 @@ Local-first AI CLI usage analytics. TokenTrace scans local CLI logs and local us
 
 TokenTrace is designed for local development machines first, with macOS-oriented defaults. It does not require a cloud account and does not send telemetry or logs anywhere.
 
-[Website](https://www.abhiyoheswaran.com/apps/tokentrace) · [Source](https://github.com/abhiyoheswaran1/tokentrace)
+[Website](https://www.baseframelabs.com/apps/tokentrace) · [Source](https://github.com/abhiyoheswaran1/tokentrace)
 
 ![TokenTrace overview dashboard](docs/assets/overview-0.12.0.png)
 

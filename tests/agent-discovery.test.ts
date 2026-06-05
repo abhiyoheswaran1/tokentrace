@@ -17,7 +17,7 @@ describe("agent discovery manifest", () => {
       name: "TokenTrace",
       packageName: "tokentrace",
       version: "0.9.0",
-      homepage: "https://www.abhiyoheswaran.com/apps/tokentrace",
+      homepage: "https://www.baseframelabs.com/apps/tokentrace",
       repository: "https://github.com/abhiyoheswaran1/tokentrace"
     });
     expect(manifest.discoveryCommands).toEqual([

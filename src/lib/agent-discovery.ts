@@ -76,7 +76,7 @@ const product = {
   name: "TokenTrace" as const,
   packageName: "tokentrace" as const,
   description: "Local-first dashboard and CLI for AI coding-agent token, cost, session, and parser analytics.",
-  homepage: "https://www.abhiyoheswaran.com/apps/tokentrace",
+  homepage: "https://www.baseframelabs.com/apps/tokentrace",
   repository: "https://github.com/abhiyoheswaran1/tokentrace"
 };
 

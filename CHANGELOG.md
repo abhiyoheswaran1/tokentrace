@@ -4,6 +4,13 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Changed
+
+- **Product website moved to Baseframe Labs.** The package `homepage`, MCP
+  registry `websiteUrl`, README link, and in-app guide link now point to
+  `https://www.baseframelabs.com/apps/tokentrace`. The previous
+  `abhiyoheswaran.com` URL redirects there.
+
 ## [0.19.2] - 2026-06-05
 
 ### Changed

@@ -44,7 +44,7 @@ describe("Guide page", () => {
     const text = textFrom(html);
 
     expect(text).toContain("TokenTrace Guide");
-    expect(html).toContain('href="https://www.abhiyoheswaran.com/apps/tokentrace"');
+    expect(html).toContain('href="https://www.baseframelabs.com/apps/tokentrace"');
     expect(text).toContain("Product website");
     expect(text).toContain("Setup status");
     expect(text).toContain("7 records");
