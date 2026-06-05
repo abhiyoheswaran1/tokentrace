@@ -75,6 +75,15 @@ export function parseRepairKey(key: string): RepairKeyParts | null {
   }
   if (parts.length !== 5) return null;
   const [cause, provider, tool, model, sourceFile] = parts;
+  if (
+    cause === undefined ||
+    provider === undefined ||
+    tool === undefined ||
+    model === undefined ||
+    sourceFile === undefined
+  ) {
+    return null;
+  }
   return {
     cause: cause as UnknownCostRepairCause,
     provider,

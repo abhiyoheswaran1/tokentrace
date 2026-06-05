@@ -66,20 +66,11 @@ function parseArgs(argv: string[]) {
 }
 
 const options = parseArgs(args);
-const { buildEvidenceTrail } = await import("@/src/lib/evidence-trail");
-const trail = buildEvidenceTrail({ metric: options.metric });
+const { buildEvidenceReport } = await import("@/src/lib/evidence-trail");
+const trail = buildEvidenceReport({ metric: options.metric });
 
 if (options.json) {
-  console.log(
-    JSON.stringify(
-      {
-        generatedAt: new Date().toISOString(),
-        ...trail
-      },
-      null,
-      2
-    )
-  );
+  console.log(JSON.stringify(trail, null, 2));
 } else {
   console.log(`TokenTrace Evidence: ${trail.title}`);
   console.log(trail.description);

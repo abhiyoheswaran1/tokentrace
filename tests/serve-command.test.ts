@@ -40,7 +40,7 @@ describe("serve command", () => {
   });
 
   it("documents startup progress and fixed-port recovery paths", async () => {
-    const source = await fs.readFile(path.join(process.cwd(), "src", "cli", "serve.js"), "utf8");
+    const source = await fs.readFile(path.join(process.cwd(), "src", "cli", "serve.ts"), "utf8");
 
     expect(source).toContain("function startupProgress");
     expect(source).toContain("function resolveServePort");

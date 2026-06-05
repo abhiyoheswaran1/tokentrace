@@ -56,6 +56,7 @@ function inputValue(date: Date | null) {
 function parseDateInput(value: string | undefined) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const [year, month, day] = value.split("-").map(Number);
+  if (year === undefined || month === undefined || day === undefined) return null;
   const parsed = new Date(year, month - 1, day);
   if (Number.isNaN(parsed.getTime())) return null;
   if (
@@ -169,7 +170,7 @@ export function dateRangeQueryParams(range: ResolvedDateRange): Record<string, s
 }
 
 export function mergeHrefParams(href: string, params: Record<string, string | undefined>) {
-  const [pathname, search = ""] = href.split("?");
+  const [pathname = href, search = ""] = href.split("?");
   const query = new URLSearchParams(search);
   Object.entries(params).forEach(([key, value]) => {
     if (value) query.set(key, value);

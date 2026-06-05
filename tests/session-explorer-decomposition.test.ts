@@ -49,12 +49,28 @@ const baseSession: SessionRow = {
 };
 
 describe("Session Explorer decomposition", () => {
-  it("keeps the component focused on UI state while helpers own filtering", () => {
+  it("keeps the component a thin coordinator while hooks and sections own the details", () => {
     const source = read("components/session-explorer.tsx");
     const helper = read("components/session-explorer/filtering.ts");
+    const filtersHook = read("components/session-explorer/use-session-filters.ts");
+    const savedViewsHook = read("components/session-explorer/use-saved-views.ts");
+    const savedViewsSection = read("components/session-explorer/saved-views-section.tsx");
+    const filtersSection = read("components/session-explorer/filters-section.tsx");
+    const sessionsTable = read("components/session-explorer/sessions-table.tsx");
 
-    expect(source.trimEnd().split("\n").length).toBeLessThan(590);
+    expect(source.trimEnd().split("\n").length).toBeLessThan(260);
     expect(source).toContain("@/components/session-explorer/filtering");
+    expect(source).toContain("@/components/session-explorer/use-session-filters");
+    expect(source).toContain("@/components/session-explorer/use-saved-views");
+    expect(source).toContain("@/components/session-explorer/saved-views-section");
+    expect(source).toContain("@/components/session-explorer/filters-section");
+    expect(source).toContain("@/components/session-explorer/sessions-table");
+    expect(filtersHook).toContain("export function useSessionFilters");
+    expect(savedViewsHook).toContain("export function useSavedViews");
+    expect(savedViewsHook).toContain("useJsonRequest");
+    expect(savedViewsSection).toContain("export function SavedViewsSection");
+    expect(filtersSection).toContain("export function FiltersSection");
+    expect(sessionsTable).toContain("export function SessionsTable");
     expect(helper).toContain("export function filterSessions");
     expect(helper).toContain("export function summarizeSessions");
     expect(helper).toContain("export function getActiveSessionFilters");
@@ -93,7 +109,8 @@ describe("Session Explorer decomposition", () => {
     };
 
     const highCostThreshold = getHighCostThreshold(sessions);
-    const filtered = filterSessions(sessions, filters, highCostThreshold);
+    expect(highCostThreshold).toBeDefined();
+    const filtered = filterSessions(sessions, filters, highCostThreshold!);
 
     expect(filtered.map((session) => session.id)).toEqual(["session-1"]);
     expect(summarizeSessions(filtered)).toMatchObject({ tokens: 10_000, cost: 3.5, exact: 1 });

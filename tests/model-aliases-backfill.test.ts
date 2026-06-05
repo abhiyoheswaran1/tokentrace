@@ -89,9 +89,11 @@ describe("backfillAlias", () => {
       cost_estimated: number;
     }>;
     const byId = Object.fromEntries(rows.map((row) => [row.id, row]));
-    expect(byId.i1.cost).toBeCloseTo(6, 5);
-    expect(byId.i2.cost).toBeCloseTo(4, 5);
-    expect(byId.i1.cost_estimated).toBe(1);
+    expect(byId.i1).toBeDefined();
+    expect(byId.i2).toBeDefined();
+    expect(byId.i1!.cost).toBeCloseTo(6, 5);
+    expect(byId.i2!.cost).toBeCloseTo(4, 5);
+    expect(byId.i1!.cost_estimated).toBe(1);
   });
 
   it("does not touch interactions that already have cost", async () => {

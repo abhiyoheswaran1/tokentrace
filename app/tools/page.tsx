@@ -39,7 +39,7 @@ export default function ToolComparisonPage() {
           </CardHeader>
           <CardContent>
             <RankBarChart
-              data={data.tools as unknown as Array<Record<string, string | number | null>>}
+              data={data.tools}
               nameKey="tool"
               valueKey="totalTokens"
             />
@@ -52,7 +52,7 @@ export default function ToolComparisonPage() {
           </CardHeader>
           <CardContent>
             <RankBarChart
-              data={data.tools as unknown as Array<Record<string, string | number | null>>}
+              data={data.tools}
               nameKey="tool"
               valueKey="cost"
               mode="cost"

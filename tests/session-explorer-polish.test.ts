@@ -8,17 +8,19 @@ function read(relativePath: string) {
 
 describe("Session Explorer polish", () => {
   it("keeps dense session review controls ergonomic", () => {
-    const source = read("components/session-explorer.tsx");
     const filtering = read("components/session-explorer/filtering.ts");
+    const filtersHook = read("components/session-explorer/use-session-filters.ts");
+    const filtersSection = read("components/session-explorer/filters-section.tsx");
+    const sessionsTable = read("components/session-explorer/sessions-table.tsx");
 
     expect(filtering).toContain('type RowDensity = "comfortable" | "compact"');
-    expect(source).toContain("const activeFilters = useMemo");
-    expect(source).toContain('aria-live="polite"');
-    expect(source).toContain('aria-label="Clear filters"');
-    expect(source).toContain('aria-label="Row density"');
-    expect(source).toContain("setRowDensity");
-    expect(source).toContain("sticky top-0 z-10");
-    expect(source).toContain("No matching sessions");
-    expect(source).toContain("Clear filters and show all sessions");
+    expect(filtersHook).toContain("const activeFilters = useMemo");
+    expect(filtersSection).toContain('aria-live="polite"');
+    expect(filtersSection).toContain('aria-label="Clear filters"');
+    expect(sessionsTable).toContain('aria-label="Row density"');
+    expect(sessionsTable).toContain("setRowDensity");
+    expect(sessionsTable).toContain("sticky top-0 z-10");
+    expect(sessionsTable).toContain("No matching sessions");
+    expect(sessionsTable).toContain("Clear filters and show all sessions");
   });
 });

@@ -40,8 +40,10 @@ export type {
   UnknownCostReviewState
 } from "@/src/lib/unknown-cost-repair/types";
 export {
+  buildUnknownCostRepairReport,
   buildUnknownCostRepairWorkbench,
-  findWorkbenchGroupByKey
+  findWorkbenchGroupByKey,
+  type UnknownCostRepairReport
 } from "@/src/lib/unknown-cost-repair/workbench";
 
 function fallbackMetadataForKey(key: string): UnknownCostRepairMetadata {

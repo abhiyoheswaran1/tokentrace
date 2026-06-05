@@ -1,20 +1,32 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import type { StdioOptions } from "node:child_process";
+import type { CliContext } from "./context.js";
 
-export function dashboardWorkdir(context) {
+export interface RunNodeScriptOptions {
+  env?: NodeJS.ProcessEnv;
+  stdio?: StdioOptions;
+}
+
+export interface InitializeDatabaseOptions {
+  quiet?: boolean;
+  refreshPrices?: boolean;
+}
+
+export function dashboardWorkdir(context: CliContext): string {
   return path.join(context.appDataDir(), "dashboard-runtime");
 }
 
-function dashboardBuildId(context) {
+function dashboardBuildId(context: CliContext): string {
   return path.join(dashboardWorkdir(context), ".next", "BUILD_ID");
 }
 
-function dashboardBuildMarker(context) {
+function dashboardBuildMarker(context: CliContext): string {
   return path.join(dashboardWorkdir(context), ".tokentrace-dashboard-version");
 }
 
-function dependencyModulesDir(context) {
+function dependencyModulesDir(context: CliContext): string {
   const localNodeModules = path.join(context.packageRoot, "node_modules");
   if (fs.existsSync(localNodeModules)) return localNodeModules;
 
@@ -24,7 +36,7 @@ function dependencyModulesDir(context) {
   return localNodeModules;
 }
 
-function copyDashboardSource(context, targetRoot) {
+function copyDashboardSource(context: CliContext, targetRoot: string): void {
   const directories = ["app", "components", "pricing", "public", "src"];
   const files = [
     "components.json",
@@ -60,8 +72,8 @@ function copyDashboardSource(context, targetRoot) {
   );
 }
 
-function runNextBuild(context, cwd) {
-  return new Promise((resolve, reject) => {
+function runNextBuild(context: CliContext, cwd: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     const child = spawn(process.execPath, [context.nextBin(), "build", "--webpack"], {
       cwd,
       env: context.runtimeEnv(),
@@ -75,7 +87,7 @@ function runNextBuild(context, cwd) {
   });
 }
 
-export async function ensureDashboardBuild(context) {
+export async function ensureDashboardBuild(context: CliContext): Promise<string> {
   const workdir = dashboardWorkdir(context);
   const marker = dashboardBuildMarker(context);
   const builtVersion = fs.existsSync(marker) ? fs.readFileSync(marker, "utf8").trim() : null;
@@ -91,13 +103,17 @@ export async function ensureDashboardBuild(context) {
   return workdir;
 }
 
-export function runtimeScriptPath(context, scriptName) {
+export function runtimeScriptPath(context: CliContext, scriptName: string): string {
   const compiled = path.join(context.packageRoot, "dist", "runtime", `${scriptName}.mjs`);
   if (fs.existsSync(compiled)) return compiled;
   return path.join(context.packageRoot, "scripts", `${scriptName}.ts`);
 }
 
-export function scriptCommand(context, scriptName, args) {
+export function scriptCommand(
+  context: CliContext,
+  scriptName: string,
+  args: readonly string[]
+): [string, string[]] {
   const scriptPath = runtimeScriptPath(context, scriptName);
   if (scriptPath.endsWith(".mjs")) {
     return [process.execPath, [scriptPath, ...args]];
@@ -106,8 +122,13 @@ export function scriptCommand(context, scriptName, args) {
   return [process.execPath, [tsx, scriptPath, ...args]];
 }
 
-export function runNodeScript(context, scriptName, args = [], options = {}) {
-  return new Promise((resolve, reject) => {
+export function runNodeScript(
+  context: CliContext,
+  scriptName: string,
+  args: readonly string[] = [],
+  options: RunNodeScriptOptions = {}
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     const [command, commandArgs] = scriptCommand(context, scriptName, args);
     const child = spawn(command, commandArgs, {
       cwd: context.packageRoot,
@@ -122,7 +143,10 @@ export function runNodeScript(context, scriptName, args = [], options = {}) {
   });
 }
 
-export async function initializeDatabase(context, { quiet = false, refreshPrices = true } = {}) {
+export async function initializeDatabase(
+  context: CliContext,
+  { quiet = false, refreshPrices = true }: InitializeDatabaseOptions = {}
+): Promise<void> {
   const env = context.runtimeEnv();
   if (!quiet) {
     console.log(`TokenTrace data: ${env.TOKENTRACE_APP_DATA_DIR}`);

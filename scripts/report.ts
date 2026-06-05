@@ -65,26 +65,35 @@ if (options.help) {
   process.exit(0);
 }
 
+if (options.type) {
+  const { generateReport } = await import("@/src/lib/report-service");
+  const format = options.csv ? "csv" : options.json ? "json" : "markdown";
+  const result = generateReport(options.type, { format, scope: { since: options.since } });
+  if (!result.ok) {
+    console.error(`Unknown report type: ${options.type}`);
+    console.error(markdownReportUsage());
+    process.exit(1);
+  }
+  console.log(result.content);
+  process.exit(0);
+}
+
 const [
   { getAnalyticsData, getScanTrustData },
   { buildAccountingInvariants },
   { buildDailyDigest },
   { renderMarkdownReport },
-  { buildSavedReportDefinitions, renderSavedReport },
   { buildPostSessionReview },
   { buildScanDiff },
-  { resolveSinceFilter },
-  { summarizeSourceCoverage }
+  { resolveSinceFilter }
 ] = await Promise.all([
   import("@/src/lib/analytics"),
   import("@/src/lib/accounting-invariants"),
   import("@/src/lib/daily-digest"),
   import("@/src/lib/markdown-report"),
-  import("@/src/lib/saved-reports"),
   import("@/src/lib/post-session-review"),
   import("@/src/lib/scan-diff"),
-  import("@/src/lib/since-filter"),
-  import("@/src/lib/source-catalog")
+  import("@/src/lib/since-filter")
 ]);
 
 const trust = getScanTrustData();
@@ -122,37 +131,7 @@ const report = {
   accounting
 };
 
-if (options.type) {
-  const definition = buildSavedReportDefinitions().find((item) => item.id === options.type);
-  if (!definition) {
-    console.error(`Unknown report type: ${options.type}`);
-    console.error(markdownReportUsage());
-    process.exit(1);
-  }
-  const coverage = summarizeSourceCoverage(trust.scanFiles);
-  const rows = options.type === "source-coverage"
-    ? [
-        { label: "Native files", value: coverage.nativeFiles.toLocaleString(), detail: "First-class adapters" },
-        { label: "Profile-assisted files", value: coverage.profileAssistedFiles.toLocaleString(), detail: "Import profile or generic parser" },
-        { label: "Fallback files", value: coverage.fallbackFiles.toLocaleString(), detail: "Low-confidence parser fallback" },
-        { label: "Imported records", value: coverage.importedRecords.toLocaleString(), detail: "Records imported from scan files" }
-      ]
-    : [
-        { label: "Tokens", value: data.summary.totalTokens.toLocaleString(), detail: since.label },
-        { label: "Cost", value: `$${data.summary.totalCost.toFixed(2)}`, detail: "Provider estimate or source cost" },
-        { label: "Sessions", value: data.summary.sessions.toLocaleString(), detail: "Imported sessions" },
-        { label: "Unknown cost", value: data.summary.unknownCostInteractions.toLocaleString(), detail: "Repair candidates" }
-      ];
-  const format = options.csv ? "csv" : options.json ? "json" : "markdown";
-  console.log(
-    renderSavedReport({
-      definitionId: options.type,
-      format,
-      generatedAt: digest.generatedAt,
-      rows
-    })
-  );
-} else if (options.json) {
+if (options.json) {
   console.log(JSON.stringify(report, null, 2));
 } else {
   console.log(

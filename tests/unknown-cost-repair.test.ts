@@ -508,7 +508,7 @@ describe("unknown cost repair state", () => {
       resolvedRepairItems: 1
     });
     expect(buildUnknownCostRepairWorkbench().groups).toHaveLength(0);
-    expect(getUnknownCostReview(before.key)).toMatchObject({
+    expect(getUnknownCostReview(before!.key)).toMatchObject({
       status: "resolved",
       notes: "Resolved after pricing update recalculated local interaction costs."
     });
@@ -718,15 +718,16 @@ describe("unknown cost repair state", () => {
       .run();
 
     const before = buildUnknownCostRepairWorkbench();
-    const key = before.groups[0].key;
+    const [beforeGroup] = before.groups;
+    expect(beforeGroup).toBeDefined();
     const result = bulkUpdateUnknownCostRepairs({
-      keys: [key],
+      keys: [beforeGroup!.key],
       status: "needs-parser-review",
       notes: "Bulk parser review"
     });
 
     expect(result.updated).toBe(1);
-    expect(buildUnknownCostRepairWorkbench().groups[0].review).toMatchObject({
+    expect(buildUnknownCostRepairWorkbench().groups[0]?.review).toMatchObject({
       status: "needs-parser-review",
       notes: "Bulk parser review"
     });

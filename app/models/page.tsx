@@ -40,7 +40,7 @@ export default function ModelAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <RankBarChart
-              data={data.models as unknown as Array<Record<string, string | number | null>>}
+              data={data.models}
               nameKey="model"
               valueKey="totalTokens"
             />
@@ -53,7 +53,7 @@ export default function ModelAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <RankBarChart
-              data={data.models as unknown as Array<Record<string, string | number | null>>}
+              data={data.models}
               nameKey="model"
               valueKey="cost"
               mode="cost"

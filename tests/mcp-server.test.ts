@@ -40,7 +40,9 @@ function runMcp(messages: unknown[], env: Partial<NodeJS.ProcessEnv> = {}) {
 }
 
 function parseToolPayload(response: { result: { content: Array<{ text: string }> } }) {
-  return JSON.parse(response.result.content[0].text);
+  const [firstContent] = response.result.content;
+  if (!firstContent) throw new Error("expected tool response content");
+  return JSON.parse(firstContent.text);
 }
 
 describe("TokenTrace MCP server", () => {

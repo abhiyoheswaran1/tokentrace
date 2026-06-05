@@ -15,7 +15,7 @@ function dateStringFromTimestamp(timestamp: number) {
 }
 
 function addCalendarDays(value: string, days: number) {
-  const [year, month, day] = value.split("-").map(Number);
+  const [year = NaN, month = NaN, day = NaN] = value.split("-").map(Number);
   const date = new Date(year, month - 1, day);
   date.setDate(date.getDate() + days);
   return dateStringFromTimestamp(date.getTime());

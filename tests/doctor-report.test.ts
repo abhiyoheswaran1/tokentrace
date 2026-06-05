@@ -133,7 +133,7 @@ describe("doctor report", () => {
     });
 
     expect(report.latestScan.zeroImportExplanation).toBe("The latest scan imported nothing because all usage candidates were already imported duplicates.");
-    expect(report.recommendations[0].id).toBe("scan-duplicates-only");
+    expect(report.recommendations[0]?.id).toBe("scan-duplicates-only");
     expect(report.fileStatus.duplicates).toBe(1);
   });
 
@@ -292,7 +292,7 @@ describe("doctor report", () => {
     });
 
     expect(report.latestScan.zeroImportExplanation).toBe("The latest scan found candidate files, but parser errors prevented complete imports.");
-    expect(report.recommendations[0].id).toBe("parser-failures");
+    expect(report.recommendations[0]?.id).toBe("parser-failures");
     expect(report.recommendations.map((item) => item.id)).not.toContain("scan-duplicates-only");
     expect(report.recommendations.map((item) => item.action).join(" ")).not.toContain("Add a custom folder");
   });

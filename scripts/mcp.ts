@@ -57,5 +57,6 @@ reader.on("line", (line) => {
 });
 
 reader.on("close", () => {
-  queue.finally(() => process.exit(0));
+  // queue is rejection-safe (every link attaches .catch above), so fire-and-forget is intentional.
+  void queue.finally(() => process.exit(0));
 });

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { useJsonRequest } from "@/components/hooks/use-json-request";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,8 +20,11 @@ type Props = {
 export function SavedReportsPanel({ initial }: Props) {
   const [reports, setReports] = useState<StoredSavedReport[]>(initial);
   const [adding, setAdding] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, startTransition] = useTransition();
+  const [formError, setFormError] = useState<string | null>(null);
+  const saveRequest = useJsonRequest("Failed to save report.");
+  const deleteRequest = useJsonRequest("Failed to delete saved report.");
+  const busy = saveRequest.isPending || deleteRequest.isPending;
+  const error = formError ?? saveRequest.error ?? deleteRequest.error;
 
   const [name, setName] = useState("");
   const [viewType, setViewType] = useState<(typeof VIEW_TYPES)[number]>("overview");
@@ -32,18 +36,20 @@ export function SavedReportsPanel({ initial }: Props) {
     setViewType("overview");
     setFormat("markdown");
     setRange("7d");
-    setError(null);
+    setFormError(null);
   }
 
   function submit() {
-    setError(null);
+    setFormError(null);
+    deleteRequest.setError(null);
     const trimmed = name.trim();
     if (!trimmed) {
-      setError("Name is required.");
+      setFormError("Name is required.");
       return;
     }
-    startTransition(async () => {
-      const response = await fetch("/api/saved-reports", {
+    saveRequest.send<{ report: StoredSavedReport }>(
+      "/api/saved-reports",
+      {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -52,27 +58,19 @@ export function SavedReportsPanel({ initial }: Props) {
           format,
           params: { range }
         })
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(body.error ?? "Failed to save report.");
-        return;
+      },
+      (body) => {
+        setReports((prev) => [body.report, ...prev]);
+        resetForm();
+        setAdding(false);
       }
-      setReports((prev) => [body.report, ...prev]);
-      resetForm();
-      setAdding(false);
-    });
+    );
   }
 
   function remove(id: string) {
-    setError(null);
-    startTransition(async () => {
-      const response = await fetch(`/api/saved-reports/${id}`, { method: "DELETE" });
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        setError(body.error ?? "Failed to delete saved report.");
-        return;
-      }
+    setFormError(null);
+    saveRequest.setError(null);
+    deleteRequest.send(`/api/saved-reports/${id}`, { method: "DELETE" }, () => {
       setReports((prev) => prev.filter((report) => report.id !== id));
     });
   }

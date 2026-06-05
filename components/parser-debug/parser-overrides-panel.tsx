@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { useJsonRequest } from "@/components/hooks/use-json-request";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,8 +19,11 @@ type Props = {
 export function ParserOverridesPanel({ initialOverrides, parsers }: Props) {
   const [overrides, setOverrides] = useState<ParserOverride[]>(initialOverrides);
   const [adding, setAdding] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, startTransition] = useTransition();
+  const [formError, setFormError] = useState<string | null>(null);
+  const saveRequest = useJsonRequest("Failed to set parser override.");
+  const clearRequest = useJsonRequest("Failed to clear override.");
+  const busy = saveRequest.isPending || clearRequest.isPending;
+  const error = formError ?? saveRequest.error ?? clearRequest.error;
 
   const [path, setPath] = useState("");
   const [parserId, setParserId] = useState(parsers[0]?.id ?? "");
@@ -31,14 +35,15 @@ export function ParserOverridesPanel({ initialOverrides, parsers }: Props) {
     setParserId(parsers[0]?.id ?? "");
     setExcluded(false);
     setNote("");
-    setError(null);
+    setFormError(null);
   }
 
   function submit() {
-    setError(null);
+    setFormError(null);
+    clearRequest.setError(null);
     const trimmed = path.trim();
     if (!trimmed) {
-      setError("Path is required.");
+      setFormError("Path is required.");
       return;
     }
     const payload: {
@@ -51,41 +56,38 @@ export function ParserOverridesPanel({ initialOverrides, parsers }: Props) {
     else payload.parserId = parserId;
     if (note.trim()) payload.note = note.trim();
 
-    startTransition(async () => {
-      const response = await fetch("/api/parser-overrides", {
+    saveRequest.send<{ override: ParserOverride }>(
+      "/api/parser-overrides",
+      {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload)
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(body.error ?? "Failed to set parser override.");
-        return;
+      },
+      (body) => {
+        setOverrides((prev) => {
+          const without = prev.filter((row) => row.path !== body.override.path);
+          return [body.override, ...without];
+        });
+        resetForm();
+        setAdding(false);
       }
-      setOverrides((prev) => {
-        const without = prev.filter((row) => row.path !== body.override.path);
-        return [body.override, ...without];
-      });
-      resetForm();
-      setAdding(false);
-    });
+    );
   }
 
   function clear(rowPath: string) {
-    setError(null);
-    startTransition(async () => {
-      const response = await fetch("/api/parser-overrides", {
+    setFormError(null);
+    saveRequest.setError(null);
+    clearRequest.send(
+      "/api/parser-overrides",
+      {
         method: "DELETE",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ path: rowPath })
-      });
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        setError(body.error ?? "Failed to clear override.");
-        return;
+      },
+      () => {
+        setOverrides((prev) => prev.filter((row) => row.path !== rowPath));
       }
-      setOverrides((prev) => prev.filter((row) => row.path !== rowPath));
-    });
+    );
   }
 
   return (

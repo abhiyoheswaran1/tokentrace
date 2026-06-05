@@ -186,9 +186,10 @@ export function serializePricingRowsCsv(rows: EditablePricingRow[]) {
 
 export function parsePricingRowsCsv(csv: string): ParsedPricingRows {
   const lines = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  if (lines.length === 0) return { rows: [], errors: ["Paste CSV rows before importing."] };
+  const [headerLine] = lines;
+  if (headerLine === undefined) return { rows: [], errors: ["Paste CSV rows before importing."] };
 
-  const header = splitCsvLine(lines[0]).map((cell) => cell.trim());
+  const header = splitCsvLine(headerLine).map((cell) => cell.trim());
   const index = (name: string) => header.findIndex((cell) => cell.toLowerCase() === name.toLowerCase());
   const providerIdIndex = index("providerId");
   const providerNameIndex = index("providerName");
@@ -203,8 +204,10 @@ export function parsePricingRowsCsv(csv: string): ParsedPricingRows {
 
   const rows: EditablePricingRow[] = [];
   for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex];
+    if (line === undefined) continue;
     const lineNumber = lineIndex + 1;
-    const cells = splitCsvLine(lines[lineIndex]);
+    const cells = splitCsvLine(line);
     const providerId = cells[providerIdIndex]?.trim() ?? "";
     const providerName = (providerNameIndex >= 0 ? cells[providerNameIndex] : cells[providerIndex])?.trim() || providerId;
     const model = cells[modelIndex]?.trim() ?? "";

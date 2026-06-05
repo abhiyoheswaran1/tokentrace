@@ -25,11 +25,12 @@ describe("generic JSONL adapter", () => {
     expect(detection.detected).toBe(true);
     expect(parsed.errors).toEqual([]);
     expect(parsed.sessions).toHaveLength(1);
-    expect(parsed.sessions[0].interactions).toHaveLength(2);
-    expect(parsed.sessions[0].interactions[1].outputTokens).toBe(85);
-    expect(parsed.sessions[0].interactions[1].tokenConfidence).toBe("exact");
-    expect(parsed.sessions[0].interactions[1].toolCalls?.[0].name).toBe("read_file");
-    expect(parsed.sessions[0].interactions[0].rawText).toBeNull();
+    const interactions = parsed.sessions[0]!.interactions;
+    expect(interactions).toHaveLength(2);
+    expect(interactions[1]!.outputTokens).toBe(85);
+    expect(interactions[1]!.tokenConfidence).toBe("exact");
+    expect(interactions[1]!.toolCalls?.[0]?.name).toBe("read_file");
+    expect(interactions[0]!.rawText).toBeNull();
   });
 
   it("does not double-count cached or reasoning details included in OpenAI-style totals", async () => {
@@ -62,7 +63,7 @@ describe("generic JSONL adapter", () => {
       );
 
       expect(parsed.errors).toEqual([]);
-      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+      expect(parsed.sessions[0]?.interactions[0]).toMatchObject({
         inputTokens: 300,
         cacheReadTokens: 700,
         outputTokens: 140,
@@ -97,9 +98,11 @@ describe("generic text log adapter", () => {
       );
 
       expect(parsed.errors).toEqual([]);
-      expect(parsed.sessions[0].interactions[0].inputTokens).toBe(1234);
-      expect(parsed.sessions[0].interactions[0].outputTokens).toBe(567);
-      expect(parsed.sessions[0].interactions[0].estimatedTokens).toBe(false);
+      const interaction = parsed.sessions[0]?.interactions[0];
+      expect(interaction).toBeDefined();
+      expect(interaction!.inputTokens).toBe(1234);
+      expect(interaction!.outputTokens).toBe(567);
+      expect(interaction!.estimatedTokens).toBe(false);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
@@ -125,7 +128,7 @@ describe("generic text log adapter", () => {
       );
 
       expect(parsed.errors).toEqual([]);
-      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+      expect(parsed.sessions[0]?.interactions[0]).toMatchObject({
         inputTokens: 300,
         cacheReadTokens: 700,
         outputTokens: 140,
@@ -158,7 +161,7 @@ describe("generic text log adapter", () => {
       );
 
       expect(parsed.errors).toEqual([]);
-      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+      expect(parsed.sessions[0]?.interactions[0]).toMatchObject({
         inputTokens: 1000,
         cacheReadTokens: 700,
         outputTokens: 60,
@@ -277,7 +280,7 @@ describe("Claude Code adapter", () => {
 
       expect(parsed.warnings).toContain("Line 2 is not a JSON object.");
       expect(parsed.errors).toEqual([]);
-      expect(parsed.sessions[0].interactions).toHaveLength(2);
+      expect(parsed.sessions[0]?.interactions).toHaveLength(2);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
@@ -364,8 +367,8 @@ describe("Codex CLI adapter", () => {
 
       expect(parsed.warnings).toContain("Line 2 is not a JSON object.");
       expect(parsed.errors).toEqual([]);
-      expect(parsed.sessions[0].interactions).toHaveLength(2);
-      expect(parsed.sessions[0].interactions[0].modelName).toBe("openai/gpt-4.1-2025-04-14");
+      expect(parsed.sessions[0]?.interactions).toHaveLength(2);
+      expect(parsed.sessions[0]?.interactions[0]?.modelName).toBe("openai/gpt-4.1-2025-04-14");
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
@@ -405,7 +408,7 @@ describe("Codex CLI adapter", () => {
 
       expect(parsed.warnings).toContain("JSON array entry 2 is not a Codex CLI object.");
       expect(parsed.errors).toEqual([]);
-      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+      expect(parsed.sessions[0]?.interactions[0]).toMatchObject({
         modelName: "gpt-5.5",
         inputTokens: 12,
         outputTokens: 34
@@ -535,8 +538,8 @@ describe("Codex CLI adapter", () => {
         externalId: "codex-session-1",
         projectPath: "/repo/tokentrace"
       });
-      expect(parsed.sessions[0].interactions).toHaveLength(2);
-      expect(parsed.sessions[0].interactions[0]).toMatchObject({
+      expect(parsed.sessions[0]!.interactions).toHaveLength(2);
+      expect(parsed.sessions[0]!.interactions[0]).toMatchObject({
         modelName: "gpt-5.5",
         inputTokens: 300,
         cacheReadTokens: 700,
@@ -545,7 +548,7 @@ describe("Codex CLI adapter", () => {
         totalTokens: 1100,
         tokenConfidence: "exact"
       });
-      expect(parsed.sessions[0].interactions[1]).toMatchObject({
+      expect(parsed.sessions[0]!.interactions[1]).toMatchObject({
         inputTokens: 300,
         cacheReadTokens: 200,
         outputTokens: 80,

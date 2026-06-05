@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DataValue, FieldLabel } from "@/components/ui/typography";
 import type { ScanResult, SettingsScanHealth } from "@/components/settings/types";
+import type { ScanControlsSectionController } from "@/components/settings/use-scan-controls-section";
+import type { ScanScheduleSectionController } from "@/components/settings/use-scan-schedule-section";
 
 function toneVariant(tone: SettingsScanHealth["tone"]) {
   if (tone === "success") return "success";
@@ -171,21 +173,16 @@ export function ScanMemorySection({ health }: { health: SettingsScanHealth }) {
   );
 }
 
-export function ScanScheduleSection({
-  scanScheduleMode,
-  setScanScheduleMode,
-  scanRetentionRuns,
-  setScanRetentionRuns,
-  lastScheduledScanAt,
-  lastScheduledScanMessage
-}: {
-  scanScheduleMode: ScanScheduleMode;
-  setScanScheduleMode: (value: ScanScheduleMode) => void;
-  scanRetentionRuns: string;
-  setScanRetentionRuns: (value: string) => void;
-  lastScheduledScanAt: string | null;
-  lastScheduledScanMessage: string | null;
-}) {
+export function ScanScheduleSection({ schedule }: { schedule: ScanScheduleSectionController }) {
+  const {
+    scanScheduleMode,
+    setScanScheduleMode,
+    scanRetentionRuns,
+    setScanRetentionRuns,
+    lastScheduledScanAt,
+    lastScheduledScanMessage
+  } = schedule;
+
   return (
     <Card id="scan-scheduling" className="scroll-mt-28">
       <CardHeader>
@@ -236,26 +233,18 @@ export function ScanScheduleSection({
 }
 
 export function ScanSection({
-  force,
-  setForce,
-  saveSettings,
-  runScan,
-  clearData,
+  scanControls,
   isPending,
   message,
-  scanResult,
   health
 }: {
-  force: boolean;
-  setForce: (value: boolean) => void;
-  saveSettings: () => void;
-  runScan: () => void;
-  clearData: () => void;
+  scanControls: ScanControlsSectionController;
   isPending: boolean;
   message: string;
-  scanResult: ScanResult | null;
   health: SettingsScanHealth;
 }) {
+  const { force, setForce, saveSettings, runScan, clearData, scanResult } = scanControls;
+
   return (
     <Card id="scan-controls" className="scroll-mt-28">
       <CardHeader>

@@ -6,9 +6,10 @@ function escapeCsv(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-export function toCsv<T extends Record<string, unknown>>(rows: T[]) {
-  if (!rows.length) return "";
-  const headers = Object.keys(rows[0]);
+export function toCsv<T extends object>(rows: T[]) {
+  const [first] = rows;
+  if (!first) return "";
+  const headers = Object.keys(first) as Array<keyof T & string>;
   return [
     headers.map(escapeCsv).join(","),
     ...rows.map((row) => headers.map((header) => escapeCsv(row[header])).join(","))

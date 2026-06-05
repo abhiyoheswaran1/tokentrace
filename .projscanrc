@@ -5,6 +5,7 @@
     "unused-dependency-postcss",
     "unused-dependency-tailwindcss",
     "unused-dependency-@tailwindcss/postcss",
+    "unused-dependency-@vitest/coverage-v8",
     "unused-exports-*"
   ]
 }

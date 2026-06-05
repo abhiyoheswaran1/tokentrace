@@ -12,5 +12,9 @@ export async function DELETE(
   }
 ) {
   const { id } = await params;
-  return NextResponse.json({ deleted: deleteSavedView(decodeURIComponent(id)) });
+  const viewId = decodeURIComponent(id).trim();
+  if (!viewId) {
+    return NextResponse.json({ error: "view id is required" }, { status: 400 });
+  }
+  return NextResponse.json({ deleted: deleteSavedView(viewId) });
 }

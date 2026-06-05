@@ -150,3 +150,18 @@ export function buildDoctorReport({
     })
   };
 }
+
+/**
+ * Compose the full doctor report the same way `tokentrace doctor` does:
+ * local scan trust data plus the default search roots. Imports are dynamic so
+ * importing this module never touches the local database.
+ */
+export async function buildDoctorReportSnapshot(): Promise<DoctorReport> {
+  const [{ getScanTrustData }, { getDefaultSearchRoots }] = await Promise.all([
+    import("@/src/lib/analytics"),
+    import("@/src/ingestion/discovery")
+  ]);
+  const trustData = getScanTrustData();
+  const roots = await getDefaultSearchRoots();
+  return buildDoctorReport({ ...trustData, roots });
+}

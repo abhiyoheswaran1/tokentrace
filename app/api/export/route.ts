@@ -9,19 +9,21 @@ export async function GET(request: Request) {
   const type = url.searchParams.get("type") ?? "sessions";
   const analytics = getAnalyticsData();
   const debug = type.startsWith("scan-") ? getDebugData() : null;
-  let rows: Array<Record<string, unknown>>;
 
-  if (type === "scan-files") rows = (debug?.scanFiles ?? []) as Array<Record<string, unknown>>;
-  else if (type === "scan-runs") rows = (debug?.scanRuns ?? []) as Array<Record<string, unknown>>;
-  else if (type === "projects") rows = analytics.projects as unknown as Array<Record<string, unknown>>;
-  else if (type === "models") rows = analytics.models as unknown as Array<Record<string, unknown>>;
-  else if (type === "tools") rows = analytics.tools as unknown as Array<Record<string, unknown>>;
-  else rows = analytics.sessions as unknown as Array<Record<string, unknown>>;
+  let csv: string;
+  if (type === "scan-files") csv = toCsv(debug?.scanFiles ?? []);
+  else if (type === "scan-runs") csv = toCsv(debug?.scanRuns ?? []);
+  else if (type === "projects") csv = toCsv(analytics.projects);
+  else if (type === "models") csv = toCsv(analytics.models);
+  else if (type === "tools") csv = toCsv(analytics.tools);
+  else csv = toCsv(analytics.sessions);
 
-  return new NextResponse(toCsv(rows), {
+  // Keep the caller-supplied type out of header syntax: quoted-string safe.
+  const filenameType = type.replace(/[^a-z0-9-]/gi, "") || "sessions";
+  return new NextResponse(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="tokentrace-${type}.csv"`
+      "content-disposition": `attachment; filename="tokentrace-${filenameType}.csv"`
     }
   });
 }

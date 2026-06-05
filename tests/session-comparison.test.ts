@@ -51,7 +51,7 @@ describe("session comparison", () => {
       peerSessions: 3,
       href: "/sessions?source=large"
     });
-    expect(comparisons[0].tokenMultiple).toBeGreaterThan(6);
+    expect(comparisons[0]!.tokenMultiple).toBeGreaterThan(6);
   });
 
   it("does not invent peer comparisons for one-off groups", () => {

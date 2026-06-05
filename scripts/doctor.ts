@@ -73,19 +73,11 @@ function renderTimings(report: AnalyticsTimingReport) {
   return lines.join("\n");
 }
 
-const [{ getScanTrustData }, { buildDoctorReport }, { getDefaultSearchRoots }, { getAnalyticsTimingReport }] =
-  await Promise.all([
-    import("@/src/lib/analytics"),
-    import("@/src/lib/doctor"),
-    import("@/src/ingestion/discovery"),
-    import("@/src/lib/analytics-timing")
-  ]);
-const trustData = getScanTrustData();
-const roots = await getDefaultSearchRoots();
-const report = buildDoctorReport({
-  ...trustData,
-  roots
-});
+const [{ buildDoctorReportSnapshot }, { getAnalyticsTimingReport }] = await Promise.all([
+  import("@/src/lib/doctor"),
+  import("@/src/lib/analytics-timing")
+]);
+const report = await buildDoctorReportSnapshot();
 
 if (options.timings) {
   const timingReport = getAnalyticsTimingReport();

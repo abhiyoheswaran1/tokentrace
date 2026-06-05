@@ -52,7 +52,10 @@ function median(values: number[]): number {
   if (values.length === 0) return 0;
   const sorted = values.slice().sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+  const upper = sorted[mid];
+  if (upper === undefined) return 0;
+  const lower = sorted[mid - 1];
+  return sorted.length % 2 === 0 && lower !== undefined ? (lower + upper) / 2 : upper;
 }
 
 function medianAbsoluteDeviation(values: number[]) {
@@ -113,13 +116,16 @@ export function detectAnomalies(
 
   for (let i = 0; i < points.length; i += 1) {
     const point = points[i];
+    if (point === undefined) continue;
     const windowStart = Math.max(0, i - windowSize);
     if (i - windowStart < minWindow) continue;
 
     for (const { metric, valueOf } of METRICS) {
       const window: number[] = [];
       for (let j = windowStart; j < i; j += 1) {
-        window.push(valueOf(points[j]));
+        const sample = points[j];
+        if (sample === undefined) continue;
+        window.push(valueOf(sample));
       }
       const nonZero = window.filter((value) => value > 0);
       if (nonZero.length < minWindow) continue;
@@ -164,5 +170,35 @@ export function detectAnomalies(
     thresholds,
     anomalies,
     summary
+  };
+}
+
+export type AnomalyMetricFilter = AnomalyMetric | "all";
+
+export function filterAnomalyReportByMetric(report: AnomalyReport, metric: AnomalyMetricFilter): AnomalyReport {
+  if (metric === "all") return report;
+  const anomalies = report.anomalies.filter((entry) => entry.metric === metric);
+  const latestAnomaly = anomalies[anomalies.length - 1];
+  return {
+    ...report,
+    anomalies,
+    summary: {
+      total: anomalies.length,
+      bySeverity: anomalies.reduce(
+        (current, entry) => {
+          current[entry.severity] += 1;
+          return current;
+        },
+        { notable: 0, high: 0, severe: 0 }
+      ),
+      byMetric: anomalies.reduce(
+        (current, entry) => {
+          current[entry.metric] += 1;
+          return current;
+        },
+        { tokens: 0, cost: 0 }
+      ),
+      latestAnomalyDate: latestAnomaly !== undefined ? latestAnomaly.date : null
+    }
   };
 }

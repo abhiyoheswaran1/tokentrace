@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, RotateCcw } from "lucide-react";
 import type { UnknownCostRepairStatus } from "@/src/lib/unknown-cost-repair";
+import { useJsonRequest } from "@/components/hooks/use-json-request";
 import { Button } from "@/components/ui/button";
 
 const statusOptions: Array<{ value: UnknownCostRepairStatus; label: string }> = [
@@ -24,12 +25,14 @@ export function RepairBulkActions({
 }) {
   const [status, setStatus] = useState<UnknownCostRepairStatus>("resolved");
   const [message, setMessage] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const { isPending, error, send } = useJsonRequest("Bulk update failed.");
+  const note = error ?? message;
 
   function applyBulkStatus() {
-    startTransition(async () => {
-      setMessage("");
-      const response = await fetch("/api/repair-items", {
+    setMessage("");
+    send(
+      "/api/repair-items",
+      {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -37,14 +40,12 @@ export function RepairBulkActions({
           status,
           notes: status === "resolved" ? "Bulk verified from Repair Workbench." : "Bulk state update from Repair Workbench."
         })
-      });
-      if (!response.ok) {
-        setMessage("Bulk update failed.");
-        return;
+      },
+      () => {
+        setMessage("Bulk update saved.");
+        window.location.reload();
       }
-      setMessage("Bulk update saved.");
-      window.location.reload();
-    });
+    );
   }
 
   return (
@@ -78,7 +79,7 @@ export function RepairBulkActions({
           <Link href={scanHealthHref}>Recalculate <RotateCcw className="h-4 w-4" /></Link>
         </Button>
       </div>
-      {message ? <div className="text-xs text-muted-foreground" aria-live="polite">{message}</div> : null}
+      {note ? <div className="text-xs text-muted-foreground" aria-live="polite">{note}</div> : null}
     </div>
   );
 }

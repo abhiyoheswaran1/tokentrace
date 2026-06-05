@@ -49,7 +49,7 @@ describe("detectAnomalies", () => {
     const report = detectAnomalies(series);
     const tokenAnomalies = report.anomalies.filter((a) => a.metric === "tokens");
     expect(tokenAnomalies).toHaveLength(1);
-    const anomaly = tokenAnomalies[0];
+    const anomaly = tokenAnomalies[0]!;
     expect(anomaly.date).toBe(dateAt(14));
     expect(anomaly.severity).toBe("severe");
     expect(anomaly.value).toBe(1000);

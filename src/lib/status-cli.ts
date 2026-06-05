@@ -69,6 +69,7 @@ function parseStatusLikeArgs(argv: string[], options: {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg === undefined) continue;
     if (arg === "--help" || arg === "-h") {
       help = true;
       continue;
@@ -118,8 +119,9 @@ export function parseStatusArgs(argv: string[]): StatusCliOptions {
     if (extra.length > 0 && extra.every((arg) => arg === "--help" || arg === "-h")) {
       return { command: "setup", help: true };
     }
-    if (extra.length > 0) {
-      throw new Error(extra[0].startsWith("-") ? `Unknown option: ${extra[0]}` : `Unknown argument: ${extra[0]}`);
+    const firstExtra = extra[0];
+    if (firstExtra !== undefined) {
+      throw new Error(firstExtra.startsWith("-") ? `Unknown option: ${firstExtra}` : `Unknown argument: ${firstExtra}`);
     }
     return { command: "setup", help: false };
   }
