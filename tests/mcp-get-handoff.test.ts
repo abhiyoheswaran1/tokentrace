@@ -18,7 +18,9 @@ describe("MCP get_handoff tool", () => {
     expect(response).toBeTruthy();
     const result = (response as { result: { content: Array<{ text: string }> } }).result;
     expect(result).toBeDefined();
-    const payload = JSON.parse(result.content[0].text);
+    const [firstContent] = result.content;
+    expect(firstContent).toBeDefined();
+    const payload = JSON.parse(firstContent!.text);
     expect(payload.data.$schema).toBe("tokentrace.handoff.v1");
     expect(payload.summary).toMatch(/handoff/i);
     expect(payload.requiresHumanConfirmation).toBe(false);

@@ -140,10 +140,10 @@ describe("runStructuredQuery — grouping", () => {
     seed(sqlite);
     const result = runStructuredQuery({ groupBy: "model", metric: "cost" });
     const byGroup = Object.fromEntries(result.rows.map((row) => [row.group, row]));
-    expect(byGroup["claude-opus-4-7"].value).toBeCloseTo(45, 5); // 36 + 9
-    expect(byGroup["gpt-5"].value).toBeCloseTo(5.6, 5); // 1.6 + 3.2 + 0.8
+    expect(byGroup["claude-opus-4-7"]?.value).toBeCloseTo(45, 5); // 36 + 9
+    expect(byGroup["gpt-5"]?.value).toBeCloseTo(5.6, 5); // 1.6 + 3.2 + 0.8
     // Descending order by default.
-    expect(result.rows[0].group).toBe("claude-opus-4-7");
+    expect(result.rows[0]?.group).toBe("claude-opus-4-7");
   });
 
   it("groups by tool with metric=totalTokens", async () => {
@@ -151,8 +151,8 @@ describe("runStructuredQuery — grouping", () => {
     seed(sqlite);
     const result = runStructuredQuery({ groupBy: "tool", metric: "totalTokens" });
     const byGroup = Object.fromEntries(result.rows.map((row) => [row.group, row]));
-    expect(byGroup["Codex CLI"].value).toBe(3500);
-    expect(byGroup["Claude Code"].value).toBe(5000);
+    expect(byGroup["Codex CLI"]?.value).toBe(3500);
+    expect(byGroup["Claude Code"]?.value).toBe(5000);
   });
 
   it("groups by project with metric=interactions", async () => {
@@ -160,8 +160,8 @@ describe("runStructuredQuery — grouping", () => {
     seed(sqlite);
     const result = runStructuredQuery({ groupBy: "project", metric: "interactions" });
     const byGroup = Object.fromEntries(result.rows.map((row) => [row.group, row]));
-    expect(byGroup["Alpha"].value).toBe(3);
-    expect(byGroup["Beta"].value).toBe(2);
+    expect(byGroup["Alpha"]?.value).toBe(3);
+    expect(byGroup["Beta"]?.value).toBe(2);
   });
 
   it("groups by day with metric=totalTokens", async () => {
@@ -169,9 +169,9 @@ describe("runStructuredQuery — grouping", () => {
     seed(sqlite);
     const result = runStructuredQuery({ groupBy: "day", metric: "totalTokens" });
     const byGroup = Object.fromEntries(result.rows.map((row) => [row.group, row]));
-    expect(byGroup["2026-05-01"].value).toBe(3000);
-    expect(byGroup["2026-05-02"].value).toBe(4500);
-    expect(byGroup["2026-05-03"].value).toBe(1000);
+    expect(byGroup["2026-05-01"]?.value).toBe(3000);
+    expect(byGroup["2026-05-02"]?.value).toBe(4500);
+    expect(byGroup["2026-05-03"]?.value).toBe(1000);
   });
 
   it("groups by session", async () => {
@@ -204,7 +204,7 @@ describe("runStructuredQuery — grouping", () => {
       filters: { tool: "Claude Code" }
     });
     expect(result.rows).toHaveLength(1);
-    expect(result.rows[0].group).toBe("claude-opus-4-7");
+    expect(result.rows[0]!.group).toBe("claude-opus-4-7");
   });
 
   it("applies filters.project", async () => {
@@ -216,8 +216,8 @@ describe("runStructuredQuery — grouping", () => {
       filters: { project: "Alpha" }
     });
     expect(result.rows).toHaveLength(1);
-    expect(result.rows[0].group).toBe("Codex CLI");
-    expect(result.rows[0].value).toBe(3);
+    expect(result.rows[0]!.group).toBe("Codex CLI");
+    expect(result.rows[0]!.value).toBe(3);
   });
 
   it("respects range.from / range.to", async () => {
@@ -229,7 +229,7 @@ describe("runStructuredQuery — grouping", () => {
       range: { from: "2026-05-02", to: "2026-05-03" }
     });
     expect(result.rows).toHaveLength(1);
-    expect(result.rows[0].group).toBe("2026-05-02");
+    expect(result.rows[0]!.group).toBe("2026-05-02");
   });
 
   it("supports range.preset values", async () => {
@@ -265,6 +265,6 @@ describe("runStructuredQuery — grouping", () => {
       metric: "cost",
       sort: "asc"
     });
-    expect(result.rows[0].group).toBe("gpt-5");
+    expect(result.rows[0]?.group).toBe("gpt-5");
   });
 });

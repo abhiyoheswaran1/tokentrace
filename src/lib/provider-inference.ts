@@ -3,7 +3,7 @@ export type InferredProvider = {
   name: string;
 };
 
-const knownProviders: InferredProvider[] = [
+const knownProviders = [
   { id: "openai", name: "OpenAI" },
   { id: "anthropic", name: "Anthropic" },
   { id: "google", name: "Google" },
@@ -11,7 +11,7 @@ const knownProviders: InferredProvider[] = [
   { id: "deepseek", name: "DeepSeek" },
   { id: "mistral", name: "Mistral AI" },
   { id: "cohere", name: "Cohere" }
-];
+] as const satisfies readonly InferredProvider[];
 
 export function inferProviderFromModel(modelName: string | null | undefined): InferredProvider | null {
   const model = modelName?.trim().toLowerCase();

@@ -131,7 +131,7 @@ describe("runScan result messages", () => {
       [ignoredPath, "ignored_non_usage"],
       [transcriptPath, "imported"]
     ]);
-    expect(JSON.parse(rows[0].rawMetadata)).toMatchObject({
+    expect(JSON.parse(rows[0]!.rawMetadata)).toMatchObject({
       ignoreReason: "Claude support file outside project transcripts"
     });
   });
@@ -155,8 +155,10 @@ describe("runScan result messages", () => {
       ?.prepare("SELECT parser, raw_metadata AS rawMetadata FROM scan_files WHERE path = ?")
       .all(transcriptPath) as Array<{ parser: string; rawMetadata: string }>;
 
-    expect(rows[0].parser).toBe("claude-code");
-    expect(JSON.parse(rows[0].rawMetadata)).toMatchObject({
+    const [row] = rows;
+    expect(row).toBeDefined();
+    expect(row!.parser).toBe("claude-code");
+    expect(JSON.parse(row!.rawMetadata)).toMatchObject({
       parser: {
         id: "claude-code",
         displayName: "Claude Code",

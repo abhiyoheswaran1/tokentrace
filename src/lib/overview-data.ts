@@ -127,7 +127,7 @@ export const getOverviewRepairData = cache(
       repairWorkbench.groups.find(
         (group) => group.review.status !== "ignored" && group.review.status !== "resolved"
       ) ?? repairWorkbench.groups[0] ?? null;
-    const repairFocusHref = mergeHrefParams(nextRepairGroup?.itemHref ?? "/repair", rangeLinkParams);
+    const repairFocusHref = mergeHrefParams(nextRepairGroup?.itemHref ?? "/repair", rangeLinkParams) ?? "/repair";
     return {
       accountingReport,
       postSessionReview,

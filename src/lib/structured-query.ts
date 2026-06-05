@@ -71,6 +71,9 @@ function parseIsoDate(value: string, label: string): number {
     throw new Error(`Invalid ${label} date: ${value} (expected YYYY-MM-DD)`);
   }
   const [year, month, day] = value.split("-").map(Number);
+  if (year === undefined || month === undefined || day === undefined) {
+    throw new Error(`Invalid ${label} calendar date: ${value}`);
+  }
   const date = new Date(year, month - 1, day);
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
     throw new Error(`Invalid ${label} calendar date: ${value}`);

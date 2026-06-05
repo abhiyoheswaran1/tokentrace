@@ -23,7 +23,7 @@ export function OverviewCurrentMixPanel({
           <CardDescription>Top tools by total tokens.</CardDescription>
         </CardHeader>
         <CardContent>
-          <RankBarChart data={tools as unknown as Array<Record<string, string | number | null>>} nameKey="tool" valueKey="totalTokens" />
+          <RankBarChart data={tools} nameKey="tool" valueKey="totalTokens" />
         </CardContent>
       </Card>
       <Card>

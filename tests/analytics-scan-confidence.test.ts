@@ -367,7 +367,7 @@ describe("scan confidence analytics", () => {
 
     const trust = getScanTrustData();
 
-    expect(trust.scanRuns[0].id).toBe("scan-z");
+    expect(trust.scanRuns[0]?.id).toBe("scan-z");
     expect(trust.health.latestRun?.id).toBe("scan-z");
     expect(trust.health.latestStatusCounts.skipped_unknown).toBe(1);
     expect(trust.health.latestStatusCounts.imported ?? 0).toBe(0);

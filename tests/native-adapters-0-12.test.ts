@@ -64,13 +64,13 @@ describe("0.12 native source adapters", () => {
       tool: { id: "team-wrapper", name: "Team Wrapper" },
       projectPath: "/repo/token-usage"
     });
-    expect(result.sessions[0].interactions[0]).toMatchObject({
+    expect(result.sessions[0]!.interactions[0]).toMatchObject({
       modelName: "gpt-5.4",
       totalTokens: 195,
       tokenConfidence: "exact",
       costUsd: 0.42
     });
-    expect(result.sessions[0].interactions[0].rawText).toBeNull();
+    expect(result.sessions[0]!.interactions[0]!.rawText).toBeNull();
   });
 
   it("imports Cursor-style chat exports as native local source evidence", async () => {
@@ -116,7 +116,7 @@ describe("0.12 native source adapters", () => {
       projectPath: "/repo/token-usage",
       title: "Refactor plan"
     });
-    expect(result.sessions[0].interactions[0]).toMatchObject({
+    expect(result.sessions[0]!.interactions[0]).toMatchObject({
       externalId: "msg-1",
       modelName: "claude-4-opus",
       totalTokens: 125,

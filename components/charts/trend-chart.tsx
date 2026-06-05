@@ -20,6 +20,7 @@ const trendWindowOptions: Array<{ key: TrendWindow; label: string }> = [
 
 function parseTrendDate(date: string) {
   const [year, month, day] = date.split("-").map(Number);
+  if (year === undefined || month === undefined || day === undefined) return new Date(Number.NaN);
   return new Date(year, month - 1, day);
 }
 
@@ -54,9 +55,10 @@ function ChartSkeleton() {
 export function filterTrendWindow(data: TrendPoint[], window: TrendWindow) {
   const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
   const days = daysForWindow(window);
-  if (!days || sorted.length === 0) return sorted;
+  const lastPoint = sorted[sorted.length - 1];
+  if (!days || !lastPoint) return sorted;
 
-  const latest = parseTrendDate(sorted[sorted.length - 1].date);
+  const latest = parseTrendDate(lastPoint.date);
   const cutoff = addDays(latest, -(days - 1)).getTime();
   return sorted.filter((point) => parseTrendDate(point.date).getTime() >= cutoff);
 }
@@ -84,7 +86,7 @@ export function TrendControls({
             variant={period === item ? "default" : "outline"}
             onClick={() => onPeriodChange(item)}
           >
-            {item[0].toUpperCase() + item.slice(1)}
+            {item.charAt(0).toUpperCase() + item.slice(1)}
           </Button>
         ))}
       </div>

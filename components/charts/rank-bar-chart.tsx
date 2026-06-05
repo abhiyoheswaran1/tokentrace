@@ -20,16 +20,16 @@ function ChartSkeleton() {
   );
 }
 
-export function RankBarChart({
+export function RankBarChart<T extends object>({
   data,
   nameKey,
   valueKey,
   mode = "tokens",
   color = "#ea580c"
 }: {
-  data: Array<Record<string, string | number | null>>;
-  nameKey: string;
-  valueKey: string;
+  data: T[];
+  nameKey: keyof T & string;
+  valueKey: keyof T & string;
   mode?: "tokens" | "cost" | "count";
   color?: string;
 }) {

@@ -81,6 +81,7 @@ export function parseDigestArgs(argv: string[]): DigestCliOptions {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg === undefined) continue;
     if (arg === "--help" || arg === "-h") {
       options.help = true;
       continue;
@@ -115,6 +116,7 @@ export function parseMarkdownReportArgs(argv: string[]): MarkdownReportCliOption
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg === undefined) continue;
     if (arg === "--help" || arg === "-h") {
       options.help = true;
       continue;

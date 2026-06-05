@@ -4,6 +4,27 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+### Changed
+
+- **Stricter compile-time safety.** TypeScript now runs with
+  `noUncheckedIndexedAccess`, `noImplicitOverride`, and
+  `noFallthroughCasesInSwitch`; ~190 unguarded array/record accesses across the
+  app, library, and tests were given explicit guards. ESLint additionally
+  enforces type-aware promise rules (`no-floating-promises`,
+  `no-misused-promises`, `await-thenable`). No behavior change intended.
+- **Type-safe chart and CSV plumbing.** `RankBarChart` is generic over its row
+  type (chart keys are now checked against the data at compile time) and
+  `toCsv` accepts typed rows, removing all eight `as unknown as` casts from the
+  export route and analytics pages.
+
+### Fixed
+
+- **MCP server reports invalid CLI JSON clearly.** If an underlying
+  `tokentrace` CLI call returns unparseable JSON, the MCP server now raises a
+  descriptive error naming the command instead of a bare `JSON.parse` failure.
+- **`DELETE /api/saved-views/:id` validates the id.** A blank or
+  whitespace-only id now returns `400` instead of attempting a delete.
+
 ## [0.19.1] - 2026-06-04
 
 ### Fixed

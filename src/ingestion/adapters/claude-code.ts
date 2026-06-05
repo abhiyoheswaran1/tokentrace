@@ -9,8 +9,9 @@ import { asObject, fileLooksLikeJsonl, firstString, readFileText, readTextSample
 function projectPathFromClaudeProjectFile(filePath: string) {
   const parts = filePath.split(path.sep);
   const projectsIndex = parts.lastIndexOf("projects");
-  if (projectsIndex === -1 || !parts[projectsIndex + 1]) return null;
+  if (projectsIndex === -1) return null;
   const encoded = parts[projectsIndex + 1];
+  if (!encoded) return null;
   if (!encoded.startsWith("-")) return null;
   return encoded.replace(/-/g, path.sep);
 }

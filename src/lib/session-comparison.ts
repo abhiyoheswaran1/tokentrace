@@ -25,7 +25,10 @@ function median(values: number[]) {
   if (!values.length) return 0;
   const sorted = [...values].sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+  const upper = sorted[middle];
+  if (upper === undefined) return 0;
+  const lower = sorted[middle - 1];
+  return sorted.length % 2 === 0 && lower !== undefined ? (lower + upper) / 2 : upper;
 }
 
 function groupKey(session: SessionRow) {

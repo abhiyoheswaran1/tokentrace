@@ -93,7 +93,8 @@ describe("Session Explorer decomposition", () => {
     };
 
     const highCostThreshold = getHighCostThreshold(sessions);
-    const filtered = filterSessions(sessions, filters, highCostThreshold);
+    expect(highCostThreshold).toBeDefined();
+    const filtered = filterSessions(sessions, filters, highCostThreshold!);
 
     expect(filtered.map((session) => session.id)).toEqual(["session-1"]);
     expect(summarizeSessions(filtered)).toMatchObject({ tokens: 10_000, cost: 3.5, exact: 1 });

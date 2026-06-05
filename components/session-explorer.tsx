@@ -88,7 +88,7 @@ export function SessionExplorer({
   const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
 
   const { tools, models, projects } = useMemo(() => getSessionFilterOptions(sessions), [sessions]);
-  const highCostThreshold = useMemo(() => getHighCostThreshold(sessions), [sessions]);
+  const highCostThreshold = useMemo(() => getHighCostThreshold(sessions) ?? 0, [sessions]);
   const filterState = useMemo<SessionExplorerFilterState>(
     () => ({ query, tool, model, project, exact, cost, from, to, highCost, hasCache }),
     [cost, exact, from, hasCache, highCost, model, project, query, to, tool]

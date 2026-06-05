@@ -51,6 +51,7 @@ function parseSet(argv: string[]): ParserOverrideAction {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg === undefined) continue;
     if (arg === "--parser") {
       const value = argv[index + 1];
       if (!value) fail("--parser requires a value");

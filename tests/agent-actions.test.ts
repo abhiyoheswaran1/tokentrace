@@ -48,8 +48,8 @@ describe("agent action log", () => {
       summary: "imported 12 records from 4 files",
       payload: {}
     });
-    expect(rows[0].ts).toBeTruthy();
-    expect(typeof rows[0].id).toBe("number");
+    expect(rows[0]!.ts).toBeTruthy();
+    expect(typeof rows[0]!.id).toBe("number");
   });
 
   it("records optional payload", async () => {
@@ -61,7 +61,9 @@ describe("agent action log", () => {
       summary: "returned local status",
       payload: { sessionCount: 7 }
     });
-    expect(listAgentActions()[0].payload).toEqual({ sessionCount: 7 });
+    const [row] = listAgentActions();
+    expect(row).toBeDefined();
+    expect(row!.payload).toEqual({ sessionCount: 7 });
   });
 
   it("returns rows in newest-first order", async () => {
@@ -123,9 +125,10 @@ describe("agent action log", () => {
     });
 
     const row = listAgentActions()[0];
-    expect(row.summary).not.toContain("sk-abc1234567890DEFGHIJklmnopqrst");
-    expect(row.summary).toContain("[REDACTED]");
-    expect(JSON.stringify(row.payload)).not.toContain("sk-abc1234567890DEFGHIJklmnopqrst");
+    expect(row).toBeDefined();
+    expect(row!.summary).not.toContain("sk-abc1234567890DEFGHIJklmnopqrst");
+    expect(row!.summary).toContain("[REDACTED]");
+    expect(JSON.stringify(row!.payload)).not.toContain("sk-abc1234567890DEFGHIJklmnopqrst");
   });
 
   it("never throws even if the DB is unavailable", async () => {

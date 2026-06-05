@@ -25,8 +25,10 @@ import { TokenTraceLogo } from "@/components/token-trace-logo";
 import { formatAppVersion, getAppVersion } from "@/src/lib/app-version";
 import { cn } from "@/src/lib/utils";
 
+const overviewNavItem = { href: "/", label: "Overview", icon: Gauge };
+
 const primaryNavItems = [
-  { href: "/", label: "Overview", icon: Gauge },
+  overviewNavItem,
   { href: "/tools", label: "Tools", icon: Terminal },
   { href: "/models", label: "Models", icon: Bot },
   { href: "/projects", label: "Projects", icon: FolderGit2 },
@@ -175,7 +177,7 @@ export function MobileNav() {
   const mobileNavItems = [...primaryNavItems, ...supportNavItems];
   const pathname = usePathname() ?? "/";
   const activeMobileItem =
-    mobileNavItems.find((item) => isActiveRoute(pathname, item.href)) ?? primaryNavItems[0];
+    mobileNavItems.find((item) => isActiveRoute(pathname, item.href)) ?? overviewNavItem;
   const ActiveIcon = activeMobileItem.icon;
 
   return (

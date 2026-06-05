@@ -55,7 +55,9 @@ describe("agent handoff envelope", () => {
 
     const envelope = buildHandoffEnvelope();
     expect(envelope.recentActions.length).toBeLessThanOrEqual(20);
-    expect(envelope.recentActions[0].summary).toBe("entry 24");
+    const [newest] = envelope.recentActions;
+    expect(newest).toBeDefined();
+    expect(newest!.summary).toBe("entry 24");
   });
 
   it("recommends running scan when no scan has happened yet", async () => {

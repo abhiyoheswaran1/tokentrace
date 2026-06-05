@@ -62,7 +62,7 @@ describe("scan health", () => {
 
     expect(health.headline).toBe("No scans yet");
     expect(health.tone).toBe("secondary");
-    expect(health.actions[0].label).toBe("Run first scan");
+    expect(health.actions[0]?.label).toBe("Run first scan");
   });
 
   it("surfaces supply-chain check status as a scan health action", () => {

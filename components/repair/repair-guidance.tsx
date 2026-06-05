@@ -57,8 +57,8 @@ function topCause(groups: UnknownCostRepairWorkbenchGroup[]) {
   for (const group of groups) {
     byCause.set(group.cause, (byCause.get(group.cause) ?? 0) + group.interactions);
   }
-  const [cause, interactions] = [...byCause.entries()].sort((a, b) => b[1] - a[1])[0] ?? [];
-  return cause ? { cause, interactions } : null;
+  const [top] = [...byCause.entries()].sort((a, b) => b[1] - a[1]);
+  return top ? { cause: top[0], interactions: top[1] } : null;
 }
 
 export function RepairFlowSteps() {

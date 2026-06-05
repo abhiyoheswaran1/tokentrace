@@ -43,6 +43,7 @@ let limit: number | null = null;
 const argv = process.argv.slice(2);
 for (let index = 0; index < argv.length; index += 1) {
   const arg = argv[index];
+  if (arg === undefined) continue;
   if (arg === "--json") {
     json = true;
   } else if (arg === "--help" || arg === "-h") {

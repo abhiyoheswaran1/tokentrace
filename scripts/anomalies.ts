@@ -28,6 +28,7 @@ const report = detectAnomalies(trends, { windowSize: options.window });
 function filterReport(input: AnomalyReport): AnomalyReport {
   if (options.metric === "all") return input;
   const anomalies = input.anomalies.filter((entry) => entry.metric === options.metric);
+  const latestAnomaly = anomalies[anomalies.length - 1];
   return {
     ...input,
     anomalies,
@@ -47,9 +48,7 @@ function filterReport(input: AnomalyReport): AnomalyReport {
         },
         { tokens: 0, cost: 0 }
       ),
-      latestAnomalyDate: anomalies.length
-        ? anomalies[anomalies.length - 1].date
-        : null
+      latestAnomalyDate: latestAnomaly !== undefined ? latestAnomaly.date : null
     }
   };
 }

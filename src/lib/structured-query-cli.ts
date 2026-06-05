@@ -81,6 +81,7 @@ export function parseStructuredQueryArgs(argv: string[]): StructuredQueryCliOpti
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
+    if (arg === undefined) continue;
     if (arg === "--help" || arg === "-h") {
       help = true;
       continue;

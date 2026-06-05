@@ -30,8 +30,8 @@ function sessionsHref(project: string) {
 
 function sessionsByProject(sessions: SessionRow[]) {
   return sessions.reduce<Record<string, SessionRow[]>>((groups, session) => {
-    groups[session.project] ??= [];
-    groups[session.project].push(session);
+    const group = (groups[session.project] ??= []);
+    group.push(session);
     return groups;
   }, {});
 }

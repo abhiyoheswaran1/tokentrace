@@ -5,8 +5,8 @@ function atLeast(version: string, target: string) {
   const current = version.split(".").map(Number);
   const required = target.split(".").map(Number);
   for (let index = 0; index < required.length; index += 1) {
-    if ((current[index] ?? 0) > required[index]) return true;
-    if ((current[index] ?? 0) < required[index]) return false;
+    if ((current[index] ?? 0) > (required[index] ?? 0)) return true;
+    if ((current[index] ?? 0) < (required[index] ?? 0)) return false;
   }
   return true;
 }

@@ -68,7 +68,13 @@ function command(args: string[]) {
 }
 
 function commandJson(args: string[]) {
-  return JSON.parse(command(args));
+  const output = command(args);
+  try {
+    return JSON.parse(output);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`tokentrace ${args.join(" ")} returned invalid JSON: ${detail}`);
+  }
 }
 
 function stringArg(args: Record<string, unknown>, key: string) {

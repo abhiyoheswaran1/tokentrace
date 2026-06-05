@@ -119,7 +119,7 @@ export default function ProjectAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <RankBarChart
-              data={data.projects as unknown as Array<Record<string, string | number | null>>}
+              data={data.projects}
               nameKey="project"
               valueKey="totalTokens"
             />

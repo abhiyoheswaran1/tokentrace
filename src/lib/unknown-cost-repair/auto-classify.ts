@@ -134,8 +134,10 @@ function findFamilyMatch(input: ClassifyInput, lookups: ClassificationLookups): 
   if (siblings.length === 0) return null;
   const candidates = modelNameCandidates(input.model);
   for (let i = 1; i < candidates.length; i += 1) {
-    const candidate = candidates[i].toLowerCase();
-    const match = siblings.find((row) => row.modelName.toLowerCase() === candidate);
+    const candidate = candidates[i];
+    if (candidate === undefined) continue;
+    const lowered = candidate.toLowerCase();
+    const match = siblings.find((row) => row.modelName.toLowerCase() === lowered);
     if (match) {
       return {
         suggestedModel: match.modelName,
