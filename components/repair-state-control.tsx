@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import type { UnknownCostRepairCause, UnknownCostRepairStatus } from "@/src/lib/unknown-cost-repair";
+import { useJsonRequest } from "@/components/hooks/use-json-request";
 import { Badge } from "@/components/ui/badge";
 
 type RepairStateControlProps = {
@@ -47,14 +48,13 @@ export function RepairStateControl({
   const [status, setStatus] = useState<UnknownCostRepairStatus>(initialStatus);
   const [notes, setNotes] = useState(initialNotes);
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const { isPending, error, send } = useJsonRequest("Save failed");
 
   function save(nextStatus = status, nextNotes = notes) {
-    startTransition(async () => {
-      setMessage("");
-      setError("");
-      const response = await fetch("/api/repair-items", {
+    setMessage("");
+    send(
+      "/api/repair-items",
+      {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -66,17 +66,13 @@ export function RepairStateControl({
           provider,
           cause
         })
-      });
-
-      if (!response.ok) {
-        setError("Save failed");
-        return;
+      },
+      () => {
+        setStatus(nextStatus);
+        setNotes(nextNotes);
+        setMessage("Saved");
       }
-
-      setStatus(nextStatus);
-      setNotes(nextNotes);
-      setMessage("Saved");
-    });
+    );
   }
 
   return (

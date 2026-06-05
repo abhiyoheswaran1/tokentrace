@@ -1,41 +1,33 @@
 import { Eye, FolderPlus } from "lucide-react";
-import type { ImportProfile } from "@/src/lib/import-profiles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DataValue, FieldLabel } from "@/components/ui/typography";
-import type { ImportPreviewResult } from "@/components/settings/types";
+import type { ImportProfilesSectionController } from "@/components/settings/use-import-profiles-section";
 
 export function ImportProfilesSection({
-  importProfiles,
-  toggleImportProfile,
-  removeImportProfile,
-  newProfileLabel,
-  setNewProfileLabel,
-  newProfileMatchers,
-  setNewProfileMatchers,
-  addImportProfile,
-  previewPath,
-  setPreviewPath,
-  previewImportProfile,
-  previewResult,
+  profiles,
   isPending
 }: {
-  importProfiles: ImportProfile[];
-  toggleImportProfile: (id: string) => void;
-  removeImportProfile: (id: string) => void;
-  newProfileLabel: string;
-  setNewProfileLabel: (value: string) => void;
-  newProfileMatchers: string;
-  setNewProfileMatchers: (value: string) => void;
-  addImportProfile: () => void;
-  previewPath: string;
-  setPreviewPath: (value: string) => void;
-  previewImportProfile: () => void;
-  previewResult: ImportPreviewResult | null;
+  profiles: ImportProfilesSectionController;
   isPending: boolean;
 }) {
+  const {
+    importProfiles,
+    toggleImportProfile,
+    removeImportProfile,
+    newProfileLabel,
+    setNewProfileLabel,
+    newProfileMatchers,
+    setNewProfileMatchers,
+    addImportProfile,
+    previewPath,
+    setPreviewPath,
+    previewImportProfile,
+    previewResult
+  } = profiles;
+
   return (
     <Card id="import-profiles" className="scroll-mt-28">
       <CardHeader>

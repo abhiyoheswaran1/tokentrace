@@ -31,6 +31,36 @@ All notable changes to TokenTrace are documented here.
   descriptive error naming the command instead of a bare `JSON.parse` failure.
 - **`DELETE /api/saved-views/:id` validates the id.** A blank or
   whitespace-only id now returns `400` instead of attempting a delete.
+- **CSV export keeps caller input out of header syntax.** The
+  `content-disposition` filename for `/api/export` now strips characters
+  outside `[a-z0-9-]` from the `type` parameter instead of interpolating it
+  raw into a quoted string.
+- **Settings scan flow no longer renders an error body as a scan result.**
+  A failed scan previously stored the `{error}` response where the last-scan
+  panel expected scan counts, which could crash the panel.
+
+### Internal
+
+- **CLI wrapper is now strict TypeScript.** `src/cli/*` (≈800 lines,
+  previously plain JS invisible to the type checker) is typed and compiled to
+  `dist/cli/main.mjs` by the runtime build; `bin/tokentrace.js` loads the
+  compiled entry and falls back to `tsx` in dev checkouts.
+- **One report engine.** `/api/reports` and `tokentrace report --type` now
+  share `src/lib/report-service.ts`; outputs verified byte-identical against
+  the previous implementations.
+- **API routes are integration-tested.** 14 new test files (59 tests) cover
+  the previously untested HTTP routes — prices, settings, files, export,
+  import-profile-preview, saved-views, saved-reports items, repair-items,
+  evidence-pack, analytics, data, operating-metadata, reports — exercising
+  real handlers against seeded SQLite databases.
+- **Tests-and-coverage CI.** A new `Tests` workflow runs the suite with v8
+  coverage, typecheck, and lint on every PR and push to main.
+- **Frontend decomposition.** The four largest UI files were split into
+  focused modules with rendering verified byte-identical: guide page
+  (658→148 lines), evidence page (590→200), session explorer (549→149),
+  settings panel (341→123, props drilling reduced 49→12 scalars). A shared
+  `useJsonRequest` hook replaces the per-component fetch/pending/error
+  boilerplate across the client components.
 
 ## [0.19.1] - 2026-06-04
 

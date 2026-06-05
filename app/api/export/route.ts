@@ -18,10 +18,12 @@ export async function GET(request: Request) {
   else if (type === "tools") csv = toCsv(analytics.tools);
   else csv = toCsv(analytics.sessions);
 
+  // Keep the caller-supplied type out of header syntax: quoted-string safe.
+  const filenameType = type.replace(/[^a-z0-9-]/gi, "") || "sessions";
   return new NextResponse(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="tokentrace-${type}.csv"`
+      "content-disposition": `attachment; filename="tokentrace-${filenameType}.csv"`
     }
   });
 }

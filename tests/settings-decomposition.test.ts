@@ -31,4 +31,43 @@ describe("Settings decomposition", () => {
     expect(panel).not.toContain("<CardTitle>Local Usage Guardrails</CardTitle>");
     expect(panel).not.toContain("<CardTitle>Local Exports</CardTitle>");
   });
+
+  it("keeps each settings domain's state in its own section hook", () => {
+    const panel = read("components/settings-panel.tsx");
+    const expectedHooks = [
+      "components/settings/use-settings-status.ts",
+      "components/settings/use-storage-section.ts",
+      "components/settings/use-guardrails-section.ts",
+      "components/settings/use-scan-schedule-section.ts",
+      "components/settings/use-folders-section.ts",
+      "components/settings/use-import-profiles-section.ts",
+      "components/settings/use-scan-controls-section.ts"
+    ];
+
+    for (const file of expectedHooks) {
+      expect(fs.existsSync(path.join(process.cwd(), file))).toBe(true);
+    }
+
+    expect(panel).toContain("useSettingsStatus()");
+    expect(panel).toContain("useStorageSection(");
+    expect(panel).toContain("useGuardrailsSection(");
+    expect(panel).toContain("useScanScheduleSection(");
+    expect(panel).toContain("useFoldersSection(");
+    expect(panel).toContain("useImportProfilesSection(");
+    expect(panel).toContain("useScanControlsSection(");
+
+    // The coordinator no longer owns per-domain state or request plumbing.
+    expect(panel).not.toContain("useState(");
+    expect(panel).not.toContain("useTransition");
+    expect(panel).not.toContain("fetch(");
+
+    // Shared async plumbing goes through the one JSON-request helper.
+    const status = read("components/settings/use-settings-status.ts");
+    expect(status).toContain("@/components/hooks/use-json-request");
+
+    // ID slugs are built by one shared helper instead of repeated regexes.
+    const formValues = read("components/settings/form-values.ts");
+    expect(formValues).toContain("export function slugifyId");
+    expect(formValues).toContain("export function parseLimitInput");
+  });
 });

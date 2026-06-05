@@ -3,20 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MonoText } from "@/components/ui/typography";
+import type { FoldersSectionController } from "@/components/settings/use-folders-section";
 
-export function CustomFoldersSection({
-  customFolders,
-  newFolder,
-  setNewFolder,
-  addFolder,
-  removeFolder
-}: {
-  customFolders: string[];
-  newFolder: string;
-  setNewFolder: (value: string) => void;
-  addFolder: () => void;
-  removeFolder: (folder: string) => void;
-}) {
+export function CustomFoldersSection({ folders }: { folders: FoldersSectionController }) {
+  const { customFolders, newFolder, setNewFolder, addFolder, removeFolder } = folders;
+
   return (
     <Card id="custom-folders" className="scroll-mt-28">
       <CardHeader>

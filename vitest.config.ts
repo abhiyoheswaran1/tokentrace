@@ -19,7 +19,22 @@ export default defineConfig({
     testTimeout: 120_000,
     hookTimeout: 120_000,
     pool: "forks",
-    maxWorkers: maxForks
+    maxWorkers: maxForks,
+    coverage: {
+      provider: "v8",
+      reporter: ["text-summary", "html"],
+      include: ["src/**", "app/api/**", "components/**"],
+      exclude: ["src/db/schema.ts", "**/*.d.ts"],
+      // Regression guards set just under the measured baseline
+      // (66% stmts / 57% branches / 63% funcs / 68% lines, 2026-06-05).
+      // Raise these as coverage grows; do not lower them.
+      thresholds: {
+        statements: 63,
+        branches: 54,
+        functions: 60,
+        lines: 65
+      }
+    }
   },
   resolve: {
     alias: {

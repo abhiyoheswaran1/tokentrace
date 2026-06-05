@@ -25,6 +25,9 @@ export type SettingsPayload = {
   appVersion: string;
 };
 
+/** Body shape for `PUT /api/settings`: the editable subset of the payload. */
+export type SettingsSaveRequest = Omit<SettingsPayload, "databasePath" | "appVersion">;
+
 export type ScanResult = {
   scanRunId: string;
   filesScanned: number;

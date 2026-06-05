@@ -4,44 +4,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ScopedGuardrail } from "@/components/settings/types";
+import type { GuardrailsSectionController } from "@/components/settings/use-guardrails-section";
 
-export function GuardrailsSection({
-  monthlyCostLimitUsd,
-  setMonthlyCostLimitUsd,
-  monthlyTokenLimit,
-  setMonthlyTokenLimit,
-  scopedGuardrails,
-  newGuardrailScope,
-  setNewGuardrailScope,
-  newGuardrailName,
-  setNewGuardrailName,
-  newGuardrailCost,
-  setNewGuardrailCost,
-  newGuardrailTokens,
-  setNewGuardrailTokens,
-  newGuardrailThreshold,
-  setNewGuardrailThreshold,
-  addScopedGuardrail,
-  removeScopedGuardrail
-}: {
-  monthlyCostLimitUsd: string;
-  setMonthlyCostLimitUsd: (value: string) => void;
-  monthlyTokenLimit: string;
-  setMonthlyTokenLimit: (value: string) => void;
-  scopedGuardrails: ScopedGuardrail[];
-  newGuardrailScope: ScopedGuardrail["scope"];
-  setNewGuardrailScope: (value: ScopedGuardrail["scope"]) => void;
-  newGuardrailName: string;
-  setNewGuardrailName: (value: string) => void;
-  newGuardrailCost: string;
-  setNewGuardrailCost: (value: string) => void;
-  newGuardrailTokens: string;
-  setNewGuardrailTokens: (value: string) => void;
-  newGuardrailThreshold: string;
-  setNewGuardrailThreshold: (value: string) => void;
-  addScopedGuardrail: () => void;
-  removeScopedGuardrail: (id: string) => void;
-}) {
+export function GuardrailsSection({ guardrails }: { guardrails: GuardrailsSectionController }) {
+  const {
+    monthlyCostLimitUsd,
+    setMonthlyCostLimitUsd,
+    monthlyTokenLimit,
+    setMonthlyTokenLimit,
+    scopedGuardrails,
+    newGuardrailScope,
+    setNewGuardrailScope,
+    newGuardrailName,
+    setNewGuardrailName,
+    newGuardrailCost,
+    setNewGuardrailCost,
+    newGuardrailTokens,
+    setNewGuardrailTokens,
+    newGuardrailThreshold,
+    setNewGuardrailThreshold,
+    addScopedGuardrail,
+    removeScopedGuardrail
+  } = guardrails;
+
   return (
     <>
       <Card id="usage-guardrails" className="scroll-mt-28">

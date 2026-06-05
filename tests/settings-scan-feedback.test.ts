@@ -6,7 +6,8 @@ describe("Settings scan feedback", () => {
   it("shows scan result metrics and clear follow-up actions after a manual scan", () => {
     const source = [
       "components/settings-panel.tsx",
-      "components/settings/scan-section.tsx"
+      "components/settings/scan-section.tsx",
+      "components/settings/use-scan-controls-section.ts"
     ].map((file) => fs.readFileSync(path.join(process.cwd(), file), "utf8")).join("\n");
 
     expect(source).toContain("Scan result");
