@@ -17,43 +17,14 @@ if (options.help) {
   process.exit(0);
 }
 
-const [{ getTrends }, { detectAnomalies }] = await Promise.all([
+const [{ getTrends }, { detectAnomalies, filterAnomalyReportByMetric }] = await Promise.all([
   import("@/src/lib/analytics/trends"),
   import("@/src/lib/anomaly-detection")
 ]);
 
 const trends = getTrends();
 const report = detectAnomalies(trends, { windowSize: options.window });
-
-function filterReport(input: AnomalyReport): AnomalyReport {
-  if (options.metric === "all") return input;
-  const anomalies = input.anomalies.filter((entry) => entry.metric === options.metric);
-  const latestAnomaly = anomalies[anomalies.length - 1];
-  return {
-    ...input,
-    anomalies,
-    summary: {
-      total: anomalies.length,
-      bySeverity: anomalies.reduce(
-        (current, entry) => {
-          current[entry.severity] += 1;
-          return current;
-        },
-        { notable: 0, high: 0, severe: 0 }
-      ),
-      byMetric: anomalies.reduce(
-        (current, entry) => {
-          current[entry.metric] += 1;
-          return current;
-        },
-        { tokens: 0, cost: 0 }
-      ),
-      latestAnomalyDate: latestAnomaly !== undefined ? latestAnomaly.date : null
-    }
-  };
-}
-
-const filtered = filterReport(report);
+const filtered = filterAnomalyReportByMetric(report, options.metric);
 
 function renderText(input: AnomalyReport) {
   const lines = [

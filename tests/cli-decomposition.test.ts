@@ -12,19 +12,21 @@ describe("CLI decomposition", () => {
     const lineCount = bin.trimEnd().split("\n").length;
 
     expect(lineCount).toBeLessThan(180);
-    expect(bin).toContain('import { createCliContext } from "../src/cli/context.js";');
-    expect(bin).toContain('import { runCliCommand } from "../src/cli/commands.js";');
+    expect(bin).toContain("dist/cli/main.mjs");
+    expect(bin).toContain("src/cli/main.ts");
+    expect(bin).toContain("tsx/esm/api");
     expect(bin).not.toContain("get-port");
     expect(bin).not.toContain('from "open"');
     expect(bin).not.toContain("node:readline/promises");
     expect(bin).not.toContain("node:crypto");
 
     for (const modulePath of [
-      "src/cli/context.js",
-      "src/cli/help.js",
-      "src/cli/runtime.js",
-      "src/cli/serve.js",
-      "src/cli/commands.js"
+      "src/cli/main.ts",
+      "src/cli/context.ts",
+      "src/cli/help.ts",
+      "src/cli/runtime.ts",
+      "src/cli/serve.ts",
+      "src/cli/commands.ts"
     ]) {
       expect(fs.existsSync(path.join(process.cwd(), modulePath)), modulePath).toBe(true);
     }

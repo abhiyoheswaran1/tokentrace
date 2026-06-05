@@ -28,3 +28,19 @@ export function buildEvidenceTrail(input: {
     })
   });
 }
+
+export type EvidenceReport = { generatedAt: string } & EvidenceTrail;
+
+/**
+ * The evidence trail plus a generation timestamp — the exact JSON payload
+ * printed by `tokentrace evidence --json`.
+ */
+export function buildEvidenceReport(input: {
+  metric: EvidenceMetric;
+  filters?: AnalyticsFilters;
+}): EvidenceReport {
+  return {
+    generatedAt: new Date().toISOString(),
+    ...buildEvidenceTrail(input)
+  };
+}

@@ -1,14 +1,28 @@
 import { spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import getPort, { portNumbers } from "get-port";
 import open from "open";
 import { serveHelp } from "./help.js";
 import { ensureDashboardBuild, initializeDatabase } from "./runtime.js";
+import type { CliContext } from "./context.js";
 
-function sleep(ms) {
+export interface ServeOptions {
+  help: boolean;
+  hostname: string;
+  port: number | null;
+  openBrowser: boolean;
+}
+
+export interface ResolvedServePort {
+  port: number;
+  fixed: boolean;
+}
+
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function parsePort(value) {
+export function parsePort(value: unknown): number {
   const port = Number(value);
   if (!Number.isInteger(port) || port < 1 || port > 65_535) {
     throw new Error(`Invalid port: ${value}`);
@@ -18,7 +32,7 @@ export function parsePort(value) {
 
 const LOOPBACK_HOSTNAMES = new Set(["127.0.0.1", "::1", "[::1]", "localhost"]);
 
-export function isLoopbackHostname(hostname) {
+export function isLoopbackHostname(hostname: unknown): boolean {
   return LOOPBACK_HOSTNAMES.has(String(hostname ?? "").trim().toLowerCase());
 }
 
@@ -27,7 +41,10 @@ export function isLoopbackHostname(hostname) {
  * loopback exposes local AI usage data and the file-preview endpoints to the
  * network. Refuse non-loopback binds unless the operator explicitly opts in.
  */
-export function assertHostnameAllowed(hostname, env = process.env) {
+export function assertHostnameAllowed(
+  hostname: string,
+  env: Record<string, string | undefined> = process.env
+): void {
   if (isLoopbackHostname(hostname)) return;
   if (env.TOKENTRACE_ALLOW_REMOTE === "1") return;
   throw new Error(
@@ -38,8 +55,11 @@ export function assertHostnameAllowed(hostname, env = process.env) {
   );
 }
 
-export function parseServeOptions(args, env = process.env) {
-  const options = {
+export function parseServeOptions(
+  args: readonly string[],
+  env: NodeJS.ProcessEnv = process.env
+): ServeOptions {
+  const options: ServeOptions = {
     help: false,
     hostname: env.TOKENTRACE_HOSTNAME ?? "127.0.0.1",
     port:
@@ -79,7 +99,7 @@ export function parseServeOptions(args, env = process.env) {
   return options;
 }
 
-async function waitForServer(url, child) {
+async function waitForServer(url: string, child: ChildProcess): Promise<void> {
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     if (child.exitCode != null) {
@@ -96,11 +116,14 @@ async function waitForServer(url, child) {
   throw new Error("Timed out waiting for the TokenTrace server to start.");
 }
 
-export function startupProgress(step, detail = "") {
+export function startupProgress(step: string, detail = ""): void {
   console.log(detail ? `TokenTrace: ${step} - ${detail}` : `TokenTrace: ${step}`);
 }
 
-export function formatServeError(error, options = {}) {
+export function formatServeError(
+  error: unknown,
+  options: { hostname?: string; port?: number | null } = {}
+): string {
   const message = error instanceof Error ? error.message : "Failed to start TokenTrace.";
   const lines = [`TokenTrace serve failed: ${message}`];
   if (/EADDRINUSE|address already in use|Requested port .* busy|port .*busy/i.test(message)) {
@@ -116,7 +139,7 @@ export function formatServeError(error, options = {}) {
   return lines.join("\n");
 }
 
-export async function resolveServePort(options) {
+export async function resolveServePort(options: ServeOptions): Promise<ResolvedServePort> {
   if (options.port != null) {
     const availablePort = await getPort({ port: options.port, host: options.hostname });
     if (availablePort !== options.port) {
@@ -129,7 +152,7 @@ export async function resolveServePort(options) {
   return { port, fixed: false };
 }
 
-export async function serve(context, args = []) {
+export async function serve(context: CliContext, args: readonly string[] = []): Promise<void> {
   const options = parseServeOptions(args);
   if (options.help) {
     console.log(serveHelp());
@@ -138,11 +161,11 @@ export async function serve(context, args = []) {
 
   const hostname = options.hostname;
   let port = options.port;
-  let child = null;
+  let child: ChildProcess | null = null;
 
   try {
     assertHostnameAllowed(hostname);
-    let resolvedPort = null;
+    let resolvedPort: ResolvedServePort | null = null;
     if (options.port != null) {
       resolvedPort = await resolveServePort(options);
       port = resolvedPort.port;

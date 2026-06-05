@@ -6,6 +6,13 @@ All notable changes to TokenTrace are documented here.
 
 ### Changed
 
+- **MCP tools now run in-process.** The MCP server calls the same library
+  functions as the CLI and HTTP API instead of spawning a `tokentrace` CLI
+  subprocess per tool call, making tool calls faster and immune to nested
+  process-spawn timeouts. Payload shapes are unchanged. `run_scan` invoked over
+  MCP now records its agent action with surface `mcp` instead of `cli`.
+  `get_report` still shells out to the CLI because its report composition has
+  not yet moved into a shared library function.
 - **Stricter compile-time safety.** TypeScript now runs with
   `noUncheckedIndexedAccess`, `noImplicitOverride`, and
   `noFallthroughCasesInSwitch`; ~190 unguarded array/record accesses across the

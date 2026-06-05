@@ -1,4 +1,4 @@
-export function help() {
+export function help(): string {
   return `TokenTrace CLI
 
 Usage:
@@ -48,7 +48,7 @@ Examples:
   tokentrace doctor --json`;
 }
 
-export function serveHelp() {
+export function serveHelp(): string {
   return `TokenTrace dashboard server
 
 Usage:

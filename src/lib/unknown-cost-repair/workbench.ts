@@ -261,6 +261,19 @@ export function buildUnknownCostRepairWorkbench(
   };
 }
 
+export type UnknownCostRepairReport = { generatedAt: string } & UnknownCostRepairWorkbench;
+
+/**
+ * The unknown-cost repair workbench plus a generation timestamp — the exact
+ * JSON payload printed by `tokentrace repair --json`.
+ */
+export function buildUnknownCostRepairReport(): UnknownCostRepairReport {
+  return {
+    generatedAt: new Date().toISOString(),
+    ...buildUnknownCostRepairWorkbench()
+  };
+}
+
 export function findWorkbenchGroupByKey(key: string): UnknownCostRepairWorkbenchGroup | null {
   return buildUnknownCostRepairWorkbench().groups.find((group) => (
     group.key === key || legacyRepairKey(group) === key

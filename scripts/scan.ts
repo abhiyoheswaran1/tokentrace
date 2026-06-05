@@ -16,37 +16,12 @@ if (options.help) {
   process.exit(0);
 }
 
-const { runScan } = await import("@/src/ingestion/scan");
-const { safeRecordAgentAction } = await import("@/src/lib/agent-actions");
+const { executeScanRun } = await import("@/src/lib/scan-cli");
 
-const result = await runScan({
+const summary = await executeScanRun({
   force: options.force,
   folders: options.folders,
-  includeDefaults: options.folders.length === 0
-});
-
-const summary = {
-  scanRunId: result.scanRunId,
-  filesScanned: result.filesScanned,
-  recordsImported: result.recordsImported,
-  costsRecalculated: result.costsRecalculated,
-  modelAliasesUpdated: result.modelAliasesUpdated,
-  unknownCostInteractions: result.unknownCostInteractions,
-  staleNonUsageSessionsRemoved: result.staleNonUsageSessionsRemoved,
-  warnings: result.warnings.length,
-  errors: result.errors.length
-};
-
-safeRecordAgentAction({
-  surface: "cli",
-  command: "scan",
-  outcome: result.errors.length ? "error" : "ok",
-  summary: `imported ${result.recordsImported} records from ${result.filesScanned} files (${result.warnings.length} warnings, ${result.errors.length} errors)`,
-  payload: {
-    scanRunId: result.scanRunId,
-    force: options.force,
-    folders: options.folders.length || undefined
-  }
+  surface: "cli"
 });
 
 if (options.json) {

@@ -7,32 +7,37 @@ import { stdin as input, stdout as output } from "node:process";
 import { help } from "./help.js";
 import { initializeDatabase, runNodeScript } from "./runtime.js";
 import { serve } from "./serve.js";
+import type { CliContext } from "./context.js";
 
-function isHelpRequest(args) {
+function isHelpRequest(args: readonly string[]): boolean {
   return args.includes("--help") || args.includes("-h");
 }
 
-async function printScriptHelp(context, scriptName, args) {
+async function printScriptHelp(
+  context: CliContext,
+  scriptName: string,
+  args: readonly string[]
+): Promise<boolean> {
   if (!isHelpRequest(args)) return false;
   await runNodeScript(context, scriptName, args, { env: process.env });
   return true;
 }
 
-async function scan(context, args) {
+async function scan(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "scan", args)) return;
   await initializeDatabase(context, { quiet: true });
   await runNodeScript(context, "scan", args);
 }
 
-async function agent(context, args) {
+async function agent(context: CliContext, args: readonly string[]): Promise<void> {
   await runNodeScript(context, "agent", args, { env: process.env });
 }
 
-async function roadmap(context, args) {
+async function roadmap(context: CliContext, args: readonly string[]): Promise<void> {
   await runNodeScript(context, "roadmap", args, { env: process.env });
 }
 
-async function mcp(context, args) {
+async function mcp(context: CliContext, args: readonly string[]): Promise<void> {
   if (args.length) {
     if (args[0] === "selftest" && (args.length === 1 || (args.length === 2 && args[1] === "--json"))) {
       await runNodeScript(context, "mcp", args, { env: process.env });
@@ -45,73 +50,73 @@ async function mcp(context, args) {
   await runNodeScript(context, "mcp", [], { env: process.env });
 }
 
-async function doctor(context, args) {
+async function doctor(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "doctor", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "doctor", args);
 }
 
-async function evidence(context, args) {
+async function evidence(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "evidence", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "evidence", args);
 }
 
-async function digest(context, args) {
+async function digest(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "digest", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "digest", args);
 }
 
-async function report(context, args) {
+async function report(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "report", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "report", args);
 }
 
-async function review(context, args) {
+async function review(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "review", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "review", args);
 }
 
-async function insights(context, args) {
+async function insights(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "insights", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "insights", args);
 }
 
-async function repair(context, args) {
+async function repair(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "repair", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "repair", args);
 }
 
-async function anomalies(context, args) {
+async function anomalies(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "anomalies", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "anomalies", args);
 }
 
-async function query(context, args) {
+async function query(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "query", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "query", args);
 }
 
-async function refreshPrices(context, args) {
+async function refreshPrices(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "pricing-refresh", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "pricing-refresh", args.length ? args : ["--json"]);
 }
 
-async function status(context, args) {
+async function status(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "status", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "status", args);
 }
 
-async function statusLine(context, args) {
+async function statusLine(context: CliContext, args: readonly string[]): Promise<void> {
   if (args[0] === "claude") {
     await runNodeScript(context, "status", ["statusline", "claude", ...args.slice(1)], { env: process.env });
     return;
@@ -126,13 +131,13 @@ async function statusLine(context, args) {
   process.exit(1);
 }
 
-async function watch(context, args) {
+async function watch(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "status", ["watch", ...args])) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
   await runNodeScript(context, "status", ["watch", ...args]);
 }
 
-async function reset(context, args) {
+async function reset(context: CliContext, args: readonly string[]): Promise<void> {
   await initializeDatabase(context, { quiet: true });
   if (!args.includes("--yes")) {
     const rl = createInterface({ input, output });
@@ -148,11 +153,11 @@ async function reset(context, args) {
   await runNodeScript(context, "reset", []);
 }
 
-function looksStructured(text) {
+function looksStructured(text: string): object | null {
   const trimmed = text.trim();
   if (!trimmed || trimmed.length > 100_000) return null;
   try {
-    const parsed = JSON.parse(trimmed);
+    const parsed: unknown = JSON.parse(trimmed);
     if (parsed && typeof parsed === "object") return parsed;
   } catch {
     // Not structured JSON.
@@ -160,8 +165,9 @@ function looksStructured(text) {
   return null;
 }
 
-async function runWrapped(context, args) {
-  if (!args.length) {
+async function runWrapped(context: CliContext, args: readonly string[]): Promise<void> {
+  const [command, ...commandArgs] = args;
+  if (command === undefined) {
     console.error("Usage: tokentrace run <command> [args...]");
     process.exit(1);
   }
@@ -171,12 +177,11 @@ async function runWrapped(context, args) {
     recursive: true
   });
 
-  const [command, ...commandArgs] = args;
   const startedAt = new Date();
   let stdoutBytes = 0;
   let stderrBytes = 0;
-  const stdoutChunks = [];
-  const stderrChunks = [];
+  const stdoutChunks: Buffer[] = [];
+  const stderrChunks: Buffer[] = [];
 
   const child = spawn(command, commandArgs, {
     cwd: context.invocationCwd,
@@ -185,18 +190,18 @@ async function runWrapped(context, args) {
     shell: process.platform === "win32"
   });
 
-  child.stdout.on("data", (chunk) => {
+  child.stdout.on("data", (chunk: Buffer) => {
     stdoutBytes += chunk.length;
     if (stdoutBytes <= 100_000) stdoutChunks.push(chunk);
     process.stdout.write(chunk);
   });
-  child.stderr.on("data", (chunk) => {
+  child.stderr.on("data", (chunk: Buffer) => {
     stderrBytes += chunk.length;
     if (stderrBytes <= 100_000) stderrChunks.push(chunk);
     process.stderr.write(chunk);
   });
 
-  const exitCode = await new Promise((resolve, reject) => {
+  const exitCode = await new Promise<number>((resolve, reject) => {
     child.on("error", reject);
     child.on("exit", (code) => resolve(code ?? 0));
   });
@@ -236,7 +241,10 @@ async function runWrapped(context, args) {
   process.exit(exitCode);
 }
 
-export async function runCliCommand(context, rawArgs = process.argv.slice(2)) {
+export async function runCliCommand(
+  context: CliContext,
+  rawArgs: readonly string[] = process.argv.slice(2)
+): Promise<void> {
   const effectiveArgs = rawArgs.length === 0 && !process.stdin.isTTY ? ["statusline", "claude"] : rawArgs;
   const [command = "serve", ...args] = effectiveArgs;
 

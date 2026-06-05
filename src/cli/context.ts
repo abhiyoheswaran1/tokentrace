@@ -4,15 +4,45 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
-export function createCliContext({ binMetaUrl, invocationCwd = process.cwd() }) {
+export interface CliPackageJson {
+  version: string;
+}
+
+export interface CliRuntimeEnv extends NodeJS.ProcessEnv {
+  TOKENTRACE_DB: string;
+  DATABASE_URL: string;
+  TOKENTRACE_APP_DATA_DIR: string;
+  TOKENTRACE_WORKDIR: string;
+  NEXT_TELEMETRY_DISABLED: string;
+}
+
+export interface CliContext {
+  binPath: string;
+  packageRoot: string;
+  packageJson: CliPackageJson;
+  invocationCwd: string;
+  appDataDir(env?: NodeJS.ProcessEnv): string;
+  runtimeEnv(env?: NodeJS.ProcessEnv): CliRuntimeEnv;
+  nextBin(): string;
+}
+
+export interface CreateCliContextOptions {
+  binMetaUrl: string;
+  invocationCwd?: string;
+}
+
+export function createCliContext({
+  binMetaUrl,
+  invocationCwd = process.cwd()
+}: CreateCliContextOptions): CliContext {
   const binPath = fs.realpathSync(fileURLToPath(binMetaUrl));
   const packageRoot = path.resolve(path.dirname(binPath), "..");
   const require = createRequire(binMetaUrl);
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")
-  );
+  ) as CliPackageJson;
 
-  function appDataDir(env = process.env) {
+  function appDataDir(env: NodeJS.ProcessEnv = process.env): string {
     if (env.TOKENTRACE_HOME) return path.resolve(env.TOKENTRACE_HOME);
     const home = os.homedir();
     if (process.platform === "darwin") {
@@ -24,7 +54,7 @@ export function createCliContext({ binMetaUrl, invocationCwd = process.cwd() }) 
     return path.join(env.XDG_DATA_HOME ?? path.join(home, ".local", "share"), "tokentrace");
   }
 
-  function runtimeEnv(env = process.env) {
+  function runtimeEnv(env: NodeJS.ProcessEnv = process.env): CliRuntimeEnv {
     const dataDir = appDataDir(env);
     fs.mkdirSync(dataDir, { recursive: true });
     const dbPath = path.join(dataDir, "tokentrace.db");
@@ -38,7 +68,7 @@ export function createCliContext({ binMetaUrl, invocationCwd = process.cwd() }) 
     };
   }
 
-  function nextBin() {
+  function nextBin(): string {
     try {
       return require.resolve("next/dist/bin/next");
     } catch {

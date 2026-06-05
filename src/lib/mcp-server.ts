@@ -47,6 +47,10 @@ export function jsonRpcError(id: JsonRpcId | undefined, code: number, message: s
   };
 }
 
+// get_report is the only tool still served by spawning the CLI: its JSON and
+// Markdown payloads are composed inline in scripts/report.ts (owned elsewhere),
+// so there is no shared lib function to call yet. Every other tool calls the
+// same src/lib functions the CLI runtime scripts call.
 function command(args: string[]) {
   const bin = path.join(process.cwd(), "bin", "tokentrace.js");
   const result = spawnSync(process.execPath, [bin, ...args], {
@@ -65,16 +69,6 @@ function command(args: string[]) {
     throw new Error(stderr || stdout || `tokentrace ${args.join(" ")} exited with code ${result.status}`);
   }
   return result.stdout;
-}
-
-function commandJson(args: string[]) {
-  const output = command(args);
-  try {
-    return JSON.parse(output);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`tokentrace ${args.join(" ")} returned invalid JSON: ${detail}`);
-  }
 }
 
 function stringArg(args: Record<string, unknown>, key: string) {
@@ -119,25 +113,23 @@ function queryUsageArgs(args: Record<string, unknown>) {
   return cliArgs;
 }
 
-function scanArgs(args: Record<string, unknown>) {
+function scanOptions(args: Record<string, unknown>) {
   if (args.confirmLocalScan !== true) {
     throw new HumanConfirmationError(
       "run_scan requires confirmLocalScan=true to acknowledge local file reads and local database writes."
     );
   }
 
-  const cliArgs = ["scan"];
-  if (args.force === true) cliArgs.push("--force");
+  const folders: string[] = [];
   if (Array.isArray(args.folders)) {
     for (const folder of args.folders) {
       if (typeof folder !== "string" || !folder.trim()) {
         throw new Error("run_scan folders must be non-empty strings.");
       }
-      cliArgs.push(folder);
+      folders.push(folder);
     }
   }
-  cliArgs.push("--json");
-  return cliArgs;
+  return { force: args.force === true, folders };
 }
 
 async function callTool(params: ToolCallParams) {
@@ -168,7 +160,8 @@ async function callTool(params: ToolCallParams) {
       });
     }
     if (params.name === "get_capabilities") {
-      return toolResult(commandJson(["agent", "--json"]), {
+      const { buildAgentDiscoveryManifest } = await import("@/src/lib/agent-discovery");
+      return toolResult(buildAgentDiscoveryManifest({ version: packageVersion() }), {
         summary: "Returned the TokenTrace agent discovery manifest.",
         confidence: "high",
         nextActions: [
@@ -186,7 +179,8 @@ async function callTool(params: ToolCallParams) {
       });
     }
     if (params.name === "get_status") {
-      return toolResult(commandJson(["status", "--json"]), {
+      const { getLiveStatusSnapshot } = await import("@/src/lib/live-status");
+      return toolResult(getLiveStatusSnapshot({ sourceFile: null }), {
         summary: "Returned the current local TokenTrace status snapshot.",
         confidence: "medium",
         nextActions: [
@@ -204,7 +198,8 @@ async function callTool(params: ToolCallParams) {
       });
     }
     if (params.name === "run_doctor") {
-      return toolResult(commandJson(["doctor", "--json"]), {
+      const { buildDoctorReportSnapshot } = await import("@/src/lib/doctor");
+      return toolResult(await buildDoctorReportSnapshot(), {
         summary: "Returned Scan Health, parser trust, source coverage, and repair recommendations.",
         confidence: "high",
         nextActions: [
@@ -223,7 +218,12 @@ async function callTool(params: ToolCallParams) {
     }
     if (params.name === "get_evidence") {
       const metric = stringArg(args, "metric");
-      return toolResult(commandJson(metric ? ["evidence", "--json", `--metric=${metric}`] : ["evidence", "--json"]), {
+      const { evidenceMetrics, parseEvidenceMetric } = await import("@/src/lib/evidence/metrics");
+      if (metric && !evidenceMetrics.includes(metric as (typeof evidenceMetrics)[number])) {
+        throw new Error(`Invalid evidence metric: ${metric}`);
+      }
+      const { buildEvidenceReport } = await import("@/src/lib/evidence-trail");
+      return toolResult(buildEvidenceReport({ metric: parseEvidenceMetric(metric ?? undefined) }), {
         summary: `Returned TokenTrace evidence${metric ? ` for ${metric}` : ""}.`,
         confidence: "high",
         nextActions: [
@@ -241,7 +241,8 @@ async function callTool(params: ToolCallParams) {
       });
     }
     if (params.name === "get_repair_queue") {
-      return toolResult(commandJson(["repair", "--json"]), {
+      const { buildUnknownCostRepairReport } = await import("@/src/lib/unknown-cost-repair");
+      return toolResult(buildUnknownCostRepairReport(), {
         summary: "Returned the unknown-cost repair queue.",
         confidence: "high",
         nextActions: [
@@ -259,8 +260,8 @@ async function callTool(params: ToolCallParams) {
       });
     }
     if (params.name === "get_handoff") {
-      const envelope = commandJson(["agent", "--handoff", "--json"]);
-      return toolResult(envelope, {
+      const { buildHandoffEnvelope } = await import("@/src/lib/handoff");
+      return toolResult(buildHandoffEnvelope(), {
         summary: "Returned the tokentrace.handoff.v1 envelope for the next agent.",
         confidence: "high",
         nextActions: [
@@ -283,7 +284,18 @@ async function callTool(params: ToolCallParams) {
       const cliArgs = ["report", format === "json" ? "--json" : "--markdown"];
       if (since) cliArgs.push("--since", since);
       const output = command(cliArgs);
-      return toolResult(format === "json" ? JSON.parse(output) : { format: "markdown", report: output.trimEnd() }, {
+      let data: unknown;
+      if (format === "json") {
+        try {
+          data = JSON.parse(output);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          throw new Error(`tokentrace ${cliArgs.join(" ")} returned invalid JSON: ${detail}`);
+        }
+      } else {
+        data = { format: "markdown", report: output.trimEnd() };
+      }
+      return toolResult(data, {
         summary: `Returned a local TokenTrace ${format === "json" ? "JSON" : "Markdown"} report.`,
         confidence: "high",
         nextActions: [
@@ -301,7 +313,9 @@ async function callTool(params: ToolCallParams) {
       });
     }
     if (params.name === "run_scan") {
-      return toolResult(commandJson(scanArgs(args)), {
+      const options = scanOptions(args);
+      const { executeScanRun } = await import("@/src/lib/scan-cli");
+      return toolResult(await executeScanRun({ ...options, surface: "mcp" }), {
         summary: "Local scan completed after explicit confirmation.",
         confidence: "high",
         nextActions: [
@@ -319,13 +333,23 @@ async function callTool(params: ToolCallParams) {
       });
     }
     if (params.name === "get_anomalies") {
-      const cliArgs = ["anomalies", "--json"];
+      const cliArgs: string[] = [];
       if (typeof args.window === "number" && Number.isInteger(args.window)) {
         cliArgs.push(`--window=${args.window}`);
       }
       const metric = stringArg(args, "metric");
       if (metric) cliArgs.push(`--metric=${metric}`);
-      return toolResult(commandJson(cliArgs), {
+      const { parseAnomaliesArgs } = await import("@/src/lib/anomalies-cli");
+      const options = parseAnomaliesArgs(cliArgs);
+      const [{ getTrends }, { detectAnomalies, filterAnomalyReportByMetric }] = await Promise.all([
+        import("@/src/lib/analytics/trends"),
+        import("@/src/lib/anomaly-detection")
+      ]);
+      const report = filterAnomalyReportByMetric(
+        detectAnomalies(getTrends(), { windowSize: options.window }),
+        options.metric
+      );
+      return toolResult(report, {
         summary: "Returned the local daily-trend anomaly report (modified-z-score, MAD detector). Zero AI tokens spent.",
         confidence: "high",
         nextActions: [
@@ -344,7 +368,12 @@ async function callTool(params: ToolCallParams) {
     }
     if (params.name === "query_usage") {
       const cliArgs = queryUsageArgs(args);
-      return toolResult(commandJson(cliArgs), {
+      const [{ parseStructuredQueryArgs }, { runStructuredQuery }] = await Promise.all([
+        import("@/src/lib/structured-query-cli"),
+        import("@/src/lib/structured-query")
+      ]);
+      const parsed = parseStructuredQueryArgs(cliArgs.slice(1));
+      return toolResult(runStructuredQuery(parsed.args), {
         summary: "Returned a structured local usage query result. No natural-language parsing happened server-side.",
         confidence: "high",
         nextActions: [
@@ -362,11 +391,19 @@ async function callTool(params: ToolCallParams) {
       });
     }
     if (params.name === "get_classifications") {
-      const cliArgs = ["repair", "auto-classify", "--json"];
+      const cliArgs: string[] = [];
       if (typeof args.minConfidence === "number" && Number.isFinite(args.minConfidence)) {
         cliArgs.push(`--min-confidence=${args.minConfidence}`);
       }
-      return toolResult(commandJson(cliArgs), {
+      const { buildAutoClassifyResult, parseAutoClassifyArgs } = await import(
+        "@/src/lib/unknown-cost-repair/auto-classify-cli"
+      );
+      const options = parseAutoClassifyArgs(cliArgs);
+      const { buildUnknownCostRepairWorkbench } = await import("@/src/lib/unknown-cost-repair");
+      const result = buildAutoClassifyResult(buildUnknownCostRepairWorkbench(), {
+        minConfidence: options.minConfidence
+      });
+      return toolResult(result, {
         summary: "Returned local unknown-cost groups with deterministic classification suggestions.",
         confidence: "high",
         nextActions: [

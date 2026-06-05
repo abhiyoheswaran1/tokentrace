@@ -193,20 +193,11 @@ function parseArgs(argv: string[]) {
 }
 
 const options = parseArgs(args);
-const { buildUnknownCostRepairWorkbench } = await import("@/src/lib/unknown-cost-repair");
-const workbench = buildUnknownCostRepairWorkbench();
+const { buildUnknownCostRepairReport } = await import("@/src/lib/unknown-cost-repair");
+const workbench = buildUnknownCostRepairReport();
 
 if (options.json) {
-  console.log(
-    JSON.stringify(
-      {
-        generatedAt: new Date().toISOString(),
-        ...workbench
-      },
-      null,
-      2
-    )
-  );
+  console.log(JSON.stringify(workbench, null, 2));
 } else {
   console.log("TokenTrace Unknown Cost Repair");
   console.log(`${workbench.summary.totalInteractions.toLocaleString()} unknown-cost interactions`);

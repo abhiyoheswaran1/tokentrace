@@ -172,3 +172,33 @@ export function detectAnomalies(
     summary
   };
 }
+
+export type AnomalyMetricFilter = AnomalyMetric | "all";
+
+export function filterAnomalyReportByMetric(report: AnomalyReport, metric: AnomalyMetricFilter): AnomalyReport {
+  if (metric === "all") return report;
+  const anomalies = report.anomalies.filter((entry) => entry.metric === metric);
+  const latestAnomaly = anomalies[anomalies.length - 1];
+  return {
+    ...report,
+    anomalies,
+    summary: {
+      total: anomalies.length,
+      bySeverity: anomalies.reduce(
+        (current, entry) => {
+          current[entry.severity] += 1;
+          return current;
+        },
+        { notable: 0, high: 0, severe: 0 }
+      ),
+      byMetric: anomalies.reduce(
+        (current, entry) => {
+          current[entry.metric] += 1;
+          return current;
+        },
+        { tokens: 0, cost: 0 }
+      ),
+      latestAnomalyDate: latestAnomaly !== undefined ? latestAnomaly.date : null
+    }
+  };
+}
