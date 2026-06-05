@@ -4,10 +4,14 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.19.1 packaging fix release", () => {
+  it("documents the 0.19.2 quality hardening release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.19.1");
+    expect(packageJson.version).toBe("0.19.2");
+    expect(changelog).toContain("## [0.19.2] - 2026-06-05");
+    expect(changelog).toContain("MCP tools now run in-process");
+    expect(changelog).toContain("Stricter compile-time safety");
+    expect(changelog).toContain("CSV export keeps caller input out of header syntax");
     expect(changelog).toContain("## [0.19.1] - 2026-06-04");
     expect(changelog).toContain("Leaner npm package");
     expect(changelog).toContain("## [0.19.0] - 2026-06-04");

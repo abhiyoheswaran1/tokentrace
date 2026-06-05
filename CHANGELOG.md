@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.19.2] - 2026-06-05
+
 ### Changed
 
 - **MCP tools now run in-process.** The MCP server calls the same library

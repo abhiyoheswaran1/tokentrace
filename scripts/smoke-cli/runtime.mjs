@@ -18,7 +18,12 @@ export async function smokeWatch(context) {
     stderr += chunk.toString("utf8");
   });
 
-  const deadline = Date.now() + 5_000;
+  // The watch chain nests several node spawns (bin -> cli -> db-migrate ->
+  // status); on machines with slow process exec each spawn can cost seconds,
+  // so the deadline guards "produces output at all", not first-paint latency.
+  // Crashes still fail immediately via the exitCode check below.
+  const timeoutMs = Number(process.env.TOKENTRACE_SMOKE_WATCH_TIMEOUT_MS ?? 30_000);
+  const deadline = Date.now() + timeoutMs;
   try {
     while (Date.now() < deadline) {
       if (child.exitCode != null) {
