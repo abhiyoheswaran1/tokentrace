@@ -53,11 +53,11 @@ async function OverviewPrimarySection({ range }: { range: ResolvedDateRange }) {
     .map((entry) => ({ date: entry.date, value: entry.value, severity: entry.severity }));
 
   return (
-    <div className="space-y-8">
+    <div className="overview-primary-section space-y-7">
       {summary.interactions === 0 ? <FirstRunPanel status={firstRunStatus} /> : null}
       <UsagePulsePanel comparison={data.comparison} />
       <DataConfidenceStrip confidence={data.dataConfidence} />
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+      <div className="overview-summary-grid grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <TokenAccountingCard
           summary={summary}
           processedHref={evidenceLinks["processed-tokens"]}
@@ -109,7 +109,7 @@ async function OverviewRepairSection({ range }: { range: ResolvedDateRange }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="overview-repair-section space-y-7">
       {summary.interactions > 0 ? (
         <OverviewReviewStatusStrip
           report={doctorReport}
@@ -140,7 +140,7 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   const range = resolveDateRange(params);
 
   return (
-    <div className="space-y-8">
+    <div className="overview-workbench space-y-7">
       <PageHeader
         title="Overview"
         description="Local token, cost, model, and session analytics across AI CLI tools."

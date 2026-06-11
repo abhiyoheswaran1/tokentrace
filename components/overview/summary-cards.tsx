@@ -6,6 +6,34 @@ import { DataValue, FieldLabel } from "@/components/ui/typography";
 import { formatCurrency, formatTokens } from "@/src/lib/format";
 import { cn } from "@/src/lib/utils";
 
+type DetailItem = {
+  label: string;
+  value: string;
+};
+
+function EvidenceAction({
+  href,
+  label,
+  muted = false
+}: {
+  href: string;
+  label: string;
+  muted?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "inline-flex w-fit items-center gap-1.5 text-xs font-medium underline-offset-4 hover:underline",
+        muted ? "text-muted-foreground hover:text-foreground" : "text-primary"
+      )}
+    >
+      <span>{label}</span>
+      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+    </Link>
+  );
+}
+
 function CostSessionsMetricPane({
   label,
   value,
@@ -22,7 +50,7 @@ function CostSessionsMetricPane({
 }: {
   label: string;
   value: string;
-  detailItems: string[];
+  detailItems: DetailItem[];
   href: string;
   actionLabel: string;
   secondaryHref?: string;
@@ -36,7 +64,7 @@ function CostSessionsMetricPane({
   return (
     <section
       className={cn(
-        "cost-sessions-section grid min-w-0 grid-rows-[auto_auto_auto_auto_1fr_auto] p-4 md:row-span-6 md:grid-rows-subgrid",
+        "cost-sessions-section cost-sessions-metric-pane grid min-w-0 grid-rows-[auto_auto_auto_auto_1fr_auto] p-4 md:row-span-6 md:grid-rows-subgrid",
         className
       )}
     >
@@ -53,8 +81,9 @@ function CostSessionsMetricPane({
 
       <div className="mt-3 flex flex-wrap items-start gap-x-2 gap-y-1 text-xs leading-snug text-muted-foreground">
         {detailItems.map((item, index) => (
-          <span key={item} className="inline-flex min-w-0 items-center gap-2">
-            <span className="min-w-0">{item}</span>
+          <span key={item.label} className="inline-flex min-w-0 items-center gap-1.5">
+            <span className="font-medium text-foreground">{item.label}</span>
+            <span className="min-w-0">{item.value}</span>
             {index < detailItems.length - 1 ? <span className="hidden text-border sm:inline">/</span> : null}
           </span>
         ))}
@@ -67,16 +96,14 @@ function CostSessionsMetricPane({
 
       <div aria-hidden="true" />
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-4">
-        <Link href={href} className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline">
-          {actionLabel}
-          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-        </Link>
-        {secondaryHref ? (
-          <Link href={secondaryHref} className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
-            {secondaryActionLabel ?? "View details"}
-          </Link>
-        ) : null}
+      <div className="pt-4">
+        <FieldLabel className="mb-2">Local evidence</FieldLabel>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <EvidenceAction href={href} label={actionLabel} />
+          {secondaryHref ? (
+            <EvidenceAction href={secondaryHref} label={secondaryActionLabel ?? "View details"} muted />
+          ) : null}
+        </div>
       </div>
     </section>
   );
@@ -124,9 +151,9 @@ export function CostSessionsCard({
             value={formatCurrency(summary.totalCost)}
             valueClassName="wrap-break-word text-2xl"
             detailItems={[
-              `${formatCurrency(summary.exactCost)} exact`,
-              `${formatCurrency(summary.estimatedCost)} estimated`,
-              `${summary.unknownCostInteractions.toLocaleString()} unknown`
+              { label: "Exact", value: formatCurrency(summary.exactCost) },
+              { label: "Estimated", value: formatCurrency(summary.estimatedCost) },
+              { label: "Unknown", value: summary.unknownCostInteractions.toLocaleString() }
             ]}
             href={costHref}
             actionLabel={costActionLabel}
@@ -140,7 +167,7 @@ export function CostSessionsCard({
             className="border-t md:border-l md:border-t-0"
             label="Sessions"
             value={summary.sessions.toLocaleString()}
-            detailItems={[`${summary.interactions.toLocaleString()} interactions`]}
+            detailItems={[{ label: "Interactions", value: summary.interactions.toLocaleString() }]}
             href={sessionsHref}
             actionLabel="View evidence"
             trustLabel="Session trust"
@@ -195,8 +222,8 @@ export function TokenAccountingCard({
 }) {
   const evidenceActions = [
     { label: "Processed", href: processedHref },
-    { label: "Fresh", href: freshHref },
-    { label: "Cache", href: cacheHref }
+    { label: "Fresh / non-cache", href: freshHref },
+    { label: "Cache read/write", href: cacheHref }
   ];
 
   return (
@@ -248,7 +275,7 @@ export function TokenAccountingCard({
             detail={`${formatTokens(summary.inputTokens)} input / ${formatTokens(summary.outputTokens)} output / ${formatTokens(summary.reasoningTokens)} reasoning`}
           />
           <TokenAccountingSlice
-            label="Cache"
+            label="Cache read/write"
             value={formatTokens(summary.cachedTokens)}
             detail={`${formatTokens(summary.cacheReadTokens)} read / ${formatTokens(summary.cacheWriteTokens)} write`}
           />
@@ -261,19 +288,22 @@ export function TokenAccountingCard({
           </span>
         </p>
 
-        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4">
-          {evidenceActions.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              aria-label={`View ${action.label.toLowerCase()} token evidence`}
-              className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline"
-            >
-              <span className="text-muted-foreground">{action.label}</span>
-              <span>View evidence</span>
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          ))}
+        <div className="mt-auto pt-4">
+          <FieldLabel className="mb-2">Local evidence</FieldLabel>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {evidenceActions.map((action) => (
+              <Link
+                key={action.href}
+                href={action.href}
+                aria-label={`View ${action.label.toLowerCase()} token evidence`}
+                className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline"
+              >
+                <span className="text-muted-foreground">{action.label}</span>
+                <span>View evidence</span>
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

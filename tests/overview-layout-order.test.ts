@@ -74,4 +74,24 @@ describe("Overview layout order", () => {
     expect(source).toContain("Exact, estimated, and unknown costs stay split.");
     expect(source).toContain("Scan freshness is shown in Review Status.");
   });
+
+  it("uses named Overview workbench sections for scan rhythm", () => {
+    const source = fs.readFileSync(path.join(process.cwd(), "app/page.tsx"), "utf8");
+
+    expect(source).toContain("overview-workbench");
+    expect(source).toContain("overview-primary-section");
+    expect(source).toContain("overview-summary-grid");
+    expect(source).toContain("overview-repair-section");
+  });
+
+  it("labels local evidence actions and accounting states near summary numbers", () => {
+    const source = fs.readFileSync(path.join(process.cwd(), "components/overview/summary-cards.tsx"), "utf8");
+
+    expect(source).toContain("Local evidence");
+    expect(source).toContain("Exact");
+    expect(source).toContain("Estimated");
+    expect(source).toContain("Unknown");
+    expect(source).toContain("Fresh / non-cache");
+    expect(source).toContain("Cache read/write");
+  });
 });

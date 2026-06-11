@@ -11,7 +11,12 @@ describe("Overview metric card divider alignment", () => {
     expect(page).toContain("<CostSessionsCard");
     expect(source).toContain("cost-sessions-card");
     expect(source).toContain("cost-sessions-section");
+    expect(source).toContain("cost-sessions-metric-pane");
     expect(source).toContain("Cost & Sessions");
+    expect(source).toContain("Local evidence");
+    expect(source).toContain("Exact");
+    expect(source).toContain("Estimated");
+    expect(source).toContain("Unknown");
     expect(source).toContain('id="cost-sessions-help"');
     expect(source).toContain('label="Cost & Sessions"');
     expect(source).toContain('label="Cost"');
