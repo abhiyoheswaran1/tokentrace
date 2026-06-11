@@ -67,6 +67,10 @@ const supportNavItems = [
 ];
 
 const primaryNavItems = navSections.flatMap((section) => section.items);
+const sidebarSections = [
+  ...navSections.map((section) => ({ ...section, variant: "default" as const })),
+  { label: "Reference", items: supportNavItems, variant: "support" as const }
+];
 
 const priorityMobileItems = primaryNavItems.filter((item) =>
   ["/", "/sessions", "/repair", "/diagnostics", "/settings"].includes(item.href)
@@ -161,26 +165,23 @@ export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string 
           </div>
         </div>
         <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto p-3">
-          <div className="space-y-5">
-            {navSections.map((section) => (
+          <div className="space-y-4">
+            {sidebarSections.map((section) => (
               <section key={section.label} aria-label={`${section.label} navigation`} className="space-y-1">
                 <div className="px-3 pb-1 text-[0.68rem] font-semibold uppercase leading-none tracking-normal text-muted-foreground">
                   {section.label}
                 </div>
                 {section.items.map((item) => (
-                  <NavLink key={item.href} item={item} isActive={isActiveRoute(pathname, item.href)} />
+                  <NavLink
+                    key={item.href}
+                    item={item}
+                    variant={section.variant}
+                    isActive={isActiveRoute(pathname, item.href)}
+                  />
                 ))}
               </section>
             ))}
           </div>
-        </nav>
-        <nav aria-label="Reference navigation" className="border-t p-3">
-          <div className="px-3 pb-2 text-[0.68rem] font-semibold uppercase leading-none tracking-normal text-muted-foreground">
-            Reference
-          </div>
-          {supportNavItems.map((item) => (
-            <NavLink key={item.href} item={item} variant="support" isActive={isActiveRoute(pathname, item.href)} />
-          ))}
         </nav>
         <div className="border-t p-4 text-xs text-muted-foreground">
           <div className="mb-2 text-[0.68rem] font-semibold uppercase leading-none tracking-normal text-muted-foreground">

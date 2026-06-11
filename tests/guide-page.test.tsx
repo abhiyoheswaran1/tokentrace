@@ -109,7 +109,7 @@ describe("Guide page", () => {
 
     expect(desktop).toContain('aria-label="Primary navigation"');
     expect(desktop).toContain('aria-label="Reference navigation"');
-    expect(desktop).toContain('aria-label="Reference navigation" class="border-t p-3"');
+    expect(desktop).toContain('aria-label="Reference navigation" class="space-y-1"');
     expect(desktop).toContain('href="/guide"');
     expect(desktop).not.toContain('aria-label="Help navigation"');
     expect(desktopText).not.toContain("Help");
