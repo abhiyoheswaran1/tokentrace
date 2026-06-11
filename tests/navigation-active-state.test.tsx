@@ -16,7 +16,24 @@ describe("active navigation state", () => {
 
     expect(html).toContain('href="/repair"');
     expect(html).toContain('aria-current="page"');
-    expect(html).toContain("bg-primary/10");
+    expect(html).toContain("bg-muted");
+    expect(html).toContain("text-primary");
+  });
+
+  it("groups desktop navigation into task areas without changing route URLs", () => {
+    currentPath = "/repair";
+    const html = renderToStaticMarkup(<Sidebar appVersion="0.10.0" />);
+    const text = html.replace(/<[^>]*>/g, "");
+
+    expect(text).toContain("Analyze");
+    expect(text).toContain("Investigate");
+    expect(text).toContain("Maintain");
+    expect(text).toContain("Reference");
+    expect(html).toContain('aria-label="Analyze navigation"');
+    expect(html).toContain('aria-label="Investigate navigation"');
+    expect(html).toContain('href="/repair"');
+    expect(html).toContain('aria-current="page"');
+    expect(html).toContain("bg-muted");
     expect(html).toContain("text-primary");
   });
 

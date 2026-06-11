@@ -26,27 +26,47 @@ import { formatAppVersion, getAppVersion } from "@/src/lib/app-version";
 import { cn } from "@/src/lib/utils";
 
 const overviewNavItem = { href: "/", label: "Overview", icon: Gauge };
+const toolsNavItem = { href: "/tools", label: "Tools", icon: Terminal };
+const modelsNavItem = { href: "/models", label: "Models", icon: Bot };
+const projectsNavItem = { href: "/projects", label: "Projects", icon: FolderGit2 };
+const sessionsNavItem = { href: "/sessions", label: "Sessions", icon: Search };
+const insightsNavItem = { href: "/optimisation", label: "Insights", icon: Sparkles };
+const queryNavItem = { href: "/query", label: "Query", icon: Database };
+const repairNavItem = { href: "/repair", label: "Repair", icon: Wrench };
+const pricingNavItem = { href: "/pricing", label: "Model Rates", icon: SlidersHorizontal };
+const diagnosticsNavItem = { href: "/diagnostics", label: "Scan Health", icon: ClipboardList };
+const discoveryNavItem = { href: "/discovery", label: "Discovery", icon: BarChart3 };
+const parsersNavItem = { href: "/parser-debug", label: "Parsers", icon: Bug };
+const rawDataNavItem = { href: "/debug", label: "Raw Data", icon: Bug };
+const settingsNavItem = { href: "/settings", label: "Settings", icon: Settings };
 
-const primaryNavItems = [
-  overviewNavItem,
-  { href: "/tools", label: "Tools", icon: Terminal },
-  { href: "/models", label: "Models", icon: Bot },
-  { href: "/projects", label: "Projects", icon: FolderGit2 },
-  { href: "/sessions", label: "Sessions", icon: Search },
-  { href: "/optimisation", label: "Insights", icon: Sparkles },
-  { href: "/query", label: "Query", icon: Database },
-  { href: "/repair", label: "Repair", icon: Wrench },
-  { href: "/pricing", label: "Model Rates", icon: SlidersHorizontal },
-  { href: "/diagnostics", label: "Scan Health", icon: ClipboardList },
-  { href: "/discovery", label: "Discovery", icon: BarChart3 },
-  { href: "/parser-debug", label: "Parsers", icon: Bug },
-  { href: "/debug", label: "Raw Data", icon: Bug },
-  { href: "/settings", label: "Settings", icon: Settings }
+const navSections = [
+  {
+    label: "Analyze",
+    items: [overviewNavItem, toolsNavItem, modelsNavItem, projectsNavItem]
+  },
+  {
+    label: "Investigate",
+    items: [sessionsNavItem, insightsNavItem, queryNavItem, repairNavItem]
+  },
+  {
+    label: "Maintain",
+    items: [
+      pricingNavItem,
+      diagnosticsNavItem,
+      discoveryNavItem,
+      parsersNavItem,
+      rawDataNavItem,
+      settingsNavItem
+    ]
+  }
 ];
 
 const supportNavItems = [
   { href: "/guide", label: "Guide", icon: BookOpen }
 ];
+
+const primaryNavItems = navSections.flatMap((section) => section.items);
 
 const priorityMobileItems = primaryNavItems.filter((item) =>
   ["/", "/sessions", "/repair", "/diagnostics", "/settings"].includes(item.href)
@@ -76,7 +96,7 @@ function NavLink({
     : cn(
         "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
         isActive
-          ? "bg-primary/10 font-medium text-primary"
+          ? "bg-muted font-medium text-primary shadow-xs ring-1 ring-border/60"
           : variant === "support"
             ? "border bg-muted/40 font-medium text-foreground hover:bg-muted"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -140,17 +160,32 @@ export function Sidebar({ appVersion = getAppVersion() }: { appVersion?: string 
             </div>
           </div>
         </div>
-        <nav aria-label="Primary navigation" className="flex-1 space-y-1 overflow-y-auto p-3">
-          {primaryNavItems.map((item) => (
-            <NavLink key={item.href} item={item} isActive={isActiveRoute(pathname, item.href)} />
-          ))}
+        <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto p-3">
+          <div className="space-y-5">
+            {navSections.map((section) => (
+              <section key={section.label} aria-label={`${section.label} navigation`} className="space-y-1">
+                <div className="px-3 pb-1 text-[0.68rem] font-semibold uppercase leading-none tracking-normal text-muted-foreground">
+                  {section.label}
+                </div>
+                {section.items.map((item) => (
+                  <NavLink key={item.href} item={item} isActive={isActiveRoute(pathname, item.href)} />
+                ))}
+              </section>
+            ))}
+          </div>
         </nav>
-        <nav aria-label="Help navigation" className="p-3">
+        <nav aria-label="Reference navigation" className="border-t p-3">
+          <div className="px-3 pb-2 text-[0.68rem] font-semibold uppercase leading-none tracking-normal text-muted-foreground">
+            Reference
+          </div>
           {supportNavItems.map((item) => (
             <NavLink key={item.href} item={item} variant="support" isActive={isActiveRoute(pathname, item.href)} />
           ))}
         </nav>
         <div className="border-t p-4 text-xs text-muted-foreground">
+          <div className="mb-2 text-[0.68rem] font-semibold uppercase leading-none tracking-normal text-muted-foreground">
+            Local processing
+          </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-relaxed">
             <span className="font-medium text-foreground">{formatAppVersion(appVersion)}</span>
             <span aria-hidden="true">·</span>
