@@ -6,6 +6,13 @@ All notable changes to TokenTrace are documented here.
 
 ### Changed
 
+- **Overview and shell UI polish.** The dashboard shell now groups navigation by
+  task area, and the Overview summary surface makes local evidence,
+  cached/non-cache token states, and exact/estimated/unknown cost distinctions
+  easier to scan.
+- **ChatGPT app feasibility documented.** Added a recommendation to prototype
+  only a private, redacted evidence-pack ChatGPT app workflow until public
+  distribution can preserve TokenTrace's local-first privacy boundary.
 - **Product website moved to Baseframe Labs.** The package `homepage`, MCP
   registry `websiteUrl`, README link, and in-app guide link now point to
   `https://www.baseframelabs.com/apps/tokentrace`. The previous
