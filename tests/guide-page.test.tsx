@@ -108,11 +108,12 @@ describe("Guide page", () => {
     const versionIndex = desktopText.indexOf("v0.10.0");
 
     expect(desktop).toContain('aria-label="Primary navigation"');
-    expect(desktop).toContain('aria-label="Help navigation"');
-    expect(desktop).toContain('aria-label="Help navigation" class="p-3"');
+    expect(desktop).toContain('aria-label="Reference navigation"');
+    expect(desktop).toContain('aria-label="Reference navigation" class="border-t p-3"');
     expect(desktop).toContain('href="/guide"');
-    expect(desktop).not.toContain('aria-label="Help navigation" class="border-t');
+    expect(desktop).not.toContain('aria-label="Help navigation"');
     expect(desktopText).not.toContain("Help");
+    expect(desktopText).toContain("Reference");
     expect(guideIndex).toBeGreaterThan(settingsIndex);
     expect(guideIndex).toBeLessThan(versionIndex);
     expect(mobile).toContain('href="/guide"');
