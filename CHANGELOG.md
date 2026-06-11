@@ -13,6 +13,9 @@ All notable changes to TokenTrace are documented here.
 - **ChatGPT app feasibility documented.** Added a recommendation to prototype
   only a private, redacted evidence-pack ChatGPT app workflow until public
   distribution can preserve TokenTrace's local-first privacy boundary.
+- **Development dashboard CSP avoids React issue noise.** The local dev server
+  now allows React's development-only diagnostics without relaxing the
+  production Content Security Policy.
 - **Product website moved to Baseframe Labs.** The package `homepage`, MCP
   registry `websiteUrl`, README link, and in-app guide link now point to
   `https://www.baseframelabs.com/apps/tokentrace`. The previous

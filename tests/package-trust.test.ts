@@ -32,6 +32,16 @@ describe("package trust policy", () => {
     expect(nextConfig).toContain('"localhost"');
   });
 
+  it("keeps production CSP strict while allowing React dev diagnostics to run", () => {
+    const nextConfig = readFileSync(join(process.cwd(), "next.config.mjs"), "utf8");
+
+    expect(nextConfig).toContain("const scriptSrc");
+    expect(nextConfig).toContain('process.env.NODE_ENV === "production"');
+    expect(nextConfig).toContain('"script-src \'self\' \'unsafe-inline\'"');
+    expect(nextConfig).toContain('"script-src \'self\' \'unsafe-inline\' \'unsafe-eval\'"');
+    expect(nextConfig).toContain("scriptSrc,");
+  });
+
   it("declares a patched Next.js dependency floor", () => {
     expect(packageJson.dependencies.next).toBe("^16.2.6");
   });

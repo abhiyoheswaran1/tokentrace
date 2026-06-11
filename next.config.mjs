@@ -16,11 +16,17 @@ const productionExperimentalConfig =
     ? { ...baseExperimental, serverMinification: false }
     : baseExperimental;
 
+const scriptSrc =
+  process.env.NODE_ENV === "production"
+    ? "script-src 'self' 'unsafe-inline'"
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
+
 // Defense-in-depth response headers for the local dashboard. The CSP keeps all
 // resource loads same-origin (no third-party script/connect surface), and the
 // frame protections block clickjacking of the unauthenticated UI. 'unsafe-inline'
 // is required because Next.js injects inline bootstrap/hydration scripts and
-// styles; everything else is locked to 'self'.
+// styles. React development diagnostics need 'unsafe-eval' only outside
+// production; production remains locked to self plus inline Next bootstrap code.
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -30,7 +36,7 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
