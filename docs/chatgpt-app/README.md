@@ -17,7 +17,8 @@ npm run release:chatgpt:check -- --mcp-url https://YOUR_HOSTED_DOMAIN/mcp
 - `test-prompts-and-responses.md` - prompts and expected results for reviewer testing.
 - `screenshot-checklist.md` - screenshots to capture from ChatGPT developer mode.
 - `review-response-template.md` - templates for responding to review feedback.
-- `assets/` - SVG icon, listing card, and widget preview assets.
+- `assets/icon.png` - ChatGPT app icon. PNG only, 256 x 256 px, under 10 KB.
+- `assets/listing-card.svg` and `assets/widget-preview.svg` - optional supporting visuals that use the existing TokenTrace dashboard visual language.
 
 ## Manual Step
 

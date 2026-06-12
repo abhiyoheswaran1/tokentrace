@@ -50,7 +50,7 @@ Use `dashboard-fields.json` and `submission-copy.md` for paste-ready content.
 Required fields commonly include:
 
 1. App name.
-2. Logo or icon.
+2. App icon: upload `docs/chatgpt-app/assets/icon.png`. OpenAI requires PNG only; this file is 256 x 256 px and under 10 KB.
 3. Description.
 4. Company or publisher name.
 5. Privacy policy URL.

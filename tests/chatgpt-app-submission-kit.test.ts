@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import packageJson from "@/package.json";
 import { describe, expect, it } from "vitest";
@@ -7,6 +7,18 @@ const kitRoot = join(process.cwd(), "docs/chatgpt-app");
 
 function readKitFile(relativePath: string) {
   return readFileSync(join(kitRoot, relativePath), "utf8");
+}
+
+function readPngDimensions(relativePath: string) {
+  const image = readFileSync(join(kitRoot, relativePath));
+  const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+  expect(image.subarray(0, 8).equals(pngSignature)).toBe(true);
+
+  return {
+    width: image.readUInt32BE(16),
+    height: image.readUInt32BE(20)
+  };
 }
 
 describe("ChatGPT app submission kit", () => {
@@ -25,6 +37,12 @@ describe("ChatGPT app submission kit", () => {
     const fields = JSON.parse(readKitFile("dashboard-fields.json"));
 
     expect(fields.appName).toBe("TokenTrace");
+    expect(fields.appIcon).toMatchObject({
+      path: "assets/icon.png",
+      format: "PNG",
+      minimumSize: "256x256",
+      maxFileSizeBytes: 10_000
+    });
     expect(fields.connectorUrlPlaceholder).toBe("https://YOUR_HOSTED_DOMAIN/mcp");
     expect(fields.tools).toContainEqual(
       expect.objectContaining({
@@ -46,10 +64,16 @@ describe("ChatGPT app submission kit", () => {
   });
 
   it("includes image assets for the ChatGPT app submission package", () => {
-    const realLogo = readFileSync(join(process.cwd(), "docs/assets/tokentrace-logo.svg"), "utf8").trim();
-    expect(readKitFile("assets/icon.svg").trim()).toBe(realLogo);
+    const iconPath = join(kitRoot, "assets/icon.png");
+    const dimensions = readPngDimensions("assets/icon.png");
 
-    for (const asset of ["assets/icon.svg", "assets/listing-card.svg", "assets/widget-preview.svg"]) {
+    expect(existsSync(iconPath)).toBe(true);
+    expect(existsSync(join(kitRoot, "assets/icon.svg"))).toBe(false);
+    expect(statSync(iconPath).size).toBeLessThanOrEqual(10_000);
+    expect(dimensions.width).toBeGreaterThanOrEqual(256);
+    expect(dimensions.height).toBeGreaterThanOrEqual(256);
+
+    for (const asset of ["assets/listing-card.svg", "assets/widget-preview.svg"]) {
       expect(existsSync(join(kitRoot, asset))).toBe(true);
       const svg = readKitFile(asset);
       expect(svg).toContain("<svg");
@@ -62,5 +86,7 @@ describe("ChatGPT app submission kit", () => {
 
     expect(packageJson.files).toContain("docs/chatgpt-app");
     expect(inspectScript).toContain("docs/chatgpt-app/manual-release-steps.md");
+    expect(inspectScript).toContain("docs/chatgpt-app/assets/icon.png");
+    expect(inspectScript).not.toContain("docs/chatgpt-app/assets/icon.svg");
   });
 });

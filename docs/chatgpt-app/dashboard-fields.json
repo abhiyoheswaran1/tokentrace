@@ -1,5 +1,12 @@
 {
   "appName": "TokenTrace",
+  "appIcon": {
+    "path": "assets/icon.png",
+    "format": "PNG",
+    "minimumSize": "256x256",
+    "actualSize": "256x256",
+    "maxFileSizeBytes": 10000
+  },
   "publisherName": "Abhi Yoheswaran",
   "connectorName": "TokenTrace",
   "connectorUrlPlaceholder": "https://YOUR_HOSTED_DOMAIN/mcp",

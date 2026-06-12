@@ -69,7 +69,7 @@ const requiredPackageFiles = [
   "llms.txt",
   "docs/chatgpt-app/manual-release-steps.md",
   "docs/chatgpt-app/dashboard-fields.json",
-  "docs/chatgpt-app/assets/icon.svg",
+  "docs/chatgpt-app/assets/icon.png",
   "docs/CHATGPT_APP_RELEASE.md",
   "docs/CHATGPT_APP_PROTOTYPE.md",
   "docs/agent-adoption.md",
