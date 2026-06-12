@@ -4,10 +4,16 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.19.2 quality hardening release", () => {
+  it("documents the 0.20.0 ChatGPT app release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.19.2");
+    expect(packageJson.version).toBe("0.20.0");
+    expect(changelog).toContain("## [0.20.0] - 2026-06-12");
+    expect(changelog).toContain("Overview and shell UI polish");
+    expect(changelog).toContain("ChatGPT app feasibility documented");
+    expect(changelog).toContain("Private ChatGPT app prototype");
+    expect(changelog).toContain("ChatGPT app release readiness");
+    expect(changelog).toContain("ChatGPT app submission kit");
     expect(changelog).toContain("## [0.19.2] - 2026-06-05");
     expect(changelog).toContain("MCP tools now run in-process");
     expect(changelog).toContain("Stricter compile-time safety");
@@ -67,7 +73,6 @@ describe("next release scope", () => {
       "0.16.0 Parser Studio",
       "0.17.0 Reports",
       "0.18.0 Agent Handoff",
-      "0.20.0",
       "rolled-up release themes",
       "next planned release"
     ];

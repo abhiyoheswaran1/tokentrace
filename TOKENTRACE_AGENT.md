@@ -44,6 +44,17 @@ The MCP server does not scan on startup. Its `run_scan` tool requires
 `confirmLocalScan=true` before reading local usage files or writing the local
 database.
 
+Private ChatGPT developer-mode prototype:
+
+```bash
+tokentrace chatgpt-app selftest --json
+tokentrace chatgpt-app --port 8787 --hostname 127.0.0.1
+```
+
+This starts a local HTTP `/mcp` server for one read-only redacted evidence-pack
+tool. ChatGPT requires an HTTPS tunnel for developer-mode connector testing.
+See `docs/CHATGPT_APP_PROTOTYPE.md`.
+
 If the local dashboard is already running, the same manifest is available from:
 
 ```bash

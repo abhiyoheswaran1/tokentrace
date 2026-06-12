@@ -30,6 +30,18 @@ jobs:
       - name: Verify release package
         run: npm run release:check
 
+      - name: Verify hosted ChatGPT app readiness
+        env:
+          CHATGPT_APP_MCP_URL: ${{ secrets.CHATGPT_APP_MCP_URL }}
+        run: |
+          if [ -z "${CHATGPT_APP_MCP_URL}" ]; then
+            echo "CHATGPT_APP_MCP_URL is not configured; skipping hosted ChatGPT app readiness check."
+            echo "Public ChatGPT app submission and publish remain a manual OpenAI Dashboard gate."
+            exit 0
+          fi
+          npm run release:chatgpt:check -- --mcp-url "${CHATGPT_APP_MCP_URL}"
+          echo "Hosted ChatGPT app readiness checks passed. Submit or publish from the OpenAI Dashboard manual gate."
+
       - name: Verify tag matches package version
         run: |
           VERSION=$(node -p "require('./package.json').version")

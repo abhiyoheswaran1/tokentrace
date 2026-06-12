@@ -51,6 +51,7 @@ describe("agent discovery manifest", () => {
         "digest",
         "roadmap",
         "mcp",
+        "chatgpt-app",
         "status",
         "claude-statusline",
         "watch",
@@ -109,6 +110,12 @@ describe("agent discovery manifest", () => {
       startsLongRunningProcess: true,
       output: "terminal"
     });
+    expect(manifest.commands.find((command) => command.id === "chatgpt-app")).toMatchObject({
+      command: ["tokentrace", "chatgpt-app"],
+      mutatesLocalState: false,
+      startsLongRunningProcess: true,
+      output: "terminal"
+    });
     expect(manifest.integrations.claudeCode.statusLineSetupCommand).toEqual([
       "tokentrace",
       "statusline",
@@ -163,6 +170,7 @@ describe("agent discovery manifest", () => {
       expect.arrayContaining([
         "TOKENTRACE_AGENT.md",
         "llms.txt",
+        "docs/CHATGPT_APP_PROTOTYPE.md",
         "docs/agent-adoption.md",
         "docs/agent-discovery.schema.json"
       ])
@@ -170,10 +178,12 @@ describe("agent discovery manifest", () => {
     expect(agentGuide).toContain("tokentrace agent --json");
     expect(agentGuide).toContain("tokentrace capabilities --json");
     expect(agentGuide).toContain("tokentrace mcp");
+    expect(agentGuide).toContain("tokentrace chatgpt-app");
     expect(agentGuide).toContain("get_agent_guide");
     expect(agentGuide).toContain("tokentrace reset");
     expect(llmsText).toContain("tokentrace agent --json");
     expect(llmsText).toContain("tokentrace mcp");
+    expect(llmsText).toContain("tokentrace chatgpt-app");
     expect(llmsText).toContain("get_agent_guide");
     expect(llmsText).toContain("Local-first");
     expect(adoptionGuide).toContain("io.github.abhiyoheswaran1/tokentrace");

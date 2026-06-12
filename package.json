@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.19.2",
+  "version": "0.20.0",
   "mcpName": "io.github.abhiyoheswaran1/tokentrace",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {
@@ -27,6 +27,9 @@
     "!public/Baseframe-Labs-brand-assets",
     "app",
     "components",
+    "docs/chatgpt-app",
+    "docs/CHATGPT_APP_RELEASE.md",
+    "docs/CHATGPT_APP_PROTOTYPE.md",
     "docs/agent-adoption.md",
     "docs/agent-discovery.schema.json",
     "docs/assets",
@@ -62,12 +65,13 @@
     "verify": "npm test && tsc --noEmit && npm run lint",
     "package:inspect": "node scripts/package-inspect.mjs",
     "release:notes": "node scripts/extract-release-notes.mjs",
+    "release:chatgpt:check": "node scripts/chatgpt-app-release-check.mjs",
     "security:ioc": "node scripts/security-ioc.mjs",
     "security:package": "npm run package:inspect && npm audit --audit-level=moderate",
     "smoke:cli": "npm run build && node scripts/smoke-cli.mjs",
     "smoke:packed": "node scripts/smoke-packed-install.mjs",
     "package:test": "npm run verify && npm pack --dry-run",
-    "release:check": "npm run package:test && npm run smoke:cli && npm run smoke:packed && npm run security:ioc && npm run security:package && npm run projscan:doctor",
+    "release:check": "npm run package:test && npm run smoke:cli && npm run smoke:packed && npm run release:chatgpt:check && npm run security:ioc && npm run security:package && npm run projscan:doctor",
     "visual:smoke": "node scripts/visual-smoke.mjs",
     "browser:guard": "node scripts/browser-issue-guard.mjs",
     "projscan:doctor": "npx --yes projscan@latest doctor",
@@ -95,6 +99,8 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.7.4",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@radix-ui/react-slot": "^1.1.1",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^22.19.19",
@@ -113,7 +119,8 @@
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

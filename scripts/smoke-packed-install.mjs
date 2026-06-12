@@ -128,6 +128,11 @@ function assertDiscoverySmoke(bin, cwd, env) {
   if (selftest.ok !== true || !selftest.tools?.includes("get_agent_guide")) {
     throw new Error("Packed tokentrace mcp selftest did not verify the agent guide tool.");
   }
+
+  const chatgptSelftest = runJson(bin, ["chatgpt-app", "selftest", "--json"], { cwd, env });
+  if (chatgptSelftest.ok !== true || !chatgptSelftest.tools?.includes("get_redacted_evidence_pack")) {
+    throw new Error("Packed tokentrace chatgpt-app selftest did not verify the redacted evidence-pack tool.");
+  }
 }
 
 function findFreePort(hostname) {

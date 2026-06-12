@@ -50,6 +50,10 @@ async function mcp(context: CliContext, args: readonly string[]): Promise<void> 
   await runNodeScript(context, "mcp", [], { env: process.env });
 }
 
+async function chatGptApp(context: CliContext, args: readonly string[]): Promise<void> {
+  await runNodeScript(context, "chatgpt-app", args, { env: process.env });
+}
+
 async function doctor(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "doctor", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
@@ -270,6 +274,10 @@ export async function runCliCommand(
   }
   if (command === "mcp") {
     await mcp(context, args);
+    return;
+  }
+  if (command === "chatgpt-app") {
+    await chatGptApp(context, args);
     return;
   }
   if (command === "scan") {

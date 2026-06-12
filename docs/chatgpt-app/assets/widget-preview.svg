@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
+  <title id="title">TokenTrace widget preview</title>
+  <desc id="desc">Preview of the TokenTrace redacted evidence pack widget.</desc>
+  <rect width="1400" height="900" fill="#fcfaf8"/>
+  <rect x="170" y="92" width="1060" height="716" rx="12" fill="#FFFFFF" stroke="#ddd6ce" stroke-width="3"/>
+  <text x="230" y="176" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="760" fill="#172026">TokenTrace Evidence Pack</text>
+  <text x="230" y="226" font-family="Inter, Arial, sans-serif" font-size="26" fill="#52616b">Redacted summary for ChatGPT review</text>
+  <rect x="230" y="284" width="940" height="110" rx="8" fill="#f4f1ec" stroke="#ddd6ce" stroke-width="2"/>
+  <text x="266" y="352" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700" fill="#172026">Raw content included: no</text>
+  <rect x="230" y="444" width="280" height="150" rx="8" fill="#ffffff" stroke="#ddd6ce" stroke-width="2"/>
+  <text x="262" y="506" font-family="Inter, Arial, sans-serif" font-size="26" fill="#52616b">Tokens</text>
+  <text x="262" y="558" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="760" fill="#172026">36.2B</text>
+  <rect x="560" y="444" width="280" height="150" rx="8" fill="#ffffff" stroke="#ddd6ce" stroke-width="2"/>
+  <text x="592" y="506" font-family="Inter, Arial, sans-serif" font-size="26" fill="#52616b">Cost</text>
+  <text x="592" y="558" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="760" fill="#172026">$20.9K</text>
+  <rect x="890" y="444" width="280" height="150" rx="8" fill="#ffffff" stroke="#ddd6ce" stroke-width="2"/>
+  <text x="922" y="506" font-family="Inter, Arial, sans-serif" font-size="26" fill="#52616b">Sessions</text>
+  <text x="922" y="558" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="760" fill="#172026">808</text>
+  <text x="230" y="670" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700" fill="#172026">Confidence drivers</text>
+  <circle cx="250" cy="724" r="8" fill="#147b74"/>
+  <text x="276" y="734" font-family="Inter, Arial, sans-serif" font-size="24" fill="#52616b">Unknown-cost interactions need review</text>
+  <circle cx="250" cy="764" r="8" fill="#f2742c"/>
+  <text x="276" y="774" font-family="Inter, Arial, sans-serif" font-size="24" fill="#52616b">Exact and estimated costs are labeled separately</text>
+</svg>

@@ -30,6 +30,7 @@ const sharedBuildOptions = {
 const entryPoints = {
   agent: "scripts/agent.ts",
   anomalies: "scripts/anomalies.ts",
+  "chatgpt-app": "scripts/chatgpt-app.ts",
   "db-migrate": "scripts/db-migrate.ts",
   "db-seed": "scripts/db-seed.ts",
   digest: "scripts/digest.ts",

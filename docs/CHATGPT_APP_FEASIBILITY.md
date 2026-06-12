@@ -6,6 +6,8 @@ Do not pursue a public ChatGPT app release yet. Build a private developer-mode p
 
 The safest first experiment is a read-only evidence-pack workflow: the local TokenTrace CLI produces a user-selected, redacted artifact, and the ChatGPT app explains that artifact without scanning the user's machine.
 
+Prototype status: TokenTrace now includes a private developer-mode prototype for this workflow. See `docs/CHATGPT_APP_PROTOTYPE.md`.
+
 ## Can
 
 TokenTrace can technically become a ChatGPT app. OpenAI's Apps SDK is built around an MCP server, tool metadata, and optional embedded UI components. TokenTrace already has MCP-oriented discovery, tool concepts, local reports, and structured evidence surfaces.

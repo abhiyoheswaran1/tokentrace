@@ -1,4 +1,6 @@
 import { formatCurrency, formatExactTokens } from "@/src/lib/format";
+import { getAnalyticsData } from "@/src/lib/analytics";
+import { buildEvidenceTrail, type EvidenceMetric } from "@/src/lib/evidence-trail";
 
 export type EvidencePackScope = {
   type: "metric" | "session" | "project" | "scan" | "repair" | "model-rate";
@@ -72,6 +74,51 @@ export function buildEvidencePack(input: {
       return sanitized;
     })
   };
+}
+
+export function buildMetricEvidencePack(input: {
+  metric: EvidenceMetric;
+  generatedAt?: string;
+}): EvidencePack {
+  const trail = buildEvidenceTrail({ metric: input.metric });
+  const analytics = getAnalyticsData();
+
+  return buildEvidencePack({
+    generatedAt: input.generatedAt,
+    scope: {
+      type: "metric",
+      id: input.metric,
+      label: trail.title
+    },
+    totals: trail.totals,
+    confidenceDrivers: [
+      `${trail.confidence.exact.toLocaleString()} exact interactions`,
+      `${trail.confidence.estimated.toLocaleString()} estimated interactions`,
+      `${trail.confidence.unknown.toLocaleString()} unknown interactions`,
+      `Data confidence ${analytics.dataConfidence.score}/100`
+    ],
+    sourceFiles: trail.sourceFiles.map((source) => source.sourceFile),
+    parserNotes: trail.sessions
+      .map((session) => `${session.parser ?? "unknown parser"}: ${session.parserStatus ?? "unknown status"}`)
+      .slice(0, 20),
+    modelRateState: trail.sessions
+      .map((session) =>
+        session.pricingHref ? `${session.model}: model-rate link available` : `${session.model}: no model-rate link`
+      )
+      .slice(0, 20),
+    repairLinks: trail.sessions
+      .filter((session) => session.unknownCostInteractions > 0)
+      .map((session) => `/repair?source=${encodeURIComponent(session.sourceFile)}`),
+    records: trail.sessions.map((session) => ({
+      id: session.id,
+      role: "session",
+      model: session.model,
+      sourceFile: session.sourceFile,
+      totalTokens: session.totalTokens,
+      cost: session.cost,
+      interactions: session.interactions
+    }))
+  });
 }
 
 function list(items: string[]) {

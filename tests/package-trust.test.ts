@@ -82,7 +82,9 @@ describe("package trust policy", () => {
         "bin",
         "TOKENTRACE_AGENT.md",
         "llms.txt",
+        "docs/CHATGPT_APP_RELEASE.md",
         "server.json",
+        "docs/CHATGPT_APP_PROTOTYPE.md",
         "docs/agent-adoption.md",
         "docs/agent-discovery.schema.json"
       ])
@@ -94,6 +96,8 @@ describe("package trust policy", () => {
 
     expect(inspectScript).toContain("requiredPackageFiles");
     expect(inspectScript).toContain("TOKENTRACE_AGENT.md");
+    expect(inspectScript).toContain("docs/CHATGPT_APP_RELEASE.md");
+    expect(inspectScript).toContain("docs/CHATGPT_APP_PROTOTYPE.md");
     expect(inspectScript).toContain("docs/agent-adoption.md");
     expect(inspectScript).toContain("docs/agent-discovery.schema.json");
     expect(inspectScript).toContain("server.json");
@@ -118,6 +122,7 @@ describe("package trust policy", () => {
     expect(smokeScript).toContain("agent");
     expect(smokeScript).toContain("capabilities");
     expect(smokeScript).toContain("roadmap");
+    expect(smokeScript).toContain("chatgpt-app");
     expect(smokeScript).toContain("mcp");
     expect(smokeScript).toContain("selftest");
     expect(smokeScript).toContain("get_agent_guide");

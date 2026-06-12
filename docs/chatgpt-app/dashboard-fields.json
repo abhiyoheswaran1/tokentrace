@@ -1,0 +1,39 @@
+{
+  "appName": "TokenTrace",
+  "publisherName": "Abhi Yoheswaran",
+  "connectorName": "TokenTrace",
+  "connectorUrlPlaceholder": "https://YOUR_HOSTED_DOMAIN/mcp",
+  "category": "Productivity",
+  "shortDescription": "Local-first AI usage analytics for token, cost, and session review.",
+  "longDescription": "TokenTrace helps people review AI CLI usage locally. The ChatGPT app exposes a read-only, redacted evidence-pack workflow so ChatGPT can explain usage totals, cost confidence, unknown-cost drivers, and review status without receiving raw prompts, completions, or message bodies.",
+  "discoveryDescription": "Use TokenTrace when the user wants a redacted explanation of local AI usage evidence, token totals, session counts, estimated costs, unknown-cost drivers, or review status from a TokenTrace evidence pack.",
+  "privacyPolicyUrl": "https://www.baseframelabs.com/privacy",
+  "termsUrl": "https://www.baseframelabs.com/terms",
+  "supportUrl": "https://github.com/abhiyoheswaran1/tokentrace/issues",
+  "websiteUrl": "https://www.baseframelabs.com/apps/tokentrace",
+  "repositoryUrl": "https://github.com/abhiyoheswaran1/tokentrace",
+  "authentication": "None for the current read-only evidence-pack prototype.",
+  "tools": [
+    {
+      "name": "get_redacted_evidence_pack",
+      "description": "Return a selected TokenTrace evidence pack for ChatGPT review.",
+      "readOnly": true,
+      "destructive": false,
+      "openWorld": false,
+      "rawContentIncluded": false,
+      "widgetUri": "ui://tokentrace/evidence-pack.html"
+    }
+  ],
+  "privacyAndDataHandling": "The app returns selected TokenTrace evidence packs only. It does not include raw prompts, completions, message bodies, or raw text previews in normal output. Evidence packs include aggregate counts, confidence drivers, source-file references, model-rate state, and repair links. TokenTrace does not add telemetry, cloud sync, browser extensions, packet capture, or desktop scraping.",
+  "testPrompts": [
+    "Use TokenTrace to show my redacted evidence pack for processed tokens.",
+    "Use TokenTrace to explain what is driving unknown cost in my local usage.",
+    "Use TokenTrace to summarize my session evidence without showing raw prompts.",
+    "Use TokenTrace to tell me whether raw message content is included in the evidence pack."
+  ],
+  "localization": {
+    "primaryLocale": "en-US",
+    "additionalLocales": []
+  },
+  "submissionNotes": "This app should be reviewed as a read-only local-first analytics companion. The hosted MCP endpoint is used for app review and metadata discovery; normal tool output is redacted by design."
+}

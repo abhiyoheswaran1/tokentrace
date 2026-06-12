@@ -40,6 +40,17 @@ The MCP server does not scan on startup. Its `run_scan` tool requires
 `confirmLocalScan=true` before reading local usage files or writing the local
 database.
 
+Private ChatGPT developer-mode prototype:
+
+```bash
+tokentrace chatgpt-app selftest --json
+tokentrace chatgpt-app --port 8787 --hostname 127.0.0.1
+```
+
+It starts a local HTTP `/mcp` server with one read-only redacted evidence-pack
+tool. ChatGPT developer mode requires an HTTPS tunnel. See
+`docs/CHATGPT_APP_PROTOTYPE.md`.
+
 When the local dashboard is running, the same manifest is available at
 `/api/agent` and `/api/capabilities`.
 
@@ -59,6 +70,8 @@ Roadmap status is available through `tokentrace roadmap --json` and
 - `tokentrace roadmap --json`: inspect the current release handoff, action recipes, evidence paths, and release status.
 - `tokentrace mcp`: start the local stdio MCP server.
 - `tokentrace mcp selftest --json`: verify MCP startup, tool listing, agent guide, and scan-confirmation refusal.
+- `tokentrace chatgpt-app selftest --json`: verify the private ChatGPT app prototype.
+- `tokentrace chatgpt-app`: start the private local HTTP `/mcp` prototype for ChatGPT developer mode.
 - `tokentrace statusline setup claude`: print Claude Code status-line setup.
 - `tokentrace watch --session --compact`: terminal sidecar fallback for Codex.
 

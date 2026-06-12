@@ -12,6 +12,9 @@ maintainer explicitly asks for that public release.
 - Run targeted tests for the slice.
 - Run `npm run verify` before considering the slice stable.
 - Run `npm run projscan:doctor` after substantial changes.
+- Run `npm run release:chatgpt:check` when ChatGPT app tools, resources, docs,
+  or release automation change. Use `--mcp-url https://.../mcp` only when a
+  hosted endpoint is available.
 - Run `npm run package:inspect` when package contents or dependencies change.
   It verifies the publish tarball does not contain generated Next.js output and
   includes the agent discovery docs, schema, and executable CLI bin.
@@ -60,8 +63,8 @@ Use this only when the maintainer explicitly asks to release.
    ```
 
    `release:check` includes package verification, CLI smoke, packed-install
-   smoke, supply-chain IOC scanning, package security inspection, and ProjScan
-   doctor.
+   smoke, ChatGPT app local readiness, supply-chain IOC scanning, package
+   security inspection, and ProjScan doctor.
 
 4. Smoke test a clean package install from the packed tarball or a temporary
    global install.
@@ -106,3 +109,14 @@ manual npm publish from the verified release commit.
     ```
 
     The returned version should match the tag.
+
+11. If this release also updates the ChatGPT app, deploy the hosted HTTPS
+    `/mcp` endpoint, run:
+
+    ```bash
+    npm run release:chatgpt:check -- --mcp-url https://example.com/mcp
+    ```
+
+    Then submit or publish the app from the OpenAI Platform Dashboard. Use the
+    intended publishing account, for example the maintainer's personal OpenAI
+    account, and keep the Dashboard review/publish step manual.

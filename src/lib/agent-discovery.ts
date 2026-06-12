@@ -215,6 +215,28 @@ const commands: AgentDiscoveryCommand[] = [
     ]
   },
   {
+    id: "chatgpt-app",
+    title: "Start private ChatGPT app prototype",
+    command: ["tokentrace", "chatgpt-app"],
+    description:
+      "Start a local HTTP MCP Apps server for ChatGPT developer-mode testing. It exposes one read-only redacted evidence-pack tool and widget.",
+    output: "terminal",
+    mutatesLocalState: false,
+    startsLongRunningProcess: true,
+    requiresNetwork: false,
+    safeForAutomation: false,
+    useWhen: "The human wants to test TokenTrace as a private ChatGPT connector without publishing a public app.",
+    followUps: [
+      ["tokentrace", "chatgpt-app", "selftest", "--json"],
+      ["tokentrace", "chatgpt-app", "--port", "8787", "--hostname", "127.0.0.1"]
+    ],
+    notes: [
+      "ChatGPT developer mode requires exposing the local /mcp endpoint through an HTTPS tunnel.",
+      "The prototype does not scan files on startup and returns only redacted evidence packs.",
+      "See docs/CHATGPT_APP_PROTOTYPE.md for connector setup steps."
+    ]
+  },
+  {
     id: "status",
     title: "Print local live usage status",
     command: ["tokentrace", "status", "--json"],
@@ -444,6 +466,15 @@ export function buildAgentDiscoveryManifest(options: AgentDiscoveryOptions = {})
         goal: "Use a terminal split while Codex native status-line hooks remain unstable.",
         steps: [
           ["tokentrace", "watch", "--session", "--compact"]
+        ]
+      },
+      {
+        id: "chatgpt-app-prototype",
+        title: "Private ChatGPT app prototype",
+        goal: "Start the local Apps SDK prototype and expose a redacted evidence-pack connector for developer-mode testing.",
+        steps: [
+          ["tokentrace", "chatgpt-app", "selftest", "--json"],
+          ["tokentrace", "chatgpt-app", "--port", "8787", "--hostname", "127.0.0.1"]
         ]
       }
     ],

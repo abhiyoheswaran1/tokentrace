@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.20.0] - 2026-06-12
+
 ### Changed
 
 - **Overview and shell UI polish.** The dashboard shell now groups navigation by
@@ -13,6 +15,19 @@ All notable changes to TokenTrace are documented here.
 - **ChatGPT app feasibility documented.** Added a recommendation to prototype
   only a private, redacted evidence-pack ChatGPT app workflow until public
   distribution can preserve TokenTrace's local-first privacy boundary.
+- **Private ChatGPT app prototype.** Added `tokentrace chatgpt-app` with a
+  local HTTP `/mcp` server, one read-only `get_redacted_evidence_pack` Apps SDK
+  tool, a compact MCP Apps widget resource, and a developer-mode runbook. The
+  prototype uses redacted evidence packs and does not scan files on startup or
+  publish a public app.
+- **ChatGPT app release readiness.** Added `npm run release:chatgpt:check`, a
+  hosted `/mcp` validator, a release runbook, and optional tag-workflow wiring
+  so ChatGPT app readiness can be checked alongside npm and MCP registry
+  releases while keeping OpenAI Dashboard submission and publishing manual.
+- **ChatGPT app submission kit.** Added `docs/chatgpt-app/` with step-by-step
+  personal-account Dashboard release instructions, ready-to-paste submission
+  copy, privacy and review templates, test prompts, screenshot guidance, and
+  reusable SVG app assets for the manual ChatGPT app submission flow.
 - **Development dashboard CSP avoids React issue noise.** The local dev server
   now allows React's development-only diagnostics without relaxing the
   production Content Security Policy.
