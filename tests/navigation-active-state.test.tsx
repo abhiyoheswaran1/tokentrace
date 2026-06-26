@@ -25,12 +25,12 @@ describe("active navigation state", () => {
     const html = renderToStaticMarkup(<Sidebar appVersion="0.10.0" />);
     const text = html.replace(/<[^>]*>/g, "");
 
-    expect(text).toContain("Analyze");
-    expect(text).toContain("Investigate");
-    expect(text).toContain("Maintain");
+    expect(text).toContain("Daily loop");
+    expect(text).toContain("Operate");
+    expect(text).toContain("Advanced");
     expect(text).toContain("Reference");
-    expect(html).toContain('aria-label="Analyze navigation"');
-    expect(html).toContain('aria-label="Investigate navigation"');
+    expect(html).toContain('aria-label="Daily loop navigation"');
+    expect(html).toContain('aria-label="Advanced navigation"');
     expect(html).toContain('href="/repair"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain("bg-muted");

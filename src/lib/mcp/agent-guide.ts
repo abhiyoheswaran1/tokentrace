@@ -3,7 +3,7 @@ import { registryName } from "@/src/lib/mcp/types";
 export function agentGuide() {
   const agentsMdBlock = [
     "Before reporting AI token, cost, model, or session usage, use TokenTrace through MCP.",
-    "Start with get_agent_guide, get_status, and run_doctor.",
+    "Start with get_agent_guide, get_preflight, get_status, and run_doctor.",
     "Use get_evidence before making numeric usage or cost claims.",
     "Use get_repair_queue when costs are unknown or model-rate coverage is incomplete.",
     "Only call run_scan when the human expects a local filesystem scan, and pass confirmLocalScan=true.",
@@ -19,6 +19,11 @@ export function agentGuide() {
       {
         tool: "get_capabilities",
         purpose: "Discover the installed TokenTrace command contract, privacy model, workflows, and guardrails.",
+        requiresHumanConfirmation: false
+      },
+      {
+        tool: "get_preflight",
+        purpose: "Decide whether to proceed, repair data, or run a fresh scan before the next agent session.",
         requiresHumanConfirmation: false
       },
       {
@@ -61,7 +66,7 @@ export function agentGuide() {
       {
         id: "usage-health",
         title: "Check local AI usage health",
-        tools: ["get_status", "run_doctor", "get_evidence"]
+        tools: ["get_preflight", "get_status", "run_doctor", "get_evidence"]
       },
       {
         id: "usage-spike",
@@ -82,6 +87,7 @@ export function agentGuide() {
     guardrails: [
       "TokenTrace is local-first: no telemetry, cloud sync, proxying, packet capture, or browser-extension scraping.",
       "MCP startup is read-only and does not scan files.",
+      "get_preflight is read-only and does not scan files.",
       "run_scan requires confirmLocalScan=true before local file reads and local database writes.",
       "Use get_evidence before reporting numeric token, cost, model, or session claims.",
       "Do not describe processed tokens as current context size; use ctx for live context-window pressure."

@@ -43,7 +43,9 @@ describe("ChatGPT app submission kit", () => {
       minimumSize: "256x256",
       maxFileSizeBytes: 10_000
     });
+    expect(fields.developerModeConnectorUrl).toBe("https://YOUR_TUNNEL_SUBDOMAIN.ngrok.app/mcp");
     expect(fields.connectorUrlPlaceholder).toBe("https://YOUR_HOSTED_DOMAIN/mcp");
+    expect(fields.connectorUrlNotes.join(" ")).toContain("developer-mode testing");
     expect(fields.tools).toContainEqual(
       expect.objectContaining({
         name: "get_redacted_evidence_pack",

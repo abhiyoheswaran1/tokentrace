@@ -45,6 +45,8 @@ tokentrace mcp          # Start the local stdio MCP server
 tokentrace scan         # Scan local AI CLI usage logs
 tokentrace doctor --json
                         # Inspect scan health and repair recommendations
+tokentrace preflight --json
+                        # Check readiness before another coding-agent run
 tokentrace evidence --json
                         # Print metric evidence trails as JSON
 tokentrace repair --json
@@ -126,10 +128,21 @@ tokentrace mcp selftest --json
 ```
 
 The MCP server exposes the same local-first surfaces as tools: capabilities,
-status, Scan Health, evidence, repair queue, reports, and an explicit scan tool.
-It does not scan files on startup, and its scan tool requires
+preflight, status, Scan Health, evidence, repair queue, reports, and an
+explicit scan tool. It does not scan files on startup, and its scan tool requires
 `confirmLocalScan=true` before reading local usage files or writing the local
 database.
+
+Before starting another long coding-agent run, use the read-only preflight
+surface:
+
+```bash
+tokentrace preflight --json
+```
+
+In MCP clients, call `get_preflight` for the same proceed, caution, or blocked
+decision with local scan freshness, confidence, guardrail, anomaly, and repair
+findings. Preflight does not scan files or inspect raw prompts.
 
 When the local dashboard is already running, agents can fetch the same manifest
 over localhost:
@@ -216,7 +229,7 @@ TokenTrace labels the trust level behind imported numbers:
 - source-provided costs from local SQLite histories
 - unknown cost repair groups when model, token, or rate evidence is missing
 
-The dashboard surfaces a Data Confidence score on Overview, Projects, Sessions,
+The dashboard surfaces a Data Confidence score on Today, Projects, Sessions,
 and Session Timeline pages. Scan Health also includes a supply-chain IOC check
 so package trust is visible in the product, not only in release scripts.
 

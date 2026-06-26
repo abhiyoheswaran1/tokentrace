@@ -1,6 +1,6 @@
-import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
+import { chromium } from "playwright";
 
 const baseUrl = process.env.E2E_BASE_URL;
 
@@ -19,12 +19,24 @@ const targets = [
   ["pricing", "/pricing"]
 ];
 
-for (const [name, route] of targets) {
-  const url = new URL(route, baseUrl).toString();
-  const output = path.join(outputDir, `${name}.png`);
-  execFileSync("npx", ["--yes", "playwright@latest", "screenshot", "--full-page", url, output], {
-    stdio: "inherit"
-  });
+const browser = await chromium.launch({ headless: true });
+try {
+  const page = await browser.newPage();
+  for (const [name, route] of targets) {
+    const url = new URL(route, baseUrl).toString();
+    const output = path.join(outputDir, `${name}.png`);
+    console.log(`Navigating to ${url}`);
+    const response = await page.goto(url, { waitUntil: "domcontentloaded" });
+    if (!response?.ok()) {
+      throw new Error(`Visual smoke route failed: ${url} returned ${response?.status() ?? "no response"}`);
+    }
+    await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => undefined);
+    await page.locator("body").waitFor({ state: "visible", timeout: 5000 });
+    console.log(`Capturing screenshot into ${output}`);
+    await page.screenshot({ path: output, fullPage: true, caret: "initial" });
+  }
+} finally {
+  await browser.close();
 }
 
 console.log(`Visual smoke screenshots written to ${outputDir}`);

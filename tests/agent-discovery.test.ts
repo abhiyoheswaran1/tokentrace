@@ -46,6 +46,7 @@ describe("agent discovery manifest", () => {
       expect.arrayContaining([
         "scan",
         "doctor",
+        "preflight",
         "evidence",
         "repair",
         "digest",
@@ -77,7 +78,7 @@ describe("agent discovery manifest", () => {
       "useWhen",
       "followUps"
     ] as const;
-    for (const id of ["anomalies", "query", "auto-classify"]) {
+    for (const id of ["preflight", "anomalies", "query", "auto-classify"]) {
       const command = manifest.commands.find((entry) => entry.id === id);
       expect(command, `${id} missing from manifest.commands`).toBeDefined();
       for (const field of requiredCommandFields) {
@@ -96,6 +97,11 @@ describe("agent discovery manifest", () => {
     });
     expect(manifest.commands.find((command) => command.id === "doctor")).toMatchObject({
       command: ["tokentrace", "doctor", "--json"],
+      mutatesLocalState: false,
+      output: "json"
+    });
+    expect(manifest.commands.find((command) => command.id === "preflight")).toMatchObject({
+      command: ["tokentrace", "preflight", "--json"],
       mutatesLocalState: false,
       output: "json"
     });
@@ -129,6 +135,7 @@ describe("agent discovery manifest", () => {
       "--compact"
     ]);
     expect(manifest.workflows.map((workflow) => workflow.id)).toContain("first-use");
+    expect(manifest.workflows.map((workflow) => workflow.id)).toContain("agent-preflight");
     expect(manifest.commands.flatMap((command) => command.followUps)).toEqual(
       expect.arrayContaining([
         ["tokentrace", "doctor", "--json"],
@@ -179,15 +186,18 @@ describe("agent discovery manifest", () => {
     expect(agentGuide).toContain("tokentrace capabilities --json");
     expect(agentGuide).toContain("tokentrace mcp");
     expect(agentGuide).toContain("tokentrace chatgpt-app");
+    expect(agentGuide).toContain("tokentrace preflight --json");
     expect(agentGuide).toContain("get_agent_guide");
     expect(agentGuide).toContain("tokentrace reset");
     expect(llmsText).toContain("tokentrace agent --json");
     expect(llmsText).toContain("tokentrace mcp");
     expect(llmsText).toContain("tokentrace chatgpt-app");
+    expect(llmsText).toContain("tokentrace preflight --json");
     expect(llmsText).toContain("get_agent_guide");
     expect(llmsText).toContain("Local-first");
     expect(adoptionGuide).toContain("io.github.abhiyoheswaran1/tokentrace");
     expect(adoptionGuide).toContain("Before reporting AI token, cost, model, or session usage");
     expect(adoptionGuide).toContain("get_evidence");
+    expect(adoptionGuide).toContain("get_preflight");
   });
 });

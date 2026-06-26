@@ -4,10 +4,14 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.20.0 ChatGPT app release", () => {
+  it("documents the 0.21.0 agent preflight release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.20.0");
+    expect(packageJson.version).toBe("0.21.0");
+    expect(changelog).toContain("## [0.21.0] - 2026-06-26");
+    expect(changelog).toContain("Local agent preflight");
+    expect(changelog).toContain("Simpler dashboard shell");
+    expect(changelog).toContain("First-run scan state uses latest scan evidence");
     expect(changelog).toContain("## [0.20.0] - 2026-06-12");
     expect(changelog).toContain("Overview and shell UI polish");
     expect(changelog).toContain("ChatGPT app feasibility documented");

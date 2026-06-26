@@ -4,6 +4,29 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.21.0] - 2026-06-26
+
+### Added
+
+- **Local agent preflight.** Added `tokentrace preflight --json` and MCP
+  `get_preflight`, a read-only readiness report that returns proceed, caution,
+  or blocked before another coding-agent run. It combines scan freshness, data
+  confidence, guardrails, anomaly signals, findings, next actions, and privacy
+  notes without scanning files or inspecting raw prompts.
+
+### Changed
+
+- **Simpler dashboard shell.** Primary navigation now follows the daily loop:
+  Today, Sessions, Evidence, Fix Data, Reports, and Settings. Diagnostic
+  surfaces such as Tools, Models, Projects, Query, Scan Health, Discovery,
+  Parsers, Raw Data, and Model Rates remain available under Advanced.
+
+### Fixed
+
+- **First-run scan state uses latest scan evidence.** The Today first-run panel
+  now distinguishes "scan ran but imported no usage" from "no scan has run,"
+  preserving zero-import explanations from Scan Health.
+
 ## [0.20.0] - 2026-06-12
 
 ### Changed

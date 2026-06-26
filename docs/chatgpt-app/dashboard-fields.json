@@ -9,7 +9,13 @@
   },
   "publisherName": "Abhi Yoheswaran",
   "connectorName": "TokenTrace",
+  "developerModeConnectorUrl": "https://YOUR_TUNNEL_SUBDOMAIN.ngrok.app/mcp",
   "connectorUrlPlaceholder": "https://YOUR_HOSTED_DOMAIN/mcp",
+  "connectorUrlNotes": [
+    "Use developerModeConnectorUrl only for private developer-mode testing while the local TokenTrace server and tunnel are running.",
+    "Use connectorUrlPlaceholder as the pattern for a real hosted HTTPS endpoint before public ChatGPT app review.",
+    "Do not paste localhost, 127.0.0.1, or a placeholder into the ChatGPT form."
+  ],
   "category": "Productivity",
   "shortDescription": "Local-first AI usage analytics for token, cost, and session review.",
   "longDescription": "TokenTrace helps people review AI CLI usage locally. The ChatGPT app exposes a read-only, redacted evidence-pack workflow so ChatGPT can explain usage totals, cost confidence, unknown-cost drivers, and review status without receiving raw prompts, completions, or message bodies.",

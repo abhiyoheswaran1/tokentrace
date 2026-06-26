@@ -16,7 +16,7 @@ export function EvidenceContextPanel({ actions }: { actions: EvidenceContextActi
         <div className="max-w-[72ch]">
           <FieldLabel>Evidence path</FieldLabel>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Evidence is a contextual drill-down from Overview, Sessions, Repair, and exported packs. If you opened this page directly, start with processed tokens, then pivot by metric or follow the next action that matches what looks incomplete.
+            Evidence is a contextual drill-down from Today, Sessions, Fix Data, and exported packs. If you opened this page directly, start with processed tokens, then pivot by metric or follow the next action that matches what looks incomplete.
           </p>
         </div>
         <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">

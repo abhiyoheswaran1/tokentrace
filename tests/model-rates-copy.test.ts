@@ -36,6 +36,6 @@ describe("Model rates user-facing copy", () => {
     expect(sessionsExplorer).toContain("Model rates");
     expect(pricingSettings).toContain("Set model rate");
     expect(pricingSettings).toContain("Review parser");
-    expect(guidePage).toContain("Repair, Model Rates, Evidence");
+    expect(guidePage).toContain("Fix Data, Model Rates, Evidence");
   });
 });

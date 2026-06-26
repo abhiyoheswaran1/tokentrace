@@ -28,6 +28,13 @@ export const mcpTools = [
     inputSchema: toolInputSchema()
   },
   {
+    name: "get_preflight",
+    title: "Get local agent preflight",
+    description:
+      "Return a read-only local preflight decision before another coding-agent run: proceed, caution, or blocked with evidence and next actions.",
+    inputSchema: toolInputSchema()
+  },
+  {
     name: "run_doctor",
     title: "Run Scan Health doctor",
     description: "Inspect scan freshness, parser trust, source coverage, package trust, and repair recommendations.",

@@ -81,6 +81,7 @@ describe("TokenTrace MCP server", () => {
       "get_agent_guide",
       "get_capabilities",
       "get_status",
+      "get_preflight",
       "run_doctor",
       "get_evidence",
       "get_repair_queue",
@@ -91,6 +92,35 @@ describe("TokenTrace MCP server", () => {
       "query_usage",
       "get_classifications"
     ]);
+  });
+
+  it("returns preflight guidance through an enveloped MCP tool call", async () => {
+    const home = await tempDir();
+    const result = runMcp(
+      [
+        { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } },
+        {
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: { name: "get_preflight", arguments: {} }
+        }
+      ],
+      {
+        TOKENTRACE_HOME: home,
+        TOKENTRACE_DB: path.join(home, "tokentrace.db"),
+        DATABASE_URL: `file:${path.join(home, "tokentrace.db")}`
+      }
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const payload = parseToolPayload(result.responses[1]);
+    expect(payload.summary).toContain("preflight");
+    expect(payload.confidence).toBe("high");
+    expect(payload.requiresHumanConfirmation).toBe(false);
+    expect(payload.data.schemaVersion).toBe("tokentrace.preflight.v1");
+    expect(["proceed", "caution", "blocked"]).toContain(payload.data.decision);
   });
 
   it("returns deterministic classification suggestions through an enveloped MCP tool call", async () => {
@@ -214,6 +244,7 @@ describe("TokenTrace MCP server", () => {
     expect(payload.requiresHumanConfirmation).toBe(false);
     expect(payload.nextActions).toEqual(
       expect.arrayContaining([
+        expect.stringContaining("get_preflight"),
         expect.stringContaining("get_status"),
         expect.stringContaining("run_doctor"),
         expect.stringContaining("get_evidence")
@@ -224,6 +255,7 @@ describe("TokenTrace MCP server", () => {
     expect(payload.data.agentsMdBlock).toContain("Before reporting AI token, cost, model, or session usage");
     expect(payload.data.workflow.map((step: { tool: string }) => step.tool)).toEqual([
       "get_capabilities",
+      "get_preflight",
       "get_status",
       "run_doctor",
       "get_evidence",

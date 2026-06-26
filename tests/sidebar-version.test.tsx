@@ -11,13 +11,13 @@ describe("Sidebar version display", () => {
     expect(text).toContain("Local only");
     expect(text).toContain("No telemetry");
     expect(text).toContain("Local processing");
-    expect(text).toContain("Analyze");
-    expect(text).toContain("Investigate");
-    expect(text).toContain("Maintain");
+    expect(text).toContain("Daily loop");
+    expect(text).toContain("Operate");
+    expect(text).toContain("Advanced");
     expect(text).toContain("Reference");
     expect(text).toContain("v0.4.0");
     expect(text).toContain("Open source by Abhi Yoheswaran.");
-    expect(html).toContain('aria-label="Analyze navigation"');
+    expect(html).toContain('aria-label="Daily loop navigation"');
     expect(html).toContain('aria-label="Reference navigation"');
     expect(html).toContain('href="https://www.abhiyoheswaran.com"');
     expect(html).not.toContain('href="https://github.com/abhiyoheswaran1"');

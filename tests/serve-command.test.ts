@@ -62,6 +62,7 @@ describe("scan command", () => {
     const commands: Array<[string, string]> = [
       ["scan", "Usage: tokentrace scan"],
       ["doctor", "Usage: tokentrace doctor"],
+      ["preflight", "Usage: tokentrace preflight"],
       ["evidence", "Usage: tokentrace evidence"],
       ["digest", "Usage: tokentrace digest"],
       ["report", "Usage: tokentrace report"],

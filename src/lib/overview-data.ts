@@ -9,6 +9,7 @@ import { buildUnknownCostRepairWorkbench, type UnknownCostRepairWorkbench } from
 import { dateRangeQueryParams, mergeHrefParams, type ResolvedDateRange } from "@/src/lib/date-range";
 import { buildScanDiff } from "@/src/lib/scan-diff";
 import { buildPostSessionReview, type PostSessionReview } from "@/src/lib/post-session-review";
+import { zeroImportExplanation } from "@/src/lib/doctor-recommendations";
 
 export type OverviewData = {
   data: AnalyticsData;
@@ -62,6 +63,20 @@ const getAnalyticsForOverview = cache((range: ResolvedDateRange) =>
 
 const getSearchRoots = cache(() => getDefaultSearchRoots());
 
+export function buildOverviewFirstRunStatus(input: {
+  rootCount: number;
+  pricedModelCount: number;
+  latestScan: {
+    filesScanned: number;
+    recordsImported: number;
+    zeroImportExplanation: string | null;
+  } | null;
+  interactions: number;
+  unknownCostInteractions: number;
+}) {
+  return buildFirstRunStatus(input);
+}
+
 function decorateEvidenceLinks(
   evidenceLinks: AnalyticsData["evidenceLinks"],
   rangeLinkParams: Record<string, string | undefined>
@@ -84,10 +99,21 @@ export const getOverviewPrimaryData = cache(
     const trust = data.scanTrust;
     const rangeLinkParams = dateRangeQueryParams(range);
     const evidenceLinks = decorateEvidenceLinks(data.evidenceLinks, rangeLinkParams);
-    const firstRunStatus = buildFirstRunStatus({
+    const latestRun = trust.health?.latestRun ?? null;
+    const firstRunStatus = buildOverviewFirstRunStatus({
       rootCount: roots.length,
       pricedModelCount: trust.pricedModelCount,
-      latestScan: null,
+      latestScan: latestRun
+        ? {
+            filesScanned: latestRun.filesScanned,
+            recordsImported: latestRun.recordsImported,
+            zeroImportExplanation: zeroImportExplanation({
+              latestRun,
+              statusCounts: trust.health?.latestStatusCounts ?? {},
+              rootCount: roots.length
+            })
+          }
+        : null,
       interactions: trust.confidence.interactions,
       unknownCostInteractions: trust.confidence.unknownCostInteractions
     });
@@ -149,7 +175,7 @@ export async function getOverviewData(range: ResolvedDateRange): Promise<Overvie
     getOverviewRepairData(range)
   ]);
   const roots = await getSearchRoots();
-  const firstRunStatus = buildFirstRunStatus({
+  const firstRunStatus = buildOverviewFirstRunStatus({
     rootCount: roots.length,
     pricedModelCount: primary.trust.pricedModelCount,
     latestScan: repair.doctorReport.latestScan.id

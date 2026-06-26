@@ -13,8 +13,8 @@ export const guideNav = [
 export const dailyLoop = [
   {
     title: "Read the pulse",
-    page: "Overview",
-    detail: "Check current period usage, cost, sessions, unknown cost, and the latest trend window before chasing details.",
+    page: "Today",
+    detail: "Check readiness, usage, cost, sessions, unknown cost, and the latest trend window before chasing details.",
     href: "/",
     icon: Gauge
   },
@@ -27,7 +27,7 @@ export const dailyLoop = [
   },
   {
     title: "Repair what blocks trust",
-    page: "Repair",
+    page: "Fix Data",
     detail: "Unknown cost usually needs a known model name, nonzero tokens, or an editable provider model rate.",
     href: "/repair",
     icon: Wrench
@@ -86,8 +86,11 @@ export const mcpAgentEntries = [
 ];
 
 export const pageMap = [
-  ["Overview", "Top-level totals, trends, repair queue, guardrails, and recommended next actions."],
+  ["Today", "Top-level readiness, totals, trends, repair queue, guardrails, and recommended next actions."],
   ["Sessions", "Per-session evidence with models, costs, cache activity, parser provenance, and tool calls."],
+  ["Evidence", "Trace a metric back to sessions, source files, confidence drivers, and model-rate state."],
+  ["Fix Data", "Repair unknown cost, missing model names, missing token counts, and trust blockers."],
+  ["Reports", "Reusable local reports for weekly usage, high-cost sessions, confidence trends, and source coverage."],
   ["Model Rates", "Editable provider model rates used for dashboard cost estimates and unknown-cost repair."],
   ["Scan Health", "First-run checklist, scan health, supply-chain IOC check, supported file types, and diagnostics for missing data."],
   ["Discovery", "Recently scanned files grouped by parser, source family, status, and import yield."],
@@ -97,7 +100,7 @@ export const pageMap = [
 export const emptyStatePlaybook = [
   ["No data", "Run Scan now from Settings, then use Scan Health if records stay at zero."],
   ["No logs found", "Add a custom folder or use Claude Code, Codex, or another supported CLI before scanning again."],
-  ["Unknown cost", "Open repair or Model Rates to decide whether the missing piece is model name, token count, or provider rate."],
+  ["Unknown cost", "Open Fix Data or Model Rates to decide whether the missing piece is model name, token count, or provider rate."],
   ["Parser warnings", "Open Discovery and Parsers to separate unsupported files from imported-with-errors rows."],
   ["Sandbox smoke skipped", "Local sandbox runs can skip server binding checks. Run the packed smoke or release check outside that constraint before release."]
 ];

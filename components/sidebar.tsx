@@ -11,6 +11,8 @@ import {
   ChevronDown,
   ClipboardList,
   Database,
+  FileSearch,
+  FileText,
   FolderGit2,
   Gauge,
   Menu,
@@ -25,39 +27,45 @@ import { TokenTraceLogo } from "@/components/token-trace-logo";
 import { formatAppVersion, getAppVersion } from "@/src/lib/app-version";
 import { cn } from "@/src/lib/utils";
 
-const overviewNavItem = { href: "/", label: "Overview", icon: Gauge };
+const todayNavItem = { href: "/", label: "Today", icon: Gauge };
+const sessionsNavItem = { href: "/sessions", label: "Sessions", icon: Search };
+const evidenceNavItem = { href: "/evidence", label: "Evidence", icon: FileSearch };
+const repairNavItem = { href: "/repair", label: "Fix Data", icon: Wrench };
+const reportsNavItem = { href: "/reports", label: "Reports", icon: FileText };
+const settingsNavItem = { href: "/settings", label: "Settings", icon: Settings };
 const toolsNavItem = { href: "/tools", label: "Tools", icon: Terminal };
 const modelsNavItem = { href: "/models", label: "Models", icon: Bot };
 const projectsNavItem = { href: "/projects", label: "Projects", icon: FolderGit2 };
-const sessionsNavItem = { href: "/sessions", label: "Sessions", icon: Search };
 const insightsNavItem = { href: "/optimisation", label: "Insights", icon: Sparkles };
 const queryNavItem = { href: "/query", label: "Query", icon: Database };
-const repairNavItem = { href: "/repair", label: "Repair", icon: Wrench };
 const pricingNavItem = { href: "/pricing", label: "Model Rates", icon: SlidersHorizontal };
 const diagnosticsNavItem = { href: "/diagnostics", label: "Scan Health", icon: ClipboardList };
 const discoveryNavItem = { href: "/discovery", label: "Discovery", icon: BarChart3 };
 const parsersNavItem = { href: "/parser-debug", label: "Parsers", icon: Bug };
 const rawDataNavItem = { href: "/debug", label: "Raw Data", icon: Bug };
-const settingsNavItem = { href: "/settings", label: "Settings", icon: Settings };
 
 const navSections = [
   {
-    label: "Analyze",
-    items: [overviewNavItem, toolsNavItem, modelsNavItem, projectsNavItem]
+    label: "Daily loop",
+    items: [todayNavItem, sessionsNavItem, evidenceNavItem, repairNavItem]
   },
   {
-    label: "Investigate",
-    items: [sessionsNavItem, insightsNavItem, queryNavItem, repairNavItem]
+    label: "Operate",
+    items: [reportsNavItem, settingsNavItem]
   },
   {
-    label: "Maintain",
+    label: "Advanced",
     items: [
-      pricingNavItem,
+      toolsNavItem,
+      modelsNavItem,
+      projectsNavItem,
+      insightsNavItem,
+      queryNavItem,
       diagnosticsNavItem,
       discoveryNavItem,
       parsersNavItem,
       rawDataNavItem,
-      settingsNavItem
+      pricingNavItem
     ]
   }
 ];
@@ -73,7 +81,7 @@ const sidebarSections = [
 ];
 
 const priorityMobileItems = primaryNavItems.filter((item) =>
-  ["/", "/sessions", "/repair", "/diagnostics", "/settings"].includes(item.href)
+  ["/", "/sessions", "/evidence", "/repair", "/settings"].includes(item.href)
 );
 
 function NavLink({
@@ -213,7 +221,7 @@ export function MobileNav() {
   const mobileNavItems = [...primaryNavItems, ...supportNavItems];
   const pathname = usePathname() ?? "/";
   const activeMobileItem =
-    mobileNavItems.find((item) => isActiveRoute(pathname, item.href)) ?? overviewNavItem;
+    mobileNavItems.find((item) => isActiveRoute(pathname, item.href)) ?? todayNavItem;
   const ActiveIcon = activeMobileItem.icon;
 
   return (

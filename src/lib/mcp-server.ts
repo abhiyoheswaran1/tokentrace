@@ -141,6 +141,7 @@ async function callTool(params: ToolCallParams) {
         summary: "Returned the recommended TokenTrace MCP operating loop for agents.",
         confidence: "high",
         nextActions: [
+          "Call get_preflight before starting or continuing a potentially expensive agent run.",
           "Call get_status to inspect the current local usage snapshot.",
           "Call run_doctor before reporting data quality, parser trust, or cost confidence.",
           "Call get_evidence before making numeric usage or cost claims."
@@ -192,6 +193,25 @@ async function callTool(params: ToolCallParams) {
           {
             label: "Local status JSON",
             command: ["tokentrace", "status", "--json"]
+          }
+        ],
+        requiresHumanConfirmation: false
+      });
+    }
+    if (params.name === "get_preflight") {
+      const { buildPreflightReportSnapshot } = await import("@/src/lib/preflight");
+      return toolResult(await buildPreflightReportSnapshot(), {
+        summary: "Returned the local TokenTrace preflight decision for the next agent run.",
+        confidence: "high",
+        nextActions: [
+          "Follow the preflight nextActions before starting a long or expensive agent run.",
+          "Call run_doctor or get_evidence when the preflight finding asks for deeper proof."
+        ],
+        warnings: [],
+        evidence: [
+          {
+            label: "Local preflight JSON",
+            command: ["tokentrace", "preflight", "--json"]
           }
         ],
         requiresHumanConfirmation: false

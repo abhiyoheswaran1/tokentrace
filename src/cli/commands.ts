@@ -60,6 +60,12 @@ async function doctor(context: CliContext, args: readonly string[]): Promise<voi
   await runNodeScript(context, "doctor", args);
 }
 
+async function preflight(context: CliContext, args: readonly string[]): Promise<void> {
+  if (await printScriptHelp(context, "preflight", args)) return;
+  await initializeDatabase(context, { quiet: true, refreshPrices: false });
+  await runNodeScript(context, "preflight", args);
+}
+
 async function evidence(context: CliContext, args: readonly string[]): Promise<void> {
   if (await printScriptHelp(context, "evidence", args)) return;
   await initializeDatabase(context, { quiet: true, refreshPrices: false });
@@ -286,6 +292,10 @@ export async function runCliCommand(
   }
   if (command === "doctor") {
     await doctor(context, args);
+    return;
+  }
+  if (command === "preflight") {
+    await preflight(context, args);
     return;
   }
   if (command === "evidence") {

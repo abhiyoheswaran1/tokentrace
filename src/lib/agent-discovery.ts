@@ -115,6 +115,24 @@ const commands: AgentDiscoveryCommand[] = [
     ]
   },
   {
+    id: "preflight",
+    title: "Check readiness before another agent run",
+    command: ["tokentrace", "preflight", "--json"],
+    description:
+      "Return a local-only preflight decision with scan freshness, confidence, guardrails, anomalies, findings, and next actions.",
+    output: "json",
+    mutatesLocalState: false,
+    startsLongRunningProcess: false,
+    requiresNetwork: false,
+    safeForAutomation: true,
+    useWhen: "The agent or human wants to know whether to proceed, repair data, or refresh local usage before another coding-agent session.",
+    followUps: [
+      ["tokentrace", "doctor", "--json"],
+      ["tokentrace", "evidence", "--json"],
+      ["tokentrace", "repair", "--json"]
+    ]
+  },
+  {
     id: "evidence",
     title: "Print metric evidence trails",
     command: ["tokentrace", "evidence", "--json"],
@@ -430,6 +448,16 @@ export function buildAgentDiscoveryManifest(options: AgentDiscoveryOptions = {})
           ["tokentrace", "scan", "--json"],
           ["tokentrace", "doctor", "--json"],
           ["tokentrace", "digest", "--json"]
+        ]
+      },
+      {
+        id: "agent-preflight",
+        title: "Before starting another agent run",
+        goal: "Check whether local evidence is fresh, trusted, and under guardrails before spending more tokens.",
+        steps: [
+          ["tokentrace", "preflight", "--json"],
+          ["tokentrace", "doctor", "--json"],
+          ["tokentrace", "evidence", "--json"]
         ]
       },
       {

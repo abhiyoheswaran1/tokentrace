@@ -40,6 +40,16 @@ The MCP server does not scan on startup. Its `run_scan` tool requires
 `confirmLocalScan=true` before reading local usage files or writing the local
 database.
 
+Before another long coding-agent run:
+
+```bash
+tokentrace preflight --json
+```
+
+In MCP clients, use `get_preflight` for the same read-only proceed, caution, or
+blocked decision. It checks local scan freshness, confidence, guardrails,
+anomalies, and repair findings without scanning files.
+
 Private ChatGPT developer-mode prototype:
 
 ```bash
@@ -60,6 +70,7 @@ Roadmap status is available through `tokentrace roadmap --json` and
 ## Useful Commands
 
 - `tokentrace scan --json`: import local usage records.
+- `tokentrace preflight --json`: check whether local evidence is ready before another agent run.
 - `tokentrace doctor --json`: inspect scan health, parser trust, support status, and repair recommendations.
 - `tokentrace evidence --json`: trace aggregate numbers back to local sources.
 - `tokentrace repair --json`: inspect unknown-cost repair work.

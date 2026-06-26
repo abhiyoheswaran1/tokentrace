@@ -19,6 +19,8 @@ Usage:
   tokentrace scan         Scan local AI CLI usage logs
   tokentrace doctor --json
                           Inspect scan health and repair recommendations
+  tokentrace preflight --json
+                          Check whether local evidence is ready before another agent run
   tokentrace evidence --json
                           Print metric evidence trail as JSON
   tokentrace digest --json
@@ -48,6 +50,7 @@ Usage:
 Examples:
   tokentrace serve --port 3210 --no-open
   tokentrace scan --json
+  tokentrace preflight --json
   tokentrace doctor --json`;
 }
 

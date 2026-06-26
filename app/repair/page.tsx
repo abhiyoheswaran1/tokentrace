@@ -22,8 +22,8 @@ export default async function RepairPage({ searchParams }: RepairPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Unknown Cost Repair"
-        description="Grouped local evidence for interactions that could not be priced."
+        title="Fix Data"
+        description="Grouped local evidence for interactions that could not be priced or trusted yet."
         actions={
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">

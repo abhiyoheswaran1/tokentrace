@@ -55,7 +55,7 @@ const firstRunSteps: FirstRunStep[] = [
     number: "5",
     title: "Inspect evidence",
     page: "Sessions",
-    detail: "Use Sessions, Evidence, Repair, and Projects after the first useful import.",
+    detail: "Use Sessions, Evidence, Fix Data, and Projects after the first useful import.",
     href: "/sessions",
     action: "Open Sessions"
   }
@@ -69,12 +69,12 @@ const workflows: GuideWorkflow[] = [
   },
   {
     problem: "Unknown cost",
-    path: "Repair, Model Rates, Evidence",
+    path: "Fix Data, Model Rates, Evidence",
     action: "Find whether the missing piece is model name, token count, or editable provider rate."
   },
   {
     problem: "High token usage",
-    path: "Overview, Sessions, Projects",
+    path: "Today, Sessions, Projects",
     action: "Compare processed, non-cache, and cache totals before treating a spike as fresh context growth."
   },
   {
@@ -111,7 +111,7 @@ export default function GuidePage() {
     {
       label: "Unknown cost",
       value: `${unknownCosts.toLocaleString()} unknown costs`,
-      detail: unknownCosts > 0 ? "Open repair or Model Rates." : "Cost coverage is clear.",
+      detail: unknownCosts > 0 ? "Open Fix Data or Model Rates." : "Cost coverage is clear.",
       ok: unknownCosts === 0
     },
     {

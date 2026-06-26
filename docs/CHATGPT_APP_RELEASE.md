@@ -16,6 +16,36 @@ Use your personal OpenAI account for the ChatGPT app release if you want the app
 
 The Codex session account does not need to be the publishing account. The only value this repo needs for automation is the hosted MCP URL.
 
+## MCP URL Options
+
+For developer-mode testing, ChatGPT still needs an HTTPS URL it can reach from
+outside your machine. Start the local TokenTrace app server:
+
+```bash
+tokentrace chatgpt-app --port 8787 --hostname 127.0.0.1
+```
+
+Then expose it with a temporary tunnel:
+
+```bash
+ngrok http 8787
+```
+
+Paste the tunnel URL with `/mcp` appended in the ChatGPT connector modal:
+
+```text
+https://YOUR_TUNNEL_SUBDOMAIN.ngrok.app/mcp
+```
+
+For public review, deploy the MCP server behind a stable HTTPS domain and use:
+
+```text
+https://YOUR_HOSTED_DOMAIN/mcp
+```
+
+Do not submit `localhost`, `127.0.0.1`, an ngrok-only URL, or a placeholder for
+public review.
+
 ## Automated Checks
 
 Local release readiness is included in the standard release gate:

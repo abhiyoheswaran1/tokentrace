@@ -142,8 +142,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
   return (
     <div className="overview-workbench space-y-7">
       <PageHeader
-        title="Overview"
-        description="Local token, cost, model, and session analytics across AI CLI tools."
+        title="Today"
+        description="Local readiness, cost, token, session, and repair signals before the next AI CLI run."
         actions={
           <Button asChild>
             <Link href="/settings#scan-controls">

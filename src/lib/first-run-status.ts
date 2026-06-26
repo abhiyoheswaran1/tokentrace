@@ -89,10 +89,10 @@ export function buildFirstRunStatus({
       detail: interactions > 0
         ? unknownCostInteractions > 0
           ? "Repair unknown costs before treating spend totals as complete."
-          : "Overview, Sessions, Evidence, and Projects are ready for review."
+          : "Today, Sessions, Evidence, and Projects are ready for review."
         : "Daily review starts after the first imported usage interactions.",
       href: unknownCostInteractions > 0 ? "/repair" : "/",
-      action: unknownCostInteractions > 0 ? "Open repair" : "Open Overview"
+      action: unknownCostInteractions > 0 ? "Open repair" : "Open Today"
     }
   ];
 
@@ -198,7 +198,7 @@ export function buildFirstRunStatus({
 
   return {
     title: "Usage imported and ready",
-    description: "TokenTrace has local CLI usage, model rates, and scan history ready for daily review.",
+      description: "TokenTrace has local CLI usage, model rates, and scan history ready for Today.",
     tone: "success",
     primaryAction: { label: "Inspect sessions", href: "/sessions" },
     checks,

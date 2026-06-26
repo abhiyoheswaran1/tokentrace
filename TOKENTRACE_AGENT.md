@@ -44,6 +44,16 @@ The MCP server does not scan on startup. Its `run_scan` tool requires
 `confirmLocalScan=true` before reading local usage files or writing the local
 database.
 
+Before starting another long coding-agent run, use the read-only preflight:
+
+```bash
+tokentrace preflight --json
+```
+
+The matching MCP tool is `get_preflight`. It returns a proceed, caution, or
+blocked decision with local scan freshness, data confidence, guardrail status,
+anomaly signals, findings, and next actions. It does not scan files.
+
 Private ChatGPT developer-mode prototype:
 
 ```bash
@@ -85,19 +95,25 @@ curl http://127.0.0.1:3030/api/roadmap
    get_agent_guide
    ```
 
-3. Refresh local data when the human expects current usage:
+3. Check whether local evidence is ready for the next agent run:
+
+   ```bash
+   tokentrace preflight --json
+   ```
+
+4. Refresh local data when the human expects current usage:
 
    ```bash
    tokentrace scan --json
    ```
 
-4. Check trust before making claims:
+5. Check trust before making claims:
 
    ```bash
    tokentrace doctor --json
    ```
 
-5. Explain totals with evidence:
+6. Explain totals with evidence:
 
    ```bash
    tokentrace evidence --json
@@ -128,8 +144,8 @@ Get deterministic classification suggestions for the unknown-cost queue:
 tokentrace repair auto-classify --json [--min-confidence=N]
 ```
 
-The matching MCP tools are `get_anomalies`, `query_usage`, and
-`get_classifications`. All three are read-only and require no
+The matching MCP tools are `get_preflight`, `get_anomalies`, `query_usage`, and
+`get_classifications`. All four are read-only and require no
 `confirmLocalScan` acknowledgement.
 
 ## Guardrails

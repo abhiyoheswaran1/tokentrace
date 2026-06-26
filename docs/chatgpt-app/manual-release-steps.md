@@ -2,7 +2,31 @@
 
 These are the steps that cannot be completed by repo automation. Use your personal OpenAI account if you want TokenTrace published outside the work account used for this Codex session.
 
-## 1. Prepare The Hosted Endpoint
+## 1. Prepare The MCP URL
+
+There are two different URLs, depending on what you are doing:
+
+- Developer-mode testing: use a temporary HTTPS tunnel to the local server.
+- Public app review: use a stable hosted HTTPS domain.
+
+For developer-mode testing, the local server URL is:
+
+```text
+http://127.0.0.1:8787/mcp
+```
+
+ChatGPT cannot connect to that localhost URL directly. Start a tunnel, then paste
+the tunnel URL with `/mcp` appended:
+
+```bash
+ngrok http 8787
+```
+
+```text
+https://YOUR_TUNNEL_SUBDOMAIN.ngrok.app/mcp
+```
+
+For public review, prepare a hosted endpoint:
 
 1. Deploy the TokenTrace ChatGPT app MCP server to a public HTTPS domain.
 2. Confirm the endpoint path ends in `/mcp`.
@@ -67,7 +91,8 @@ Required fields commonly include:
 3. Create a connector.
 4. Enter:
    - Connector name: `TokenTrace`
-   - Connector URL: `https://YOUR_HOSTED_DOMAIN/mcp`
+   - Connector URL for developer-mode testing: `https://YOUR_TUNNEL_SUBDOMAIN.ngrok.app/mcp`
+   - Connector URL for public release testing: `https://YOUR_HOSTED_DOMAIN/mcp`
    - Description: use the short description from `submission-copy.md`.
 5. Click Create.
 6. Verify ChatGPT shows `get_redacted_evidence_pack`.
