@@ -6,7 +6,7 @@ import type {
   ScanHealthNoteGroup,
   ScanHealthRun,
   SupplyChainHealth
-} from "@/src/lib/scan-health";
+} from "@/src/lib/scan-health-types";
 
 export function incrementCount(target: Record<string, number>, key: string, amount = 1) {
   target[key] = (target[key] ?? 0) + amount;

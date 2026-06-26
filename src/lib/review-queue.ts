@@ -2,33 +2,16 @@ import { formatCurrency, formatTokens } from "@/src/lib/format";
 import type {
   ModelAnalyticsRow,
   ProjectAnalyticsRow,
+  ReviewQueueCategory,
+  ReviewQueueItem,
   SessionRow,
   SummaryMetrics,
   ToolComparisonRow,
   UnknownCostQueueRow
-} from "@/src/lib/analytics";
+} from "@/src/lib/analytics-types";
 import type { UsageGuardrailProgress, UsageGuardrailMetric } from "@/src/lib/usage-guardrails";
 
-export type ReviewQueueCategory =
-  | "guardrail"
-  | "cost-repair"
-  | "session"
-  | "project"
-  | "model"
-  | "cache"
-  | "baseline";
-
-export type ReviewQueueItem = {
-  id: string;
-  severity: "high" | "medium" | "low";
-  category: ReviewQueueCategory;
-  title: string;
-  evidence: string;
-  action: string;
-  href: string;
-  impactLabel: string;
-  impactValue: string;
-};
+export type { ReviewQueueCategory, ReviewQueueItem } from "@/src/lib/analytics-types";
 
 type ReviewQueueInput = {
   summary: Pick<SummaryMetrics, "totalTokens" | "totalCost" | "inputTokens" | "cachedTokens" | "unknownCostInteractions">;

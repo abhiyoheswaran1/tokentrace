@@ -1,18 +1,7 @@
-import type { ProjectAnalyticsRow, SessionRow } from "@/src/lib/analytics";
+import type { ProjectAnalyticsRow, ProjectSignalRow, SessionRow } from "@/src/lib/analytics-types";
 import { formatTokens } from "@/src/lib/format";
 
-export type ProjectSignalRow = {
-  id: string;
-  severity: "high" | "medium" | "low";
-  project: string;
-  path: string;
-  signal: "dominant usage" | "unknown cost" | "estimated tokens" | "model concentration";
-  evidence: string;
-  action: string;
-  href: string;
-  metricLabel: string;
-  metricValue: string;
-};
+export type { ProjectSignalRow } from "@/src/lib/analytics-types";
 
 type ProjectSignalInput = {
   totalTokens: number;

@@ -4,10 +4,14 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.21.1 README and website handoff patch release", () => {
+  it("documents the 0.21.2 architecture health patch release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.21.1");
+    expect(packageJson.version).toBe("0.21.2");
+    expect(changelog).toContain("## [0.21.2] - 2026-06-26");
+    expect(changelog).toContain("ProjScan circular-import warnings removed");
+    expect(changelog).toContain("import graph stays");
+    expect(changelog).toContain("Low-risk dependency refresh");
     expect(changelog).toContain("## [0.21.1] - 2026-06-26");
     expect(changelog).toContain("README and website handoff now match the simplified product");
     expect(changelog).toContain("Playwright-captured `0.21.0` dashboard screenshots");

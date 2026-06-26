@@ -1,25 +1,7 @@
-import type { SessionRow } from "@/src/lib/analytics";
+import type { SessionComparisonRow, SessionRow } from "@/src/lib/analytics-types";
 import { formatCurrency, formatTokens } from "@/src/lib/format";
 
-export type SessionComparisonRow = {
-  sessionId: string;
-  title: string;
-  project: string;
-  tool: string;
-  models: string;
-  totalTokens: number;
-  cost: number | null;
-  peerSessions: number;
-  peerMedianTokens: number;
-  peerMedianCost: number | null;
-  tokenMultiple: number;
-  costMultiple: number | null;
-  severity: "high" | "medium" | "low";
-  flag: "token outlier" | "cost outlier";
-  evidence: string;
-  action: string;
-  href: string;
-};
+export type { SessionComparisonRow } from "@/src/lib/analytics-types";
 
 function median(values: number[]) {
   if (!values.length) return 0;

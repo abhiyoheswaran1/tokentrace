@@ -64,11 +64,10 @@ Use this only when the maintainer explicitly asks to release.
 
    `release:check` includes package verification, CLI smoke, packed-install
    smoke, ChatGPT app local readiness, supply-chain IOC scanning, package
-   security inspection, and ProjScan doctor. The release gate follows each
-  command's exit code. ProjScan warning-level architecture findings, such as
-  circular imports, must be reported with the release evidence and either fixed
-  in scope or treated as explicit architecture debt; they do not fail the
-  release unless ProjScan exits non-zero.
+   security inspection, and ProjScan doctor. ProjScan should report an A-grade
+   health score with no circular-import findings. If ProjScan reports warnings
+   while exiting successfully, document the evidence and either fix them before
+   release or record a maintainer-approved exception.
 
 4. Smoke test a clean package install from the packed tarball or a temporary
    global install.

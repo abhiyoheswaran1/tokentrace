@@ -417,7 +417,7 @@ Stop the server with `Ctrl+C` in the terminal where `tokentrace` is running.
 - `npm run security:ioc` scans lockfiles, workflows, and local Claude/VS Code hook files for high-signal supply-chain compromise indicators.
 - Public npm publishing is configured through GitHub Actions Trusted Publishing and provenance from version tags.
 - Socket GitHub checks and ProjScan are used as release guardrails, alongside `npm audit --audit-level=moderate`.
-- `npm run release:check` fails when a gate command exits non-zero. ProjScan warning-level architecture findings, such as circular imports, are reported as release risk and tracked as architecture debt; they do not fail the release unless ProjScan exits non-zero.
+- `npm run release:check` fails when a gate command exits non-zero. The import graph is expected to remain free of circular dependencies; `tests/import-boundaries.test.ts` protects shared type/helper modules from importing higher-level orchestration barrels.
 - Release notes are published directly in GitHub Releases from the relevant changelog section, not as a link-only summary.
 
 See [SECURITY.md](SECURITY.md) for the full security and privacy model.

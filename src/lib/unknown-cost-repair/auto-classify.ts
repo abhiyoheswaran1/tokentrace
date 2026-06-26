@@ -1,46 +1,21 @@
 import { prepareCached } from "@/src/db/prepared";
 import { modelNameCandidates } from "@/src/lib/model-aliases";
-import type { UnknownCostRepairWorkbenchGroup } from "@/src/lib/unknown-cost-repair/types";
+import type {
+  AutoClassification,
+  ClassificationLookups,
+  ClassifyInput,
+  PricedModelRow,
+  SourcePricedRow
+} from "@/src/lib/unknown-cost-repair/classification-types";
 
-export type AutoClassificationRule = "exact-model" | "family-fragment" | "parser-source" | "none";
-
-export type AutoClassification = {
-  suggestedModel: string | null;
-  suggestedProvider: string | null;
-  confidence: number;
-  rule: AutoClassificationRule;
-  evidence: {
-    matchedRows: number;
-    sampleSourceFile: string | null;
-  };
-};
-
-export type ClassifyInput = {
-  cause: UnknownCostRepairWorkbenchGroup["cause"];
-  providerId: string;
-  model: string;
-  sourceFile: string;
-};
-
-export type PricedModelRow = {
-  providerId: string;
-  providerName: string;
-  modelName: string;
-  usageCount: number;
-};
-
-export type SourcePricedRow = {
-  sourceFile: string;
-  providerId: string;
-  providerName: string;
-  modelName: string;
-  usageCount: number;
-};
-
-export type ClassificationLookups = {
-  pricedByProvider: Map<string, PricedModelRow[]>;
-  pricedBySource: Map<string, SourcePricedRow>;
-};
+export type {
+  AutoClassification,
+  AutoClassificationRule,
+  ClassificationLookups,
+  ClassifyInput,
+  PricedModelRow,
+  SourcePricedRow
+} from "@/src/lib/unknown-cost-repair/classification-types";
 
 export function buildClassificationLookups(): ClassificationLookups {
   const pricedRows = prepareCached(

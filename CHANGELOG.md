@@ -4,6 +4,20 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.21.2] - 2026-06-26
+
+### Fixed
+
+- **ProjScan circular-import warnings removed.** Shared scan-health, analytics,
+  evidence, review-queue, project-signal, session-comparison, and unknown-cost
+  repair contracts now live in leaf type modules so the import graph stays
+  acyclic. Added a regression test for these architecture boundaries.
+
+### Changed
+
+- **Low-risk dependency refresh.** Updated patch and minor dependencies within
+  the existing major-version ranges after audit and package-security checks.
+
 ## [0.21.1] - 2026-06-26
 
 ### Changed

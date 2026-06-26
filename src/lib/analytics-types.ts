@@ -1,10 +1,7 @@
 import type { DataConfidenceGrade, DataConfidenceScore } from "@/src/lib/data-confidence";
-import type { EvidenceMetric } from "@/src/lib/evidence-trail";
+import type { EvidenceMetric } from "@/src/lib/evidence/metrics";
 import type { LocalRecommendation } from "@/src/lib/recommendations";
-import type { ProjectSignalRow } from "@/src/lib/project-signals";
-import type { ReviewQueueItem } from "@/src/lib/review-queue";
-import type { ScanConfidenceSummary, ScanHealth } from "@/src/lib/scan-health";
-import type { SessionComparisonRow } from "@/src/lib/session-comparison";
+import type { ScanConfidenceSummary, ScanHealth } from "@/src/lib/scan-health-types";
 import type { UsageGuardrailProgress } from "@/src/lib/usage-guardrails";
 
 export type TrendPoint = {
@@ -170,6 +167,60 @@ export type ModelAliasSuggestion = {
   reason: string;
   repairHref: string;
   parserHref: string;
+};
+
+export type ReviewQueueCategory =
+  | "guardrail"
+  | "cost-repair"
+  | "session"
+  | "project"
+  | "model"
+  | "cache"
+  | "baseline";
+
+export type ReviewQueueItem = {
+  id: string;
+  severity: "high" | "medium" | "low";
+  category: ReviewQueueCategory;
+  title: string;
+  evidence: string;
+  action: string;
+  href: string;
+  impactLabel: string;
+  impactValue: string;
+};
+
+export type SessionComparisonRow = {
+  sessionId: string;
+  title: string;
+  project: string;
+  tool: string;
+  models: string;
+  totalTokens: number;
+  cost: number | null;
+  peerSessions: number;
+  peerMedianTokens: number;
+  peerMedianCost: number | null;
+  tokenMultiple: number;
+  costMultiple: number | null;
+  severity: "high" | "medium" | "low";
+  flag: "token outlier" | "cost outlier";
+  evidence: string;
+  action: string;
+  href: string;
+};
+
+export type ProjectSignalRow = {
+  id: string;
+  severity: "high" | "medium" | "low";
+  project: string;
+  path: string;
+  signal: "dominant usage" | "unknown cost" | "estimated tokens" | "model concentration";
+  evidence: string;
+  action: string;
+  href: string;
+  metricLabel: string;
+  metricValue: string;
 };
 
 export type DebugScanFile = {

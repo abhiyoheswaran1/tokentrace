@@ -1,4 +1,4 @@
-import type { AnalyticsFilters } from "@/src/lib/analytics";
+import type { AnalyticsFilters } from "@/src/lib/analytics-types";
 import type { EvidenceMetric } from "@/src/lib/evidence/metrics";
 import {
   mapEvidenceTrail,
