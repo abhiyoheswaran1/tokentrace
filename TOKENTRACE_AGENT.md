@@ -3,6 +3,11 @@
 TokenTrace is a local-first CLI and dashboard for AI coding-agent token, cost,
 session, parser, and evidence analytics.
 
+The current product loop is: run preflight, review Today, inspect Sessions or
+Evidence, then use Fix Data when model rates or parser confidence block trusted
+costs. Advanced pages remain available for diagnostics, but agents should start
+from preflight before long runs.
+
 ## Start Here
 
 Use the read-only discovery manifest before running any other TokenTrace command:
@@ -101,19 +106,22 @@ curl http://127.0.0.1:3030/api/roadmap
    tokentrace preflight --json
    ```
 
-4. Refresh local data when the human expects current usage:
+4. Follow the preflight decision. Use Today for the human-facing status, Evidence
+   for numeric claims, and Fix Data for unknown-cost work.
+
+5. Refresh local data when the human expects current usage:
 
    ```bash
    tokentrace scan --json
    ```
 
-5. Check trust before making claims:
+6. Check trust before making claims:
 
    ```bash
    tokentrace doctor --json
    ```
 
-6. Explain totals with evidence:
+7. Explain totals with evidence:
 
    ```bash
    tokentrace evidence --json

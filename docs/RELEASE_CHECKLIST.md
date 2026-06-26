@@ -32,7 +32,7 @@ maintainer explicitly asks for that public release.
   `npm run release:notes -- v0.12.0`.
 - For UI milestones, manually smoke the live app before release notes are
   considered current:
-  - Overview renders Usage Pulse, accounting, cost/session, trends, Review
+  - Today renders Usage Pulse, accounting, cost/session, trends, Review
     Status, and Top repair items without blank charts.
   - Configure scan opens `/settings#scan-controls` and lands on Scan Controls
     after hydration.
@@ -40,11 +40,11 @@ maintainer explicitly asks for that public release.
     Scoped Guardrails, Package Trust, Import Profiles, and Local Exports.
   - Scan now feedback reports files checked, records imported, warnings, errors,
     recalculated costs, unknown cost, stale support imports, aliases, and links
-    to Scan Health, Repair, Discovery, and Model Rates.
+    to Scan Health, Fix Data, Discovery, and Model Rates.
   - Evidence opened directly explains its contextual role, supports JSON and
-    Markdown exports, and provides next actions to Overview, Sessions, Repair,
+    Markdown exports, and provides next actions to Today, Sessions, Fix Data,
     and Model Rates.
-  - Mobile Overview keeps period controls, trend controls, charts, and dense
+  - Mobile Today keeps period controls, trend controls, charts, and dense
     summaries usable without widening the page.
 - Commit the slice with a plain milestone message.
 - Do not run `npm version`, `git tag`, `gh release create`, or `npm publish`.
@@ -64,7 +64,11 @@ Use this only when the maintainer explicitly asks to release.
 
    `release:check` includes package verification, CLI smoke, packed-install
    smoke, ChatGPT app local readiness, supply-chain IOC scanning, package
-   security inspection, and ProjScan doctor.
+   security inspection, and ProjScan doctor. The release gate follows each
+  command's exit code. ProjScan warning-level architecture findings, such as
+  circular imports, must be reported with the release evidence and either fixed
+  in scope or treated as explicit architecture debt; they do not fail the
+  release unless ProjScan exits non-zero.
 
 4. Smoke test a clean package install from the packed tarball or a temporary
    global install.
@@ -105,7 +109,7 @@ manual npm publish from the verified release commit.
 10. Verify the MCP registry entry:
 
     ```bash
-    curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=tokentrace" | jq '.servers[] | select(.name == "io.github.abhiyoheswaran1/tokentrace") | .version'
+    curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=tokentrace" | jq '.servers[] | select(.server.name == "io.github.abhiyoheswaran1/tokentrace" and ._meta["io.modelcontextprotocol.registry/official"].isLatest == true) | .server.version'
     ```
 
     The returned version should match the tag.

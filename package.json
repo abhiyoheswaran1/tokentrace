@@ -1,6 +1,6 @@
 {
   "name": "tokentrace",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "mcpName": "io.github.abhiyoheswaran1/tokentrace",
   "description": "Local-first dashboard for AI CLI token, cost, and session analytics.",
   "author": {

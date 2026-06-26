@@ -4,13 +4,26 @@
 
 # TokenTrace CLI
 
-Local-first AI CLI usage analytics. TokenTrace scans local CLI logs and local usage databases, normalizes token usage, estimates missing counts with confidence labels, and shows cost, model, project, session, repair, and evidence analytics in a browser dashboard.
+Local-first AI CLI usage analytics for developers and coding agents.
+
+TokenTrace answers one practical question before the next expensive AI CLI run:
+is your local usage evidence ready to trust? It scans local Claude Code, Codex,
+structured usage logs, and usage-shaped local databases, then labels token and
+cost data as exact, estimated, unknown, cached, or non-cache. The dashboard
+opens on **Today**, with direct paths into Sessions, Evidence, and Fix Data.
 
 TokenTrace is designed for local development machines first, with macOS-oriented defaults. It does not require a cloud account and does not send telemetry or logs anywhere.
 
 [Website](https://www.baseframelabs.com/apps/tokentrace) · [Source](https://github.com/abhiyoheswaran1/tokentrace)
 
-![TokenTrace overview dashboard](docs/assets/overview-0.12.0.png)
+![TokenTrace Today dashboard](docs/assets/today-0.21.0.png)
+
+## What TokenTrace Helps You Do
+
+- Check readiness before another coding-agent run with `tokentrace preflight --json` or MCP `get_preflight`.
+- See today’s local cost, tokens, sessions, confidence, anomalies, and repair signals in one first screen.
+- Trace every important number back to local files, parser state, sessions, model rates, and confidence labels.
+- Fix missing cost data through a guided repair queue without uploading prompts or message bodies.
 
 ## Start In Seconds
 
@@ -133,8 +146,7 @@ explicit scan tool. It does not scan files on startup, and its scan tool require
 `confirmLocalScan=true` before reading local usage files or writing the local
 database.
 
-Before starting another long coding-agent run, use the read-only preflight
-surface:
+Before starting another long coding-agent run, use preflight:
 
 ```bash
 tokentrace preflight --json
@@ -195,13 +207,17 @@ tokentrace roadmap --json
                     # Inspect roadmap handoff, action recipes, and release status
 ```
 
-## Local Sources And Trust
+## Daily Loop And Trust
 
-TokenTrace 0.12.0 bundles local source expansion, evidence exports, scan
-scheduling, scoped guardrails, parser profile preview, saved reports, and
-agent-readable release status.
+TokenTrace now organizes the product around the daily loop:
 
-New trust surfaces include:
+1. **Preflight**: decide whether local evidence is ready before another agent run.
+2. **Today**: review cost, token, session, confidence, anomaly, and repair signals.
+3. **Evidence**: trace numbers back to source files, parser confidence, sessions, and model-rate state.
+4. **Fix Data**: resolve unknown cost, parser review, and model-rate gaps.
+5. **Advanced**: inspect Scan Health, Discovery, Parsers, Raw Data, Query, and Model Rates when you need the full diagnostic surface.
+
+Trust surfaces include:
 
 - native structured usage log and Cursor-style chat export ingestion
 - Source Coverage in Scan Health for native, profile-assisted, fallback, and
@@ -213,11 +229,6 @@ New trust surfaces include:
 - saved report exports for weekly usage, source coverage, guardrails, unknown
   cost, high-cost sessions, and confidence trends
 - operating metadata export without raw usage records
-
-The 0.12.0 dashboard also tightens the daily operator path: setup buttons now
-open the exact Settings section, scan results show what changed and where to go
-next, and Evidence explains when it is being opened as a contextual drill-down
-rather than a sidebar destination.
 
 ## Accuracy And Evidence
 
@@ -270,10 +281,13 @@ Default discovery checks these locations when present:
 - TokenTrace wrapper logs in the local app-data directory
 - Any custom folders configured in Settings
 
-Use **Settings** in the dashboard to add custom folders, toggle raw message storage, and trigger scans. Use **Scan Health**, **Discovery**, **Parsers**, and **Raw Data** to inspect discovered files, parser decisions, warnings, failures, extracted metadata, and confidence levels.
+Use **Settings** to add custom folders, toggle raw message storage, and trigger
+scans. Use **Scan Health**, **Discovery**, **Parsers**, and **Raw Data** to
+inspect discovered files, parser decisions, warnings, failures, extracted
+metadata, and confidence levels.
 
 Settings also supports optional local monthly usage guardrails. Set a cost
-limit, token limit, or both, and Overview will show month-to-date progress from
+limit, token limit, or both, and Today will show month-to-date progress from
 imported local CLI usage.
 
 Sessions includes built-in and local saved views for recurring review paths:
@@ -362,13 +376,13 @@ Codex CLI status-line integration is intentionally deferred until its status-lin
 
 Dashboard views:
 
-![TokenTrace overview dashboard](docs/assets/overview-0.12.0.png)
+![TokenTrace Today dashboard](docs/assets/today-0.21.0.png)
 
-![TokenTrace processed tokens evidence trail](docs/assets/evidence-0.12.0.png)
+![TokenTrace unknown cost evidence trail](docs/assets/evidence-0.21.0.png)
 
-![TokenTrace unknown cost repair queue](docs/assets/repair-0.12.0.png)
+![TokenTrace Fix Data queue](docs/assets/fix-data-0.21.0.png)
 
-![TokenTrace Scan Health parser review](docs/assets/scan-health-0.12.0.png)
+![TokenTrace Scan Health parser review](docs/assets/scan-health-0.21.0.png)
 
 CLI startup and help:
 
@@ -403,6 +417,7 @@ Stop the server with `Ctrl+C` in the terminal where `tokentrace` is running.
 - `npm run security:ioc` scans lockfiles, workflows, and local Claude/VS Code hook files for high-signal supply-chain compromise indicators.
 - Public npm publishing is configured through GitHub Actions Trusted Publishing and provenance from version tags.
 - Socket GitHub checks and ProjScan are used as release guardrails, alongside `npm audit --audit-level=moderate`.
+- `npm run release:check` fails when a gate command exits non-zero. ProjScan warning-level architecture findings, such as circular imports, are reported as release risk and tracked as architecture debt; they do not fail the release unless ProjScan exits non-zero.
 - Release notes are published directly in GitHub Releases from the relevant changelog section, not as a link-only summary.
 
 See [SECURITY.md](SECURITY.md) for the full security and privacy model.

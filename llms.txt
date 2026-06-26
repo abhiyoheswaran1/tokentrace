@@ -2,6 +2,10 @@
 
 > Local-first analytics for AI CLI usage, focused on coding-agent tokens, costs, sessions, parser confidence, and evidence trails.
 
+Current product loop: preflight before long runs, Today for local readiness and
+daily usage, Sessions for conversation detail, Evidence for numeric claims, and
+Fix Data for unknown cost or parser-confidence work.
+
 ## Agent Entry Point
 
 Start with:

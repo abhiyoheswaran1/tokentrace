@@ -4,6 +4,14 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+## [0.21.1] - 2026-06-26
+
+### Changed
+
+- **README and website handoff now match the simplified product.** Refreshed the
+  public docs around preflight, Today, Evidence, Fix Data, and current
+  Playwright-captured `0.21.0` dashboard screenshots.
+
 ## [0.21.0] - 2026-06-26
 
 ### Added

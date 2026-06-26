@@ -4,10 +4,13 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.21.0 agent preflight release", () => {
+  it("documents the 0.21.1 README and website handoff patch release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.21.0");
+    expect(packageJson.version).toBe("0.21.1");
+    expect(changelog).toContain("## [0.21.1] - 2026-06-26");
+    expect(changelog).toContain("README and website handoff now match the simplified product");
+    expect(changelog).toContain("Playwright-captured `0.21.0` dashboard screenshots");
     expect(changelog).toContain("## [0.21.0] - 2026-06-26");
     expect(changelog).toContain("Local agent preflight");
     expect(changelog).toContain("Simpler dashboard shell");

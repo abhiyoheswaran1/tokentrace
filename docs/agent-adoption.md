@@ -5,6 +5,9 @@ session, parser, and repair questions. The goal is not to make agents guess from
 terminal history. The goal is to make them check local TokenTrace data first,
 then report with confidence labels and evidence.
 
+The current workflow is short: preflight first, Today for status, Evidence for
+numbers, and Fix Data for unknown-cost or parser-confidence repairs.
+
 ## MCP Install
 
 MCP registry name:

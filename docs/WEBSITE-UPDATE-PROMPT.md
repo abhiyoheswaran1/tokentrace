@@ -8,11 +8,11 @@ TokenTrace is local-first AI CLI usage analytics for developers using Claude Cod
 
 Primary message:
 
-> Local-first AI CLI usage analytics.
+> Local-first AI CLI usage analytics for developers and coding agents.
 
 Supporting copy:
 
-> TokenTrace scans local AI CLI artifacts, normalizes token usage, estimates missing counts when necessary, and shows cost, model, project, session, parser, and repair evidence in a local dashboard. No cloud account, no telemetry, no proxying.
+> TokenTrace checks whether your local AI CLI usage evidence is ready before the next expensive agent run. It scans local Claude Code, Codex, structured usage logs, and usage-shaped local databases, then shows Today, Sessions, Evidence, and Fix Data in a local dashboard. No cloud account, no telemetry, no proxying.
 
 0.13.0 release message:
 
@@ -50,27 +50,31 @@ Supporting copy:
 
 > Local intelligence bundle: TokenTrace 0.18.0 adds three deterministic, zero-AI-token local features that make the dashboard and MCP surface meaningfully smarter without spending a single token of your AI budget. **Anomaly detection** (`tokentrace anomalies`, MCP `get_anomalies`) runs a modified-z-score (MAD) detector over the daily token and cost trend and flags unusual days as `notable`, `high`, or `severe`; a new Anomalies panel on the overview lists the most recent anomalies with clickable date links that filter the entire dashboard to that day, and the Token Trend and Cost Trend charts render colored Recharts markers on flagged daily buckets. **Structured query** (`tokentrace query`, MCP `query_usage`, and a new `/query` page) is a parameterized SQL aggregation that lets agents ask precise questions — group by model, project, tool, session, or day; aggregate cost, total tokens, or interaction count; filter exactly by model, project, or tool; pick a preset window or explicit from/to range — without TokenTrace doing any natural-language parsing. The agent supplies structured arguments; TokenTrace executes deterministic SQL. **Unknown-cost auto-classifier** (`tokentrace repair auto-classify`, MCP `get_classifications`, "Auto-classify" column in Repair Items) emits classification suggestions for each unknown-cost group using three rules in confidence order: `exact-model` (0.95, case-insensitive name match), `family-fragment` (0.70, normalized via the existing model-alias candidates), and `parser-source` (0.45, same source file has priced examples). The new `--apply --min-confidence=N` flag (floor 0.85, requires explicit `--dry-run` for preview) persists qualifying suggestions to a new `model_aliases` table and backfills cost for the matching interactions; cost recalculation honors the alias table so backfills survive every scan. All three features run pure SQL or pure math over the existing local SQLite. Upgrade with `npm install -g tokentrace@latest`.
 
+0.21.0 agent preflight and simplified daily loop message:
+
+> Agent preflight and simplified daily loop: TokenTrace 0.21.0 adds `tokentrace preflight --json` and MCP `get_preflight`, a read-only local report that returns proceed, caution, or blocked before another long coding-agent run. Preflight combines scan freshness, data confidence, guardrails, anomaly signals, repair findings, and next actions without scanning files or reading raw prompts. The dashboard navigation now leads with Today, Sessions, Evidence, and Fix Data, with Reports and Settings in the operator path and diagnostics under Advanced.
+
 ## Screenshots
 
 Use the latest refreshed screenshots from this repo:
 
-- `docs/assets/overview-0.12.0.png`
-- `docs/assets/evidence-0.12.0.png`
-- `docs/assets/repair-0.12.0.png`
-- `docs/assets/scan-health-0.12.0.png`
+- `docs/assets/today-0.21.0.png`
+- `docs/assets/evidence-0.21.0.png`
+- `docs/assets/fix-data-0.21.0.png`
+- `docs/assets/scan-health-0.21.0.png`
 
 ## Sections
 
-1. Hero: TokenTrace, local-first AI CLI usage analytics, `npx tokentrace`.
-2. Evidence-first overview: pulse, token accounting, model rates, and trend charts.
-3. Faster overview: trend aggregation avoids slow localtime bucketing, and overview data loading focuses on the first screen.
-4. Local Sources & Trust: structured usage logs, Cursor-style chat exports, SQLite histories, source coverage, and Data Confidence.
-5. Evidence Packs: JSON and Markdown exports with totals, confidence drivers, parser notes, model-rate state, and no raw prompts by default.
-6. Scan Health: explain files checked, parser warnings, ignored support files, cost coverage, scheduling, and package IOC checks.
-7. Repair workflow: top cause, next best repair, what changes after repair, resolved/ignored/parser-review states, and before/after repair deltas.
-8. Mobile workflow polish: compact navigation plus card layouts for narrow Repair and Model Rates views.
+1. Hero: TokenTrace, local-first AI CLI usage analytics for developers and coding agents, `npx tokentrace`.
+2. Preflight: `tokentrace preflight --json` and MCP `get_preflight` return proceed, caution, or blocked before another agent run.
+3. Today: pulse, token accounting, cost/session state, data confidence, trends, anomalies, and repair signals.
+4. Daily loop: Today -> Sessions -> Evidence -> Fix Data, with Advanced diagnostics still available.
+5. Local Sources & Trust: structured usage logs, Cursor-style chat exports, SQLite histories, source coverage, and Data Confidence.
+6. Evidence Packs: JSON and Markdown exports with totals, confidence drivers, parser notes, model-rate state, and no raw prompts by default.
+7. Scan Health: explain files checked, parser warnings, ignored support files, cost coverage, scheduling, and package IOC checks.
+8. Fix Data workflow: top cause, next best repair, what changes after repair, resolved/ignored/parser-review states, and before/after repair deltas.
 9. Agent-ready entry points: `tokentrace agent --json`, `tokentrace capabilities --json`, `/api/agent`, `tokentrace roadmap --json`, and `docs/agent-adoption.md`.
-10. MCP entry point: registry name `io.github.abhiyoheswaran1/tokentrace`, `tokentrace mcp` for local stdio clients, `get_agent_guide` as the first tool call, `tokentrace mcp selftest --json`, no scan on startup, and explicit scan confirmation.
+10. MCP entry point: registry name `io.github.abhiyoheswaran1/tokentrace`, `tokentrace mcp` for local stdio clients, `get_agent_guide` as the first tool call, `get_preflight` before long runs, `tokentrace mcp selftest --json`, no scan on startup, and explicit scan confirmation.
 11. Privacy: local files stay local; model-rate refresh fetches public rate data only.
 
 ## Copy Rules
@@ -79,4 +83,6 @@ Use the latest refreshed screenshots from this repo:
 - Use `Scan Health`, not health check or scan doctor.
 - Use `Parsers`, not Parser Debug.
 - Use `Insights`, not Usage Intelligence.
+- Use `Today`, not Overview, for the first dashboard surface.
+- Use `Fix Data`, not Repair, for the primary user-facing repair workflow.
 - Mention that processed tokens are cumulative processed usage, not current context size.
