@@ -1,5 +1,7 @@
 # TokenTrace
 
+TokenTrace is in maintenance mode: it keeps working and stays installable, with security fixes and breaking-bug fixes only. There will be no new features, parsers or integrations. Issues are read, but replies may be slow.
+
 > Local-first analytics for AI CLI usage, focused on coding-agent tokens, costs, sessions, parser confidence, and evidence trails.
 
 Current product loop: preflight before long runs, Today for local readiness and

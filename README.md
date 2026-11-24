@@ -4,6 +4,8 @@
 
 # TokenTrace CLI
 
+TokenTrace is in maintenance mode: it keeps working and stays installable, with security fixes and breaking-bug fixes only. There will be no new features, parsers or integrations. Issues are read, but replies may be slow.
+
 Local-first AI CLI usage analytics for developers and coding agents.
 
 TokenTrace answers one practical question before the next expensive AI CLI run:

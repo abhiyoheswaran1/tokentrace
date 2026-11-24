@@ -1,5 +1,7 @@
 # TokenTrace Agent Guide
 
+TokenTrace is in maintenance mode: it keeps working and stays installable, with security fixes and breaking-bug fixes only. There will be no new features, parsers or integrations. Issues are read, but replies may be slow.
+
 TokenTrace is a local-first CLI and dashboard for AI coding-agent token, cost,
 session, parser, and evidence analytics.
 

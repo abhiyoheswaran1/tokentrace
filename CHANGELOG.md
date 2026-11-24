@@ -4,6 +4,8 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
+Maintenance mode notice; no functional changes.
+
 ## [0.21.2] - 2026-06-26
 
 ### Fixed

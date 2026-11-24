@@ -1,5 +1,7 @@
 # Use TokenTrace With Agents
 
+TokenTrace is in maintenance mode: it keeps working and stays installable, with security fixes and breaking-bug fixes only. There will be no new features, parsers or integrations. Issues are read, but replies may be slow.
+
 TokenTrace gives coding agents local evidence for AI CLI token, cost, model,
 session, parser, and repair questions. The goal is not to make agents guess from
 terminal history. The goal is to make them check local TokenTrace data first,
