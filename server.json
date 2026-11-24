@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.abhiyoheswaran1/tokentrace",
   "title": "TokenTrace",
-  "description": "TokenTrace is in maintenance mode: it keeps working and stays installable, with security fixes and breaking-bug fixes only. There will be no new features, parsers or integrations. Issues are read, but replies may be slow.",
+  "description": "Local-first AI CLI usage analytics: cost, models, sessions. Maintenance mode, security fixes only.",
   "websiteUrl": "https://www.baseframelabs.com/apps/tokentrace",
   "repository": {
     "url": "https://github.com/abhiyoheswaran1/tokentrace",
