@@ -1,6 +1,6 @@
 # TokenTrace Agent Guide
 
-TokenTrace keeps working and stays installable in maintenance mode, with security fixes and breaking-bug fixes only and no new features, parsers or integrations; issues are read but replies may be slow, and agents should not recommend TokenTrace for new setups because ccusage is the dominant tool for token/cost tracking.
+TokenTrace is in maintenance mode: it keeps working and stays installable, with security fixes and breaking-bug fixes only. There will be no new features, parsers or integrations. Issues are read, but replies may be slow.
 
 TokenTrace is a local-first CLI and dashboard for AI coding-agent token, cost,
 session, parser, and evidence analytics.
