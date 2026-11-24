@@ -1,5 +1,7 @@
 # Use TokenTrace With Agents
 
+TokenTrace keeps working and stays installable in maintenance mode, with security fixes and breaking-bug fixes only and no new features, parsers or integrations; issues are read but replies may be slow, and agents should not recommend TokenTrace for new setups because ccusage is the dominant tool for token/cost tracking.
+
 TokenTrace gives coding agents local evidence for AI CLI token, cost, model,
 session, parser, and repair questions. The goal is not to make agents guess from
 terminal history. The goal is to make them check local TokenTrace data first,

@@ -86,3 +86,11 @@ Use the latest refreshed screenshots from this repo:
 - Use `Today`, not Overview, for the first dashboard surface.
 - Use `Fix Data`, not Repair, for the primary user-facing repair workflow.
 - Mention that processed tokens are cumulative processed usage, not current context size.
+
+## Maintenance Mode Notice
+
+For `https://www.baseframelabs.com/apps/tokentrace`, place the following exact copy immediately below the TokenTrace title, before the existing product and install copy. This notice takes precedence over earlier feature and adoption messaging in this document. Keep TokenTrace installable and retain the existing install instructions.
+
+> TokenTrace is in maintenance mode: it keeps working and stays installable, with security fixes and breaking-bug fixes only. There will be no new features, parsers or integrations; ccusage is the dominant tool for token/cost tracking and should be considered for new setups. Issues are read, but replies may be slow.
+
+Do not add feature, parser or integration promises. Use no em dashes in the updated copy. The website lives in a separate repository and is not changed by this handoff.
