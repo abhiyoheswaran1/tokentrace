@@ -4,10 +4,15 @@ import { describe, expect, it } from "vitest";
 import packageJson from "@/package.json";
 
 describe("next release scope", () => {
-  it("documents the 0.21.2 architecture health patch release", () => {
+  it("documents the 0.21.3 security patch release", () => {
     const changelog = fs.readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8");
 
-    expect(packageJson.version).toBe("0.21.2");
+    expect(packageJson.version).toBe("0.21.3");
+    expect(changelog).toContain("## [0.21.3] - 2026-11-24");
+    expect(changelog).toContain("Updated production dependencies to resolve 16 npm audit findings");
+    expect(changelog).toContain("critical advisories in Next.js and proxy-addr");
+    expect(changelog).toContain("Updated development dependencies, including Vitest and its coverage provider");
+    expect(changelog).toContain("Maintenance mode notice; no functional changes.");
     expect(changelog).toContain("## [0.21.2] - 2026-06-26");
     expect(changelog).toContain("ProjScan circular-import warnings removed");
     expect(changelog).toContain("import graph stays");

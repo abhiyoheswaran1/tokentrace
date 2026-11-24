@@ -4,7 +4,16 @@ All notable changes to TokenTrace are documented here.
 
 ## Unreleased
 
-Maintenance mode notice; no functional changes.
+## [0.21.3] - 2026-11-24
+
+### Security
+
+- **Dependency security fixes.** Updated production dependencies to resolve 16 npm audit findings, including critical advisories in Next.js and proxy-addr.
+- **Development dependency security fixes.** Updated development dependencies, including Vitest and its coverage provider, to resolve remaining security advisories.
+
+### Changed
+
+- Maintenance mode notice; no functional changes.
 
 ## [0.21.2] - 2026-06-26
 
