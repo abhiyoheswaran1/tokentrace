@@ -127,12 +127,12 @@
     "@types/better-sqlite3": "^7.6.12",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^5.2.0",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.12",
     "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.6",
     "eslint-plugin-react-hooks": "^5.2.0",
     "tsx": "^4.22.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.12"
   }
 }
